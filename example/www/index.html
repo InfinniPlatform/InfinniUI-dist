@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+
+    <!-- Стили платформы скомпилированные вместе со стилями расширений (конфигурации) -->
+    <link href="/compiled/platform/css/vendor.css" rel="stylesheet" type="text/css"/>
+    <link href="/compiled/platform/css/main.css" rel="stylesheet" type="text/css"/>
+
+    <!-- Фавикон -->
+    <link rel="icon" type="image/png" href="img/favicon.ico" />
+	
+</head>
+<body class="page-header-fixed" id="page-content">
+
+    <script src="config.js"></script>
+
+    <!-- <script src="/app/utils/pdf/build/pdf.js"></script> -->
+    <script src="/compiled/platform/vendor.js"></script>
+    <script src="/compiled/platform/templates.js"></script>
+    <script src="/compiled/platform/platform.js"></script>
+
+    <script src="/compiled/js/templates.js"></script>
+    <script src="/compiled/js/app.js"></script>
+
+    <script src="js/main.js"></script>
+    <script type="application/javascript">
+        jQuery(function () {
+        //    $(document).on('contextmenu', function() {
+        //        return false;
+        //    });
+
+        //    Metronic.init();
+        //    Layout.init();
+
+            var resize;
+            $(window).resize(function () {
+                if (resize) {
+                    clearTimeout(resize);
+                }
+                resize = setTimeout(function () {
+                    _runResizeHandlers();
+                }, 50); // wait 50ms until window resize finishes.
+            });
+
+            function _runResizeHandlers() {
+                resizeContent();
+            }
+
+            function getViewPort() {
+                var e = window, a = 'inner';
+                if (!('innerWidth' in window)) {
+                    a = 'client';
+                    e = document.documentElement || document.body;
+                }
+                return {
+                    width: e[a + 'Width'],
+                    height: e[a + 'Height']
+                }
+            }
+
+            function resizeContent () {
+                var height = getViewPort().height - (46 + 51); //46px высота толбаров
+                $("#page-content").css('height', height + 'px');
+            }
+
+            resizeContent();
+        });
+    </script>
+
+</body>
+</html>

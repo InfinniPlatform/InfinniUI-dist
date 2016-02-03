@@ -1,0 +1,174 @@
+{
+  "OnLoaded": "OL2",
+  "DataSources": [{
+    "ObjectDataSource":{
+      "Name": "Clone",
+      "Items":{
+        "Source": "BloodGroupDataSource",
+        "Converter":{
+          "ToElement":"{return [args.value[0]];}"
+        }
+      }
+    }
+  },
+    {
+      "ObjectDataSource": {
+        "Name": "BloodGroupDataSource",
+        "Items": [
+          {
+            "Id": 1,
+            "DisplayName": "44",
+            "SomeField": "",
+            "Array": [
+              {
+                "Id": 5,
+                "DisplayName": "I-1"
+              },
+              {
+                "Id": 6,
+                "DisplayName": "I-2"
+              },
+              {
+                "Id": 7,
+                "DisplayName": "I-3"
+              }
+            ]
+          },
+          {
+            "Id": 2,
+            "DisplayName": "II",
+            "SomeField": "val",
+            "Array": [
+              {
+                "Id": 8,
+                "DisplayName": "II-1"
+              },
+              {
+                "Id": 9,
+                "DisplayName": "II-2"
+              }
+            ]
+          },
+          {
+            "Id": 3,
+            "DisplayName": "III",
+            "SomeField": 3
+          },
+          {
+            "Id": 4,
+            "DisplayName": "IV",
+            "SomeField": null
+          }
+        ],
+        "OnSelectedItemChanged": {
+          "Name": "OnSelectedItemChanged_1"
+        }
+      }
+    }
+  ],
+  "Items": [{
+    "GridPanel": {
+      "Items": [
+        {
+          "Cell": {
+            "ColumnSpan": 4,
+            "Items": [
+              {
+                "ToggleButton": {
+                  "Name": "TB",
+                  "Text": "Subscribe",
+                  "TextOn": "yes",
+                  "TextOff": "no",
+                  "OnValueChanged": {
+                    "Name": "ToggleButtonOnValueChanged"
+                  },
+                  "OnValueChanging": {
+                    "Name": "ToggleButtonOnValueChanging"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Cell": {
+            "ColumnSpan": 4,
+            "Items": [
+              {
+                "ExtensionPanel": {
+                  "ExtensionName": "TestExtension",
+                  "Parameters": [
+                    {
+                      "Name": "p1",
+                      "Value": {
+                        "Source": "BloodGroupDataSource",
+                        "Property": ""
+                      }
+                    }
+                  ],
+                  "Items": [
+                    {
+                      "NumericBox": {
+                        "Background": "Primary1",
+                        "HintText": "I'm NumericBox hint",
+                        "LabelText": "Numeric label",
+                        "Enabled": true,
+                        "MinValue": 0,
+                        "EditMask": {
+                          "NumberEditMask": {
+                            "Mask": "n3"
+                          }
+                        },
+                        "Value": {
+                          "Source": "BloodGroupDataSource",
+                          "Property": "$.Id"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Cell": {
+            "ColumnSpan": 4,
+            "Items": [
+              {
+                "TestElement":{
+                  "TestProperty": "Value Of Test Property In TestElement"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Cell": {
+            "ColumnSpan": 4,
+            "Items": [
+              {
+                "StackPanel":{
+                  "Items": {
+                    "Source": "Clone",
+                    "Property": ""
+                  },
+
+                  "ItemTemplate":{
+                    "Label":{
+                      "Value": {
+                        "Source": "Clone",
+                        "Property": "#.DisplayName"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }]
+}
+
