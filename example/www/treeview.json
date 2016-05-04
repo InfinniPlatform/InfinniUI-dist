@@ -1,0 +1,56 @@
+{
+  "DataSources": [
+    {
+      "ObjectDataSource": {
+        "Name": "Geo",
+        "Items": [
+          {
+            "Id": 1,
+            "ParentId": null,
+            "Name": "Челябинск"
+          },
+          {
+            "Id": 2,
+            "ParentId": 1,
+            "Name": "Чичерина"
+          },
+          {
+            "Id": 3,
+            "ParentId": 1,
+            "Name": "Комарова"
+          },
+          {
+            "Id": 4,
+            "ParentId": null,
+            "Name": "Копейск"
+          },
+          {
+            "Id": 5,
+            "ParentId": 4,
+            "Name": "Победы"
+          },
+          {
+            "Id": 6,
+            "ParentId": 5,
+            "Name": "33/1"
+          }
+        ]
+      }
+    }
+  ],
+  "Items": [
+    {
+      "TreeView": {
+        "KeyProperty": "Id",
+        "ParentProperty": "ParentId",
+        "ItemProperty": "Name",
+        "ValueProperty": "Name",
+        "MultiSelect": true,
+        "Items": {
+          "Source": "Geo"
+        }
+      }
+    }
+  ]
+}
+

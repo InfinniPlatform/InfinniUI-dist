@@ -1,0 +1,119 @@
+.clearfix() {
+  &:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+.pl-datagrid {
+
+  &_select {
+    &_single {
+      .pl-datagrid-toggle_all {
+        display: none;
+      }
+    }
+  }
+
+  &_selectors {
+
+    &_show {
+      .pl-datagrid-row__cell_checker, .pl-datagrid-row__cell_toggle  {
+        width: 40px;
+        display: table-cell;
+      }
+    }
+
+    &_hide {
+      .pl-datagrid-row__cell_checker, .pl-datagrid-row__cell_toggle  {
+        width: 0;
+        display: none;
+      }
+    }
+
+  }
+
+  &__body {
+    //overflow-y: scroll;
+    //overflow-x: auto;
+  }
+
+  &.verticalAlignment {
+    &Top {
+      table > tbody > tr > td {
+        vertical-align: top;
+      }
+    }
+
+    &Center {
+      table > tbody > tr > td {
+        vertical-align: middle;
+      }
+    }
+
+    &Bottom {
+      table > tbody > tr > td {
+        vertical-align: bottom;
+      }
+    }
+
+    &Stretch {
+      table > tbody > tr > td {
+        vertical-align: middle;
+      }
+    }
+  }
+  table {
+    /*table-layout: fixed;*/
+  }
+
+  //.pl-toggle-cell{
+  //  width: 30px;
+  //}
+
+}
+
+.pl-datagrid.verticalAlignmentStretch {
+
+  overflow-x: hidden;
+
+  //При вытягивании по вертикали заголовки колонок становятся фикированными - для этого table-layout = fixed
+
+  .pl-datagrid-table {
+    table-layout: fixed;
+  }
+
+  .pl-datagrid__body {
+    overflow-y: scroll;
+    overflow-x: auto;
+  }
+
+}
+
+
+.pl-datagrid-table {
+  margin-bottom: 0;
+
+  &_body {
+    border-top: 0!important;
+  }
+}
+
+.pl-datagrid-container {
+  &_head {
+    overflow-x: hidden;
+  }
+}
+
+.pl-datagrid-row {
+  &__cell {
+    overflow: hidden;
+
+    &_width {
+      padding: 0!important;
+      border: 0!important;
+    }
+  }
+}
+

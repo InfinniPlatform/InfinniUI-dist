@@ -1,0 +1,54 @@
+@import "../../../bootstrap-framework/less/pl-variables.less";
+@import "../../../bootstrap-framework/less/variables.less";
+
+.toggle-off {
+  .togglebutton-box{
+    border: 1px solid @pl-background4;
+  }
+
+  .togglebutton-container {
+    margin-left: -50px;
+  }
+}
+
+.togglebutton-box {
+  display: inline-block;
+  width: 66px;
+  border: 1px solid @pl-primary1;
+  transition: border 0.5s;
+  border-radius: @border-radius-base;
+  overflow: hidden;
+}
+
+.togglebutton-container {
+  display: inline-block;
+  white-space: nowrap;
+  transition: margin-left 0.5s;
+}
+
+.togglebutton-container .togglebutton-handle-on,
+.togglebutton-container .togglebutton-handle-label,
+.togglebutton-container .togglebutton-handle-off {
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+}
+
+.togglebutton-container .togglebutton-handle-on,
+.togglebutton-container .togglebutton-handle-off {
+  width: 50px;
+  padding: @padding-base-vertical 10px;
+}
+
+.togglebutton-container .togglebutton-handle-label{
+  width: 6px;
+}
+
+.togglebutton-handle-on {
+  color: @pl-white;
+  background: @pl-primary1;
+}
+
+.togglebutton-handle-off {
+  background: @pl-background4;
+}

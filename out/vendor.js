@@ -1,5 +1,5 @@
 /*!
- * jQuery JavaScript Library v1.12.0
+ * jQuery JavaScript Library v1.12.3
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -9,7 +9,7 @@
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2016-01-08T19:56Z
+ * Date: 2016-04-05T19:16Z
  */
 
 (function( global, factory ) {
@@ -65,7 +65,7 @@ var support = {};
 
 
 var
-	version = "1.12.0",
+	version = "1.12.3",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -3625,11 +3625,10 @@ jQuery.ready.promise = function( obj ) {
 
 		// Catch cases where $(document).ready() is called
 		// after the browser event has already occurred.
-		// we once tried to use readyState "interactive" here,
-		// but it caused issues like the one
-		// discovered by ChrisS here:
-		// http://bugs.jquery.com/ticket/12282#comment:15
-		if ( document.readyState === "complete" ) {
+		// Support: IE6-10
+		// Older IE sometimes signals "interactive" too soon
+		if ( document.readyState === "complete" ||
+			( document.readyState !== "loading" && !document.documentElement.doScroll ) ) {
 
 			// Handle it asynchronously to allow scripts the opportunity to delay ready
 			window.setTimeout( jQuery.ready );
@@ -6701,7 +6700,7 @@ if ( window.getComputedStyle ) {
 		// FF meanwhile throws on frame elements through "defaultView.getComputedStyle"
 		var view = elem.ownerDocument.defaultView;
 
-		if ( !view.opener ) {
+		if ( !view || !view.opener ) {
 			view = window;
 		}
 
@@ -6717,11 +6716,14 @@ if ( window.getComputedStyle ) {
 		// getPropertyValue is only needed for .css('filter') in IE9, see #12537
 		ret = computed ? computed.getPropertyValue( name ) || computed[ name ] : undefined;
 
-		if ( computed ) {
+		// Support: Opera 12.1x only
+		// Fall back to style even without computed
+		// computed is undefined for elems on document fragments
+		if ( ( ret === "" || ret === undefined ) && !jQuery.contains( elem.ownerDocument, elem ) ) {
+			ret = jQuery.style( elem, name );
+		}
 
-			if ( ret === "" && !jQuery.contains( elem.ownerDocument, elem ) ) {
-				ret = jQuery.style( elem, name );
-			}
+		if ( computed ) {
 
 			// A tribute to the "awesome hack by Dean Edwards"
 			// Chrome < 17 and Safari 5.0 uses "computed value"
@@ -8196,7 +8198,8 @@ jQuery.fn.delay = function( time, type ) {
 } )();
 
 
-var rreturn = /\r/g;
+var rreturn = /\r/g,
+	rspaces = /[\x20\t\r\n\f]+/g;
 
 jQuery.fn.extend( {
 	val: function( value ) {
@@ -8276,7 +8279,9 @@ jQuery.extend( {
 
 					// Support: IE10-11+
 					// option.text throws exceptions (#14686, #14858)
-					jQuery.trim( jQuery.text( elem ) );
+					// Strip and collapse whitespace
+					// https://html.spec.whatwg.org/#strip-and-collapse-whitespace
+					jQuery.trim( jQuery.text( elem ) ).replace( rspaces, " " );
 			}
 		},
 		select: {
@@ -8330,7 +8335,7 @@ jQuery.extend( {
 				while ( i-- ) {
 					option = options[ i ];
 
-					if ( jQuery.inArray( jQuery.valHooks.option.get( option ), values ) >= 0 ) {
+					if ( jQuery.inArray( jQuery.valHooks.option.get( option ), values ) > -1 ) {
 
 						// Support: IE6
 						// When new option element is added to select box we need to
@@ -8749,8 +8754,11 @@ if ( !support.hrefNormalized ) {
 }
 
 // Support: Safari, IE9+
-// mis-reports the default selected property of an option
-// Accessing the parent's selectedIndex property fixes it
+// Accessing the selectedIndex property
+// forces the browser to respect setting selected
+// on the option
+// The getter ensures a default option is selected
+// when in an optgroup
 if ( !support.optSelected ) {
 	jQuery.propHooks.selected = {
 		get: function( elem ) {
@@ -8765,6 +8773,16 @@ if ( !support.optSelected ) {
 				}
 			}
 			return null;
+		},
+		set: function( elem ) {
+			var parent = elem.parentNode;
+			if ( parent ) {
+				parent.selectedIndex;
+
+				if ( parent.parentNode ) {
+					parent.parentNode.selectedIndex;
+				}
+			}
 		}
 	};
 }
@@ -10347,13 +10365,6 @@ function createActiveXHR() {
 
 
 
-// Prevent auto-execution of scripts when no explicit dataType was provided (See gh-2432)
-jQuery.ajaxPrefilter( function( s ) {
-	if ( s.crossDomain ) {
-		s.contents.script = false;
-	}
-} );
-
 // Install script dataType
 jQuery.ajaxSetup( {
 	accepts: {
@@ -10540,21 +10551,6 @@ jQuery.ajaxPrefilter( "json jsonp", function( s, originalSettings, jqXHR ) {
 
 
 
-// Support: Safari 8+
-// In Safari 8 documents created via document.implementation.createHTMLDocument
-// collapse sibling forms: the second one becomes a child of the first one.
-// Because of that, this security measure has to be disabled in Safari 8.
-// https://bugs.webkit.org/show_bug.cgi?id=137337
-support.createHTMLDocument = ( function() {
-	if ( !document.implementation.createHTMLDocument ) {
-		return false;
-	}
-	var doc = document.implementation.createHTMLDocument( "" );
-	doc.body.innerHTML = "<form></form><form></form>";
-	return doc.body.childNodes.length === 2;
-} )();
-
-
 // data: string of html
 // context (optional): If specified, the fragment will be created in this context,
 // defaults to document
@@ -10567,12 +10563,7 @@ jQuery.parseHTML = function( data, context, keepScripts ) {
 		keepScripts = context;
 		context = false;
 	}
-
-	// document.implementation stops scripts or inline event handlers from
-	// being executed immediately
-	context = context || ( support.createHTMLDocument ?
-		document.implementation.createHTMLDocument( "" ) :
-		document );
+	context = context || document;
 
 	var parsed = rsingleTag.exec( data ),
 		scripts = !keepScripts && [];
@@ -10654,7 +10645,7 @@ jQuery.fn.load = function( url, params, callback ) {
 		// If it fails, this function gets "jqXHR", "status", "error"
 		} ).always( callback && function( jqXHR, status ) {
 			self.each( function() {
-				callback.apply( self, response || [ jqXHR.responseText, status, jqXHR ] );
+				callback.apply( this, response || [ jqXHR.responseText, status, jqXHR ] );
 			} );
 		} );
 	}
@@ -10818,11 +10809,8 @@ jQuery.fn.extend( {
 			}
 
 			// Add offsetParent borders
-			// Subtract offsetParent scroll positions
-			parentOffset.top += jQuery.css( offsetParent[ 0 ], "borderTopWidth", true ) -
-				offsetParent.scrollTop();
-			parentOffset.left += jQuery.css( offsetParent[ 0 ], "borderLeftWidth", true ) -
-				offsetParent.scrollLeft();
+			parentOffset.top  += jQuery.css( offsetParent[ 0 ], "borderTopWidth", true );
+			parentOffset.left += jQuery.css( offsetParent[ 0 ], "borderLeftWidth", true );
 		}
 
 		// Subtract parent offsets and element margins
@@ -14185,7 +14173,7 @@ return jQuery;
 }));
 
 //! moment.js
-//! version : 2.11.1
+//! version : 2.13.0
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -14209,7 +14197,7 @@ return jQuery;
     }
 
     function isArray(input) {
-        return Object.prototype.toString.call(input) === '[object Array]';
+        return input instanceof Array || Object.prototype.toString.call(input) === '[object Array]';
     }
 
     function isDate(input) {
@@ -14262,7 +14250,9 @@ return jQuery;
             invalidMonth    : null,
             invalidFormat   : false,
             userInvalidated : false,
-            iso             : false
+            iso             : false,
+            parsedDateParts : [],
+            meridiem        : null
         };
     }
 
@@ -14273,9 +14263,30 @@ return jQuery;
         return m._pf;
     }
 
+    var some;
+    if (Array.prototype.some) {
+        some = Array.prototype.some;
+    } else {
+        some = function (fun) {
+            var t = Object(this);
+            var len = t.length >>> 0;
+
+            for (var i = 0; i < len; i++) {
+                if (i in t && fun.call(this, t[i], i, t)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+    }
+
     function valid__isValid(m) {
         if (m._isValid == null) {
             var flags = getParsingFlags(m);
+            var parsedParts = some.call(flags.parsedDateParts, function (i) {
+                return i != null;
+            });
             m._isValid = !isNaN(m._d.getTime()) &&
                 flags.overflow < 0 &&
                 !flags.empty &&
@@ -14283,7 +14294,8 @@ return jQuery;
                 !flags.invalidWeekday &&
                 !flags.nullInput &&
                 !flags.invalidFormat &&
-                !flags.userInvalidated;
+                !flags.userInvalidated &&
+                (!flags.meridiem || (flags.meridiem && parsedParts));
 
             if (m._strict) {
                 m._isValid = m._isValid &&
@@ -14415,7 +14427,105 @@ return jQuery;
         return diffs + lengthDiff;
     }
 
-    function Locale() {
+    function warn(msg) {
+        if (utils_hooks__hooks.suppressDeprecationWarnings === false &&
+                (typeof console !==  'undefined') && console.warn) {
+            console.warn('Deprecation warning: ' + msg);
+        }
+    }
+
+    function deprecate(msg, fn) {
+        var firstTime = true;
+
+        return extend(function () {
+            if (utils_hooks__hooks.deprecationHandler != null) {
+                utils_hooks__hooks.deprecationHandler(null, msg);
+            }
+            if (firstTime) {
+                warn(msg + '\nArguments: ' + Array.prototype.slice.call(arguments).join(', ') + '\n' + (new Error()).stack);
+                firstTime = false;
+            }
+            return fn.apply(this, arguments);
+        }, fn);
+    }
+
+    var deprecations = {};
+
+    function deprecateSimple(name, msg) {
+        if (utils_hooks__hooks.deprecationHandler != null) {
+            utils_hooks__hooks.deprecationHandler(name, msg);
+        }
+        if (!deprecations[name]) {
+            warn(msg);
+            deprecations[name] = true;
+        }
+    }
+
+    utils_hooks__hooks.suppressDeprecationWarnings = false;
+    utils_hooks__hooks.deprecationHandler = null;
+
+    function isFunction(input) {
+        return input instanceof Function || Object.prototype.toString.call(input) === '[object Function]';
+    }
+
+    function isObject(input) {
+        return Object.prototype.toString.call(input) === '[object Object]';
+    }
+
+    function locale_set__set (config) {
+        var prop, i;
+        for (i in config) {
+            prop = config[i];
+            if (isFunction(prop)) {
+                this[i] = prop;
+            } else {
+                this['_' + i] = prop;
+            }
+        }
+        this._config = config;
+        // Lenient ordinal parsing accepts just a number in addition to
+        // number + (possibly) stuff coming from _ordinalParseLenient.
+        this._ordinalParseLenient = new RegExp(this._ordinalParse.source + '|' + (/\d{1,2}/).source);
+    }
+
+    function mergeConfigs(parentConfig, childConfig) {
+        var res = extend({}, parentConfig), prop;
+        for (prop in childConfig) {
+            if (hasOwnProp(childConfig, prop)) {
+                if (isObject(parentConfig[prop]) && isObject(childConfig[prop])) {
+                    res[prop] = {};
+                    extend(res[prop], parentConfig[prop]);
+                    extend(res[prop], childConfig[prop]);
+                } else if (childConfig[prop] != null) {
+                    res[prop] = childConfig[prop];
+                } else {
+                    delete res[prop];
+                }
+            }
+        }
+        return res;
+    }
+
+    function Locale(config) {
+        if (config != null) {
+            this.set(config);
+        }
+    }
+
+    var keys;
+
+    if (Object.keys) {
+        keys = Object.keys;
+    } else {
+        keys = function (obj) {
+            var i, res = [];
+            for (i in obj) {
+                if (hasOwnProp(obj, i)) {
+                    res.push(i);
+                }
+            }
+            return res;
+        };
     }
 
     // internal storage for locale config files
@@ -14491,11 +14601,25 @@ return jQuery;
         return globalLocale._abbr;
     }
 
-    function defineLocale (name, values) {
-        if (values !== null) {
-            values.abbr = name;
-            locales[name] = locales[name] || new Locale();
-            locales[name].set(values);
+    function defineLocale (name, config) {
+        if (config !== null) {
+            config.abbr = name;
+            if (locales[name] != null) {
+                deprecateSimple('defineLocaleOverride',
+                        'use moment.updateLocale(localeName, config) to change ' +
+                        'an existing locale. moment.defineLocale(localeName, ' +
+                        'config) should only be used for creating a new locale');
+                config = mergeConfigs(locales[name]._config, config);
+            } else if (config.parentLocale != null) {
+                if (locales[config.parentLocale] != null) {
+                    config = mergeConfigs(locales[config.parentLocale]._config, config);
+                } else {
+                    // treat as if there is no base config
+                    deprecateSimple('parentLocaleUndefined',
+                            'specified parentLocale is not defined yet');
+                }
+            }
+            locales[name] = new Locale(config);
 
             // backwards compat for now: also set the locale
             locale_locales__getSetGlobalLocale(name);
@@ -14506,6 +14630,31 @@ return jQuery;
             delete locales[name];
             return null;
         }
+    }
+
+    function updateLocale(name, config) {
+        if (config != null) {
+            var locale;
+            if (locales[name] != null) {
+                config = mergeConfigs(locales[name]._config, config);
+            }
+            locale = new Locale(config);
+            locale.parentLocale = locales[name];
+            locales[name] = locale;
+
+            // backwards compat for now: also set the locale
+            locale_locales__getSetGlobalLocale(name);
+        } else {
+            // pass null for config to unupdate, useful for tests
+            if (locales[name] != null) {
+                if (locales[name].parentLocale != null) {
+                    locales[name] = locales[name].parentLocale;
+                } else if (locales[name] != null) {
+                    delete locales[name];
+                }
+            }
+        }
+        return locales[name];
     }
 
     // returns locale data
@@ -14530,6 +14679,10 @@ return jQuery;
         }
 
         return chooseLocale(key);
+    }
+
+    function locale_locales__listLocales() {
+        return keys(locales);
     }
 
     var aliases = {};
@@ -14558,10 +14711,6 @@ return jQuery;
         }
 
         return normalizedInput;
-    }
-
-    function isFunction(input) {
-        return input instanceof Function || Object.prototype.toString.call(input) === '[object Function]';
     }
 
     function makeGetSet (unit, keepTime) {
@@ -14612,7 +14761,7 @@ return jQuery;
             Math.pow(10, Math.max(0, zerosToFill)).toString().substr(1) + absNumber;
     }
 
-    var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|YYYYYY|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
+    var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|YYYYYY|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g;
 
     var localFormattingTokens = /(\[[^\[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g;
 
@@ -14665,7 +14814,7 @@ return jQuery;
         }
 
         return function (mom) {
-            var output = '';
+            var output = '', i;
             for (i = 0; i < length; i++) {
                 output += array[i] instanceof Function ? array[i].call(mom, format) : array[i];
             }
@@ -14794,6 +14943,23 @@ return jQuery;
     var WEEK = 7;
     var WEEKDAY = 8;
 
+    var indexOf;
+
+    if (Array.prototype.indexOf) {
+        indexOf = Array.prototype.indexOf;
+    } else {
+        indexOf = function (o) {
+            // I know
+            var i;
+            for (i = 0; i < this.length; ++i) {
+                if (this[i] === o) {
+                    return i;
+                }
+            }
+            return -1;
+        };
+    }
+
     function daysInMonth(year, month) {
         return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     }
@@ -14856,8 +15022,53 @@ return jQuery;
             this._monthsShort[MONTHS_IN_FORMAT.test(format) ? 'format' : 'standalone'][m.month()];
     }
 
+    function units_month__handleStrictParse(monthName, format, strict) {
+        var i, ii, mom, llc = monthName.toLocaleLowerCase();
+        if (!this._monthsParse) {
+            // this is not used
+            this._monthsParse = [];
+            this._longMonthsParse = [];
+            this._shortMonthsParse = [];
+            for (i = 0; i < 12; ++i) {
+                mom = create_utc__createUTC([2000, i]);
+                this._shortMonthsParse[i] = this.monthsShort(mom, '').toLocaleLowerCase();
+                this._longMonthsParse[i] = this.months(mom, '').toLocaleLowerCase();
+            }
+        }
+
+        if (strict) {
+            if (format === 'MMM') {
+                ii = indexOf.call(this._shortMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._longMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        } else {
+            if (format === 'MMM') {
+                ii = indexOf.call(this._shortMonthsParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._longMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._longMonthsParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._shortMonthsParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        }
+    }
+
     function localeMonthsParse (monthName, format, strict) {
         var i, mom, regex;
+
+        if (this._monthsParseExact) {
+            return units_month__handleStrictParse.call(this, monthName, format, strict);
+        }
 
         if (!this._monthsParse) {
             this._monthsParse = [];
@@ -14865,6 +15076,9 @@ return jQuery;
             this._shortMonthsParse = [];
         }
 
+        // TODO: add sorting
+        // Sorting makes sure if one month (or abbr) is a prefix of another
+        // see sorting in computeMonthsParse
         for (i = 0; i < 12; i++) {
             // make the regex if we don't have it already
             mom = create_utc__createUTC([2000, i]);
@@ -14897,12 +15111,15 @@ return jQuery;
             return mom;
         }
 
-        // TODO: Move this out of here!
         if (typeof value === 'string') {
-            value = mom.localeData().monthsParse(value);
-            // TODO: Another silent failure?
-            if (typeof value !== 'number') {
-                return mom;
+            if (/^\d+$/.test(value)) {
+                value = toInt(value);
+            } else {
+                value = mom.localeData().monthsParse(value);
+                // TODO: Another silent failure?
+                if (typeof value !== 'number') {
+                    return mom;
+                }
             }
         }
 
@@ -14987,8 +15204,8 @@ return jQuery;
 
         this._monthsRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
         this._monthsShortRegex = this._monthsRegex;
-        this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')$', 'i');
-        this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')$', 'i');
+        this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+        this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
     }
 
     function checkOverflow (m) {
@@ -15020,36 +15237,6 @@ return jQuery;
 
         return m;
     }
-
-    function warn(msg) {
-        if (utils_hooks__hooks.suppressDeprecationWarnings === false &&
-                (typeof console !==  'undefined') && console.warn) {
-            console.warn('Deprecation warning: ' + msg);
-        }
-    }
-
-    function deprecate(msg, fn) {
-        var firstTime = true;
-
-        return extend(function () {
-            if (firstTime) {
-                warn(msg + '\nArguments: ' + Array.prototype.slice.call(arguments).join(', ') + '\n' + (new Error()).stack);
-                firstTime = false;
-            }
-            return fn.apply(this, arguments);
-        }, fn);
-    }
-
-    var deprecations = {};
-
-    function deprecateSimple(name, msg) {
-        if (!deprecations[name]) {
-            warn(msg);
-            deprecations[name] = true;
-        }
-    }
-
-    utils_hooks__hooks.suppressDeprecationWarnings = false;
 
     // iso 8601 regex
     // 0000-00-00 0000-W00 or 0000-W00-0 + T + 00 or 00:00 or 00:00:00 or 00:00:00.000 + +00:00 or +0000 or +00)
@@ -15245,7 +15432,7 @@ return jQuery;
 
     // MOMENTS
 
-    var getSetYear = makeGetSet('FullYear', false);
+    var getSetYear = makeGetSet('FullYear', true);
 
     function getIsLeapYear () {
         return isLeapYear(this.year());
@@ -15514,6 +15701,9 @@ return jQuery;
                 config._a[HOUR] > 0) {
             getParsingFlags(config).bigHour = undefined;
         }
+
+        getParsingFlags(config).parsedDateParts = config._a.slice(0);
+        getParsingFlags(config).meridiem = config._meridiem;
         // handle meridiem
         config._a[HOUR] = meridiemFixWrap(config._locale, config._a[HOUR], config._meridiem);
 
@@ -15654,7 +15844,7 @@ return jQuery;
         if (input === undefined) {
             config._d = new Date(utils_hooks__hooks.now());
         } else if (isDate(input)) {
-            config._d = new Date(+input);
+            config._d = new Date(input.valueOf());
         } else if (typeof input === 'string') {
             configFromString(config);
         } else if (isArray(input)) {
@@ -15696,7 +15886,7 @@ return jQuery;
     }
 
     var prototypeMin = deprecate(
-         'moment().min is deprecated, use moment.min instead. https://github.com/moment/moment/issues/1548',
+         'moment().min is deprecated, use moment.max instead. https://github.com/moment/moment/issues/1548',
          function () {
              var other = local__createLocal.apply(null, arguments);
              if (this.isValid() && other.isValid()) {
@@ -15708,7 +15898,7 @@ return jQuery;
      );
 
     var prototypeMax = deprecate(
-        'moment().max is deprecated, use moment.max instead. https://github.com/moment/moment/issues/1548',
+        'moment().max is deprecated, use moment.min instead. https://github.com/moment/moment/issues/1548',
         function () {
             var other = local__createLocal.apply(null, arguments);
             if (this.isValid() && other.isValid()) {
@@ -15774,7 +15964,7 @@ return jQuery;
         this._milliseconds = +milliseconds +
             seconds * 1e3 + // 1000
             minutes * 6e4 + // 1000 * 60
-            hours * 36e5; // 1000 * 60 * 60
+            hours * 1000 * 60 * 60; //using 1000 * 60 * 60 instead of 36e5 to avoid floating point rounding errors https://github.com/moment/moment/issues/2978
         // Because of dateAddRemove treats 24 hours as different from a
         // day when working around DST, we need to store them separately
         this._days = +days +
@@ -15844,9 +16034,9 @@ return jQuery;
         var res, diff;
         if (model._isUTC) {
             res = model.clone();
-            diff = (isMoment(input) || isDate(input) ? +input : +local__createLocal(input)) - (+res);
+            diff = (isMoment(input) || isDate(input) ? input.valueOf() : local__createLocal(input).valueOf()) - res.valueOf();
             // Use low-level api, because this fn is low-level api.
-            res._d.setTime(+res._d + diff);
+            res._d.setTime(res._d.valueOf() + diff);
             utils_hooks__hooks.updateOffset(res, false);
             return res;
         } else {
@@ -16002,11 +16192,12 @@ return jQuery;
     }
 
     // ASP.NET json date format regex
-    var aspNetRegex = /(\-)?(?:(\d*)[. ])?(\d+)\:(\d+)(?:\:(\d+)\.?(\d{3})?)?/;
+    var aspNetRegex = /^(\-)?(?:(\d*)[. ])?(\d+)\:(\d+)(?:\:(\d+)\.?(\d{3})?\d*)?$/;
 
     // from http://docs.closure-library.googlecode.com/git/closure_goog_date_date.js.source.html
     // somewhat more in line with 4.4.3.2 2004 spec, but allows decimal anywhere
-    var isoRegex = /^(-)?P(?:(?:([0-9,.]*)Y)?(?:([0-9,.]*)M)?(?:([0-9,.]*)D)?(?:T(?:([0-9,.]*)H)?(?:([0-9,.]*)M)?(?:([0-9,.]*)S)?)?|([0-9,.]*)W)$/;
+    // and further modified to allow for strings containing both week and day
+    var isoRegex = /^(-)?P(?:(-?[0-9,.]*)Y)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)W)?(?:(-?[0-9,.]*)D)?(?:T(?:(-?[0-9,.]*)H)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)S)?)?$/;
 
     function create__createDuration (input, key) {
         var duration = input,
@@ -16044,11 +16235,11 @@ return jQuery;
             duration = {
                 y : parseIso(match[2], sign),
                 M : parseIso(match[3], sign),
-                d : parseIso(match[4], sign),
-                h : parseIso(match[5], sign),
-                m : parseIso(match[6], sign),
-                s : parseIso(match[7], sign),
-                w : parseIso(match[8], sign)
+                w : parseIso(match[4], sign),
+                d : parseIso(match[5], sign),
+                h : parseIso(match[6], sign),
+                m : parseIso(match[7], sign),
+                s : parseIso(match[8], sign)
             };
         } else if (duration == null) {// checks for null or undefined
             duration = {};
@@ -16112,6 +16303,14 @@ return jQuery;
         return res;
     }
 
+    function absRound (number) {
+        if (number < 0) {
+            return Math.round(-1 * number) * -1;
+        } else {
+            return Math.round(number);
+        }
+    }
+
     // TODO: remove 'name' arg after deprecation is removed
     function createAdder(direction, name) {
         return function (val, period) {
@@ -16131,8 +16330,8 @@ return jQuery;
 
     function add_subtract__addSubtract (mom, duration, isAdding, updateOffset) {
         var milliseconds = duration._milliseconds,
-            days = duration._days,
-            months = duration._months;
+            days = absRound(duration._days),
+            months = absRound(duration._months);
 
         if (!mom.isValid()) {
             // No op
@@ -16142,7 +16341,7 @@ return jQuery;
         updateOffset = updateOffset == null ? true : updateOffset;
 
         if (milliseconds) {
-            mom._d.setTime(+mom._d + milliseconds * isAdding);
+            mom._d.setTime(mom._d.valueOf() + milliseconds * isAdding);
         }
         if (days) {
             get_set__set(mom, 'Date', get_set__get(mom, 'Date') + days * isAdding);
@@ -16187,9 +16386,9 @@ return jQuery;
         }
         units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
         if (units === 'millisecond') {
-            return +this > +localInput;
+            return this.valueOf() > localInput.valueOf();
         } else {
-            return +localInput < +this.clone().startOf(units);
+            return localInput.valueOf() < this.clone().startOf(units).valueOf();
         }
     }
 
@@ -16200,14 +16399,16 @@ return jQuery;
         }
         units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
         if (units === 'millisecond') {
-            return +this < +localInput;
+            return this.valueOf() < localInput.valueOf();
         } else {
-            return +this.clone().endOf(units) < +localInput;
+            return this.clone().endOf(units).valueOf() < localInput.valueOf();
         }
     }
 
-    function isBetween (from, to, units) {
-        return this.isAfter(from, units) && this.isBefore(to, units);
+    function isBetween (from, to, units, inclusivity) {
+        inclusivity = inclusivity || '()';
+        return (inclusivity[0] === '(' ? this.isAfter(from, units) : !this.isBefore(from, units)) &&
+            (inclusivity[1] === ')' ? this.isBefore(to, units) : !this.isAfter(to, units));
     }
 
     function isSame (input, units) {
@@ -16218,10 +16419,10 @@ return jQuery;
         }
         units = normalizeUnits(units || 'millisecond');
         if (units === 'millisecond') {
-            return +this === +localInput;
+            return this.valueOf() === localInput.valueOf();
         } else {
-            inputMs = +localInput;
-            return +(this.clone().startOf(units)) <= inputMs && inputMs <= +(this.clone().endOf(units));
+            inputMs = localInput.valueOf();
+            return this.clone().startOf(units).valueOf() <= inputMs && inputMs <= this.clone().endOf(units).valueOf();
         }
     }
 
@@ -16288,10 +16489,12 @@ return jQuery;
             adjust = (b - anchor) / (anchor2 - anchor);
         }
 
-        return -(wholeMonthDiff + adjust);
+        //check for negative zero, return zero if negative zero
+        return -(wholeMonthDiff + adjust) || 0;
     }
 
     utils_hooks__hooks.defaultFormat = 'YYYY-MM-DDTHH:mm:ssZ';
+    utils_hooks__hooks.defaultFormatUtc = 'YYYY-MM-DDTHH:mm:ss[Z]';
 
     function toString () {
         return this.clone().locale('en').format('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
@@ -16312,7 +16515,10 @@ return jQuery;
     }
 
     function format (inputString) {
-        var output = formatMoment(this, inputString || utils_hooks__hooks.defaultFormat);
+        if (!inputString) {
+            inputString = this.isUtc() ? utils_hooks__hooks.defaultFormatUtc : utils_hooks__hooks.defaultFormat;
+        }
+        var output = formatMoment(this, inputString);
         return this.localeData().postformat(output);
     }
 
@@ -16391,6 +16597,7 @@ return jQuery;
         case 'week':
         case 'isoWeek':
         case 'day':
+        case 'date':
             this.hours(0);
             /* falls through */
         case 'hour':
@@ -16424,19 +16631,25 @@ return jQuery;
         if (units === undefined || units === 'millisecond') {
             return this;
         }
+
+        // 'date' is an alias for 'day', so it should be considered as such.
+        if (units === 'date') {
+            units = 'day';
+        }
+
         return this.startOf(units).add(1, (units === 'isoWeek' ? 'week' : units)).subtract(1, 'ms');
     }
 
     function to_type__valueOf () {
-        return +this._d - ((this._offset || 0) * 60000);
+        return this._d.valueOf() - ((this._offset || 0) * 60000);
     }
 
     function unix () {
-        return Math.floor(+this / 1000);
+        return Math.floor(this.valueOf() / 1000);
     }
 
     function toDate () {
-        return this._offset ? new Date(+this) : this._d;
+        return this._offset ? new Date(this.valueOf()) : this._d;
     }
 
     function toArray () {
@@ -16458,8 +16671,8 @@ return jQuery;
     }
 
     function toJSON () {
-        // JSON.stringify(new Date(NaN)) === 'null'
-        return this.isValid() ? this.toISOString() : 'null';
+        // new Date(NaN).toJSON() === null
+        return this.isValid() ? this.toISOString() : null;
     }
 
     function moment_valid__isValid () {
@@ -16569,7 +16782,6 @@ return jQuery;
         var dayOfYearData = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy),
             date = createUTCDate(dayOfYearData.year, 0, dayOfYearData.dayOfYear);
 
-        // console.log("got", weekYear, week, weekday, "set", date.toISOString());
         this.year(date.getUTCFullYear());
         this.month(date.getUTCMonth());
         this.date(date.getUTCDate());
@@ -16706,9 +16918,15 @@ return jQuery;
     addRegexToken('d',    match1to2);
     addRegexToken('e',    match1to2);
     addRegexToken('E',    match1to2);
-    addRegexToken('dd',   matchWord);
-    addRegexToken('ddd',  matchWord);
-    addRegexToken('dddd', matchWord);
+    addRegexToken('dd',   function (isStrict, locale) {
+        return locale.weekdaysMinRegex(isStrict);
+    });
+    addRegexToken('ddd',   function (isStrict, locale) {
+        return locale.weekdaysShortRegex(isStrict);
+    });
+    addRegexToken('dddd',   function (isStrict, locale) {
+        return locale.weekdaysRegex(isStrict);
+    });
 
     addWeekParseToken(['dd', 'ddd', 'dddd'], function (input, week, config, token) {
         var weekday = config._locale.weekdaysParse(input, token, config._strict);
@@ -16761,8 +16979,76 @@ return jQuery;
         return this._weekdaysMin[m.day()];
     }
 
+    function day_of_week__handleStrictParse(weekdayName, format, strict) {
+        var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
+        if (!this._weekdaysParse) {
+            this._weekdaysParse = [];
+            this._shortWeekdaysParse = [];
+            this._minWeekdaysParse = [];
+
+            for (i = 0; i < 7; ++i) {
+                mom = create_utc__createUTC([2000, 1]).day(i);
+                this._minWeekdaysParse[i] = this.weekdaysMin(mom, '').toLocaleLowerCase();
+                this._shortWeekdaysParse[i] = this.weekdaysShort(mom, '').toLocaleLowerCase();
+                this._weekdaysParse[i] = this.weekdays(mom, '').toLocaleLowerCase();
+            }
+        }
+
+        if (strict) {
+            if (format === 'dddd') {
+                ii = indexOf.call(this._weekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else if (format === 'ddd') {
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        } else {
+            if (format === 'dddd') {
+                ii = indexOf.call(this._weekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else if (format === 'ddd') {
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._weekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            } else {
+                ii = indexOf.call(this._minWeekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._weekdaysParse, llc);
+                if (ii !== -1) {
+                    return ii;
+                }
+                ii = indexOf.call(this._shortWeekdaysParse, llc);
+                return ii !== -1 ? ii : null;
+            }
+        }
+    }
+
     function localeWeekdaysParse (weekdayName, format, strict) {
         var i, mom, regex;
+
+        if (this._weekdaysParseExact) {
+            return day_of_week__handleStrictParse.call(this, weekdayName, format, strict);
+        }
 
         if (!this._weekdaysParse) {
             this._weekdaysParse = [];
@@ -16774,7 +17060,7 @@ return jQuery;
         for (i = 0; i < 7; i++) {
             // make the regex if we don't have it already
 
-            mom = local__createLocal([2000, 1]).day(i);
+            mom = create_utc__createUTC([2000, 1]).day(i);
             if (strict && !this._fullWeekdaysParse[i]) {
                 this._fullWeekdaysParse[i] = new RegExp('^' + this.weekdays(mom, '').replace('.', '\.?') + '$', 'i');
                 this._shortWeekdaysParse[i] = new RegExp('^' + this.weekdaysShort(mom, '').replace('.', '\.?') + '$', 'i');
@@ -16830,6 +17116,99 @@ return jQuery;
         return input == null ? this.day() || 7 : this.day(this.day() % 7 ? input : input - 7);
     }
 
+    var defaultWeekdaysRegex = matchWord;
+    function weekdaysRegex (isStrict) {
+        if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, '_weekdaysRegex')) {
+                computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+                return this._weekdaysStrictRegex;
+            } else {
+                return this._weekdaysRegex;
+            }
+        } else {
+            return this._weekdaysStrictRegex && isStrict ?
+                this._weekdaysStrictRegex : this._weekdaysRegex;
+        }
+    }
+
+    var defaultWeekdaysShortRegex = matchWord;
+    function weekdaysShortRegex (isStrict) {
+        if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, '_weekdaysRegex')) {
+                computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+                return this._weekdaysShortStrictRegex;
+            } else {
+                return this._weekdaysShortRegex;
+            }
+        } else {
+            return this._weekdaysShortStrictRegex && isStrict ?
+                this._weekdaysShortStrictRegex : this._weekdaysShortRegex;
+        }
+    }
+
+    var defaultWeekdaysMinRegex = matchWord;
+    function weekdaysMinRegex (isStrict) {
+        if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, '_weekdaysRegex')) {
+                computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+                return this._weekdaysMinStrictRegex;
+            } else {
+                return this._weekdaysMinRegex;
+            }
+        } else {
+            return this._weekdaysMinStrictRegex && isStrict ?
+                this._weekdaysMinStrictRegex : this._weekdaysMinRegex;
+        }
+    }
+
+
+    function computeWeekdaysParse () {
+        function cmpLenRev(a, b) {
+            return b.length - a.length;
+        }
+
+        var minPieces = [], shortPieces = [], longPieces = [], mixedPieces = [],
+            i, mom, minp, shortp, longp;
+        for (i = 0; i < 7; i++) {
+            // make the regex if we don't have it already
+            mom = create_utc__createUTC([2000, 1]).day(i);
+            minp = this.weekdaysMin(mom, '');
+            shortp = this.weekdaysShort(mom, '');
+            longp = this.weekdays(mom, '');
+            minPieces.push(minp);
+            shortPieces.push(shortp);
+            longPieces.push(longp);
+            mixedPieces.push(minp);
+            mixedPieces.push(shortp);
+            mixedPieces.push(longp);
+        }
+        // Sorting makes sure if one weekday (or abbr) is a prefix of another it
+        // will match the longer piece.
+        minPieces.sort(cmpLenRev);
+        shortPieces.sort(cmpLenRev);
+        longPieces.sort(cmpLenRev);
+        mixedPieces.sort(cmpLenRev);
+        for (i = 0; i < 7; i++) {
+            shortPieces[i] = regexEscape(shortPieces[i]);
+            longPieces[i] = regexEscape(longPieces[i]);
+            mixedPieces[i] = regexEscape(mixedPieces[i]);
+        }
+
+        this._weekdaysRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
+        this._weekdaysShortRegex = this._weekdaysRegex;
+        this._weekdaysMinRegex = this._weekdaysRegex;
+
+        this._weekdaysStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+        this._weekdaysShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
+        this._weekdaysMinStrictRegex = new RegExp('^(' + minPieces.join('|') + ')', 'i');
+    }
+
     // FORMATTING
 
     addFormatToken('DDD', ['DDDD', 3], 'DDDo', 'dayOfYear');
@@ -16861,8 +17240,13 @@ return jQuery;
         return this.hours() % 12 || 12;
     }
 
+    function kFormat() {
+        return this.hours() || 24;
+    }
+
     addFormatToken('H', ['HH', 2], 0, 'hour');
     addFormatToken('h', ['hh', 2], 0, hFormat);
+    addFormatToken('k', ['kk', 2], 0, kFormat);
 
     addFormatToken('hmm', 0, 0, function () {
         return '' + hFormat.apply(this) + zeroFill(this.minutes(), 2);
@@ -17279,21 +17663,6 @@ return jQuery;
         return isFunction(format) ? format(output) : format.replace(/%s/i, output);
     }
 
-    function locale_set__set (config) {
-        var prop, i;
-        for (i in config) {
-            prop = config[i];
-            if (isFunction(prop)) {
-                this[i] = prop;
-            } else {
-                this['_' + i] = prop;
-            }
-        }
-        // Lenient ordinal parsing accepts just a number in addition to
-        // number + (possibly) stuff coming from _ordinalParseLenient.
-        this._ordinalParseLenient = new RegExp(this._ordinalParse.source + '|' + (/\d{1,2}/).source);
-    }
-
     var prototype__proto = Locale.prototype;
 
     prototype__proto._calendar       = defaultCalendar;
@@ -17338,6 +17707,13 @@ return jQuery;
     prototype__proto._weekdaysShort = defaultLocaleWeekdaysShort;
     prototype__proto.weekdaysParse  =        localeWeekdaysParse;
 
+    prototype__proto._weekdaysRegex      = defaultWeekdaysRegex;
+    prototype__proto.weekdaysRegex       =        weekdaysRegex;
+    prototype__proto._weekdaysShortRegex = defaultWeekdaysShortRegex;
+    prototype__proto.weekdaysShortRegex  =        weekdaysShortRegex;
+    prototype__proto._weekdaysMinRegex   = defaultWeekdaysMinRegex;
+    prototype__proto.weekdaysMinRegex    =        weekdaysMinRegex;
+
     // Hours
     prototype__proto.isPM = localeIsPM;
     prototype__proto._meridiemParse = defaultLocaleMeridiemParse;
@@ -17349,7 +17725,7 @@ return jQuery;
         return locale[field](utc, format);
     }
 
-    function list (format, index, field, count, setter) {
+    function listMonthsImpl (format, index, field) {
         if (typeof format === 'number') {
             index = format;
             format = undefined;
@@ -17358,35 +17734,79 @@ return jQuery;
         format = format || '';
 
         if (index != null) {
-            return lists__get(format, index, field, setter);
+            return lists__get(format, index, field, 'month');
         }
 
         var i;
         var out = [];
-        for (i = 0; i < count; i++) {
-            out[i] = lists__get(format, i, field, setter);
+        for (i = 0; i < 12; i++) {
+            out[i] = lists__get(format, i, field, 'month');
+        }
+        return out;
+    }
+
+    // ()
+    // (5)
+    // (fmt, 5)
+    // (fmt)
+    // (true)
+    // (true, 5)
+    // (true, fmt, 5)
+    // (true, fmt)
+    function listWeekdaysImpl (localeSorted, format, index, field) {
+        if (typeof localeSorted === 'boolean') {
+            if (typeof format === 'number') {
+                index = format;
+                format = undefined;
+            }
+
+            format = format || '';
+        } else {
+            format = localeSorted;
+            index = format;
+            localeSorted = false;
+
+            if (typeof format === 'number') {
+                index = format;
+                format = undefined;
+            }
+
+            format = format || '';
+        }
+
+        var locale = locale_locales__getLocale(),
+            shift = localeSorted ? locale._week.dow : 0;
+
+        if (index != null) {
+            return lists__get(format, (index + shift) % 7, field, 'day');
+        }
+
+        var i;
+        var out = [];
+        for (i = 0; i < 7; i++) {
+            out[i] = lists__get(format, (i + shift) % 7, field, 'day');
         }
         return out;
     }
 
     function lists__listMonths (format, index) {
-        return list(format, index, 'months', 12, 'month');
+        return listMonthsImpl(format, index, 'months');
     }
 
     function lists__listMonthsShort (format, index) {
-        return list(format, index, 'monthsShort', 12, 'month');
+        return listMonthsImpl(format, index, 'monthsShort');
     }
 
-    function lists__listWeekdays (format, index) {
-        return list(format, index, 'weekdays', 7, 'day');
+    function lists__listWeekdays (localeSorted, format, index) {
+        return listWeekdaysImpl(localeSorted, format, index, 'weekdays');
     }
 
-    function lists__listWeekdaysShort (format, index) {
-        return list(format, index, 'weekdaysShort', 7, 'day');
+    function lists__listWeekdaysShort (localeSorted, format, index) {
+        return listWeekdaysImpl(localeSorted, format, index, 'weekdaysShort');
     }
 
-    function lists__listWeekdaysMin (format, index) {
-        return list(format, index, 'weekdaysMin', 7, 'day');
+    function lists__listWeekdaysMin (localeSorted, format, index) {
+        return listWeekdaysImpl(localeSorted, format, index, 'weekdaysMin');
     }
 
     locale_locales__getSetGlobalLocale('en', {
@@ -17757,7 +18177,7 @@ return jQuery;
     // Side effect imports
 
 
-    utils_hooks__hooks.version = '2.11.1';
+    utils_hooks__hooks.version = '2.13.0';
 
     setHookCallback(local__createLocal);
 
@@ -17780,6 +18200,8 @@ return jQuery;
     utils_hooks__hooks.monthsShort           = lists__listMonthsShort;
     utils_hooks__hooks.weekdaysMin           = lists__listWeekdaysMin;
     utils_hooks__hooks.defineLocale          = defineLocale;
+    utils_hooks__hooks.updateLocale          = updateLocale;
+    utils_hooks__hooks.locales               = locale_locales__listLocales;
     utils_hooks__hooks.weekdaysShort         = lists__listWeekdaysShort;
     utils_hooks__hooks.normalizeUnits        = normalizeUnits;
     utils_hooks__hooks.relativeTimeThreshold = duration_humanize__getSetRelativeTimeThreshold;
@@ -20619,7245 +21041,6 @@ return jQuery;
     $.signalR.version = "2.1.1";
 }(window.jQuery));
 
-/*globals jQuery, define, exports, require, window, document, postMessage */
-(function (factory) {
-	"use strict";
-	if (typeof define === 'function' && define.amd) {
-		define(['jquery'], factory);
-	}
-	else if(typeof exports === 'object') {
-		factory(require('jquery'));
-	}
-	else {
-		factory(jQuery);
-	}
-}(function ($, undefined) {
-	"use strict";
-/*!
- * jsTree 3.0.9
- * http://jstree.com/
- *
- * Copyright (c) 2014 Ivan Bozhanov (http://vakata.com)
- *
- * Licensed same as jquery - under the terms of the MIT License
- *   http://www.opensource.org/licenses/mit-license.php
- */
-/*!
- * if using jslint please allow for the jQuery global and use following options: 
- * jslint: browser: true, ass: true, bitwise: true, continue: true, nomen: true, plusplus: true, regexp: true, unparam: true, todo: true, white: true
- */
-
-	// prevent another load? maybe there is a better way?
-	if($.jstree) {
-		return;
-	}
-
-	/**
-	 * ### jsTree core functionality
-	 */
-
-	// internal variables
-	var instance_counter = 0,
-		ccp_node = false,
-		ccp_mode = false,
-		ccp_inst = false,
-		themes_loaded = [],
-		src = $('script:last').attr('src'),
-		_d = document, _node = _d.createElement('LI'), _temp1, _temp2;
-
-	_node.setAttribute('role', 'treeitem');
-	_temp1 = _d.createElement('I');
-	_temp1.className = 'jstree-icon jstree-ocl';
-	_temp1.setAttribute('role', 'presentation');
-	_node.appendChild(_temp1);
-	_temp1 = _d.createElement('A');
-	_temp1.className = 'jstree-anchor';
-	_temp1.setAttribute('href','#');
-	_temp1.setAttribute('tabindex','-1');
-	_temp2 = _d.createElement('I');
-	_temp2.className = 'jstree-icon jstree-themeicon';
-	_temp2.setAttribute('role', 'presentation');
-	_temp1.appendChild(_temp2);
-	_node.appendChild(_temp1);
-	_temp1 = _temp2 = null;
-
-
-	/**
-	 * holds all jstree related functions and variables, including the actual class and methods to create, access and manipulate instances.
-	 * @name $.jstree
-	 */
-	$.jstree = {
-		/** 
-		 * specifies the jstree version in use
-		 * @name $.jstree.version
-		 */
-		version : '3.0.9',
-		/**
-		 * holds all the default options used when creating new instances
-		 * @name $.jstree.defaults
-		 */
-		defaults : {
-			/**
-			 * configure which plugins will be active on an instance. Should be an array of strings, where each element is a plugin name. The default is `[]`
-			 * @name $.jstree.defaults.plugins
-			 */
-			plugins : []
-		},
-		/**
-		 * stores all loaded jstree plugins (used internally)
-		 * @name $.jstree.plugins
-		 */
-		plugins : {},
-		path : src && src.indexOf('/') !== -1 ? src.replace(/\/[^\/]+$/,'') : '',
-		idregex : /[\\:&!^|()\[\]<>@*'+~#";.,=\- \/${}%?`]/g
-	};
-	/**
-	 * creates a jstree instance
-	 * @name $.jstree.create(el [, options])
-	 * @param {DOMElement|jQuery|String} el the element to create the instance on, can be jQuery extended or a selector
-	 * @param {Object} options options for this instance (extends `$.jstree.defaults`)
-	 * @return {jsTree} the new instance
-	 */
-	$.jstree.create = function (el, options) {
-		var tmp = new $.jstree.core(++instance_counter),
-			opt = options;
-		options = $.extend(true, {}, $.jstree.defaults, options);
-		if(opt && opt.plugins) {
-			options.plugins = opt.plugins;
-		}
-		$.each(options.plugins, function (i, k) {
-			if(i !== 'core') {
-				tmp = tmp.plugin(k, options[k]);
-			}
-		});
-		tmp.init(el, options);
-		return tmp;
-	};
-	/**
-	 * remove all traces of jstree from the DOM and destroy all instances
-	 * @name $.jstree.destroy()
-	 */
-	$.jstree.destroy = function () {
-		$('.jstree:jstree').jstree('destroy');
-		$(document).off('.jstree');
-	};
-	/**
-	 * the jstree class constructor, used only internally
-	 * @private
-	 * @name $.jstree.core(id)
-	 * @param {Number} id this instance's index
-	 */
-	$.jstree.core = function (id) {
-		this._id = id;
-		this._cnt = 0;
-		this._wrk = null;
-		this._data = {
-			core : {
-				themes : {
-					name : false,
-					dots : false,
-					icons : false
-				},
-				selected : [],
-				last_error : {},
-				working : false,
-				worker_queue : [],
-				focused : null
-			}
-		};
-	};
-	/**
-	 * get a reference to an existing instance
-	 *
-	 * __Examples__
-	 *
-	 *	// provided a container with an ID of "tree", and a nested node with an ID of "branch"
-	 *	// all of there will return the same instance
-	 *	$.jstree.reference('tree');
-	 *	$.jstree.reference('#tree');
-	 *	$.jstree.reference($('#tree'));
-	 *	$.jstree.reference(document.getElementByID('tree'));
-	 *	$.jstree.reference('branch');
-	 *	$.jstree.reference('#branch');
-	 *	$.jstree.reference($('#branch'));
-	 *	$.jstree.reference(document.getElementByID('branch'));
-	 *
-	 * @name $.jstree.reference(needle)
-	 * @param {DOMElement|jQuery|String} needle
-	 * @return {jsTree|null} the instance or `null` if not found
-	 */
-	$.jstree.reference = function (needle) {
-		var tmp = null,
-			obj = null;
-		if(needle && needle.id) { needle = needle.id; }
-
-		if(!obj || !obj.length) {
-			try { obj = $(needle); } catch (ignore) { }
-		}
-		if(!obj || !obj.length) {
-			try { obj = $('#' + needle.replace($.jstree.idregex,'\\$&')); } catch (ignore) { }
-		}
-		if(obj && obj.length && (obj = obj.closest('.jstree')).length && (obj = obj.data('jstree'))) {
-			tmp = obj;
-		}
-		else {
-			$('.jstree').each(function () {
-				var inst = $(this).data('jstree');
-				if(inst && inst._model.data[needle]) {
-					tmp = inst;
-					return false;
-				}
-			});
-		}
-		return tmp;
-	};
-	/**
-	 * Create an instance, get an instance or invoke a command on a instance. 
-	 * 
-	 * If there is no instance associated with the current node a new one is created and `arg` is used to extend `$.jstree.defaults` for this new instance. There would be no return value (chaining is not broken).
-	 * 
-	 * If there is an existing instance and `arg` is a string the command specified by `arg` is executed on the instance, with any additional arguments passed to the function. If the function returns a value it will be returned (chaining could break depending on function).
-	 * 
-	 * If there is an existing instance and `arg` is not a string the instance itself is returned (similar to `$.jstree.reference`).
-	 * 
-	 * In any other case - nothing is returned and chaining is not broken.
-	 *
-	 * __Examples__
-	 *
-	 *	$('#tree1').jstree(); // creates an instance
-	 *	$('#tree2').jstree({ plugins : [] }); // create an instance with some options
-	 *	$('#tree1').jstree('open_node', '#branch_1'); // call a method on an existing instance, passing additional arguments
-	 *	$('#tree2').jstree(); // get an existing instance (or create an instance)
-	 *	$('#tree2').jstree(true); // get an existing instance (will not create new instance)
-	 *	$('#branch_1').jstree().select_node('#branch_1'); // get an instance (using a nested element and call a method)
-	 *
-	 * @name $().jstree([arg])
-	 * @param {String|Object} arg
-	 * @return {Mixed}
-	 */
-	$.fn.jstree = function (arg) {
-		// check for string argument
-		var is_method	= (typeof arg === 'string'),
-			args		= Array.prototype.slice.call(arguments, 1),
-			result		= null;
-		if(arg === true && !this.length) { return false; }
-		this.each(function () {
-			// get the instance (if there is one) and method (if it exists)
-			var instance = $.jstree.reference(this),
-				method = is_method && instance ? instance[arg] : null;
-			// if calling a method, and method is available - execute on the instance
-			result = is_method && method ?
-				method.apply(instance, args) :
-				null;
-			// if there is no instance and no method is being called - create one
-			if(!instance && !is_method && (arg === undefined || $.isPlainObject(arg))) {
-				$(this).data('jstree', new $.jstree.create(this, arg));
-			}
-			// if there is an instance and no method is called - return the instance
-			if( (instance && !is_method) || arg === true ) {
-				result = instance || false;
-			}
-			// if there was a method call which returned a result - break and return the value
-			if(result !== null && result !== undefined) {
-				return false;
-			}
-		});
-		// if there was a method call with a valid return value - return that, otherwise continue the chain
-		return result !== null && result !== undefined ?
-			result : this;
-	};
-	/**
-	 * used to find elements containing an instance
-	 *
-	 * __Examples__
-	 *
-	 *	$('div:jstree').each(function () {
-	 *		$(this).jstree('destroy');
-	 *	});
-	 *
-	 * @name $(':jstree')
-	 * @return {jQuery}
-	 */
-	$.expr[':'].jstree = $.expr.createPseudo(function(search) {
-		return function(a) {
-			return $(a).hasClass('jstree') &&
-				$(a).data('jstree') !== undefined;
-		};
-	});
-
-	/**
-	 * stores all defaults for the core
-	 * @name $.jstree.defaults.core
-	 */
-	$.jstree.defaults.core = {
-		/**
-		 * data configuration
-		 * 
-		 * If left as `false` the HTML inside the jstree container element is used to populate the tree (that should be an unordered list with list items).
-		 *
-		 * You can also pass in a HTML string or a JSON array here.
-		 * 
-		 * It is possible to pass in a standard jQuery-like AJAX config and jstree will automatically determine if the response is JSON or HTML and use that to populate the tree. 
-		 * In addition to the standard jQuery ajax options here you can suppy functions for `data` and `url`, the functions will be run in the current instance's scope and a param will be passed indicating which node is being loaded, the return value of those functions will be used.
-		 * 
-		 * The last option is to specify a function, that function will receive the node being loaded as argument and a second param which is a function which should be called with the result.
-		 *
-		 * __Examples__
-		 *
-		 *	// AJAX
-		 *	$('#tree').jstree({
-		 *		'core' : {
-		 *			'data' : {
-		 *				'url' : '/get/children/',
-		 *				'data' : function (node) {
-		 *					return { 'id' : node.id };
-		 *				}
-		 *			}
-		 *		});
-		 *
-		 *	// direct data
-		 *	$('#tree').jstree({
-		 *		'core' : {
-		 *			'data' : [
-		 *				'Simple root node',
-		 *				{
-		 *					'id' : 'node_2',
-		 *					'text' : 'Root node with options',
-		 *					'state' : { 'opened' : true, 'selected' : true },
-		 *					'children' : [ { 'text' : 'Child 1' }, 'Child 2']
-		 *				}
-		 *			]
-		 *		});
-		 *	
-		 *	// function
-		 *	$('#tree').jstree({
-		 *		'core' : {
-		 *			'data' : function (obj, callback) {
-		 *				callback.call(this, ['Root 1', 'Root 2']);
-		 *			}
-		 *		});
-		 * 
-		 * @name $.jstree.defaults.core.data
-		 */
-		data			: false,
-		/**
-		 * configure the various strings used throughout the tree
-		 *
-		 * You can use an object where the key is the string you need to replace and the value is your replacement.
-		 * Another option is to specify a function which will be called with an argument of the needed string and should return the replacement.
-		 * If left as `false` no replacement is made.
-		 *
-		 * __Examples__
-		 *
-		 *	$('#tree').jstree({
-		 *		'core' : {
-		 *			'strings' : {
-		 *				'Loading ...' : 'Please wait ...'
-		 *			}
-		 *		}
-		 *	});
-		 *
-		 * @name $.jstree.defaults.core.strings
-		 */
-		strings			: false,
-		/**
-		 * determines what happens when a user tries to modify the structure of the tree
-		 * If left as `false` all operations like create, rename, delete, move or copy are prevented.
-		 * You can set this to `true` to allow all interactions or use a function to have better control.
-		 *
-		 * __Examples__
-		 *
-		 *	$('#tree').jstree({
-		 *		'core' : {
-		 *			'check_callback' : function (operation, node, node_parent, node_position, more) {
-		 *				// operation can be 'create_node', 'rename_node', 'delete_node', 'move_node' or 'copy_node'
-		 *				// in case of 'rename_node' node_position is filled with the new node name
-		 *				return operation === 'rename_node' ? true : false;
-		 *			}
-		 *		}
-		 *	});
-		 * 
-		 * @name $.jstree.defaults.core.check_callback
-		 */
-		check_callback	: false,
-		/**
-		 * a callback called with a single object parameter in the instance's scope when something goes wrong (operation prevented, ajax failed, etc)
-		 * @name $.jstree.defaults.core.error
-		 */
-		error			: $.noop,
-		/**
-		 * the open / close animation duration in milliseconds - set this to `false` to disable the animation (default is `200`)
-		 * @name $.jstree.defaults.core.animation
-		 */
-		animation		: 200,
-		/**
-		 * a boolean indicating if multiple nodes can be selected
-		 * @name $.jstree.defaults.core.multiple
-		 */
-		multiple		: true,
-		/**
-		 * theme configuration object
-		 * @name $.jstree.defaults.core.themes
-		 */
-		themes			: {
-			/**
-			 * the name of the theme to use (if left as `false` the default theme is used)
-			 * @name $.jstree.defaults.core.themes.name
-			 */
-			name			: false,
-			/**
-			 * the URL of the theme's CSS file, leave this as `false` if you have manually included the theme CSS (recommended). You can set this to `true` too which will try to autoload the theme.
-			 * @name $.jstree.defaults.core.themes.url
-			 */
-			url				: false,
-			/**
-			 * the location of all jstree themes - only used if `url` is set to `true`
-			 * @name $.jstree.defaults.core.themes.dir
-			 */
-			dir				: false,
-			/**
-			 * a boolean indicating if connecting dots are shown
-			 * @name $.jstree.defaults.core.themes.dots
-			 */
-			dots			: true,
-			/**
-			 * a boolean indicating if node icons are shown
-			 * @name $.jstree.defaults.core.themes.icons
-			 */
-			icons			: true,
-			/**
-			 * a boolean indicating if the tree background is striped
-			 * @name $.jstree.defaults.core.themes.stripes
-			 */
-			stripes			: false,
-			/**
-			 * a string (or boolean `false`) specifying the theme variant to use (if the theme supports variants)
-			 * @name $.jstree.defaults.core.themes.variant
-			 */
-			variant			: false,
-			/**
-			 * a boolean specifying if a reponsive version of the theme should kick in on smaller screens (if the theme supports it). Defaults to `false`.
-			 * @name $.jstree.defaults.core.themes.responsive
-			 */
-			responsive		: false
-		},
-		/**
-		 * if left as `true` all parents of all selected nodes will be opened once the tree loads (so that all selected nodes are visible to the user)
-		 * @name $.jstree.defaults.core.expand_selected_onload
-		 */
-		expand_selected_onload : true,
-		/**
-		 * if left as `true` web workers will be used to parse incoming JSON data where possible, so that the UI will not be blocked by large requests. Workers are however about 30% slower. Defaults to `true`
-		 * @name $.jstree.defaults.core.worker
-		 */
-		worker : true,
-		/**
-		 * Force node text to plain text (and escape HTML). Defaults to `false`
-		 * @name $.jstree.defaults.core.force_text
-		 */
-		force_text : false,
-		/**
-		 * Should the node should be toggled if the text is double clicked . Defaults to `true`
-		 * @name $.jstree.defaults.core.dblclick_toggle
-		 */
-		dblclick_toggle : true
-	};
-	$.jstree.core.prototype = {
-		/**
-		 * used to decorate an instance with a plugin. Used internally.
-		 * @private
-		 * @name plugin(deco [, opts])
-		 * @param  {String} deco the plugin to decorate with
-		 * @param  {Object} opts options for the plugin
-		 * @return {jsTree}
-		 */
-		plugin : function (deco, opts) {
-			var Child = $.jstree.plugins[deco];
-			if(Child) {
-				this._data[deco] = {};
-				Child.prototype = this;
-				return new Child(opts, this);
-			}
-			return this;
-		},
-		/**
-		 * used to decorate an instance with a plugin. Used internally.
-		 * @private
-		 * @name init(el, optons)
-		 * @param {DOMElement|jQuery|String} el the element we are transforming
-		 * @param {Object} options options for this instance
-		 * @trigger init.jstree, loading.jstree, loaded.jstree, ready.jstree, changed.jstree
-		 */
-		init : function (el, options) {
-			this._model = {
-				data : {
-					'#' : {
-						id : '#',
-						parent : null,
-						parents : [],
-						children : [],
-						children_d : [],
-						state : { loaded : false }
-					}
-				},
-				changed : [],
-				force_full_redraw : false,
-				redraw_timeout : false,
-				default_state : {
-					loaded : true,
-					opened : false,
-					selected : false,
-					disabled : false
-				}
-			};
-
-			this.element = $(el).addClass('jstree jstree-' + this._id);
-			this.settings = options;
-
-			this._data.core.ready = false;
-			this._data.core.loaded = false;
-			this._data.core.rtl = (this.element.css("direction") === "rtl");
-			this.element[this._data.core.rtl ? 'addClass' : 'removeClass']("jstree-rtl");
-			this.element.attr('role','tree');
-			if(this.settings.core.multiple) {
-				this.element.attr('aria-multiselectable', true);
-			}
-			if(!this.element.attr('tabindex')) {
-				this.element.attr('tabindex','0');
-			}
-
-			this.bind();
-			/**
-			 * triggered after all events are bound
-			 * @event
-			 * @name init.jstree
-			 */
-			this.trigger("init");
-
-			this._data.core.original_container_html = this.element.find(" > ul > li").clone(true);
-			this._data.core.original_container_html
-				.find("li").addBack()
-				.contents().filter(function() {
-					return this.nodeType === 3 && (!this.nodeValue || /^\s+$/.test(this.nodeValue));
-				})
-				.remove();
-			this.element.html("<"+"ul class='jstree-container-ul jstree-children' role='group'><"+"li id='j"+this._id+"_loading' class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='tree-item'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor' href='#'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
-			this.element.attr('aria-activedescendant','j' + this._id + '_loading');
-			this._data.core.li_height = this.get_container_ul().children("li").first().height() || 24;
-			/**
-			 * triggered after the loading text is shown and before loading starts
-			 * @event
-			 * @name loading.jstree
-			 */
-			this.trigger("loading");
-			this.load_node('#');
-		},
-		/**
-		 * destroy an instance
-		 * @name destroy()
-		 * @param  {Boolean} keep_html if not set to `true` the container will be emptied, otherwise the current DOM elements will be kept intact
-		 */
-		destroy : function (keep_html) {
-			if(this._wrk) {
-				try {
-					window.URL.revokeObjectURL(this._wrk);
-					this._wrk = null;
-				}
-				catch (ignore) { }
-			}
-			if(!keep_html) { this.element.empty(); }
-			this.teardown();
-		},
-		/**
-		 * part of the destroying of an instance. Used internally.
-		 * @private
-		 * @name teardown()
-		 */
-		teardown : function () {
-			this.unbind();
-			this.element
-				.removeClass('jstree')
-				.removeData('jstree')
-				.find("[class^='jstree']")
-					.addBack()
-					.attr("class", function () { return this.className.replace(/jstree[^ ]*|$/ig,''); });
-			this.element = null;
-		},
-		/**
-		 * bind all events. Used internally.
-		 * @private
-		 * @name bind()
-		 */
-		bind : function () {
-			var word = '',
-				tout = null,
-				was_click = 0;
-			this.element
-				.on("dblclick.jstree", function () {
-						if(document.selection && document.selection.empty) {
-							document.selection.empty();
-						}
-						else {
-							if(window.getSelection) {
-								var sel = window.getSelection();
-								try {
-									sel.removeAllRanges();
-									sel.collapse();
-								} catch (ignore) { }
-							}
-						}
-					})
-				.on("mousedown.jstree", $.proxy(function (e) {
-						if(e.target === this.element[0]) {
-							e.preventDefault(); // prevent losing focus when clicking scroll arrows (FF, Chrome)
-							was_click = +(new Date()); // ie does not allow to prevent losing focus
-						}
-					}, this))
-				.on("mousedown.jstree", ".jstree-ocl", function (e) {
-						e.preventDefault(); // prevent any node inside from losing focus when clicking the open/close icon
-					})
-				.on("click.jstree", ".jstree-ocl", $.proxy(function (e) {
-						this.toggle_node(e.target);
-					}, this))
-				.on("dblclick.jstree", ".jstree-anchor", $.proxy(function (e) {
-						if(this.settings.core.dblclick_toggle) {
-							this.toggle_node(e.target);
-						}
-					}, this))
-				.on("click.jstree", ".jstree-anchor", $.proxy(function (e) {
-						e.preventDefault();
-						if(e.currentTarget !== document.activeElement) { $(e.currentTarget).focus(); }
-						this.activate_node(e.currentTarget, e);
-					}, this))
-				.on('keydown.jstree', '.jstree-anchor', $.proxy(function (e) {
-						if(e.target.tagName === "INPUT") { return true; }
-						var o = null;
-						if(this._data.core.rtl) {
-							if(e.which === 37) { e.which = 39; }
-							else if(e.which === 39) { e.which = 37; }
-						}
-						switch(e.which) {
-							case 32: // aria defines space only with Ctrl
-								if(e.ctrlKey) {
-									e.type = "click";
-									$(e.currentTarget).trigger(e);
-								}
-								break;
-							case 13: // enter
-								e.type = "click";
-								$(e.currentTarget).trigger(e);
-								break;
-							case 37: // right
-								e.preventDefault();
-								if(this.is_open(e.currentTarget)) {
-									this.close_node(e.currentTarget);
-								}
-								else {
-									o = this.get_parent(e.currentTarget);
-									if(o && o.id !== '#') { this.get_node(o, true).children('.jstree-anchor').focus(); }
-								}
-								break;
-							case 38: // up
-								e.preventDefault();
-								o = this.get_prev_dom(e.currentTarget);
-								if(o && o.length) { o.children('.jstree-anchor').focus(); }
-								break;
-							case 39: // left
-								e.preventDefault();
-								if(this.is_closed(e.currentTarget)) {
-									this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
-								}
-								else if (this.is_open(e.currentTarget)) {
-									o = this.get_node(e.currentTarget, true).children('.jstree-children')[0];
-									if(o) { $(this._firstChild(o)).children('.jstree-anchor').focus(); }
-								}
-								break;
-							case 40: // down
-								e.preventDefault();
-								o = this.get_next_dom(e.currentTarget);
-								if(o && o.length) { o.children('.jstree-anchor').focus(); }
-								break;
-							case 106: // aria defines * on numpad as open_all - not very common
-								this.open_all();
-								break;
-							case 36: // home
-								e.preventDefault();
-								o = this._firstChild(this.get_container_ul()[0]);
-								if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
-								break;
-							case 35: // end
-								e.preventDefault();
-								this.element.find('.jstree-anchor').filter(':visible').last().focus();
-								break;
-							/*
-							// delete
-							case 46:
-								e.preventDefault();
-								o = this.get_node(e.currentTarget);
-								if(o && o.id && o.id !== '#') {
-									o = this.is_selected(o) ? this.get_selected() : o;
-									this.delete_node(o);
-								}
-								break;
-							// f2
-							case 113:
-								e.preventDefault();
-								o = this.get_node(e.currentTarget);
-								if(o && o.id && o.id !== '#') {
-									// this.edit(o);
-								}
-								break;
-							default:
-								// console.log(e.which);
-								break;
-							*/
-						}
-					}, this))
-				.on("load_node.jstree", $.proxy(function (e, data) {
-						if(data.status) {
-							if(data.node.id === '#' && !this._data.core.loaded) {
-								this._data.core.loaded = true;
-								if(this._firstChild(this.get_container_ul()[0])) {
-									this.element.attr('aria-activedescendant',this._firstChild(this.get_container_ul()[0]).id);
-								}
-								/**
-								 * triggered after the root node is loaded for the first time
-								 * @event
-								 * @name loaded.jstree
-								 */
-								this.trigger("loaded");
-							}
-							if(!this._data.core.ready) {
-								setTimeout($.proxy(function() {
-									if(!this.get_container_ul().find('.jstree-loading').length) {
-										this._data.core.ready = true;
-										if(this._data.core.selected.length) {
-											if(this.settings.core.expand_selected_onload) {
-												var tmp = [], i, j;
-												for(i = 0, j = this._data.core.selected.length; i < j; i++) {
-													tmp = tmp.concat(this._model.data[this._data.core.selected[i]].parents);
-												}
-												tmp = $.vakata.array_unique(tmp);
-												for(i = 0, j = tmp.length; i < j; i++) {
-													this.open_node(tmp[i], false, 0);
-												}
-											}
-											this.trigger('changed', { 'action' : 'ready', 'selected' : this._data.core.selected });
-										}
-										/**
-										 * triggered after all nodes are finished loading
-										 * @event
-										 * @name ready.jstree
-										 */
-										this.trigger("ready");
-									}
-								}, this), 0);
-							}
-						}
-					}, this))
-				// quick searching when the tree is focused
-				.on('keypress.jstree', $.proxy(function (e) {
-						if(e.target.tagName === "INPUT") { return true; }
-						if(tout) { clearTimeout(tout); }
-						tout = setTimeout(function () {
-							word = '';
-						}, 500);
-
-						var chr = String.fromCharCode(e.which).toLowerCase(),
-							col = this.element.find('.jstree-anchor').filter(':visible'),
-							ind = col.index(document.activeElement) || 0,
-							end = false;
-						word += chr;
-
-						// match for whole word from current node down (including the current node)
-						if(word.length > 1) {
-							col.slice(ind).each($.proxy(function (i, v) {
-								if($(v).text().toLowerCase().indexOf(word) === 0) {
-									$(v).focus();
-									end = true;
-									return false;
-								}
-							}, this));
-							if(end) { return; }
-
-							// match for whole word from the beginning of the tree
-							col.slice(0, ind).each($.proxy(function (i, v) {
-								if($(v).text().toLowerCase().indexOf(word) === 0) {
-									$(v).focus();
-									end = true;
-									return false;
-								}
-							}, this));
-							if(end) { return; }
-						}
-						// list nodes that start with that letter (only if word consists of a single char)
-						if(new RegExp('^' + chr + '+$').test(word)) {
-							// search for the next node starting with that letter
-							col.slice(ind + 1).each($.proxy(function (i, v) {
-								if($(v).text().toLowerCase().charAt(0) === chr) {
-									$(v).focus();
-									end = true;
-									return false;
-								}
-							}, this));
-							if(end) { return; }
-
-							// search from the beginning
-							col.slice(0, ind + 1).each($.proxy(function (i, v) {
-								if($(v).text().toLowerCase().charAt(0) === chr) {
-									$(v).focus();
-									end = true;
-									return false;
-								}
-							}, this));
-							if(end) { return; }
-						}
-					}, this))
-				// THEME RELATED
-				.on("init.jstree", $.proxy(function () {
-						var s = this.settings.core.themes;
-						this._data.core.themes.dots			= s.dots;
-						this._data.core.themes.stripes		= s.stripes;
-						this._data.core.themes.icons		= s.icons;
-						this.set_theme(s.name || "default", s.url);
-						this.set_theme_variant(s.variant);
-					}, this))
-				.on("loading.jstree", $.proxy(function () {
-						this[ this._data.core.themes.dots ? "show_dots" : "hide_dots" ]();
-						this[ this._data.core.themes.icons ? "show_icons" : "hide_icons" ]();
-						this[ this._data.core.themes.stripes ? "show_stripes" : "hide_stripes" ]();
-					}, this))
-				.on('blur.jstree', '.jstree-anchor', $.proxy(function (e) {
-						this._data.core.focused = null;
-						$(e.currentTarget).filter('.jstree-hovered').mouseleave();
-						this.element.attr('tabindex', '0');
-					}, this))
-				.on('focus.jstree', '.jstree-anchor', $.proxy(function (e) {
-						var tmp = this.get_node(e.currentTarget);
-						if(tmp && tmp.id) {
-							this._data.core.focused = tmp.id;
-						}
-						this.element.find('.jstree-hovered').not(e.currentTarget).mouseleave();
-						$(e.currentTarget).mouseenter();
-						this.element.attr('tabindex', '-1');
-					}, this))
-				.on('focus.jstree', $.proxy(function () {
-						if(+(new Date()) - was_click > 500 && !this._data.core.focused) {
-							was_click = 0;
-							this.get_node(this.element.attr('aria-activedescendant'), true).find('> .jstree-anchor').focus();
-						}
-					}, this))
-				.on('mouseenter.jstree', '.jstree-anchor', $.proxy(function (e) {
-						this.hover_node(e.currentTarget);
-					}, this))
-				.on('mouseleave.jstree', '.jstree-anchor', $.proxy(function (e) {
-						this.dehover_node(e.currentTarget);
-					}, this));
-		},
-		/**
-		 * part of the destroying of an instance. Used internally.
-		 * @private
-		 * @name unbind()
-		 */
-		unbind : function () {
-			this.element.off('.jstree');
-			$(document).off('.jstree-' + this._id);
-		},
-		/**
-		 * trigger an event. Used internally.
-		 * @private
-		 * @name trigger(ev [, data])
-		 * @param  {String} ev the name of the event to trigger
-		 * @param  {Object} data additional data to pass with the event
-		 */
-		trigger : function (ev, data) {
-			if(!data) {
-				data = {};
-			}
-			data.instance = this;
-			this.element.triggerHandler(ev.replace('.jstree','') + '.jstree', data);
-		},
-		/**
-		 * returns the jQuery extended instance container
-		 * @name get_container()
-		 * @return {jQuery}
-		 */
-		get_container : function () {
-			return this.element;
-		},
-		/**
-		 * returns the jQuery extended main UL node inside the instance container. Used internally.
-		 * @private
-		 * @name get_container_ul()
-		 * @return {jQuery}
-		 */
-		get_container_ul : function () {
-			return this.element.children(".jstree-children").first();
-		},
-		/**
-		 * gets string replacements (localization). Used internally.
-		 * @private
-		 * @name get_string(key)
-		 * @param  {String} key
-		 * @return {String}
-		 */
-		get_string : function (key) {
-			var a = this.settings.core.strings;
-			if($.isFunction(a)) { return a.call(this, key); }
-			if(a && a[key]) { return a[key]; }
-			return key;
-		},
-		/**
-		 * gets the first child of a DOM node. Used internally.
-		 * @private
-		 * @name _firstChild(dom)
-		 * @param  {DOMElement} dom
-		 * @return {DOMElement}
-		 */
-		_firstChild : function (dom) {
-			dom = dom ? dom.firstChild : null;
-			while(dom !== null && dom.nodeType !== 1) {
-				dom = dom.nextSibling;
-			}
-			return dom;
-		},
-		/**
-		 * gets the next sibling of a DOM node. Used internally.
-		 * @private
-		 * @name _nextSibling(dom)
-		 * @param  {DOMElement} dom
-		 * @return {DOMElement}
-		 */
-		_nextSibling : function (dom) {
-			dom = dom ? dom.nextSibling : null;
-			while(dom !== null && dom.nodeType !== 1) {
-				dom = dom.nextSibling;
-			}
-			return dom;
-		},
-		/**
-		 * gets the previous sibling of a DOM node. Used internally.
-		 * @private
-		 * @name _previousSibling(dom)
-		 * @param  {DOMElement} dom
-		 * @return {DOMElement}
-		 */
-		_previousSibling : function (dom) {
-			dom = dom ? dom.previousSibling : null;
-			while(dom !== null && dom.nodeType !== 1) {
-				dom = dom.previousSibling;
-			}
-			return dom;
-		},
-		/**
-		 * get the JSON representation of a node (or the actual jQuery extended DOM node) by using any input (child DOM element, ID string, selector, etc)
-		 * @name get_node(obj [, as_dom])
-		 * @param  {mixed} obj
-		 * @param  {Boolean} as_dom
-		 * @return {Object|jQuery}
-		 */
-		get_node : function (obj, as_dom) {
-			if(obj && obj.id) {
-				obj = obj.id;
-			}
-			var dom;
-			try {
-				if(this._model.data[obj]) {
-					obj = this._model.data[obj];
-				}
-				else if(typeof obj === "string" && this._model.data[obj.replace(/^#/, '')]) {
-					obj = this._model.data[obj.replace(/^#/, '')];
-				}
-				else if(typeof obj === "string" && (dom = $('#' + obj.replace($.jstree.idregex,'\\$&'), this.element)).length && this._model.data[dom.closest('.jstree-node').attr('id')]) {
-					obj = this._model.data[dom.closest('.jstree-node').attr('id')];
-				}
-				else if((dom = $(obj, this.element)).length && this._model.data[dom.closest('.jstree-node').attr('id')]) {
-					obj = this._model.data[dom.closest('.jstree-node').attr('id')];
-				}
-				else if((dom = $(obj, this.element)).length && dom.hasClass('jstree')) {
-					obj = this._model.data['#'];
-				}
-				else {
-					return false;
-				}
-
-				if(as_dom) {
-					obj = obj.id === '#' ? this.element : $('#' + obj.id.replace($.jstree.idregex,'\\$&'), this.element);
-				}
-				return obj;
-			} catch (ex) { return false; }
-		},
-		/**
-		 * get the path to a node, either consisting of node texts, or of node IDs, optionally glued together (otherwise an array)
-		 * @name get_path(obj [, glue, ids])
-		 * @param  {mixed} obj the node
-		 * @param  {String} glue if you want the path as a string - pass the glue here (for example '/'), if a falsy value is supplied here, an array is returned
-		 * @param  {Boolean} ids if set to true build the path using ID, otherwise node text is used
-		 * @return {mixed}
-		 */
-		get_path : function (obj, glue, ids) {
-			obj = obj.parents ? obj : this.get_node(obj);
-			if(!obj || obj.id === '#' || !obj.parents) {
-				return false;
-			}
-			var i, j, p = [];
-			p.push(ids ? obj.id : obj.text);
-			for(i = 0, j = obj.parents.length; i < j; i++) {
-				p.push(ids ? obj.parents[i] : this.get_text(obj.parents[i]));
-			}
-			p = p.reverse().slice(1);
-			return glue ? p.join(glue) : p;
-		},
-		/**
-		 * get the next visible node that is below the `obj` node. If `strict` is set to `true` only sibling nodes are returned.
-		 * @name get_next_dom(obj [, strict])
-		 * @param  {mixed} obj
-		 * @param  {Boolean} strict
-		 * @return {jQuery}
-		 */
-		get_next_dom : function (obj, strict) {
-			var tmp;
-			obj = this.get_node(obj, true);
-			if(obj[0] === this.element[0]) {
-				tmp = this._firstChild(this.get_container_ul()[0]);
-				while (tmp && tmp.offsetHeight === 0) {
-					tmp = this._nextSibling(tmp);
-				}
-				return tmp ? $(tmp) : false;
-			}
-			if(!obj || !obj.length) {
-				return false;
-			}
-			if(strict) {
-				tmp = obj[0];
-				do {
-					tmp = this._nextSibling(tmp);
-				} while (tmp && tmp.offsetHeight === 0);
-				return tmp ? $(tmp) : false;
-			}
-			if(obj.hasClass("jstree-open")) {
-				tmp = this._firstChild(obj.children('.jstree-children')[0]);
-				while (tmp && tmp.offsetHeight === 0) {
-					tmp = this._nextSibling(tmp);
-				}
-				if(tmp !== null) {
-					return $(tmp);
-				}
-			}
-			tmp = obj[0];
-			do {
-				tmp = this._nextSibling(tmp);
-			} while (tmp && tmp.offsetHeight === 0);
-			if(tmp !== null) {
-				return $(tmp);
-			}
-			return obj.parentsUntil(".jstree",".jstree-node").next(".jstree-node:visible").first();
-		},
-		/**
-		 * get the previous visible node that is above the `obj` node. If `strict` is set to `true` only sibling nodes are returned.
-		 * @name get_prev_dom(obj [, strict])
-		 * @param  {mixed} obj
-		 * @param  {Boolean} strict
-		 * @return {jQuery}
-		 */
-		get_prev_dom : function (obj, strict) {
-			var tmp;
-			obj = this.get_node(obj, true);
-			if(obj[0] === this.element[0]) {
-				tmp = this.get_container_ul()[0].lastChild;
-				while (tmp && tmp.offsetHeight === 0) {
-					tmp = this._previousSibling(tmp);
-				}
-				return tmp ? $(tmp) : false;
-			}
-			if(!obj || !obj.length) {
-				return false;
-			}
-			if(strict) {
-				tmp = obj[0];
-				do {
-					tmp = this._previousSibling(tmp);
-				} while (tmp && tmp.offsetHeight === 0);
-				return tmp ? $(tmp) : false;
-			}
-			tmp = obj[0];
-			do {
-				tmp = this._previousSibling(tmp);
-			} while (tmp && tmp.offsetHeight === 0);
-			if(tmp !== null) {
-				obj = $(tmp);
-				while(obj.hasClass("jstree-open")) {
-					obj = obj.children(".jstree-children").first().children(".jstree-node:visible:last");
-				}
-				return obj;
-			}
-			tmp = obj[0].parentNode.parentNode;
-			return tmp && tmp.className && tmp.className.indexOf('jstree-node') !== -1 ? $(tmp) : false;
-		},
-		/**
-		 * get the parent ID of a node
-		 * @name get_parent(obj)
-		 * @param  {mixed} obj
-		 * @return {String}
-		 */
-		get_parent : function (obj) {
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			return obj.parent;
-		},
-		/**
-		 * get a jQuery collection of all the children of a node (node must be rendered)
-		 * @name get_children_dom(obj)
-		 * @param  {mixed} obj
-		 * @return {jQuery}
-		 */
-		get_children_dom : function (obj) {
-			obj = this.get_node(obj, true);
-			if(obj[0] === this.element[0]) {
-				return this.get_container_ul().children(".jstree-node");
-			}
-			if(!obj || !obj.length) {
-				return false;
-			}
-			return obj.children(".jstree-children").children(".jstree-node");
-		},
-		/**
-		 * checks if a node has children
-		 * @name is_parent(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_parent : function (obj) {
-			obj = this.get_node(obj);
-			return obj && (obj.state.loaded === false || obj.children.length > 0);
-		},
-		/**
-		 * checks if a node is loaded (its children are available)
-		 * @name is_loaded(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_loaded : function (obj) {
-			obj = this.get_node(obj);
-			return obj && obj.state.loaded;
-		},
-		/**
-		 * check if a node is currently loading (fetching children)
-		 * @name is_loading(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_loading : function (obj) {
-			obj = this.get_node(obj);
-			return obj && obj.state && obj.state.loading;
-		},
-		/**
-		 * check if a node is opened
-		 * @name is_open(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_open : function (obj) {
-			obj = this.get_node(obj);
-			return obj && obj.state.opened;
-		},
-		/**
-		 * check if a node is in a closed state
-		 * @name is_closed(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_closed : function (obj) {
-			obj = this.get_node(obj);
-			return obj && this.is_parent(obj) && !obj.state.opened;
-		},
-		/**
-		 * check if a node has no children
-		 * @name is_leaf(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_leaf : function (obj) {
-			return !this.is_parent(obj);
-		},
-		/**
-		 * loads a node (fetches its children using the `core.data` setting). Multiple nodes can be passed to by using an array.
-		 * @name load_node(obj [, callback])
-		 * @param  {mixed} obj
-		 * @param  {function} callback a function to be executed once loading is complete, the function is executed in the instance's scope and receives two arguments - the node and a boolean status
-		 * @return {Boolean}
-		 * @trigger load_node.jstree
-		 */
-		load_node : function (obj, callback) {
-			var k, l, i, j, c;
-			if($.isArray(obj)) {
-				this._load_nodes(obj.slice(), callback);
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj) {
-				if(callback) { callback.call(this, obj, false); }
-				return false;
-			}
-			// if(obj.state.loading) { } // the node is already loading - just wait for it to load and invoke callback? but if called implicitly it should be loaded again?
-			if(obj.state.loaded) {
-				obj.state.loaded = false;
-				for(k = 0, l = obj.children_d.length; k < l; k++) {
-					for(i = 0, j = obj.parents.length; i < j; i++) {
-						this._model.data[obj.parents[i]].children_d = $.vakata.array_remove_item(this._model.data[obj.parents[i]].children_d, obj.children_d[k]);
-					}
-					if(this._model.data[obj.children_d[k]].state.selected) {
-						c = true;
-						this._data.core.selected = $.vakata.array_remove_item(this._data.core.selected, obj.children_d[k]);
-					}
-					delete this._model.data[obj.children_d[k]];
-				}
-				obj.children = [];
-				obj.children_d = [];
-				if(c) {
-					this.trigger('changed', { 'action' : 'load_node', 'node' : obj, 'selected' : this._data.core.selected });
-				}
-			}
-			obj.state.loading = true;
-			this.get_node(obj, true).addClass("jstree-loading").attr('aria-busy',true);
-			this._load_node(obj, $.proxy(function (status) {
-				obj = this._model.data[obj.id];
-				obj.state.loading = false;
-				obj.state.loaded = status;
-				var dom = this.get_node(obj, true);
-				if(obj.state.loaded && !obj.children.length && dom && dom.length && !dom.hasClass('jstree-leaf')) {
-					dom.removeClass('jstree-closed jstree-open').addClass('jstree-leaf');
-				}
-				dom.removeClass("jstree-loading").attr('aria-busy',false);
-				/**
-				 * triggered after a node is loaded
-				 * @event
-				 * @name load_node.jstree
-				 * @param {Object} node the node that was loading
-				 * @param {Boolean} status was the node loaded successfully
-				 */
-				this.trigger('load_node', { "node" : obj, "status" : status });
-				if(callback) {
-					callback.call(this, obj, status);
-				}
-			}, this));
-			return true;
-		},
-		/**
-		 * load an array of nodes (will also load unavailable nodes as soon as the appear in the structure). Used internally.
-		 * @private
-		 * @name _load_nodes(nodes [, callback])
-		 * @param  {array} nodes
-		 * @param  {function} callback a function to be executed once loading is complete, the function is executed in the instance's scope and receives one argument - the array passed to _load_nodes
-		 */
-		_load_nodes : function (nodes, callback, is_callback) {
-			var r = true,
-				c = function () { this._load_nodes(nodes, callback, true); },
-				m = this._model.data, i, j;
-			for(i = 0, j = nodes.length; i < j; i++) {
-				if(m[nodes[i]] && (!m[nodes[i]].state.loaded || !is_callback)) {
-					if(!this.is_loading(nodes[i])) {
-						this.load_node(nodes[i], c);
-					}
-					r = false;
-				}
-			}
-			if(r) {
-				if(callback && !callback.done) {
-					callback.call(this, nodes);
-					callback.done = true;
-				}
-			}
-		},
-		/**
-		 * loads all unloaded nodes
-		 * @name load_all([obj, callback])
-		 * @param {mixed} obj the node to load recursively, omit to load all nodes in the tree
-		 * @param {function} callback a function to be executed once loading all the nodes is complete,
-		 * @trigger load_all.jstree
-		 */
-		load_all : function (obj, callback) {
-			if(!obj) { obj = '#'; }
-			obj = this.get_node(obj);
-			if(!obj) { return false; }
-			var to_load = [],
-				m = this._model.data,
-				c = m[obj.id].children_d,
-				i, j;
-			if(obj.state && !obj.state.loaded) {
-				to_load.push(obj.id);
-			}
-			for(i = 0, j = c.length; i < j; i++) {
-				if(m[c[i]] && m[c[i]].state && !m[c[i]].state.loaded) {
-					to_load.push(c[i]);
-				}
-			}
-			if(to_load.length) {
-				this._load_nodes(to_load, function () {
-					this.load_all(obj, callback);
-				});
-			}
-			else {
-				/**
-				 * triggered after a load_all call completes
-				 * @event
-				 * @name load_all.jstree
-				 * @param {Object} node the recursively loaded node
-				 */
-				if(callback) { callback.call(this, obj); }
-				this.trigger('load_all', { "node" : obj });
-			}
-		},
-		/**
-		 * handles the actual loading of a node. Used only internally.
-		 * @private
-		 * @name _load_node(obj [, callback])
-		 * @param  {mixed} obj
-		 * @param  {function} callback a function to be executed once loading is complete, the function is executed in the instance's scope and receives one argument - a boolean status
-		 * @return {Boolean}
-		 */
-		_load_node : function (obj, callback) {
-			var s = this.settings.core.data, t;
-			// use original HTML
-			if(!s) {
-				if(obj.id === '#') {
-					return this._append_html_data(obj, this._data.core.original_container_html.clone(true), function (status) {
-						callback.call(this, status);
-					});
-				}
-				else {
-					return callback.call(this, false);
-				}
-				// return callback.call(this, obj.id === '#' ? this._append_html_data(obj, this._data.core.original_container_html.clone(true)) : false);
-			}
-			if($.isFunction(s)) {
-				return s.call(this, obj, $.proxy(function (d) {
-					if(d === false) {
-						callback.call(this, false);
-					}
-					this[typeof d === 'string' ? '_append_html_data' : '_append_json_data'](obj, typeof d === 'string' ? $(d) : d, function (status) {
-						callback.call(this, status);
-					});
-					// return d === false ? callback.call(this, false) : callback.call(this, this[typeof d === 'string' ? '_append_html_data' : '_append_json_data'](obj, typeof d === 'string' ? $(d) : d));
-				}, this));
-			}
-			if(typeof s === 'object') {
-				if(s.url) {
-					s = $.extend(true, {}, s);
-					if($.isFunction(s.url)) {
-						s.url = s.url.call(this, obj);
-					}
-					if($.isFunction(s.data)) {
-						s.data = s.data.call(this, obj);
-					}
-					return $.ajax(s)
-						.done($.proxy(function (d,t,x) {
-								var type = x.getResponseHeader('Content-Type');
-								if(type.indexOf('json') !== -1 || typeof d === "object") {
-									return this._append_json_data(obj, d, function (status) { callback.call(this, status); });
-									//return callback.call(this, this._append_json_data(obj, d));
-								}
-								if(type.indexOf('html') !== -1 || typeof d === "string") {
-									return this._append_html_data(obj, $(d), function (status) { callback.call(this, status); });
-									// return callback.call(this, this._append_html_data(obj, $(d)));
-								}
-								this._data.core.last_error = { 'error' : 'ajax', 'plugin' : 'core', 'id' : 'core_04', 'reason' : 'Could not load node', 'data' : JSON.stringify({ 'id' : obj.id, 'xhr' : x }) };
-								this.settings.core.error.call(this, this._data.core.last_error);
-								return callback.call(this, false);
-							}, this))
-						.fail($.proxy(function (f) {
-								callback.call(this, false);
-								this._data.core.last_error = { 'error' : 'ajax', 'plugin' : 'core', 'id' : 'core_04', 'reason' : 'Could not load node', 'data' : JSON.stringify({ 'id' : obj.id, 'xhr' : f }) };
-								this.settings.core.error.call(this, this._data.core.last_error);
-							}, this));
-				}
-				t = ($.isArray(s) || $.isPlainObject(s)) ? JSON.parse(JSON.stringify(s)) : s;
-				if(obj.id === '#') {
-					return this._append_json_data(obj, t, function (status) {
-						callback.call(this, status);
-					});
-				}
-				else {
-					this._data.core.last_error = { 'error' : 'nodata', 'plugin' : 'core', 'id' : 'core_05', 'reason' : 'Could not load node', 'data' : JSON.stringify({ 'id' : obj.id }) };
-					this.settings.core.error.call(this, this._data.core.last_error);
-					return callback.call(this, false);
-				}
-				//return callback.call(this, (obj.id === "#" ? this._append_json_data(obj, t) : false) );
-			}
-			if(typeof s === 'string') {
-				if(obj.id === '#') {
-					return this._append_html_data(obj, $(s), function (status) {
-						callback.call(this, status);
-					});
-				}
-				else {
-					this._data.core.last_error = { 'error' : 'nodata', 'plugin' : 'core', 'id' : 'core_06', 'reason' : 'Could not load node', 'data' : JSON.stringify({ 'id' : obj.id }) };
-					this.settings.core.error.call(this, this._data.core.last_error);
-					return callback.call(this, false);
-				}
-				//return callback.call(this, (obj.id === "#" ? this._append_html_data(obj, $(s)) : false) );
-			}
-			return callback.call(this, false);
-		},
-		/**
-		 * adds a node to the list of nodes to redraw. Used only internally.
-		 * @private
-		 * @name _node_changed(obj [, callback])
-		 * @param  {mixed} obj
-		 */
-		_node_changed : function (obj) {
-			obj = this.get_node(obj);
-			if(obj) {
-				this._model.changed.push(obj.id);
-			}
-		},
-		/**
-		 * appends HTML content to the tree. Used internally.
-		 * @private
-		 * @name _append_html_data(obj, data)
-		 * @param  {mixed} obj the node to append to
-		 * @param  {String} data the HTML string to parse and append
-		 * @trigger model.jstree, changed.jstree
-		 */
-		_append_html_data : function (dom, data, cb) {
-			dom = this.get_node(dom);
-			dom.children = [];
-			dom.children_d = [];
-			var dat = data.is('ul') ? data.children() : data,
-				par = dom.id,
-				chd = [],
-				dpc = [],
-				m = this._model.data,
-				p = m[par],
-				s = this._data.core.selected.length,
-				tmp, i, j;
-			dat.each($.proxy(function (i, v) {
-				tmp = this._parse_model_from_html($(v), par, p.parents.concat());
-				if(tmp) {
-					chd.push(tmp);
-					dpc.push(tmp);
-					if(m[tmp].children_d.length) {
-						dpc = dpc.concat(m[tmp].children_d);
-					}
-				}
-			}, this));
-			p.children = chd;
-			p.children_d = dpc;
-			for(i = 0, j = p.parents.length; i < j; i++) {
-				m[p.parents[i]].children_d = m[p.parents[i]].children_d.concat(dpc);
-			}
-			/**
-			 * triggered when new data is inserted to the tree model
-			 * @event
-			 * @name model.jstree
-			 * @param {Array} nodes an array of node IDs
-			 * @param {String} parent the parent ID of the nodes
-			 */
-			this.trigger('model', { "nodes" : dpc, 'parent' : par });
-			if(par !== '#') {
-				this._node_changed(par);
-				this.redraw();
-			}
-			else {
-				this.get_container_ul().children('.jstree-initial-node').remove();
-				this.redraw(true);
-			}
-			if(this._data.core.selected.length !== s) {
-				this.trigger('changed', { 'action' : 'model', 'selected' : this._data.core.selected });
-			}
-			cb.call(this, true);
-		},
-		/**
-		 * appends JSON content to the tree. Used internally.
-		 * @private
-		 * @name _append_json_data(obj, data)
-		 * @param  {mixed} obj the node to append to
-		 * @param  {String} data the JSON object to parse and append
-		 * @param  {Boolean} force_processing internal param - do not set
-		 * @trigger model.jstree, changed.jstree
-		 */
-		_append_json_data : function (dom, data, cb, force_processing) {
-			dom = this.get_node(dom);
-			dom.children = [];
-			dom.children_d = [];
-			// *%$@!!!
-			if(data.d) {
-				data = data.d;
-				if(typeof data === "string") {
-					data = JSON.parse(data);
-				}
-			}
-			if(!$.isArray(data)) { data = [data]; }
-			var w = null,
-				args = {
-					'df'	: this._model.default_state,
-					'dat'	: data,
-					'par'	: dom.id,
-					'm'		: this._model.data,
-					't_id'	: this._id,
-					't_cnt'	: this._cnt,
-					'sel'	: this._data.core.selected
-				},
-				func = function (data, undefined) {
-					if(data.data) { data = data.data; }
-					var dat = data.dat,
-						par = data.par,
-						chd = [],
-						dpc = [],
-						add = [],
-						df = data.df,
-						t_id = data.t_id,
-						t_cnt = data.t_cnt,
-						m = data.m,
-						p = m[par],
-						sel = data.sel,
-						tmp, i, j, rslt,
-						parse_flat = function (d, p, ps) {
-							if(!ps) { ps = []; }
-							else { ps = ps.concat(); }
-							if(p) { ps.unshift(p); }
-							var tid = d.id.toString(),
-								i, j, c, e,
-								tmp = {
-									id			: tid,
-									text		: d.text || '',
-									icon		: d.icon !== undefined ? d.icon : true,
-									parent		: p,
-									parents		: ps,
-									children	: d.children || [],
-									children_d	: d.children_d || [],
-									data		: d.data,
-									state		: { },
-									li_attr		: { id : false },
-									a_attr		: { href : '#' },
-									original	: false
-								};
-							for(i in df) {
-								if(df.hasOwnProperty(i)) {
-									tmp.state[i] = df[i];
-								}
-							}
-							if(d && d.data && d.data.jstree && d.data.jstree.icon) {
-								tmp.icon = d.data.jstree.icon;
-							}
-							if(d && d.data) {
-								tmp.data = d.data;
-								if(d.data.jstree) {
-									for(i in d.data.jstree) {
-										if(d.data.jstree.hasOwnProperty(i)) {
-											tmp.state[i] = d.data.jstree[i];
-										}
-									}
-								}
-							}
-							if(d && typeof d.state === 'object') {
-								for (i in d.state) {
-									if(d.state.hasOwnProperty(i)) {
-										tmp.state[i] = d.state[i];
-									}
-								}
-							}
-							if(d && typeof d.li_attr === 'object') {
-								for (i in d.li_attr) {
-									if(d.li_attr.hasOwnProperty(i)) {
-										tmp.li_attr[i] = d.li_attr[i];
-									}
-								}
-							}
-							if(!tmp.li_attr.id) {
-								tmp.li_attr.id = tid;
-							}
-							if(d && typeof d.a_attr === 'object') {
-								for (i in d.a_attr) {
-									if(d.a_attr.hasOwnProperty(i)) {
-										tmp.a_attr[i] = d.a_attr[i];
-									}
-								}
-							}
-							if(d && d.children && d.children === true) {
-								tmp.state.loaded = false;
-								tmp.children = [];
-								tmp.children_d = [];
-							}
-							m[tmp.id] = tmp;
-							for(i = 0, j = tmp.children.length; i < j; i++) {
-								c = parse_flat(m[tmp.children[i]], tmp.id, ps);
-								e = m[c];
-								tmp.children_d.push(c);
-								if(e.children_d.length) {
-									tmp.children_d = tmp.children_d.concat(e.children_d);
-								}
-							}
-							delete d.data;
-							delete d.children;
-							m[tmp.id].original = d;
-							if(tmp.state.selected) {
-								add.push(tmp.id);
-							}
-							return tmp.id;
-						},
-						parse_nest = function (d, p, ps) {
-							if(!ps) { ps = []; }
-							else { ps = ps.concat(); }
-							if(p) { ps.unshift(p); }
-							var tid = false, i, j, c, e, tmp;
-							do {
-								tid = 'j' + t_id + '_' + (++t_cnt);
-							} while(m[tid]);
-
-							tmp = {
-								id			: false,
-								text		: typeof d === 'string' ? d : '',
-								icon		: typeof d === 'object' && d.icon !== undefined ? d.icon : true,
-								parent		: p,
-								parents		: ps,
-								children	: [],
-								children_d	: [],
-								data		: null,
-								state		: { },
-								li_attr		: { id : false },
-								a_attr		: { href : '#' },
-								original	: false
-							};
-							for(i in df) {
-								if(df.hasOwnProperty(i)) {
-									tmp.state[i] = df[i];
-								}
-							}
-							if(d && d.id) { tmp.id = d.id.toString(); }
-							if(d && d.text) { tmp.text = d.text; }
-							if(d && d.data && d.data.jstree && d.data.jstree.icon) {
-								tmp.icon = d.data.jstree.icon;
-							}
-							if(d && d.data) {
-								tmp.data = d.data;
-								if(d.data.jstree) {
-									for(i in d.data.jstree) {
-										if(d.data.jstree.hasOwnProperty(i)) {
-											tmp.state[i] = d.data.jstree[i];
-										}
-									}
-								}
-							}
-							if(d && typeof d.state === 'object') {
-								for (i in d.state) {
-									if(d.state.hasOwnProperty(i)) {
-										tmp.state[i] = d.state[i];
-									}
-								}
-							}
-							if(d && typeof d.li_attr === 'object') {
-								for (i in d.li_attr) {
-									if(d.li_attr.hasOwnProperty(i)) {
-										tmp.li_attr[i] = d.li_attr[i];
-									}
-								}
-							}
-							if(tmp.li_attr.id && !tmp.id) {
-								tmp.id = tmp.li_attr.id.toString();
-							}
-							if(!tmp.id) {
-								tmp.id = tid;
-							}
-							if(!tmp.li_attr.id) {
-								tmp.li_attr.id = tmp.id;
-							}
-							if(d && typeof d.a_attr === 'object') {
-								for (i in d.a_attr) {
-									if(d.a_attr.hasOwnProperty(i)) {
-										tmp.a_attr[i] = d.a_attr[i];
-									}
-								}
-							}
-							if(d && d.children && d.children.length) {
-								for(i = 0, j = d.children.length; i < j; i++) {
-									c = parse_nest(d.children[i], tmp.id, ps);
-									e = m[c];
-									tmp.children.push(c);
-									if(e.children_d.length) {
-										tmp.children_d = tmp.children_d.concat(e.children_d);
-									}
-								}
-								tmp.children_d = tmp.children_d.concat(tmp.children);
-							}
-							if(d && d.children && d.children === true) {
-								tmp.state.loaded = false;
-								tmp.children = [];
-								tmp.children_d = [];
-							}
-							delete d.data;
-							delete d.children;
-							tmp.original = d;
-							m[tmp.id] = tmp;
-							if(tmp.state.selected) {
-								add.push(tmp.id);
-							}
-							return tmp.id;
-						};
-
-					if(dat.length && dat[0].id !== undefined && dat[0].parent !== undefined) {
-						// Flat JSON support (for easy import from DB):
-						// 1) convert to object (foreach)
-						for(i = 0, j = dat.length; i < j; i++) {
-							if(!dat[i].children) {
-								dat[i].children = [];
-							}
-							m[dat[i].id.toString()] = dat[i];
-						}
-						// 2) populate children (foreach)
-						for(i = 0, j = dat.length; i < j; i++) {
-							m[dat[i].parent.toString()].children.push(dat[i].id.toString());
-							// populate parent.children_d
-							p.children_d.push(dat[i].id.toString());
-						}
-						// 3) normalize && populate parents and children_d with recursion
-						for(i = 0, j = p.children.length; i < j; i++) {
-							tmp = parse_flat(m[p.children[i]], par, p.parents.concat());
-							dpc.push(tmp);
-							if(m[tmp].children_d.length) {
-								dpc = dpc.concat(m[tmp].children_d);
-							}
-						}
-						for(i = 0, j = p.parents.length; i < j; i++) {
-							m[p.parents[i]].children_d = m[p.parents[i]].children_d.concat(dpc);
-						}
-						// ?) three_state selection - p.state.selected && t - (if three_state foreach(dat => ch) -> foreach(parents) if(parent.selected) child.selected = true;
-						rslt = {
-							'cnt' : t_cnt,
-							'mod' : m,
-							'sel' : sel,
-							'par' : par,
-							'dpc' : dpc,
-							'add' : add
-						};
-					}
-					else {
-						for(i = 0, j = dat.length; i < j; i++) {
-							tmp = parse_nest(dat[i], par, p.parents.concat());
-							if(tmp) {
-								chd.push(tmp);
-								dpc.push(tmp);
-								if(m[tmp].children_d.length) {
-									dpc = dpc.concat(m[tmp].children_d);
-								}
-							}
-						}
-						p.children = chd;
-						p.children_d = dpc;
-						for(i = 0, j = p.parents.length; i < j; i++) {
-							m[p.parents[i]].children_d = m[p.parents[i]].children_d.concat(dpc);
-						}
-						rslt = {
-							'cnt' : t_cnt,
-							'mod' : m,
-							'sel' : sel,
-							'par' : par,
-							'dpc' : dpc,
-							'add' : add
-						};
-					}
-					if(typeof window === 'undefined' || typeof window.document === 'undefined') {
-						postMessage(rslt);
-					}
-					else {
-						return rslt;
-					}
-				},
-				rslt = function (rslt, worker) {
-					this._cnt = rslt.cnt;
-					this._model.data = rslt.mod; // breaks the reference in load_node - careful
-
-					if(worker) {
-						var i, j, a = rslt.add, r = rslt.sel, s = this._data.core.selected.slice(), m = this._model.data;
-						// if selection was changed while calculating in worker
-						if(r.length !== s.length || $.vakata.array_unique(r.concat(s)).length !== r.length) {
-							// deselect nodes that are no longer selected
-							for(i = 0, j = r.length; i < j; i++) {
-								if($.inArray(r[i], a) === -1 && $.inArray(r[i], s) === -1) {
-									m[r[i]].state.selected = false;
-								}
-							}
-							// select nodes that were selected in the mean time
-							for(i = 0, j = s.length; i < j; i++) {
-								if($.inArray(s[i], r) === -1) {
-									m[s[i]].state.selected = true;
-								}
-							}
-						}
-					}
-					if(rslt.add.length) {
-						this._data.core.selected = this._data.core.selected.concat(rslt.add);
-					}
-
-					this.trigger('model', { "nodes" : rslt.dpc, 'parent' : rslt.par });
-
-					if(rslt.par !== '#') {
-						this._node_changed(rslt.par);
-						this.redraw();
-					}
-					else {
-						// this.get_container_ul().children('.jstree-initial-node').remove();
-						this.redraw(true);
-					}
-					if(rslt.add.length) {
-						this.trigger('changed', { 'action' : 'model', 'selected' : this._data.core.selected });
-					}
-					cb.call(this, true);
-				};
-			if(this.settings.core.worker && window.Blob && window.URL && window.Worker) {
-				try {
-					if(this._wrk === null) {
-						this._wrk = window.URL.createObjectURL(
-							new window.Blob(
-								['self.onmessage = ' + func.toString()],
-								{type:"text/javascript"}
-							)
-						);
-					}
-					if(!this._data.core.working || force_processing) {
-						this._data.core.working = true;
-						w = new window.Worker(this._wrk);
-						w.onmessage = $.proxy(function (e) {
-							rslt.call(this, e.data, true);
-							try { w.terminate(); w = null; } catch(ignore) { }
-							if(this._data.core.worker_queue.length) {
-								this._append_json_data.apply(this, this._data.core.worker_queue.shift());
-							}
-							else {
-								this._data.core.working = false;
-							}
-						}, this);
-						if(!args.par) {
-							if(this._data.core.worker_queue.length) {
-								this._append_json_data.apply(this, this._data.core.worker_queue.shift());
-							}
-							else {
-								this._data.core.working = false;
-							}
-						}
-						else {
-							w.postMessage(args);
-						}
-					}
-					else {
-						this._data.core.worker_queue.push([dom, data, cb, true]);
-					}
-				}
-				catch(e) {
-					rslt.call(this, func(args), false);
-					if(this._data.core.worker_queue.length) {
-						this._append_json_data.apply(this, this._data.core.worker_queue.shift());
-					}
-					else {
-						this._data.core.working = false;
-					}
-				}
-			}
-			else {
-				rslt.call(this, func(args), false);
-			}
-		},
-		/**
-		 * parses a node from a jQuery object and appends them to the in memory tree model. Used internally.
-		 * @private
-		 * @name _parse_model_from_html(d [, p, ps])
-		 * @param  {jQuery} d the jQuery object to parse
-		 * @param  {String} p the parent ID
-		 * @param  {Array} ps list of all parents
-		 * @return {String} the ID of the object added to the model
-		 */
-		_parse_model_from_html : function (d, p, ps) {
-			if(!ps) { ps = []; }
-			else { ps = [].concat(ps); }
-			if(p) { ps.unshift(p); }
-			var c, e, m = this._model.data,
-				data = {
-					id			: false,
-					text		: false,
-					icon		: true,
-					parent		: p,
-					parents		: ps,
-					children	: [],
-					children_d	: [],
-					data		: null,
-					state		: { },
-					li_attr		: { id : false },
-					a_attr		: { href : '#' },
-					original	: false
-				}, i, tmp, tid;
-			for(i in this._model.default_state) {
-				if(this._model.default_state.hasOwnProperty(i)) {
-					data.state[i] = this._model.default_state[i];
-				}
-			}
-			tmp = $.vakata.attributes(d, true);
-			$.each(tmp, function (i, v) {
-				v = $.trim(v);
-				if(!v.length) { return true; }
-				data.li_attr[i] = v;
-				if(i === 'id') {
-					data.id = v.toString();
-				}
-			});
-			tmp = d.children('a').first();
-			if(tmp.length) {
-				tmp = $.vakata.attributes(tmp, true);
-				$.each(tmp, function (i, v) {
-					v = $.trim(v);
-					if(v.length) {
-						data.a_attr[i] = v;
-					}
-				});
-			}
-			tmp = d.children("a").first().length ? d.children("a").first().clone() : d.clone();
-			tmp.children("ins, i, ul").remove();
-			tmp = tmp.html();
-			tmp = $('<div />').html(tmp);
-			data.text = this.settings.core.force_text ? tmp.text() : tmp.html();
-			tmp = d.data();
-			data.data = tmp ? $.extend(true, {}, tmp) : null;
-			data.state.opened = d.hasClass('jstree-open');
-			data.state.selected = d.children('a').hasClass('jstree-clicked');
-			data.state.disabled = d.children('a').hasClass('jstree-disabled');
-			if(data.data && data.data.jstree) {
-				for(i in data.data.jstree) {
-					if(data.data.jstree.hasOwnProperty(i)) {
-						data.state[i] = data.data.jstree[i];
-					}
-				}
-			}
-			tmp = d.children("a").children(".jstree-themeicon");
-			if(tmp.length) {
-				data.icon = tmp.hasClass('jstree-themeicon-hidden') ? false : tmp.attr('rel');
-			}
-			if(data.state.icon) {
-				data.icon = data.state.icon;
-			}
-			tmp = d.children("ul").children("li");
-			do {
-				tid = 'j' + this._id + '_' + (++this._cnt);
-			} while(m[tid]);
-			data.id = data.li_attr.id ? data.li_attr.id.toString() : tid;
-			if(tmp.length) {
-				tmp.each($.proxy(function (i, v) {
-					c = this._parse_model_from_html($(v), data.id, ps);
-					e = this._model.data[c];
-					data.children.push(c);
-					if(e.children_d.length) {
-						data.children_d = data.children_d.concat(e.children_d);
-					}
-				}, this));
-				data.children_d = data.children_d.concat(data.children);
-			}
-			else {
-				if(d.hasClass('jstree-closed')) {
-					data.state.loaded = false;
-				}
-			}
-			if(data.li_attr['class']) {
-				data.li_attr['class'] = data.li_attr['class'].replace('jstree-closed','').replace('jstree-open','');
-			}
-			if(data.a_attr['class']) {
-				data.a_attr['class'] = data.a_attr['class'].replace('jstree-clicked','').replace('jstree-disabled','');
-			}
-			m[data.id] = data;
-			if(data.state.selected) {
-				this._data.core.selected.push(data.id);
-			}
-			return data.id;
-		},
-		/**
-		 * parses a node from a JSON object (used when dealing with flat data, which has no nesting of children, but has id and parent properties) and appends it to the in memory tree model. Used internally.
-		 * @private
-		 * @name _parse_model_from_flat_json(d [, p, ps])
-		 * @param  {Object} d the JSON object to parse
-		 * @param  {String} p the parent ID
-		 * @param  {Array} ps list of all parents
-		 * @return {String} the ID of the object added to the model
-		 */
-		_parse_model_from_flat_json : function (d, p, ps) {
-			if(!ps) { ps = []; }
-			else { ps = ps.concat(); }
-			if(p) { ps.unshift(p); }
-			var tid = d.id.toString(),
-				m = this._model.data,
-				df = this._model.default_state,
-				i, j, c, e,
-				tmp = {
-					id			: tid,
-					text		: d.text || '',
-					icon		: d.icon !== undefined ? d.icon : true,
-					parent		: p,
-					parents		: ps,
-					children	: d.children || [],
-					children_d	: d.children_d || [],
-					data		: d.data,
-					state		: { },
-					li_attr		: { id : false },
-					a_attr		: { href : '#' },
-					original	: false
-				};
-			for(i in df) {
-				if(df.hasOwnProperty(i)) {
-					tmp.state[i] = df[i];
-				}
-			}
-			if(d && d.data && d.data.jstree && d.data.jstree.icon) {
-				tmp.icon = d.data.jstree.icon;
-			}
-			if(d && d.data) {
-				tmp.data = d.data;
-				if(d.data.jstree) {
-					for(i in d.data.jstree) {
-						if(d.data.jstree.hasOwnProperty(i)) {
-							tmp.state[i] = d.data.jstree[i];
-						}
-					}
-				}
-			}
-			if(d && typeof d.state === 'object') {
-				for (i in d.state) {
-					if(d.state.hasOwnProperty(i)) {
-						tmp.state[i] = d.state[i];
-					}
-				}
-			}
-			if(d && typeof d.li_attr === 'object') {
-				for (i in d.li_attr) {
-					if(d.li_attr.hasOwnProperty(i)) {
-						tmp.li_attr[i] = d.li_attr[i];
-					}
-				}
-			}
-			if(!tmp.li_attr.id) {
-				tmp.li_attr.id = tid;
-			}
-			if(d && typeof d.a_attr === 'object') {
-				for (i in d.a_attr) {
-					if(d.a_attr.hasOwnProperty(i)) {
-						tmp.a_attr[i] = d.a_attr[i];
-					}
-				}
-			}
-			if(d && d.children && d.children === true) {
-				tmp.state.loaded = false;
-				tmp.children = [];
-				tmp.children_d = [];
-			}
-			m[tmp.id] = tmp;
-			for(i = 0, j = tmp.children.length; i < j; i++) {
-				c = this._parse_model_from_flat_json(m[tmp.children[i]], tmp.id, ps);
-				e = m[c];
-				tmp.children_d.push(c);
-				if(e.children_d.length) {
-					tmp.children_d = tmp.children_d.concat(e.children_d);
-				}
-			}
-			delete d.data;
-			delete d.children;
-			m[tmp.id].original = d;
-			if(tmp.state.selected) {
-				this._data.core.selected.push(tmp.id);
-			}
-			return tmp.id;
-		},
-		/**
-		 * parses a node from a JSON object and appends it to the in memory tree model. Used internally.
-		 * @private
-		 * @name _parse_model_from_json(d [, p, ps])
-		 * @param  {Object} d the JSON object to parse
-		 * @param  {String} p the parent ID
-		 * @param  {Array} ps list of all parents
-		 * @return {String} the ID of the object added to the model
-		 */
-		_parse_model_from_json : function (d, p, ps) {
-			if(!ps) { ps = []; }
-			else { ps = ps.concat(); }
-			if(p) { ps.unshift(p); }
-			var tid = false, i, j, c, e, m = this._model.data, df = this._model.default_state, tmp;
-			do {
-				tid = 'j' + this._id + '_' + (++this._cnt);
-			} while(m[tid]);
-
-			tmp = {
-				id			: false,
-				text		: typeof d === 'string' ? d : '',
-				icon		: typeof d === 'object' && d.icon !== undefined ? d.icon : true,
-				parent		: p,
-				parents		: ps,
-				children	: [],
-				children_d	: [],
-				data		: null,
-				state		: { },
-				li_attr		: { id : false },
-				a_attr		: { href : '#' },
-				original	: false
-			};
-			for(i in df) {
-				if(df.hasOwnProperty(i)) {
-					tmp.state[i] = df[i];
-				}
-			}
-			if(d && d.id) { tmp.id = d.id.toString(); }
-			if(d && d.text) { tmp.text = d.text; }
-			if(d && d.data && d.data.jstree && d.data.jstree.icon) {
-				tmp.icon = d.data.jstree.icon;
-			}
-			if(d && d.data) {
-				tmp.data = d.data;
-				if(d.data.jstree) {
-					for(i in d.data.jstree) {
-						if(d.data.jstree.hasOwnProperty(i)) {
-							tmp.state[i] = d.data.jstree[i];
-						}
-					}
-				}
-			}
-			if(d && typeof d.state === 'object') {
-				for (i in d.state) {
-					if(d.state.hasOwnProperty(i)) {
-						tmp.state[i] = d.state[i];
-					}
-				}
-			}
-			if(d && typeof d.li_attr === 'object') {
-				for (i in d.li_attr) {
-					if(d.li_attr.hasOwnProperty(i)) {
-						tmp.li_attr[i] = d.li_attr[i];
-					}
-				}
-			}
-			if(tmp.li_attr.id && !tmp.id) {
-				tmp.id = tmp.li_attr.id.toString();
-			}
-			if(!tmp.id) {
-				tmp.id = tid;
-			}
-			if(!tmp.li_attr.id) {
-				tmp.li_attr.id = tmp.id;
-			}
-			if(d && typeof d.a_attr === 'object') {
-				for (i in d.a_attr) {
-					if(d.a_attr.hasOwnProperty(i)) {
-						tmp.a_attr[i] = d.a_attr[i];
-					}
-				}
-			}
-			if(d && d.children && d.children.length) {
-				for(i = 0, j = d.children.length; i < j; i++) {
-					c = this._parse_model_from_json(d.children[i], tmp.id, ps);
-					e = m[c];
-					tmp.children.push(c);
-					if(e.children_d.length) {
-						tmp.children_d = tmp.children_d.concat(e.children_d);
-					}
-				}
-				tmp.children_d = tmp.children_d.concat(tmp.children);
-			}
-			if(d && d.children && d.children === true) {
-				tmp.state.loaded = false;
-				tmp.children = [];
-				tmp.children_d = [];
-			}
-			delete d.data;
-			delete d.children;
-			tmp.original = d;
-			m[tmp.id] = tmp;
-			if(tmp.state.selected) {
-				this._data.core.selected.push(tmp.id);
-			}
-			return tmp.id;
-		},
-		/**
-		 * redraws all nodes that need to be redrawn. Used internally.
-		 * @private
-		 * @name _redraw()
-		 * @trigger redraw.jstree
-		 */
-		_redraw : function () {
-			var nodes = this._model.force_full_redraw ? this._model.data['#'].children.concat([]) : this._model.changed.concat([]),
-				f = document.createElement('UL'), tmp, i, j, fe = this._data.core.focused;
-			for(i = 0, j = nodes.length; i < j; i++) {
-				tmp = this.redraw_node(nodes[i], true, this._model.force_full_redraw);
-				if(tmp && this._model.force_full_redraw) {
-					f.appendChild(tmp);
-				}
-			}
-			if(this._model.force_full_redraw) {
-				f.className = this.get_container_ul()[0].className;
-				f.setAttribute('role','group');
-				this.element.empty().append(f);
-				//this.get_container_ul()[0].appendChild(f);
-			}
-			if(fe !== null) {
-				tmp = this.get_node(fe, true);
-				if(tmp && tmp.length && tmp.children('.jstree-anchor')[0] !== document.activeElement) {
-					tmp.children('.jstree-anchor').focus();
-				}
-				else {
-					this._data.core.focused = null;
-				}
-			}
-			this._model.force_full_redraw = false;
-			this._model.changed = [];
-			/**
-			 * triggered after nodes are redrawn
-			 * @event
-			 * @name redraw.jstree
-			 * @param {array} nodes the redrawn nodes
-			 */
-			this.trigger('redraw', { "nodes" : nodes });
-		},
-		/**
-		 * redraws all nodes that need to be redrawn or optionally - the whole tree
-		 * @name redraw([full])
-		 * @param {Boolean} full if set to `true` all nodes are redrawn.
-		 */
-		redraw : function (full) {
-			if(full) {
-				this._model.force_full_redraw = true;
-			}
-			//if(this._model.redraw_timeout) {
-			//	clearTimeout(this._model.redraw_timeout);
-			//}
-			//this._model.redraw_timeout = setTimeout($.proxy(this._redraw, this),0);
-			this._redraw();
-		},
-		/**
-		 * redraws a single node's children. Used internally.
-		 * @private
-		 * @name draw_children(node)
-		 * @param {mixed} node the node whose children will be redrawn
-		 */
-		draw_children : function (node) {
-			var obj = this.get_node(node),
-				i = false,
-				j = false,
-				k = false,
-				d = document;
-			if(!obj) { return false; }
-			if(obj.id === '#') { return this.redraw(true); }
-			node = this.get_node(node, true);
-			if(!node || !node.length) { return false; } // TODO: quick toggle
-
-			node.children('.jstree-children').remove();
-			node = node[0];
-			if(obj.children.length && obj.state.loaded) {
-				k = d.createElement('UL');
-				k.setAttribute('role', 'group');
-				k.className = 'jstree-children';
-				for(i = 0, j = obj.children.length; i < j; i++) {
-					k.appendChild(this.redraw_node(obj.children[i], true, true));
-				}
-				node.appendChild(k);
-			}
-		},
-		/**
-		 * redraws a single node. Used internally.
-		 * @private
-		 * @name redraw_node(node, deep, is_callback, force_render)
-		 * @param {mixed} node the node to redraw
-		 * @param {Boolean} deep should child nodes be redrawn too
-		 * @param {Boolean} is_callback is this a recursion call
-		 * @param {Boolean} force_render should children of closed parents be drawn anyway
-		 */
-		redraw_node : function (node, deep, is_callback, force_render) {
-			var obj = this.get_node(node),
-				par = false,
-				ind = false,
-				old = false,
-				i = false,
-				j = false,
-				k = false,
-				c = '',
-				d = document,
-				m = this._model.data,
-				f = false,
-				s = false,
-				tmp = null,
-				t = 0,
-				l = 0;
-			if(!obj) { return false; }
-			if(obj.id === '#') {  return this.redraw(true); }
-			deep = deep || obj.children.length === 0;
-			node = !document.querySelector ? document.getElementById(obj.id) : this.element[0].querySelector('#' + ("0123456789".indexOf(obj.id[0]) !== -1 ? '\\3' + obj.id[0] + ' ' + obj.id.substr(1).replace($.jstree.idregex,'\\$&') : obj.id.replace($.jstree.idregex,'\\$&')) ); //, this.element);
-			if(!node) {
-				deep = true;
-				//node = d.createElement('LI');
-				if(!is_callback) {
-					par = obj.parent !== '#' ? $('#' + obj.parent.replace($.jstree.idregex,'\\$&'), this.element)[0] : null;
-					if(par !== null && (!par || !m[obj.parent].state.opened)) {
-						return false;
-					}
-					ind = $.inArray(obj.id, par === null ? m['#'].children : m[obj.parent].children);
-				}
-			}
-			else {
-				node = $(node);
-				if(!is_callback) {
-					par = node.parent().parent()[0];
-					if(par === this.element[0]) {
-						par = null;
-					}
-					ind = node.index();
-				}
-				// m[obj.id].data = node.data(); // use only node's data, no need to touch jquery storage
-				if(!deep && obj.children.length && !node.children('.jstree-children').length) {
-					deep = true;
-				}
-				if(!deep) {
-					old = node.children('.jstree-children')[0];
-				}
-				f = node.children('.jstree-anchor')[0] === document.activeElement;
-				node.remove();
-				//node = d.createElement('LI');
-				//node = node[0];
-			}
-			node = _node.cloneNode(true);
-			// node is DOM, deep is boolean
-
-			c = 'jstree-node ';
-			for(i in obj.li_attr) {
-				if(obj.li_attr.hasOwnProperty(i)) {
-					if(i === 'id') { continue; }
-					if(i !== 'class') {
-						node.setAttribute(i, obj.li_attr[i]);
-					}
-					else {
-						c += obj.li_attr[i];
-					}
-				}
-			}
-			if(!obj.a_attr.id) {
-				obj.a_attr.id = obj.id + '_anchor';
-			}
-			node.setAttribute('aria-selected', !!obj.state.selected);
-			node.setAttribute('aria-level', obj.parents.length);
-			node.setAttribute('aria-labelledby', obj.a_attr.id);
-			if(obj.state.disabled) {
-				node.setAttribute('aria-disabled', true);
-			}
-
-			if(obj.state.loaded && !obj.children.length) {
-				c += ' jstree-leaf';
-			}
-			else {
-				c += obj.state.opened && obj.state.loaded ? ' jstree-open' : ' jstree-closed';
-				node.setAttribute('aria-expanded', (obj.state.opened && obj.state.loaded) );
-			}
-			if(obj.parent !== null && m[obj.parent].children[m[obj.parent].children.length - 1] === obj.id) {
-				c += ' jstree-last';
-			}
-			node.id = obj.id;
-			node.className = c;
-			c = ( obj.state.selected ? ' jstree-clicked' : '') + ( obj.state.disabled ? ' jstree-disabled' : '');
-			for(j in obj.a_attr) {
-				if(obj.a_attr.hasOwnProperty(j)) {
-					if(j === 'href' && obj.a_attr[j] === '#') { continue; }
-					if(j !== 'class') {
-						node.childNodes[1].setAttribute(j, obj.a_attr[j]);
-					}
-					else {
-						c += ' ' + obj.a_attr[j];
-					}
-				}
-			}
-			if(c.length) {
-				node.childNodes[1].className = 'jstree-anchor ' + c;
-			}
-			if((obj.icon && obj.icon !== true) || obj.icon === false) {
-				if(obj.icon === false) {
-					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-hidden';
-				}
-				else if(obj.icon.indexOf('/') === -1 && obj.icon.indexOf('.') === -1) {
-					node.childNodes[1].childNodes[0].className += ' ' + obj.icon + ' jstree-themeicon-custom';
-				}
-				else {
-					node.childNodes[1].childNodes[0].style.backgroundImage = 'url('+obj.icon+')';
-					node.childNodes[1].childNodes[0].style.backgroundPosition = 'center center';
-					node.childNodes[1].childNodes[0].style.backgroundSize = 'auto';
-					node.childNodes[1].childNodes[0].className += ' jstree-themeicon-custom';
-				}
-			}
-
-			if(this.settings.core.force_text) {
-				node.childNodes[1].appendChild(d.createTextNode(obj.text));
-			}
-			else {
-				node.childNodes[1].innerHTML += obj.text;
-			}
-
-
-			if(deep && obj.children.length && (obj.state.opened || force_render) && obj.state.loaded) {
-				k = d.createElement('UL');
-				k.setAttribute('role', 'group');
-				k.className = 'jstree-children';
-				for(i = 0, j = obj.children.length; i < j; i++) {
-					k.appendChild(this.redraw_node(obj.children[i], deep, true));
-				}
-				node.appendChild(k);
-			}
-			if(old) {
-				node.appendChild(old);
-			}
-			if(!is_callback) {
-				// append back using par / ind
-				if(!par) {
-					par = this.element[0];
-				}
-				for(i = 0, j = par.childNodes.length; i < j; i++) {
-					if(par.childNodes[i] && par.childNodes[i].className && par.childNodes[i].className.indexOf('jstree-children') !== -1) {
-						tmp = par.childNodes[i];
-						break;
-					}
-				}
-				if(!tmp) {
-					tmp = d.createElement('UL');
-					tmp.setAttribute('role', 'group');
-					tmp.className = 'jstree-children';
-					par.appendChild(tmp);
-				}
-				par = tmp;
-
-				if(ind < par.childNodes.length) {
-					par.insertBefore(node, par.childNodes[ind]);
-				}
-				else {
-					par.appendChild(node);
-				}
-				if(f) {
-					t = this.element[0].scrollTop;
-					l = this.element[0].scrollLeft;
-					node.childNodes[1].focus();
-					this.element[0].scrollTop = t;
-					this.element[0].scrollLeft = l;
-				}
-			}
-			if(obj.state.opened && !obj.state.loaded) {
-				obj.state.opened = false;
-				setTimeout($.proxy(function () {
-					this.open_node(obj.id, false, 0);
-				}, this), 0);
-			}
-			return node;
-		},
-		/**
-		 * opens a node, revaling its children. If the node is not loaded it will be loaded and opened once ready.
-		 * @name open_node(obj [, callback, animation])
-		 * @param {mixed} obj the node to open
-		 * @param {Function} callback a function to execute once the node is opened
-		 * @param {Number} animation the animation duration in milliseconds when opening the node (overrides the `core.animation` setting). Use `false` for no animation.
-		 * @trigger open_node.jstree, after_open.jstree, before_open.jstree
-		 */
-		open_node : function (obj, callback, animation) {
-			var t1, t2, d, t;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.open_node(obj[t1], callback, animation);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			animation = animation === undefined ? this.settings.core.animation : animation;
-			if(!this.is_closed(obj)) {
-				if(callback) {
-					callback.call(this, obj, false);
-				}
-				return false;
-			}
-			if(!this.is_loaded(obj)) {
-				if(this.is_loading(obj)) {
-					return setTimeout($.proxy(function () {
-						this.open_node(obj, callback, animation);
-					}, this), 500);
-				}
-				this.load_node(obj, function (o, ok) {
-					return ok ? this.open_node(o, callback, animation) : (callback ? callback.call(this, o, false) : false);
-				});
-			}
-			else {
-				d = this.get_node(obj, true);
-				t = this;
-				if(d.length) {
-					if(animation && d.children(".jstree-children").length) {
-						d.children(".jstree-children").stop(true, true);
-					}
-					if(obj.children.length && !this._firstChild(d.children('.jstree-children')[0])) {
-						this.draw_children(obj);
-						//d = this.get_node(obj, true);
-					}
-					if(!animation) {
-						this.trigger('before_open', { "node" : obj });
-						d[0].className = d[0].className.replace('jstree-closed', 'jstree-open');
-						d[0].setAttribute("aria-expanded", true);
-					}
-					else {
-						this.trigger('before_open', { "node" : obj });
-						d
-							.children(".jstree-children").css("display","none").end()
-							.removeClass("jstree-closed").addClass("jstree-open").attr("aria-expanded", true)
-							.children(".jstree-children").stop(true, true)
-								.slideDown(animation, function () {
-									this.style.display = "";
-									t.trigger("after_open", { "node" : obj });
-								});
-					}
-				}
-				obj.state.opened = true;
-				if(callback) {
-					callback.call(this, obj, true);
-				}
-				if(!d.length) {
-					/**
-					 * triggered when a node is about to be opened (if the node is supposed to be in the DOM, it will be, but it won't be visible yet)
-					 * @event
-					 * @name before_open.jstree
-					 * @param {Object} node the opened node
-					 */
-					this.trigger('before_open', { "node" : obj });
-				}
-				/**
-				 * triggered when a node is opened (if there is an animation it will not be completed yet)
-				 * @event
-				 * @name open_node.jstree
-				 * @param {Object} node the opened node
-				 */
-				this.trigger('open_node', { "node" : obj });
-				if(!animation || !d.length) {
-					/**
-					 * triggered when a node is opened and the animation is complete
-					 * @event
-					 * @name after_open.jstree
-					 * @param {Object} node the opened node
-					 */
-					this.trigger("after_open", { "node" : obj });
-				}
-			}
-		},
-		/**
-		 * opens every parent of a node (node should be loaded)
-		 * @name _open_to(obj)
-		 * @param {mixed} obj the node to reveal
-		 * @private
-		 */
-		_open_to : function (obj) {
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			var i, j, p = obj.parents;
-			for(i = 0, j = p.length; i < j; i+=1) {
-				if(i !== '#') {
-					this.open_node(p[i], false, 0);
-				}
-			}
-			return $('#' + obj.id.replace($.jstree.idregex,'\\$&'), this.element);
-		},
-		/**
-		 * closes a node, hiding its children
-		 * @name close_node(obj [, animation])
-		 * @param {mixed} obj the node to close
-		 * @param {Number} animation the animation duration in milliseconds when closing the node (overrides the `core.animation` setting). Use `false` for no animation.
-		 * @trigger close_node.jstree, after_close.jstree
-		 */
-		close_node : function (obj, animation) {
-			var t1, t2, t, d;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.close_node(obj[t1], animation);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			if(this.is_closed(obj)) {
-				return false;
-			}
-			animation = animation === undefined ? this.settings.core.animation : animation;
-			t = this;
-			d = this.get_node(obj, true);
-			if(d.length) {
-				if(!animation) {
-					d[0].className = d[0].className.replace('jstree-open', 'jstree-closed');
-					d.attr("aria-expanded", false).children('.jstree-children').remove();
-				}
-				else {
-					d
-						.children(".jstree-children").attr("style","display:block !important").end()
-						.removeClass("jstree-open").addClass("jstree-closed").attr("aria-expanded", false)
-						.children(".jstree-children").stop(true, true).slideUp(animation, function () {
-							this.style.display = "";
-							d.children('.jstree-children').remove();
-							t.trigger("after_close", { "node" : obj });
-						});
-				}
-			}
-			obj.state.opened = false;
-			/**
-			 * triggered when a node is closed (if there is an animation it will not be complete yet)
-			 * @event
-			 * @name close_node.jstree
-			 * @param {Object} node the closed node
-			 */
-			this.trigger('close_node',{ "node" : obj });
-			if(!animation || !d.length) {
-				/**
-				 * triggered when a node is closed and the animation is complete
-				 * @event
-				 * @name after_close.jstree
-				 * @param {Object} node the closed node
-				 */
-				this.trigger("after_close", { "node" : obj });
-			}
-		},
-		/**
-		 * toggles a node - closing it if it is open, opening it if it is closed
-		 * @name toggle_node(obj)
-		 * @param {mixed} obj the node to toggle
-		 */
-		toggle_node : function (obj) {
-			var t1, t2;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.toggle_node(obj[t1]);
-				}
-				return true;
-			}
-			if(this.is_closed(obj)) {
-				return this.open_node(obj);
-			}
-			if(this.is_open(obj)) {
-				return this.close_node(obj);
-			}
-		},
-		/**
-		 * opens all nodes within a node (or the tree), revaling their children. If the node is not loaded it will be loaded and opened once ready.
-		 * @name open_all([obj, animation, original_obj])
-		 * @param {mixed} obj the node to open recursively, omit to open all nodes in the tree
-		 * @param {Number} animation the animation duration in milliseconds when opening the nodes, the default is no animation
-		 * @param {jQuery} reference to the node that started the process (internal use)
-		 * @trigger open_all.jstree
-		 */
-		open_all : function (obj, animation, original_obj) {
-			if(!obj) { obj = '#'; }
-			obj = this.get_node(obj);
-			if(!obj) { return false; }
-			var dom = obj.id === '#' ? this.get_container_ul() : this.get_node(obj, true), i, j, _this;
-			if(!dom.length) {
-				for(i = 0, j = obj.children_d.length; i < j; i++) {
-					if(this.is_closed(this._model.data[obj.children_d[i]])) {
-						this._model.data[obj.children_d[i]].state.opened = true;
-					}
-				}
-				return this.trigger('open_all', { "node" : obj });
-			}
-			original_obj = original_obj || dom;
-			_this = this;
-			dom = this.is_closed(obj) ? dom.find('.jstree-closed').addBack() : dom.find('.jstree-closed');
-			dom.each(function () {
-				_this.open_node(
-					this,
-					function(node, status) { if(status && this.is_parent(node)) { this.open_all(node, animation, original_obj); } },
-					animation || 0
-				);
-			});
-			if(original_obj.find('.jstree-closed').length === 0) {
-				/**
-				 * triggered when an `open_all` call completes
-				 * @event
-				 * @name open_all.jstree
-				 * @param {Object} node the opened node
-				 */
-				this.trigger('open_all', { "node" : this.get_node(original_obj) });
-			}
-		},
-		/**
-		 * closes all nodes within a node (or the tree), revaling their children
-		 * @name close_all([obj, animation])
-		 * @param {mixed} obj the node to close recursively, omit to close all nodes in the tree
-		 * @param {Number} animation the animation duration in milliseconds when closing the nodes, the default is no animation
-		 * @trigger close_all.jstree
-		 */
-		close_all : function (obj, animation) {
-			if(!obj) { obj = '#'; }
-			obj = this.get_node(obj);
-			if(!obj) { return false; }
-			var dom = obj.id === '#' ? this.get_container_ul() : this.get_node(obj, true),
-				_this = this, i, j;
-			if(!dom.length) {
-				for(i = 0, j = obj.children_d.length; i < j; i++) {
-					this._model.data[obj.children_d[i]].state.opened = false;
-				}
-				return this.trigger('close_all', { "node" : obj });
-			}
-			dom = this.is_open(obj) ? dom.find('.jstree-open').addBack() : dom.find('.jstree-open');
-			$(dom.get().reverse()).each(function () { _this.close_node(this, animation || 0); });
-			/**
-			 * triggered when an `close_all` call completes
-			 * @event
-			 * @name close_all.jstree
-			 * @param {Object} node the closed node
-			 */
-			this.trigger('close_all', { "node" : obj });
-		},
-		/**
-		 * checks if a node is disabled (not selectable)
-		 * @name is_disabled(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		is_disabled : function (obj) {
-			obj = this.get_node(obj);
-			return obj && obj.state && obj.state.disabled;
-		},
-		/**
-		 * enables a node - so that it can be selected
-		 * @name enable_node(obj)
-		 * @param {mixed} obj the node to enable
-		 * @trigger enable_node.jstree
-		 */
-		enable_node : function (obj) {
-			var t1, t2;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.enable_node(obj[t1]);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			obj.state.disabled = false;
-			this.get_node(obj,true).children('.jstree-anchor').removeClass('jstree-disabled').attr('aria-disabled', false);
-			/**
-			 * triggered when an node is enabled
-			 * @event
-			 * @name enable_node.jstree
-			 * @param {Object} node the enabled node
-			 */
-			this.trigger('enable_node', { 'node' : obj });
-		},
-		/**
-		 * disables a node - so that it can not be selected
-		 * @name disable_node(obj)
-		 * @param {mixed} obj the node to disable
-		 * @trigger disable_node.jstree
-		 */
-		disable_node : function (obj) {
-			var t1, t2;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.disable_node(obj[t1]);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			obj.state.disabled = true;
-			this.get_node(obj,true).children('.jstree-anchor').addClass('jstree-disabled').attr('aria-disabled', true);
-			/**
-			 * triggered when an node is disabled
-			 * @event
-			 * @name disable_node.jstree
-			 * @param {Object} node the disabled node
-			 */
-			this.trigger('disable_node', { 'node' : obj });
-		},
-		/**
-		 * called when a node is selected by the user. Used internally.
-		 * @private
-		 * @name activate_node(obj, e)
-		 * @param {mixed} obj the node
-		 * @param {Object} e the related event
-		 * @trigger activate_node.jstree, changed.jstree
-		 */
-		activate_node : function (obj, e) {
-			if(this.is_disabled(obj)) {
-				return false;
-			}
-
-			// ensure last_clicked is still in the DOM, make it fresh (maybe it was moved?) and make sure it is still selected, if not - make last_clicked the last selected node
-			this._data.core.last_clicked = this._data.core.last_clicked && this._data.core.last_clicked.id !== undefined ? this.get_node(this._data.core.last_clicked.id) : null;
-			if(this._data.core.last_clicked && !this._data.core.last_clicked.state.selected) { this._data.core.last_clicked = null; }
-			if(!this._data.core.last_clicked && this._data.core.selected.length) { this._data.core.last_clicked = this.get_node(this._data.core.selected[this._data.core.selected.length - 1]); }
-
-			if(!this.settings.core.multiple || (!e.metaKey && !e.ctrlKey && !e.shiftKey) || (e.shiftKey && (!this._data.core.last_clicked || !this.get_parent(obj) || this.get_parent(obj) !== this._data.core.last_clicked.parent ) )) {
-				if(!this.settings.core.multiple && (e.metaKey || e.ctrlKey || e.shiftKey) && this.is_selected(obj)) {
-					this.deselect_node(obj, false, e);
-				}
-				else {
-					this.deselect_all(true);
-					this.select_node(obj, false, false, e);
-					this._data.core.last_clicked = this.get_node(obj);
-				}
-			}
-			else {
-				if(e.shiftKey) {
-					var o = this.get_node(obj).id,
-						l = this._data.core.last_clicked.id,
-						p = this.get_node(this._data.core.last_clicked.parent).children,
-						c = false,
-						i, j;
-					for(i = 0, j = p.length; i < j; i += 1) {
-						// separate IFs work whem o and l are the same
-						if(p[i] === o) {
-							c = !c;
-						}
-						if(p[i] === l) {
-							c = !c;
-						}
-						if(c || p[i] === o || p[i] === l) {
-							this.select_node(p[i], true, false, e);
-						}
-						else {
-							this.deselect_node(p[i], true, e);
-						}
-					}
-					this.trigger('changed', { 'action' : 'select_node', 'node' : this.get_node(obj), 'selected' : this._data.core.selected, 'event' : e });
-				}
-				else {
-					if(!this.is_selected(obj)) {
-						this.select_node(obj, false, false, e);
-					}
-					else {
-						this.deselect_node(obj, false, e);
-					}
-				}
-			}
-			/**
-			 * triggered when an node is clicked or intercated with by the user
-			 * @event
-			 * @name activate_node.jstree
-			 * @param {Object} node
-			 */
-			this.trigger('activate_node', { 'node' : this.get_node(obj) });
-		},
-		/**
-		 * applies the hover state on a node, called when a node is hovered by the user. Used internally.
-		 * @private
-		 * @name hover_node(obj)
-		 * @param {mixed} obj
-		 * @trigger hover_node.jstree
-		 */
-		hover_node : function (obj) {
-			obj = this.get_node(obj, true);
-			if(!obj || !obj.length || obj.children('.jstree-hovered').length) {
-				return false;
-			}
-			var o = this.element.find('.jstree-hovered'), t = this.element;
-			if(o && o.length) { this.dehover_node(o); }
-
-			obj.children('.jstree-anchor').addClass('jstree-hovered');
-			/**
-			 * triggered when an node is hovered
-			 * @event
-			 * @name hover_node.jstree
-			 * @param {Object} node
-			 */
-			this.trigger('hover_node', { 'node' : this.get_node(obj) });
-			setTimeout(function () { t.attr('aria-activedescendant', obj[0].id); }, 0);
-		},
-		/**
-		 * removes the hover state from a nodecalled when a node is no longer hovered by the user. Used internally.
-		 * @private
-		 * @name dehover_node(obj)
-		 * @param {mixed} obj
-		 * @trigger dehover_node.jstree
-		 */
-		dehover_node : function (obj) {
-			obj = this.get_node(obj, true);
-			if(!obj || !obj.length || !obj.children('.jstree-hovered').length) {
-				return false;
-			}
-			obj.children('.jstree-anchor').removeClass('jstree-hovered');
-			/**
-			 * triggered when an node is no longer hovered
-			 * @event
-			 * @name dehover_node.jstree
-			 * @param {Object} node
-			 */
-			this.trigger('dehover_node', { 'node' : this.get_node(obj) });
-		},
-		/**
-		 * select a node
-		 * @name select_node(obj [, supress_event, prevent_open])
-		 * @param {mixed} obj an array can be used to select multiple nodes
-		 * @param {Boolean} supress_event if set to `true` the `changed.jstree` event won't be triggered
-		 * @param {Boolean} prevent_open if set to `true` parents of the selected node won't be opened
-		 * @trigger select_node.jstree, changed.jstree
-		 */
-		select_node : function (obj, supress_event, prevent_open, e) {
-			var dom, t1, t2, th;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.select_node(obj[t1], supress_event, prevent_open, e);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			dom = this.get_node(obj, true);
-			if(!obj.state.selected) {
-				obj.state.selected = true;
-				this._data.core.selected.push(obj.id);
-				if(!prevent_open) {
-					dom = this._open_to(obj);
-				}
-				if(dom && dom.length) {
-					dom.attr('aria-selected', true).children('.jstree-anchor').addClass('jstree-clicked');
-				}
-				/**
-				 * triggered when an node is selected
-				 * @event
-				 * @name select_node.jstree
-				 * @param {Object} node
-				 * @param {Array} selected the current selection
-				 * @param {Object} event the event (if any) that triggered this select_node
-				 */
-				this.trigger('select_node', { 'node' : obj, 'selected' : this._data.core.selected, 'event' : e });
-				if(!supress_event) {
-					/**
-					 * triggered when selection changes
-					 * @event
-					 * @name changed.jstree
-					 * @param {Object} node
-					 * @param {Object} action the action that caused the selection to change
-					 * @param {Array} selected the current selection
-					 * @param {Object} event the event (if any) that triggered this changed event
-					 */
-					this.trigger('changed', { 'action' : 'select_node', 'node' : obj, 'selected' : this._data.core.selected, 'event' : e });
-				}
-			}
-		},
-		/**
-		 * deselect a node
-		 * @name deselect_node(obj [, supress_event])
-		 * @param {mixed} obj an array can be used to deselect multiple nodes
-		 * @param {Boolean} supress_event if set to `true` the `changed.jstree` event won't be triggered
-		 * @trigger deselect_node.jstree, changed.jstree
-		 */
-		deselect_node : function (obj, supress_event, e) {
-			var t1, t2, dom;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.deselect_node(obj[t1], supress_event, e);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			dom = this.get_node(obj, true);
-			if(obj.state.selected) {
-				obj.state.selected = false;
-				this._data.core.selected = $.vakata.array_remove_item(this._data.core.selected, obj.id);
-				if(dom.length) {
-					dom.attr('aria-selected', false).children('.jstree-anchor').removeClass('jstree-clicked');
-				}
-				/**
-				 * triggered when an node is deselected
-				 * @event
-				 * @name deselect_node.jstree
-				 * @param {Object} node
-				 * @param {Array} selected the current selection
-				 * @param {Object} event the event (if any) that triggered this deselect_node
-				 */
-				this.trigger('deselect_node', { 'node' : obj, 'selected' : this._data.core.selected, 'event' : e });
-				if(!supress_event) {
-					this.trigger('changed', { 'action' : 'deselect_node', 'node' : obj, 'selected' : this._data.core.selected, 'event' : e });
-				}
-			}
-		},
-		/**
-		 * select all nodes in the tree
-		 * @name select_all([supress_event])
-		 * @param {Boolean} supress_event if set to `true` the `changed.jstree` event won't be triggered
-		 * @trigger select_all.jstree, changed.jstree
-		 */
-		select_all : function (supress_event) {
-			var tmp = this._data.core.selected.concat([]), i, j;
-			this._data.core.selected = this._model.data['#'].children_d.concat();
-			for(i = 0, j = this._data.core.selected.length; i < j; i++) {
-				if(this._model.data[this._data.core.selected[i]]) {
-					this._model.data[this._data.core.selected[i]].state.selected = true;
-				}
-			}
-			this.redraw(true);
-			/**
-			 * triggered when all nodes are selected
-			 * @event
-			 * @name select_all.jstree
-			 * @param {Array} selected the current selection
-			 */
-			this.trigger('select_all', { 'selected' : this._data.core.selected });
-			if(!supress_event) {
-				this.trigger('changed', { 'action' : 'select_all', 'selected' : this._data.core.selected, 'old_selection' : tmp });
-			}
-		},
-		/**
-		 * deselect all selected nodes
-		 * @name deselect_all([supress_event])
-		 * @param {Boolean} supress_event if set to `true` the `changed.jstree` event won't be triggered
-		 * @trigger deselect_all.jstree, changed.jstree
-		 */
-		deselect_all : function (supress_event) {
-			var tmp = this._data.core.selected.concat([]), i, j;
-			for(i = 0, j = this._data.core.selected.length; i < j; i++) {
-				if(this._model.data[this._data.core.selected[i]]) {
-					this._model.data[this._data.core.selected[i]].state.selected = false;
-				}
-			}
-			this._data.core.selected = [];
-			this.element.find('.jstree-clicked').removeClass('jstree-clicked').parent().attr('aria-selected', false);
-			/**
-			 * triggered when all nodes are deselected
-			 * @event
-			 * @name deselect_all.jstree
-			 * @param {Object} node the previous selection
-			 * @param {Array} selected the current selection
-			 */
-			this.trigger('deselect_all', { 'selected' : this._data.core.selected, 'node' : tmp });
-			if(!supress_event) {
-				this.trigger('changed', { 'action' : 'deselect_all', 'selected' : this._data.core.selected, 'old_selection' : tmp });
-			}
-		},
-		/**
-		 * checks if a node is selected
-		 * @name is_selected(obj)
-		 * @param  {mixed}  obj
-		 * @return {Boolean}
-		 */
-		is_selected : function (obj) {
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			return obj.state.selected;
-		},
-		/**
-		 * get an array of all selected nodes
-		 * @name get_selected([full])
-		 * @param  {mixed}  full if set to `true` the returned array will consist of the full node objects, otherwise - only IDs will be returned
-		 * @return {Array}
-		 */
-		get_selected : function (full) {
-			return full ? $.map(this._data.core.selected, $.proxy(function (i) { return this.get_node(i); }, this)) : this._data.core.selected.slice();
-		},
-		/**
-		 * get an array of all top level selected nodes (ignoring children of selected nodes)
-		 * @name get_top_selected([full])
-		 * @param  {mixed}  full if set to `true` the returned array will consist of the full node objects, otherwise - only IDs will be returned
-		 * @return {Array}
-		 */
-		get_top_selected : function (full) {
-			var tmp = this.get_selected(true),
-				obj = {}, i, j, k, l;
-			for(i = 0, j = tmp.length; i < j; i++) {
-				obj[tmp[i].id] = tmp[i];
-			}
-			for(i = 0, j = tmp.length; i < j; i++) {
-				for(k = 0, l = tmp[i].children_d.length; k < l; k++) {
-					if(obj[tmp[i].children_d[k]]) {
-						delete obj[tmp[i].children_d[k]];
-					}
-				}
-			}
-			tmp = [];
-			for(i in obj) {
-				if(obj.hasOwnProperty(i)) {
-					tmp.push(i);
-				}
-			}
-			return full ? $.map(tmp, $.proxy(function (i) { return this.get_node(i); }, this)) : tmp;
-		},
-		/**
-		 * get an array of all bottom level selected nodes (ignoring selected parents)
-		 * @name get_bottom_selected([full])
-		 * @param  {mixed}  full if set to `true` the returned array will consist of the full node objects, otherwise - only IDs will be returned
-		 * @return {Array}
-		 */
-		get_bottom_selected : function (full) {
-			var tmp = this.get_selected(true),
-				obj = [], i, j;
-			for(i = 0, j = tmp.length; i < j; i++) {
-				if(!tmp[i].children.length) {
-					obj.push(tmp[i].id);
-				}
-			}
-			return full ? $.map(obj, $.proxy(function (i) { return this.get_node(i); }, this)) : obj;
-		},
-		/**
-		 * gets the current state of the tree so that it can be restored later with `set_state(state)`. Used internally.
-		 * @name get_state()
-		 * @private
-		 * @return {Object}
-		 */
-		get_state : function () {
-			var state	= {
-				'core' : {
-					'open' : [],
-					'scroll' : {
-						'left' : this.element.scrollLeft(),
-						'top' : this.element.scrollTop()
-					},
-					/*!
-					'themes' : {
-						'name' : this.get_theme(),
-						'icons' : this._data.core.themes.icons,
-						'dots' : this._data.core.themes.dots
-					},
-					*/
-					'selected' : []
-				}
-			}, i;
-			for(i in this._model.data) {
-				if(this._model.data.hasOwnProperty(i)) {
-					if(i !== '#') {
-						if(this._model.data[i].state.opened) {
-							state.core.open.push(i);
-						}
-						if(this._model.data[i].state.selected) {
-							state.core.selected.push(i);
-						}
-					}
-				}
-			}
-			return state;
-		},
-		/**
-		 * sets the state of the tree. Used internally.
-		 * @name set_state(state [, callback])
-		 * @private
-		 * @param {Object} state the state to restore
-		 * @param {Function} callback an optional function to execute once the state is restored.
-		 * @trigger set_state.jstree
-		 */
-		set_state : function (state, callback) {
-			if(state) {
-				if(state.core) {
-					var res, n, t, _this;
-					if(state.core.open) {
-						if(!$.isArray(state.core.open)) {
-							delete state.core.open;
-							this.set_state(state, callback);
-							return false;
-						}
-						res = true;
-						n = false;
-						t = this;
-						$.each(state.core.open.concat([]), function (i, v) {
-							n = t.get_node(v);
-							if(n) {
-								if(t.is_loaded(v)) {
-									if(t.is_closed(v)) {
-										t.open_node(v, false, 0);
-									}
-									if(state && state.core && state.core.open) {
-										$.vakata.array_remove_item(state.core.open, v);
-									}
-								}
-								else {
-									if(!t.is_loading(v)) {
-										t.open_node(v, $.proxy(function (o, s) {
-											if(!s && state && state.core && state.core.open) {
-												$.vakata.array_remove_item(state.core.open, o.id);
-											}
-											this.set_state(state, callback);
-										}, t), 0);
-									}
-									// there will be some async activity - so wait for it
-									res = false;
-								}
-							}
-						});
-						if(res) {
-							delete state.core.open;
-							this.set_state(state, callback);
-						}
-						return false;
-					}
-					if(state.core.scroll) {
-						if(state.core.scroll && state.core.scroll.left !== undefined) {
-							this.element.scrollLeft(state.core.scroll.left);
-						}
-						if(state.core.scroll && state.core.scroll.top !== undefined) {
-							this.element.scrollTop(state.core.scroll.top);
-						}
-						delete state.core.scroll;
-						this.set_state(state, callback);
-						return false;
-					}
-					/*!
-					if(state.core.themes) {
-						if(state.core.themes.name) {
-							this.set_theme(state.core.themes.name);
-						}
-						if(typeof state.core.themes.dots !== 'undefined') {
-							this[ state.core.themes.dots ? "show_dots" : "hide_dots" ]();
-						}
-						if(typeof state.core.themes.icons !== 'undefined') {
-							this[ state.core.themes.icons ? "show_icons" : "hide_icons" ]();
-						}
-						delete state.core.themes;
-						delete state.core.open;
-						this.set_state(state, callback);
-						return false;
-					}
-					*/
-					if(state.core.selected) {
-						_this = this;
-						this.deselect_all();
-						$.each(state.core.selected, function (i, v) {
-							_this.select_node(v);
-						});
-						delete state.core.selected;
-						this.set_state(state, callback);
-						return false;
-					}
-					if($.isEmptyObject(state.core)) {
-						delete state.core;
-						this.set_state(state, callback);
-						return false;
-					}
-				}
-				if($.isEmptyObject(state)) {
-					state = null;
-					if(callback) { callback.call(this); }
-					/**
-					 * triggered when a `set_state` call completes
-					 * @event
-					 * @name set_state.jstree
-					 */
-					this.trigger('set_state');
-					return false;
-				}
-				return true;
-			}
-			return false;
-		},
-		/**
-		 * refreshes the tree - all nodes are reloaded with calls to `load_node`.
-		 * @name refresh()
-		 * @param {Boolean} skip_loading an option to skip showing the loading indicator
-		 * @param {Mixed} forget_state if set to `true` state will not be reapplied, if set to a function (receiving the current state as argument) the result of that function will be used as state
-		 * @trigger refresh.jstree
-		 */
-		refresh : function (skip_loading, forget_state) {
-			this._data.core.state = forget_state === true ? {} : this.get_state();
-			if(forget_state && $.isFunction(forget_state)) { this._data.core.state = forget_state.call(this, this._data.core.state); }
-			this._cnt = 0;
-			this._model.data = {
-				'#' : {
-					id : '#',
-					parent : null,
-					parents : [],
-					children : [],
-					children_d : [],
-					state : { loaded : false }
-				}
-			};
-			var c = this.get_container_ul()[0].className;
-			if(!skip_loading) {
-				this.element.html("<"+"ul class='"+c+"' role='group'><"+"li class='jstree-initial-node jstree-loading jstree-leaf jstree-last' role='treeitem' id='j"+this._id+"_loading'><i class='jstree-icon jstree-ocl'></i><"+"a class='jstree-anchor' href='#'><i class='jstree-icon jstree-themeicon-hidden'></i>" + this.get_string("Loading ...") + "</a></li></ul>");
-				this.element.attr('aria-activedescendant','j'+this._id+'_loading');
-			}
-			this.load_node('#', function (o, s) {
-				if(s) {
-					this.get_container_ul()[0].className = c;
-					if(this._firstChild(this.get_container_ul()[0])) {
-						this.element.attr('aria-activedescendant',this._firstChild(this.get_container_ul()[0]).id);
-					}
-					this.set_state($.extend(true, {}, this._data.core.state), function () {
-						/**
-						 * triggered when a `refresh` call completes
-						 * @event
-						 * @name refresh.jstree
-						 */
-						this.trigger('refresh');
-					});
-				}
-				this._data.core.state = null;
-			});
-		},
-		/**
-		 * refreshes a node in the tree (reload its children) all opened nodes inside that node are reloaded with calls to `load_node`.
-		 * @name refresh_node(obj)
-		 * @param  {mixed} obj the node
-		 * @trigger refresh_node.jstree
-		 */
-		refresh_node : function (obj) {
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			var opened = [], to_load = [], s = this._data.core.selected.concat([]);
-			to_load.push(obj.id);
-			if(obj.state.opened === true) { opened.push(obj.id); }
-			this.get_node(obj, true).find('.jstree-open').each(function() { opened.push(this.id); });
-			this._load_nodes(to_load, $.proxy(function (nodes) {
-				this.open_node(opened, false, 0);
-				this.select_node(this._data.core.selected);
-				/**
-				 * triggered when a node is refreshed
-				 * @event
-				 * @name refresh_node.jstree
-				 * @param {Object} node - the refreshed node
-				 * @param {Array} nodes - an array of the IDs of the nodes that were reloaded
-				 */
-				this.trigger('refresh_node', { 'node' : obj, 'nodes' : nodes });
-			}, this));
-		},
-		/**
-		 * set (change) the ID of a node
-		 * @name set_id(obj, id)
-		 * @param  {mixed} obj the node
-		 * @param  {String} id the new ID
-		 * @return {Boolean}
-		 */
-		set_id : function (obj, id) {
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			var i, j, m = this._model.data;
-			id = id.toString();
-			// update parents (replace current ID with new one in children and children_d)
-			m[obj.parent].children[$.inArray(obj.id, m[obj.parent].children)] = id;
-			for(i = 0, j = obj.parents.length; i < j; i++) {
-				m[obj.parents[i]].children_d[$.inArray(obj.id, m[obj.parents[i]].children_d)] = id;
-			}
-			// update children (replace current ID with new one in parent and parents)
-			for(i = 0, j = obj.children.length; i < j; i++) {
-				m[obj.children[i]].parent = id;
-			}
-			for(i = 0, j = obj.children_d.length; i < j; i++) {
-				m[obj.children_d[i]].parents[$.inArray(obj.id, m[obj.children_d[i]].parents)] = id;
-			}
-			i = $.inArray(obj.id, this._data.core.selected);
-			if(i !== -1) { this._data.core.selected[i] = id; }
-			// update model and obj itself (obj.id, this._model.data[KEY])
-			i = this.get_node(obj.id, true);
-			if(i) {
-				i.attr('id', id);
-			}
-			delete m[obj.id];
-			obj.id = id;
-			m[id] = obj;
-			return true;
-		},
-		/**
-		 * get the text value of a node
-		 * @name get_text(obj)
-		 * @param  {mixed} obj the node
-		 * @return {String}
-		 */
-		get_text : function (obj) {
-			obj = this.get_node(obj);
-			return (!obj || obj.id === '#') ? false : obj.text;
-		},
-		/**
-		 * set the text value of a node. Used internally, please use `rename_node(obj, val)`.
-		 * @private
-		 * @name set_text(obj, val)
-		 * @param  {mixed} obj the node, you can pass an array to set the text on multiple nodes
-		 * @param  {String} val the new text value
-		 * @return {Boolean}
-		 * @trigger set_text.jstree
-		 */
-		set_text : function (obj, val) {
-			var t1, t2;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.set_text(obj[t1], val);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			obj.text = val;
-			if(this.get_node(obj, true).length) {
-				this.redraw_node(obj.id);
-			}
-			/**
-			 * triggered when a node text value is changed
-			 * @event
-			 * @name set_text.jstree
-			 * @param {Object} obj
-			 * @param {String} text the new value
-			 */
-			this.trigger('set_text',{ "obj" : obj, "text" : val });
-			return true;
-		},
-		/**
-		 * gets a JSON representation of a node (or the whole tree)
-		 * @name get_json([obj, options])
-		 * @param  {mixed} obj
-		 * @param  {Object} options
-		 * @param  {Boolean} options.no_state do not return state information
-		 * @param  {Boolean} options.no_id do not return ID
-		 * @param  {Boolean} options.no_children do not include children
-		 * @param  {Boolean} options.no_data do not include node data
-		 * @param  {Boolean} options.flat return flat JSON instead of nested
-		 * @return {Object}
-		 */
-		get_json : function (obj, options, flat) {
-			obj = this.get_node(obj || '#');
-			if(!obj) { return false; }
-			if(options && options.flat && !flat) { flat = []; }
-			var tmp = {
-				'id' : obj.id,
-				'text' : obj.text,
-				'icon' : this.get_icon(obj),
-				'li_attr' : $.extend(true, {}, obj.li_attr),
-				'a_attr' : $.extend(true, {}, obj.a_attr),
-				'state' : {},
-				'data' : options && options.no_data ? false : $.extend(true, {}, obj.data)
-				//( this.get_node(obj, true).length ? this.get_node(obj, true).data() : obj.data ),
-			}, i, j;
-			if(options && options.flat) {
-				tmp.parent = obj.parent;
-			}
-			else {
-				tmp.children = [];
-			}
-			if(!options || !options.no_state) {
-				for(i in obj.state) {
-					if(obj.state.hasOwnProperty(i)) {
-						tmp.state[i] = obj.state[i];
-					}
-				}
-			}
-			if(options && options.no_id) {
-				delete tmp.id;
-				if(tmp.li_attr && tmp.li_attr.id) {
-					delete tmp.li_attr.id;
-				}
-				if(tmp.a_attr && tmp.a_attr.id) {
-					delete tmp.a_attr.id;
-				}
-			}
-			if(options && options.flat && obj.id !== '#') {
-				flat.push(tmp);
-			}
-			if(!options || !options.no_children) {
-				for(i = 0, j = obj.children.length; i < j; i++) {
-					if(options && options.flat) {
-						this.get_json(obj.children[i], options, flat);
-					}
-					else {
-						tmp.children.push(this.get_json(obj.children[i], options));
-					}
-				}
-			}
-			return options && options.flat ? flat : (obj.id === '#' ? tmp.children : tmp);
-		},
-		/**
-		 * create a new node (do not confuse with load_node)
-		 * @name create_node([obj, node, pos, callback, is_loaded])
-		 * @param  {mixed}   par       the parent node (to create a root node use either "#" (string) or `null`)
-		 * @param  {mixed}   node      the data for the new node (a valid JSON object, or a simple string with the name)
-		 * @param  {mixed}   pos       the index at which to insert the node, "first" and "last" are also supported, default is "last"
-		 * @param  {Function} callback a function to be called once the node is created
-		 * @param  {Boolean} is_loaded internal argument indicating if the parent node was succesfully loaded
-		 * @return {String}            the ID of the newly create node
-		 * @trigger model.jstree, create_node.jstree
-		 */
-		create_node : function (par, node, pos, callback, is_loaded) {
-			if(par === null) { par = "#"; }
-			par = this.get_node(par);
-			if(!par) { return false; }
-			pos = pos === undefined ? "last" : pos;
-			if(!pos.toString().match(/^(before|after)$/) && !is_loaded && !this.is_loaded(par)) {
-				return this.load_node(par, function () { this.create_node(par, node, pos, callback, true); });
-			}
-			if(!node) { node = { "text" : this.get_string('New node') }; }
-			if(typeof node === "string") { node = { "text" : node }; }
-			if(node.text === undefined) { node.text = this.get_string('New node'); }
-			var tmp, dpc, i, j;
-
-			if(par.id === '#') {
-				if(pos === "before") { pos = "first"; }
-				if(pos === "after") { pos = "last"; }
-			}
-			switch(pos) {
-				case "before":
-					tmp = this.get_node(par.parent);
-					pos = $.inArray(par.id, tmp.children);
-					par = tmp;
-					break;
-				case "after" :
-					tmp = this.get_node(par.parent);
-					pos = $.inArray(par.id, tmp.children) + 1;
-					par = tmp;
-					break;
-				case "inside":
-				case "first":
-					pos = 0;
-					break;
-				case "last":
-					pos = par.children.length;
-					break;
-				default:
-					if(!pos) { pos = 0; }
-					break;
-			}
-			if(pos > par.children.length) { pos = par.children.length; }
-			if(!node.id) { node.id = true; }
-			if(!this.check("create_node", node, par, pos)) {
-				this.settings.core.error.call(this, this._data.core.last_error);
-				return false;
-			}
-			if(node.id === true) { delete node.id; }
-			node = this._parse_model_from_json(node, par.id, par.parents.concat());
-			if(!node) { return false; }
-			tmp = this.get_node(node);
-			dpc = [];
-			dpc.push(node);
-			dpc = dpc.concat(tmp.children_d);
-			this.trigger('model', { "nodes" : dpc, "parent" : par.id });
-
-			par.children_d = par.children_d.concat(dpc);
-			for(i = 0, j = par.parents.length; i < j; i++) {
-				this._model.data[par.parents[i]].children_d = this._model.data[par.parents[i]].children_d.concat(dpc);
-			}
-			node = tmp;
-			tmp = [];
-			for(i = 0, j = par.children.length; i < j; i++) {
-				tmp[i >= pos ? i+1 : i] = par.children[i];
-			}
-			tmp[pos] = node.id;
-			par.children = tmp;
-
-			this.redraw_node(par, true);
-			if(callback) { callback.call(this, this.get_node(node)); }
-			/**
-			 * triggered when a node is created
-			 * @event
-			 * @name create_node.jstree
-			 * @param {Object} node
-			 * @param {String} parent the parent's ID
-			 * @param {Number} position the position of the new node among the parent's children
-			 */
-			this.trigger('create_node', { "node" : this.get_node(node), "parent" : par.id, "position" : pos });
-			return node.id;
-		},
-		/**
-		 * set the text value of a node
-		 * @name rename_node(obj, val)
-		 * @param  {mixed} obj the node, you can pass an array to rename multiple nodes to the same name
-		 * @param  {String} val the new text value
-		 * @return {Boolean}
-		 * @trigger rename_node.jstree
-		 */
-		rename_node : function (obj, val) {
-			var t1, t2, old;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.rename_node(obj[t1], val);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			old = obj.text;
-			if(!this.check("rename_node", obj, this.get_parent(obj), val)) {
-				this.settings.core.error.call(this, this._data.core.last_error);
-				return false;
-			}
-			this.set_text(obj, val); // .apply(this, Array.prototype.slice.call(arguments))
-			/**
-			 * triggered when a node is renamed
-			 * @event
-			 * @name rename_node.jstree
-			 * @param {Object} node
-			 * @param {String} text the new value
-			 * @param {String} old the old value
-			 */
-			this.trigger('rename_node', { "node" : obj, "text" : val, "old" : old });
-			return true;
-		},
-		/**
-		 * remove a node
-		 * @name delete_node(obj)
-		 * @param  {mixed} obj the node, you can pass an array to delete multiple nodes
-		 * @return {Boolean}
-		 * @trigger delete_node.jstree, changed.jstree
-		 */
-		delete_node : function (obj) {
-			var t1, t2, par, pos, tmp, i, j, k, l, c;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.delete_node(obj[t1]);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			par = this.get_node(obj.parent);
-			pos = $.inArray(obj.id, par.children);
-			c = false;
-			if(!this.check("delete_node", obj, par, pos)) {
-				this.settings.core.error.call(this, this._data.core.last_error);
-				return false;
-			}
-			if(pos !== -1) {
-				par.children = $.vakata.array_remove(par.children, pos);
-			}
-			tmp = obj.children_d.concat([]);
-			tmp.push(obj.id);
-			for(k = 0, l = tmp.length; k < l; k++) {
-				for(i = 0, j = obj.parents.length; i < j; i++) {
-					pos = $.inArray(tmp[k], this._model.data[obj.parents[i]].children_d);
-					if(pos !== -1) {
-						this._model.data[obj.parents[i]].children_d = $.vakata.array_remove(this._model.data[obj.parents[i]].children_d, pos);
-					}
-				}
-				if(this._model.data[tmp[k]].state.selected) {
-					c = true;
-					pos = $.inArray(tmp[k], this._data.core.selected);
-					if(pos !== -1) {
-						this._data.core.selected = $.vakata.array_remove(this._data.core.selected, pos);
-					}
-				}
-			}
-			/**
-			 * triggered when a node is deleted
-			 * @event
-			 * @name delete_node.jstree
-			 * @param {Object} node
-			 * @param {String} parent the parent's ID
-			 */
-			this.trigger('delete_node', { "node" : obj, "parent" : par.id });
-			if(c) {
-				this.trigger('changed', { 'action' : 'delete_node', 'node' : obj, 'selected' : this._data.core.selected, 'parent' : par.id });
-			}
-			for(k = 0, l = tmp.length; k < l; k++) {
-				delete this._model.data[tmp[k]];
-			}
-			this.redraw_node(par, true);
-			return true;
-		},
-		/**
-		 * check if an operation is premitted on the tree. Used internally.
-		 * @private
-		 * @name check(chk, obj, par, pos)
-		 * @param  {String} chk the operation to check, can be "create_node", "rename_node", "delete_node", "copy_node" or "move_node"
-		 * @param  {mixed} obj the node
-		 * @param  {mixed} par the parent
-		 * @param  {mixed} pos the position to insert at, or if "rename_node" - the new name
-		 * @param  {mixed} more some various additional information, for example if a "move_node" operations is triggered by DND this will be the hovered node
-		 * @return {Boolean}
-		 */
-		check : function (chk, obj, par, pos, more) {
-			obj = obj && obj.id ? obj : this.get_node(obj);
-			par = par && par.id ? par : this.get_node(par);
-			var tmp = chk.match(/^move_node|copy_node|create_node$/i) ? par : obj,
-				chc = this.settings.core.check_callback;
-			if(chk === "move_node" || chk === "copy_node") {
-				if((!more || !more.is_multi) && (obj.id === par.id || $.inArray(obj.id, par.children) === pos || $.inArray(par.id, obj.children_d) !== -1)) {
-					this._data.core.last_error = { 'error' : 'check', 'plugin' : 'core', 'id' : 'core_01', 'reason' : 'Moving parent inside child', 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-					return false;
-				}
-			}
-			if(tmp && tmp.data) { tmp = tmp.data; }
-			if(tmp && tmp.functions && (tmp.functions[chk] === false || tmp.functions[chk] === true)) {
-				if(tmp.functions[chk] === false) {
-					this._data.core.last_error = { 'error' : 'check', 'plugin' : 'core', 'id' : 'core_02', 'reason' : 'Node data prevents function: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-				}
-				return tmp.functions[chk];
-			}
-			if(chc === false || ($.isFunction(chc) && chc.call(this, chk, obj, par, pos, more) === false) || (chc && chc[chk] === false)) {
-				this._data.core.last_error = { 'error' : 'check', 'plugin' : 'core', 'id' : 'core_03', 'reason' : 'User config for core.check_callback prevents function: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-				return false;
-			}
-			return true;
-		},
-		/**
-		 * get the last error
-		 * @name last_error()
-		 * @return {Object}
-		 */
-		last_error : function () {
-			return this._data.core.last_error;
-		},
-		/**
-		 * move a node to a new parent
-		 * @name move_node(obj, par [, pos, callback, is_loaded])
-		 * @param  {mixed} obj the node to move, pass an array to move multiple nodes
-		 * @param  {mixed} par the new parent
-		 * @param  {mixed} pos the position to insert at (besides integer values, "first" and "last" are supported, as well as "before" and "after"), defaults to integer `0`
-		 * @param  {function} callback a function to call once the move is completed, receives 3 arguments - the node, the new parent and the position
-		 * @param  {Boolean} internal parameter indicating if the parent node has been loaded
-		 * @param  {Boolean} internal parameter indicating if the tree should be redrawn
-		 * @trigger move_node.jstree
-		 */
-		move_node : function (obj, par, pos, callback, is_loaded, skip_redraw) {
-			var t1, t2, old_par, old_pos, new_par, old_ins, is_multi, dpc, tmp, i, j, k, l, p;
-
-			par = this.get_node(par);
-			pos = pos === undefined ? 0 : pos;
-			if(!par) { return false; }
-			if(!pos.toString().match(/^(before|after)$/) && !is_loaded && !this.is_loaded(par)) {
-				return this.load_node(par, function () { this.move_node(obj, par, pos, callback, true); });
-			}
-
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					if(this.move_node(obj[t1], par, pos, callback, is_loaded, true)) {
-						par = obj[t1];
-						pos = "after";
-					}
-				}
-				this.redraw();
-				return true;
-			}
-			obj = obj && obj.id ? obj : this.get_node(obj);
-
-			if(!obj || obj.id === '#') { return false; }
-
-			old_par = (obj.parent || '#').toString();
-			new_par = (!pos.toString().match(/^(before|after)$/) || par.id === '#') ? par : this.get_node(par.parent);
-			old_ins = obj.instance ? obj.instance : (this._model.data[obj.id] ? this : $.jstree.reference(obj.id));
-			is_multi = !old_ins || !old_ins._id || (this._id !== old_ins._id);
-			old_pos = old_ins && old_ins._id && old_par && old_ins._model.data[old_par] && old_ins._model.data[old_par].children ? $.inArray(obj.id, old_ins._model.data[old_par].children) : -1;
-			if(is_multi) {
-				if(this.copy_node(obj, par, pos, callback, is_loaded)) {
-					if(old_ins) { old_ins.delete_node(obj); }
-					return true;
-				}
-				return false;
-			}
-			//var m = this._model.data;
-			if(par.id === '#') {
-				if(pos === "before") { pos = "first"; }
-				if(pos === "after") { pos = "last"; }
-			}
-			switch(pos) {
-				case "before":
-					pos = $.inArray(par.id, new_par.children);
-					break;
-				case "after" :
-					pos = $.inArray(par.id, new_par.children) + 1;
-					break;
-				case "inside":
-				case "first":
-					pos = 0;
-					break;
-				case "last":
-					pos = new_par.children.length;
-					break;
-				default:
-					if(!pos) { pos = 0; }
-					break;
-			}
-			if(pos > new_par.children.length) { pos = new_par.children.length; }
-			if(!this.check("move_node", obj, new_par, pos, { 'core' : true, 'is_multi' : (old_ins && old_ins._id && old_ins._id !== this._id), 'is_foreign' : (!old_ins || !old_ins._id) })) {
-				this.settings.core.error.call(this, this._data.core.last_error);
-				return false;
-			}
-			if(obj.parent === new_par.id) {
-				dpc = new_par.children.concat();
-				tmp = $.inArray(obj.id, dpc);
-				if(tmp !== -1) {
-					dpc = $.vakata.array_remove(dpc, tmp);
-					if(pos > tmp) { pos--; }
-				}
-				tmp = [];
-				for(i = 0, j = dpc.length; i < j; i++) {
-					tmp[i >= pos ? i+1 : i] = dpc[i];
-				}
-				tmp[pos] = obj.id;
-				new_par.children = tmp;
-				this._node_changed(new_par.id);
-				this.redraw(new_par.id === '#');
-			}
-			else {
-				// clean old parent and up
-				tmp = obj.children_d.concat();
-				tmp.push(obj.id);
-				for(i = 0, j = obj.parents.length; i < j; i++) {
-					dpc = [];
-					p = old_ins._model.data[obj.parents[i]].children_d;
-					for(k = 0, l = p.length; k < l; k++) {
-						if($.inArray(p[k], tmp) === -1) {
-							dpc.push(p[k]);
-						}
-					}
-					old_ins._model.data[obj.parents[i]].children_d = dpc;
-				}
-				old_ins._model.data[old_par].children = $.vakata.array_remove_item(old_ins._model.data[old_par].children, obj.id);
-
-				// insert into new parent and up
-				for(i = 0, j = new_par.parents.length; i < j; i++) {
-					this._model.data[new_par.parents[i]].children_d = this._model.data[new_par.parents[i]].children_d.concat(tmp);
-				}
-				dpc = [];
-				for(i = 0, j = new_par.children.length; i < j; i++) {
-					dpc[i >= pos ? i+1 : i] = new_par.children[i];
-				}
-				dpc[pos] = obj.id;
-				new_par.children = dpc;
-				new_par.children_d.push(obj.id);
-				new_par.children_d = new_par.children_d.concat(obj.children_d);
-
-				// update object
-				obj.parent = new_par.id;
-				tmp = new_par.parents.concat();
-				tmp.unshift(new_par.id);
-				p = obj.parents.length;
-				obj.parents = tmp;
-
-				// update object children
-				tmp = tmp.concat();
-				for(i = 0, j = obj.children_d.length; i < j; i++) {
-					this._model.data[obj.children_d[i]].parents = this._model.data[obj.children_d[i]].parents.slice(0,p*-1);
-					Array.prototype.push.apply(this._model.data[obj.children_d[i]].parents, tmp);
-				}
-
-				if(old_par === '#' || new_par.id === '#') {
-					this._model.force_full_redraw = true;
-				}
-				if(!this._model.force_full_redraw) {
-					this._node_changed(old_par);
-					this._node_changed(new_par.id);
-				}
-				if(!skip_redraw) {
-					this.redraw();
-				}
-			}
-			if(callback) { callback.call(this, obj, new_par, pos); }
-			/**
-			 * triggered when a node is moved
-			 * @event
-			 * @name move_node.jstree
-			 * @param {Object} node
-			 * @param {String} parent the parent's ID
-			 * @param {Number} position the position of the node among the parent's children
-			 * @param {String} old_parent the old parent of the node
-			 * @param {Number} old_position the old position of the node
-			 * @param {Boolean} is_multi do the node and new parent belong to different instances
-			 * @param {jsTree} old_instance the instance the node came from
-			 * @param {jsTree} new_instance the instance of the new parent
-			 */
-			this.trigger('move_node', { "node" : obj, "parent" : new_par.id, "position" : pos, "old_parent" : old_par, "old_position" : old_pos, 'is_multi' : (old_ins && old_ins._id && old_ins._id !== this._id), 'is_foreign' : (!old_ins || !old_ins._id), 'old_instance' : old_ins, 'new_instance' : this });
-			return true;
-		},
-		/**
-		 * copy a node to a new parent
-		 * @name copy_node(obj, par [, pos, callback, is_loaded])
-		 * @param  {mixed} obj the node to copy, pass an array to copy multiple nodes
-		 * @param  {mixed} par the new parent
-		 * @param  {mixed} pos the position to insert at (besides integer values, "first" and "last" are supported, as well as "before" and "after"), defaults to integer `0`
-		 * @param  {function} callback a function to call once the move is completed, receives 3 arguments - the node, the new parent and the position
-		 * @param  {Boolean} internal parameter indicating if the parent node has been loaded
-		 * @param  {Boolean} internal parameter indicating if the tree should be redrawn
-		 * @trigger model.jstree copy_node.jstree
-		 */
-		copy_node : function (obj, par, pos, callback, is_loaded, skip_redraw) {
-			var t1, t2, dpc, tmp, i, j, node, old_par, new_par, old_ins, is_multi;
-
-			par = this.get_node(par);
-			pos = pos === undefined ? 0 : pos;
-			if(!par) { return false; }
-			if(!pos.toString().match(/^(before|after)$/) && !is_loaded && !this.is_loaded(par)) {
-				return this.load_node(par, function () { this.copy_node(obj, par, pos, callback, true); });
-			}
-
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					tmp = this.copy_node(obj[t1], par, pos, callback, is_loaded, true);
-					if(tmp) {
-						par = tmp;
-						pos = "after";
-					}
-				}
-				this.redraw();
-				return true;
-			}
-			obj = obj && obj.id ? obj : this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-
-			old_par = (obj.parent || '#').toString();
-			new_par = (!pos.toString().match(/^(before|after)$/) || par.id === '#') ? par : this.get_node(par.parent);
-			old_ins = obj.instance ? obj.instance : (this._model.data[obj.id] ? this : $.jstree.reference(obj.id));
-			is_multi = !old_ins || !old_ins._id || (this._id !== old_ins._id);
-			if(par.id === '#') {
-				if(pos === "before") { pos = "first"; }
-				if(pos === "after") { pos = "last"; }
-			}
-			switch(pos) {
-				case "before":
-					pos = $.inArray(par.id, new_par.children);
-					break;
-				case "after" :
-					pos = $.inArray(par.id, new_par.children) + 1;
-					break;
-				case "inside":
-				case "first":
-					pos = 0;
-					break;
-				case "last":
-					pos = new_par.children.length;
-					break;
-				default:
-					if(!pos) { pos = 0; }
-					break;
-			}
-			if(pos > new_par.children.length) { pos = new_par.children.length; }
-			if(!this.check("copy_node", obj, new_par, pos, { 'core' : true, 'is_multi' : (old_ins && old_ins._id && old_ins._id !== this._id), 'is_foreign' : (!old_ins || !old_ins._id) })) {
-				this.settings.core.error.call(this, this._data.core.last_error);
-				return false;
-			}
-			node = old_ins ? old_ins.get_json(obj, { no_id : true, no_data : true, no_state : true }) : obj;
-			if(!node) { return false; }
-			if(node.id === true) { delete node.id; }
-			node = this._parse_model_from_json(node, new_par.id, new_par.parents.concat());
-			if(!node) { return false; }
-			tmp = this.get_node(node);
-			if(obj && obj.state && obj.state.loaded === false) { tmp.state.loaded = false; }
-			dpc = [];
-			dpc.push(node);
-			dpc = dpc.concat(tmp.children_d);
-			this.trigger('model', { "nodes" : dpc, "parent" : new_par.id });
-
-			// insert into new parent and up
-			for(i = 0, j = new_par.parents.length; i < j; i++) {
-				this._model.data[new_par.parents[i]].children_d = this._model.data[new_par.parents[i]].children_d.concat(dpc);
-			}
-			dpc = [];
-			for(i = 0, j = new_par.children.length; i < j; i++) {
-				dpc[i >= pos ? i+1 : i] = new_par.children[i];
-			}
-			dpc[pos] = tmp.id;
-			new_par.children = dpc;
-			new_par.children_d.push(tmp.id);
-			new_par.children_d = new_par.children_d.concat(tmp.children_d);
-
-			if(new_par.id === '#') {
-				this._model.force_full_redraw = true;
-			}
-			if(!this._model.force_full_redraw) {
-				this._node_changed(new_par.id);
-			}
-			if(!skip_redraw) {
-				this.redraw(new_par.id === '#');
-			}
-			if(callback) { callback.call(this, tmp, new_par, pos); }
-			/**
-			 * triggered when a node is copied
-			 * @event
-			 * @name copy_node.jstree
-			 * @param {Object} node the copied node
-			 * @param {Object} original the original node
-			 * @param {String} parent the parent's ID
-			 * @param {Number} position the position of the node among the parent's children
-			 * @param {String} old_parent the old parent of the node
-			 * @param {Number} old_position the position of the original node
-			 * @param {Boolean} is_multi do the node and new parent belong to different instances
-			 * @param {jsTree} old_instance the instance the node came from
-			 * @param {jsTree} new_instance the instance of the new parent
-			 */
-			this.trigger('copy_node', { "node" : tmp, "original" : obj, "parent" : new_par.id, "position" : pos, "old_parent" : old_par, "old_position" : old_ins && old_ins._id && old_par && old_ins._model.data[old_par] && old_ins._model.data[old_par].children ? $.inArray(obj.id, old_ins._model.data[old_par].children) : -1,'is_multi' : (old_ins && old_ins._id && old_ins._id !== this._id), 'is_foreign' : (!old_ins || !old_ins._id), 'old_instance' : old_ins, 'new_instance' : this });
-			return tmp.id;
-		},
-		/**
-		 * cut a node (a later call to `paste(obj)` would move the node)
-		 * @name cut(obj)
-		 * @param  {mixed} obj multiple objects can be passed using an array
-		 * @trigger cut.jstree
-		 */
-		cut : function (obj) {
-			if(!obj) { obj = this._data.core.selected.concat(); }
-			if(!$.isArray(obj)) { obj = [obj]; }
-			if(!obj.length) { return false; }
-			var tmp = [], o, t1, t2;
-			for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-				o = this.get_node(obj[t1]);
-				if(o && o.id && o.id !== '#') { tmp.push(o); }
-			}
-			if(!tmp.length) { return false; }
-			ccp_node = tmp;
-			ccp_inst = this;
-			ccp_mode = 'move_node';
-			/**
-			 * triggered when nodes are added to the buffer for moving
-			 * @event
-			 * @name cut.jstree
-			 * @param {Array} node
-			 */
-			this.trigger('cut', { "node" : obj });
-		},
-		/**
-		 * copy a node (a later call to `paste(obj)` would copy the node)
-		 * @name copy(obj)
-		 * @param  {mixed} obj multiple objects can be passed using an array
-		 * @trigger copy.jstre
-		 */
-		copy : function (obj) {
-			if(!obj) { obj = this._data.core.selected.concat(); }
-			if(!$.isArray(obj)) { obj = [obj]; }
-			if(!obj.length) { return false; }
-			var tmp = [], o, t1, t2;
-			for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-				o = this.get_node(obj[t1]);
-				if(o && o.id && o.id !== '#') { tmp.push(o); }
-			}
-			if(!tmp.length) { return false; }
-			ccp_node = tmp;
-			ccp_inst = this;
-			ccp_mode = 'copy_node';
-			/**
-			 * triggered when nodes are added to the buffer for copying
-			 * @event
-			 * @name copy.jstree
-			 * @param {Array} node
-			 */
-			this.trigger('copy', { "node" : obj });
-		},
-		/**
-		 * get the current buffer (any nodes that are waiting for a paste operation)
-		 * @name get_buffer()
-		 * @return {Object} an object consisting of `mode` ("copy_node" or "move_node"), `node` (an array of objects) and `inst` (the instance)
-		 */
-		get_buffer : function () {
-			return { 'mode' : ccp_mode, 'node' : ccp_node, 'inst' : ccp_inst };
-		},
-		/**
-		 * check if there is something in the buffer to paste
-		 * @name can_paste()
-		 * @return {Boolean}
-		 */
-		can_paste : function () {
-			return ccp_mode !== false && ccp_node !== false; // && ccp_inst._model.data[ccp_node];
-		},
-		/**
-		 * copy or move the previously cut or copied nodes to a new parent
-		 * @name paste(obj [, pos])
-		 * @param  {mixed} obj the new parent
-		 * @param  {mixed} pos the position to insert at (besides integer, "first" and "last" are supported), defaults to integer `0`
-		 * @trigger paste.jstree
-		 */
-		paste : function (obj, pos) {
-			obj = this.get_node(obj);
-			if(!obj || !ccp_mode || !ccp_mode.match(/^(copy_node|move_node)$/) || !ccp_node) { return false; }
-			if(this[ccp_mode](ccp_node, obj, pos)) {
-				/**
-				 * triggered when paste is invoked
-				 * @event
-				 * @name paste.jstree
-				 * @param {String} parent the ID of the receiving node
-				 * @param {Array} node the nodes in the buffer
-				 * @param {String} mode the performed operation - "copy_node" or "move_node"
-				 */
-				this.trigger('paste', { "parent" : obj.id, "node" : ccp_node, "mode" : ccp_mode });
-			}
-			ccp_node = false;
-			ccp_mode = false;
-			ccp_inst = false;
-		},
-		/**
-		 * clear the buffer of previously copied or cut nodes
-		 * @name clear_buffer()
-		 * @trigger clear_buffer.jstree
-		 */
-		clear_buffer : function () {
-			ccp_node = false;
-			ccp_mode = false;
-			ccp_inst = false;
-			/**
-			 * triggered when the copy / cut buffer is cleared
-			 * @event
-			 * @name clear_buffer.jstree
-			 */
-			this.trigger('clear_buffer');
-		},
-		/**
-		 * put a node in edit mode (input field to rename the node)
-		 * @name edit(obj [, default_text])
-		 * @param  {mixed} obj
-		 * @param  {String} default_text the text to populate the input with (if omitted the node text value is used)
-		 */
-		edit : function (obj, default_text) {
-			obj = this.get_node(obj);
-			if(!obj) { return false; }
-			if(this.settings.core.check_callback === false) {
-				this._data.core.last_error = { 'error' : 'check', 'plugin' : 'core', 'id' : 'core_07', 'reason' : 'Could not edit node because of check_callback' };
-				this.settings.core.error.call(this, this._data.core.last_error);
-				return false;
-			}
-			default_text = typeof default_text === 'string' ? default_text : obj.text;
-			this.set_text(obj, "");
-			obj = this._open_to(obj);
-
-			var rtl = this._data.core.rtl,
-				w  = this.element.width(),
-				a  = obj.children('.jstree-anchor'),
-				s  = $('<span>'),
-				/*!
-				oi = obj.children("i:visible"),
-				ai = a.children("i:visible"),
-				w1 = oi.width() * oi.length,
-				w2 = ai.width() * ai.length,
-				*/
-				t  = default_text,
-				h1 = $("<"+"div />", { css : { "position" : "absolute", "top" : "-200px", "left" : (rtl ? "0px" : "-1000px"), "visibility" : "hidden" } }).appendTo("body"),
-				h2 = $("<"+"input />", {
-						"value" : t,
-						"class" : "jstree-rename-input",
-						// "size" : t.length,
-						"css" : {
-							"padding" : "0",
-							"border" : "1px solid silver",
-							"box-sizing" : "border-box",
-							"display" : "inline-block",
-							"height" : (this._data.core.li_height) + "px",
-							"lineHeight" : (this._data.core.li_height) + "px",
-							"width" : "150px" // will be set a bit further down
-						},
-						"blur" : $.proxy(function () {
-							var i = s.children(".jstree-rename-input"),
-								v = i.val();
-							if(v === "") { v = t; }
-							h1.remove();
-							s.replaceWith(a);
-							s.remove();
-							this.set_text(obj, t);
-							if(this.rename_node(obj, $('<div></div>').text(v)[this.settings.core.force_text ? 'text' : 'html']()) === false) {
-								this.set_text(obj, t); // move this up? and fix #483
-							}
-						}, this),
-						"keydown" : function (event) {
-							var key = event.which;
-							if(key === 27) {
-								this.value = t;
-							}
-							if(key === 27 || key === 13 || key === 37 || key === 38 || key === 39 || key === 40 || key === 32) {
-								event.stopImmediatePropagation();
-							}
-							if(key === 27 || key === 13) {
-								event.preventDefault();
-								this.blur();
-							}
-						},
-						"click" : function (e) { e.stopImmediatePropagation(); },
-						"mousedown" : function (e) { e.stopImmediatePropagation(); },
-						"keyup" : function (event) {
-							h2.width(Math.min(h1.text("pW" + this.value).width(),w));
-						},
-						"keypress" : function(event) {
-							if(event.which === 13) { return false; }
-						}
-					}),
-				fn = {
-						fontFamily		: a.css('fontFamily')		|| '',
-						fontSize		: a.css('fontSize')			|| '',
-						fontWeight		: a.css('fontWeight')		|| '',
-						fontStyle		: a.css('fontStyle')		|| '',
-						fontStretch		: a.css('fontStretch')		|| '',
-						fontVariant		: a.css('fontVariant')		|| '',
-						letterSpacing	: a.css('letterSpacing')	|| '',
-						wordSpacing		: a.css('wordSpacing')		|| ''
-				};
-			s.attr('class', a.attr('class')).append(a.contents().clone()).append(h2);
-			a.replaceWith(s);
-			h1.css(fn);
-			h2.css(fn).width(Math.min(h1.text("pW" + h2[0].value).width(),w))[0].select();
-		},
-
-
-		/**
-		 * changes the theme
-		 * @name set_theme(theme_name [, theme_url])
-		 * @param {String} theme_name the name of the new theme to apply
-		 * @param {mixed} theme_url  the location of the CSS file for this theme. Omit or set to `false` if you manually included the file. Set to `true` to autoload from the `core.themes.dir` directory.
-		 * @trigger set_theme.jstree
-		 */
-		set_theme : function (theme_name, theme_url) {
-			if(!theme_name) { return false; }
-			if(theme_url === true) {
-				var dir = this.settings.core.themes.dir;
-				if(!dir) { dir = $.jstree.path + '/themes'; }
-				theme_url = dir + '/' + theme_name + '/style.css';
-			}
-			if(theme_url && $.inArray(theme_url, themes_loaded) === -1) {
-				$('head').append('<'+'link rel="stylesheet" href="' + theme_url + '" type="text/css" />');
-				themes_loaded.push(theme_url);
-			}
-			if(this._data.core.themes.name) {
-				this.element.removeClass('jstree-' + this._data.core.themes.name);
-			}
-			this._data.core.themes.name = theme_name;
-			this.element.addClass('jstree-' + theme_name);
-			this.element[this.settings.core.themes.responsive ? 'addClass' : 'removeClass' ]('jstree-' + theme_name + '-responsive');
-			/**
-			 * triggered when a theme is set
-			 * @event
-			 * @name set_theme.jstree
-			 * @param {String} theme the new theme
-			 */
-			this.trigger('set_theme', { 'theme' : theme_name });
-		},
-		/**
-		 * gets the name of the currently applied theme name
-		 * @name get_theme()
-		 * @return {String}
-		 */
-		get_theme : function () { return this._data.core.themes.name; },
-		/**
-		 * changes the theme variant (if the theme has variants)
-		 * @name set_theme_variant(variant_name)
-		 * @param {String|Boolean} variant_name the variant to apply (if `false` is used the current variant is removed)
-		 */
-		set_theme_variant : function (variant_name) {
-			if(this._data.core.themes.variant) {
-				this.element.removeClass('jstree-' + this._data.core.themes.name + '-' + this._data.core.themes.variant);
-			}
-			this._data.core.themes.variant = variant_name;
-			if(variant_name) {
-				this.element.addClass('jstree-' + this._data.core.themes.name + '-' + this._data.core.themes.variant);
-			}
-		},
-		/**
-		 * gets the name of the currently applied theme variant
-		 * @name get_theme()
-		 * @return {String}
-		 */
-		get_theme_variant : function () { return this._data.core.themes.variant; },
-		/**
-		 * shows a striped background on the container (if the theme supports it)
-		 * @name show_stripes()
-		 */
-		show_stripes : function () { this._data.core.themes.stripes = true; this.get_container_ul().addClass("jstree-striped"); },
-		/**
-		 * hides the striped background on the container
-		 * @name hide_stripes()
-		 */
-		hide_stripes : function () { this._data.core.themes.stripes = false; this.get_container_ul().removeClass("jstree-striped"); },
-		/**
-		 * toggles the striped background on the container
-		 * @name toggle_stripes()
-		 */
-		toggle_stripes : function () { if(this._data.core.themes.stripes) { this.hide_stripes(); } else { this.show_stripes(); } },
-		/**
-		 * shows the connecting dots (if the theme supports it)
-		 * @name show_dots()
-		 */
-		show_dots : function () { this._data.core.themes.dots = true; this.get_container_ul().removeClass("jstree-no-dots"); },
-		/**
-		 * hides the connecting dots
-		 * @name hide_dots()
-		 */
-		hide_dots : function () { this._data.core.themes.dots = false; this.get_container_ul().addClass("jstree-no-dots"); },
-		/**
-		 * toggles the connecting dots
-		 * @name toggle_dots()
-		 */
-		toggle_dots : function () { if(this._data.core.themes.dots) { this.hide_dots(); } else { this.show_dots(); } },
-		/**
-		 * show the node icons
-		 * @name show_icons()
-		 */
-		show_icons : function () { this._data.core.themes.icons = true; this.get_container_ul().removeClass("jstree-no-icons"); },
-		/**
-		 * hide the node icons
-		 * @name hide_icons()
-		 */
-		hide_icons : function () { this._data.core.themes.icons = false; this.get_container_ul().addClass("jstree-no-icons"); },
-		/**
-		 * toggle the node icons
-		 * @name toggle_icons()
-		 */
-		toggle_icons : function () { if(this._data.core.themes.icons) { this.hide_icons(); } else { this.show_icons(); } },
-		/**
-		 * set the node icon for a node
-		 * @name set_icon(obj, icon)
-		 * @param {mixed} obj
-		 * @param {String} icon the new icon - can be a path to an icon or a className, if using an image that is in the current directory use a `./` prefix, otherwise it will be detected as a class
-		 */
-		set_icon : function (obj, icon) {
-			var t1, t2, dom, old;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.set_icon(obj[t1], icon);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			old = obj.icon;
-			obj.icon = icon;
-			dom = this.get_node(obj, true).children(".jstree-anchor").children(".jstree-themeicon");
-			if(icon === false) {
-				this.hide_icon(obj);
-			}
-			else if(icon === true) {
-				dom.removeClass('jstree-themeicon-custom ' + old).css("background","").removeAttr("rel");
-				if(old === false) { this.show_icon(obj); }
-			}
-			else if(icon.indexOf("/") === -1 && icon.indexOf(".") === -1) {
-				dom.removeClass(old).css("background","");
-				dom.addClass(icon + ' jstree-themeicon-custom').attr("rel",icon);
-				if(old === false) { this.show_icon(obj); }
-			}
-			else {
-				dom.removeClass(old).css("background","");
-				dom.addClass('jstree-themeicon-custom').css("background", "url('" + icon + "') center center no-repeat").attr("rel",icon);
-				if(old === false) { this.show_icon(obj); }
-			}
-			return true;
-		},
-		/**
-		 * get the node icon for a node
-		 * @name get_icon(obj)
-		 * @param {mixed} obj
-		 * @return {String}
-		 */
-		get_icon : function (obj) {
-			obj = this.get_node(obj);
-			return (!obj || obj.id === '#') ? false : obj.icon;
-		},
-		/**
-		 * hide the icon on an individual node
-		 * @name hide_icon(obj)
-		 * @param {mixed} obj
-		 */
-		hide_icon : function (obj) {
-			var t1, t2;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.hide_icon(obj[t1]);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj === '#') { return false; }
-			obj.icon = false;
-			this.get_node(obj, true).children(".jstree-anchor").children(".jstree-themeicon").addClass('jstree-themeicon-hidden');
-			return true;
-		},
-		/**
-		 * show the icon on an individual node
-		 * @name show_icon(obj)
-		 * @param {mixed} obj
-		 */
-		show_icon : function (obj) {
-			var t1, t2, dom;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.show_icon(obj[t1]);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj === '#') { return false; }
-			dom = this.get_node(obj, true);
-			obj.icon = dom.length ? dom.children(".jstree-anchor").children(".jstree-themeicon").attr('rel') : true;
-			if(!obj.icon) { obj.icon = true; }
-			dom.children(".jstree-anchor").children(".jstree-themeicon").removeClass('jstree-themeicon-hidden');
-			return true;
-		}
-	};
-
-	// helpers
-	$.vakata = {};
-	// collect attributes
-	$.vakata.attributes = function(node, with_values) {
-		node = $(node)[0];
-		var attr = with_values ? {} : [];
-		if(node && node.attributes) {
-			$.each(node.attributes, function (i, v) {
-				if($.inArray(v.name.toLowerCase(),['style','contenteditable','hasfocus','tabindex']) !== -1) { return; }
-				if(v.value !== null && $.trim(v.value) !== '') {
-					if(with_values) { attr[v.name] = v.value; }
-					else { attr.push(v.name); }
-				}
-			});
-		}
-		return attr;
-	};
-	$.vakata.array_unique = function(array) {
-		var a = [], i, j, l;
-		for(i = 0, l = array.length; i < l; i++) {
-			for(j = 0; j <= i; j++) {
-				if(array[i] === array[j]) {
-					break;
-				}
-			}
-			if(j === i) { a.push(array[i]); }
-		}
-		return a;
-	};
-	// remove item from array
-	$.vakata.array_remove = function(array, from, to) {
-		var rest = array.slice((to || from) + 1 || array.length);
-		array.length = from < 0 ? array.length + from : from;
-		array.push.apply(array, rest);
-		return array;
-	};
-	// remove item from array
-	$.vakata.array_remove_item = function(array, item) {
-		var tmp = $.inArray(item, array);
-		return tmp !== -1 ? $.vakata.array_remove(array, tmp) : array;
-	};
-
-
-/**
- * ### Checkbox plugin
- *
- * This plugin renders checkbox icons in front of each node, making multiple selection much easier. 
- * It also supports tri-state behavior, meaning that if a node has a few of its children checked it will be rendered as undetermined, and state will be propagated up.
- */
-
-	var _i = document.createElement('I');
-	_i.className = 'jstree-icon jstree-checkbox';
-	_i.setAttribute('role', 'presentation');
-	/**
-	 * stores all defaults for the checkbox plugin
-	 * @name $.jstree.defaults.checkbox
-	 * @plugin checkbox
-	 */
-	$.jstree.defaults.checkbox = {
-		/**
-		 * a boolean indicating if checkboxes should be visible (can be changed at a later time using `show_checkboxes()` and `hide_checkboxes`). Defaults to `true`.
-		 * @name $.jstree.defaults.checkbox.visible
-		 * @plugin checkbox
-		 */
-		visible				: true,
-		/**
-		 * a boolean indicating if checkboxes should cascade down and have an undetermined state. Defaults to `true`.
-		 * @name $.jstree.defaults.checkbox.three_state
-		 * @plugin checkbox
-		 */
-		three_state			: true,
-		/**
-		 * a boolean indicating if clicking anywhere on the node should act as clicking on the checkbox. Defaults to `true`.
-		 * @name $.jstree.defaults.checkbox.whole_node
-		 * @plugin checkbox
-		 */
-		whole_node			: true,
-		/**
-		 * a boolean indicating if the selected style of a node should be kept, or removed. Defaults to `true`.
-		 * @name $.jstree.defaults.checkbox.keep_selected_style
-		 * @plugin checkbox
-		 */
-		keep_selected_style	: true,
-		/**
-		 * This setting controls how cascading and undetermined nodes are applied. 
-		 * If 'up' is in the string - cascading up is enabled, if 'down' is in the string - cascading down is enabled, if 'undetermined' is in the string - undetermined nodes will be used. 
-		 * If `three_state` is set to `true` this setting is automatically set to 'up+down+undetermined'. Defaults to ''.
-		 * @name $.jstree.defaults.checkbox.cascade
-		 * @plugin checkbox
-		 */
-		cascade				: '',
-		/**
-		 * This setting controls if checkbox are bound to the general tree selection or to an internal array maintained by the checkbox plugin. Defaults to `true`, only set to `false` if you know exactly what you are doing. 
-		 * @name $.jstree.defaults.checkbox.tie_selection
-		 * @plugin checkbox
-		 */
-		tie_selection		: true
-	};
-	$.jstree.plugins.checkbox = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-			this._data.checkbox.uto = false;
-			this._data.checkbox.selected = [];
-			if(this.settings.checkbox.three_state) {
-				this.settings.checkbox.cascade = 'up+down+undetermined';
-			}
-			this.element
-				.on("init.jstree", $.proxy(function () {
-						this._data.checkbox.visible = this.settings.checkbox.visible;
-						if(!this.settings.checkbox.keep_selected_style) {
-							this.element.addClass('jstree-checkbox-no-clicked');
-						}
-						if(this.settings.checkbox.tie_selection) {
-							this.element.addClass('jstree-checkbox-selection');
-						}
-					}, this))
-				.on("loading.jstree", $.proxy(function () {
-						this[ this._data.checkbox.visible ? 'show_checkboxes' : 'hide_checkboxes' ]();
-					}, this));
-			if(this.settings.checkbox.cascade.indexOf('undetermined') !== -1) {
-				this.element
-					.on('changed.jstree uncheck_node.jstree check_node.jstree uncheck_all.jstree check_all.jstree move_node.jstree copy_node.jstree redraw.jstree open_node.jstree', $.proxy(function () {
-							// only if undetermined is in setting
-							if(this._data.checkbox.uto) { clearTimeout(this._data.checkbox.uto); }
-							this._data.checkbox.uto = setTimeout($.proxy(this._undetermined, this), 50);
-						}, this));
-			}
-			if(!this.settings.checkbox.tie_selection) {
-				this.element
-					.on('model.jstree', $.proxy(function (e, data) {
-						var m = this._model.data,
-							p = m[data.parent],
-							dpc = data.nodes,
-							i, j;
-						for(i = 0, j = dpc.length; i < j; i++) {
-							m[dpc[i]].state.checked = (m[dpc[i]].original && m[dpc[i]].original.state && m[dpc[i]].original.state.checked);
-							if(m[dpc[i]].state.checked) {
-								this._data.checkbox.selected.push(dpc[i]);
-							}
-						}
-					}, this));
-			}
-			if(this.settings.checkbox.cascade.indexOf('up') !== -1 || this.settings.checkbox.cascade.indexOf('down') !== -1) {
-				this.element
-					.on('model.jstree', $.proxy(function (e, data) {
-							var m = this._model.data,
-								p = m[data.parent],
-								dpc = data.nodes,
-								chd = [],
-								c, i, j, k, l, tmp, s = this.settings.checkbox.cascade, t = this.settings.checkbox.tie_selection;
-
-							if(s.indexOf('down') !== -1) {
-								// apply down
-								if(p.state[ t ? 'selected' : 'checked' ]) {
-									for(i = 0, j = dpc.length; i < j; i++) {
-										m[dpc[i]].state[ t ? 'selected' : 'checked' ] = true;
-									}
-									this._data[ t ? 'core' : 'checkbox' ].selected = this._data[ t ? 'core' : 'checkbox' ].selected.concat(dpc);
-								}
-								else {
-									for(i = 0, j = dpc.length; i < j; i++) {
-										if(m[dpc[i]].state[ t ? 'selected' : 'checked' ]) {
-											for(k = 0, l = m[dpc[i]].children_d.length; k < l; k++) {
-												m[m[dpc[i]].children_d[k]].state[ t ? 'selected' : 'checked' ] = true;
-											}
-											this._data[ t ? 'core' : 'checkbox' ].selected = this._data[ t ? 'core' : 'checkbox' ].selected.concat(m[dpc[i]].children_d);
-										}
-									}
-								}
-							}
-
-							if(s.indexOf('up') !== -1) {
-								// apply up
-								for(i = 0, j = p.children_d.length; i < j; i++) {
-									if(!m[p.children_d[i]].children.length) {
-										chd.push(m[p.children_d[i]].parent);
-									}
-								}
-								chd = $.vakata.array_unique(chd);
-								for(k = 0, l = chd.length; k < l; k++) {
-									p = m[chd[k]];
-									while(p && p.id !== '#') {
-										c = 0;
-										for(i = 0, j = p.children.length; i < j; i++) {
-											c += m[p.children[i]].state[ t ? 'selected' : 'checked' ];
-										}
-										if(c === j) {
-											p.state[ t ? 'selected' : 'checked' ] = true;
-											this._data[ t ? 'core' : 'checkbox' ].selected.push(p.id);
-											tmp = this.get_node(p, true);
-											if(tmp && tmp.length) {
-												tmp.attr('aria-selected', true).children('.jstree-anchor').addClass( t ? 'jstree-clicked' : 'jstree-checked');
-											}
-										}
-										else {
-											break;
-										}
-										p = this.get_node(p.parent);
-									}
-								}
-							}
-
-							this._data[ t ? 'core' : 'checkbox' ].selected = $.vakata.array_unique(this._data[ t ? 'core' : 'checkbox' ].selected);
-						}, this))
-					.on(this.settings.checkbox.tie_selection ? 'select_node.jstree' : 'check_node.jstree', $.proxy(function (e, data) {
-							var obj = data.node,
-								m = this._model.data,
-								par = this.get_node(obj.parent),
-								dom = this.get_node(obj, true),
-								i, j, c, tmp, s = this.settings.checkbox.cascade, t = this.settings.checkbox.tie_selection;
-
-							// apply down
-							if(s.indexOf('down') !== -1) {
-								this._data[ t ? 'core' : 'checkbox' ].selected = $.vakata.array_unique(this._data[ t ? 'core' : 'checkbox' ].selected.concat(obj.children_d));
-								for(i = 0, j = obj.children_d.length; i < j; i++) {
-									tmp = m[obj.children_d[i]];
-									tmp.state[ t ? 'selected' : 'checked' ] = true;
-									if(tmp && tmp.original && tmp.original.state && tmp.original.state.undetermined) {
-										tmp.original.state.undetermined = false;
-									}
-								}
-							}
-
-							// apply up
-							if(s.indexOf('up') !== -1) {
-								while(par && par.id !== '#') {
-									c = 0;
-									for(i = 0, j = par.children.length; i < j; i++) {
-										c += m[par.children[i]].state[ t ? 'selected' : 'checked' ];
-									}
-									if(c === j) {
-										par.state[ t ? 'selected' : 'checked' ] = true;
-										this._data[ t ? 'core' : 'checkbox' ].selected.push(par.id);
-										tmp = this.get_node(par, true);
-										if(tmp && tmp.length) {
-											tmp.attr('aria-selected', true).children('.jstree-anchor').addClass(t ? 'jstree-clicked' : 'jstree-checked');
-										}
-									}
-									else {
-										break;
-									}
-									par = this.get_node(par.parent);
-								}
-							}
-
-							// apply down (process .children separately?)
-							if(s.indexOf('down') !== -1 && dom.length) {
-								dom.find('.jstree-anchor').addClass(t ? 'jstree-clicked' : 'jstree-checked').parent().attr('aria-selected', true);
-							}
-						}, this))
-					.on(this.settings.checkbox.tie_selection ? 'deselect_all.jstree' : 'uncheck_all.jstree', $.proxy(function (e, data) {
-							var obj = this.get_node('#'),
-								m = this._model.data,
-								i, j, tmp;
-							for(i = 0, j = obj.children_d.length; i < j; i++) {
-								tmp = m[obj.children_d[i]];
-								if(tmp && tmp.original && tmp.original.state && tmp.original.state.undetermined) {
-									tmp.original.state.undetermined = false;
-								}
-							}
-						}, this))
-					.on(this.settings.checkbox.tie_selection ? 'deselect_node.jstree' : 'uncheck_node.jstree', $.proxy(function (e, data) {
-							var obj = data.node,
-								dom = this.get_node(obj, true),
-								i, j, tmp, s = this.settings.checkbox.cascade, t = this.settings.checkbox.tie_selection;
-							if(obj && obj.original && obj.original.state && obj.original.state.undetermined) {
-								obj.original.state.undetermined = false;
-							}
-
-							// apply down
-							if(s.indexOf('down') !== -1) {
-								for(i = 0, j = obj.children_d.length; i < j; i++) {
-									tmp = this._model.data[obj.children_d[i]];
-									tmp.state[ t ? 'selected' : 'checked' ] = false;
-									if(tmp && tmp.original && tmp.original.state && tmp.original.state.undetermined) {
-										tmp.original.state.undetermined = false;
-									}
-								}
-							}
-
-							// apply up
-							if(s.indexOf('up') !== -1) {
-								for(i = 0, j = obj.parents.length; i < j; i++) {
-									tmp = this._model.data[obj.parents[i]];
-									tmp.state[ t ? 'selected' : 'checked' ] = false;
-									if(tmp && tmp.original && tmp.original.state && tmp.original.state.undetermined) {
-										tmp.original.state.undetermined = false;
-									}
-									tmp = this.get_node(obj.parents[i], true);
-									if(tmp && tmp.length) {
-										tmp.attr('aria-selected', false).children('.jstree-anchor').removeClass(t ? 'jstree-clicked' : 'jstree-checked');
-									}
-								}
-							}
-							tmp = [];
-							for(i = 0, j = this._data[ t ? 'core' : 'checkbox' ].selected.length; i < j; i++) {
-								// apply down + apply up
-								if(
-									(s.indexOf('down') === -1 || $.inArray(this._data[ t ? 'core' : 'checkbox' ].selected[i], obj.children_d) === -1) &&
-									(s.indexOf('up') === -1 || $.inArray(this._data[ t ? 'core' : 'checkbox' ].selected[i], obj.parents) === -1)
-								) {
-									tmp.push(this._data[ t ? 'core' : 'checkbox' ].selected[i]);
-								}
-							}
-							this._data[ t ? 'core' : 'checkbox' ].selected = $.vakata.array_unique(tmp);
-
-							// apply down (process .children separately?)
-							if(s.indexOf('down') !== -1 && dom.length) {
-								dom.find('.jstree-anchor').removeClass(t ? 'jstree-clicked' : 'jstree-checked').parent().attr('aria-selected', false);
-							}
-						}, this));
-			}
-			if(this.settings.checkbox.cascade.indexOf('up') !== -1) {
-				this.element
-					.on('delete_node.jstree', $.proxy(function (e, data) {
-							// apply up (whole handler)
-							var p = this.get_node(data.parent),
-								m = this._model.data,
-								i, j, c, tmp, t = this.settings.checkbox.tie_selection;
-							while(p && p.id !== '#') {
-								c = 0;
-								for(i = 0, j = p.children.length; i < j; i++) {
-									c += m[p.children[i]].state[ t ? 'selected' : 'checked' ];
-								}
-								if(c === j) {
-									p.state[ t ? 'selected' : 'checked' ] = true;
-									this._data[ t ? 'core' : 'checkbox' ].selected.push(p.id);
-									tmp = this.get_node(p, true);
-									if(tmp && tmp.length) {
-										tmp.attr('aria-selected', true).children('.jstree-anchor').addClass(t ? 'jstree-clicked' : 'jstree-checked');
-									}
-								}
-								else {
-									break;
-								}
-								p = this.get_node(p.parent);
-							}
-						}, this))
-					.on('move_node.jstree', $.proxy(function (e, data) {
-							// apply up (whole handler)
-							var is_multi = data.is_multi,
-								old_par = data.old_parent,
-								new_par = this.get_node(data.parent),
-								m = this._model.data,
-								p, c, i, j, tmp, t = this.settings.checkbox.tie_selection;
-							if(!is_multi) {
-								p = this.get_node(old_par);
-								while(p && p.id !== '#') {
-									c = 0;
-									for(i = 0, j = p.children.length; i < j; i++) {
-										c += m[p.children[i]].state[ t ? 'selected' : 'checked' ];
-									}
-									if(c === j) {
-										p.state[ t ? 'selected' : 'checked' ] = true;
-										this._data[ t ? 'core' : 'checkbox' ].selected.push(p.id);
-										tmp = this.get_node(p, true);
-										if(tmp && tmp.length) {
-											tmp.attr('aria-selected', true).children('.jstree-anchor').addClass(t ? 'jstree-clicked' : 'jstree-checked');
-										}
-									}
-									else {
-										break;
-									}
-									p = this.get_node(p.parent);
-								}
-							}
-							p = new_par;
-							while(p && p.id !== '#') {
-								c = 0;
-								for(i = 0, j = p.children.length; i < j; i++) {
-									c += m[p.children[i]].state[ t ? 'selected' : 'checked' ];
-								}
-								if(c === j) {
-									if(!p.state[ t ? 'selected' : 'checked' ]) {
-										p.state[ t ? 'selected' : 'checked' ] = true;
-										this._data[ t ? 'core' : 'checkbox' ].selected.push(p.id);
-										tmp = this.get_node(p, true);
-										if(tmp && tmp.length) {
-											tmp.attr('aria-selected', true).children('.jstree-anchor').addClass(t ? 'jstree-clicked' : 'jstree-checked');
-										}
-									}
-								}
-								else {
-									if(p.state[ t ? 'selected' : 'checked' ]) {
-										p.state[ t ? 'selected' : 'checked' ] = false;
-										this._data[ t ? 'core' : 'checkbox' ].selected = $.vakata.array_remove_item(this._data[ t ? 'core' : 'checkbox' ].selected, p.id);
-										tmp = this.get_node(p, true);
-										if(tmp && tmp.length) {
-											tmp.attr('aria-selected', false).children('.jstree-anchor').removeClass(t ? 'jstree-clicked' : 'jstree-checked');
-										}
-									}
-									else {
-										break;
-									}
-								}
-								p = this.get_node(p.parent);
-							}
-						}, this));
-			}
-		};
-		/**
-		 * set the undetermined state where and if necessary. Used internally.
-		 * @private
-		 * @name _undetermined()
-		 * @plugin checkbox
-		 */
-		this._undetermined = function () {
-			var i, j, m = this._model.data, t = this.settings.checkbox.tie_selection, s = this._data[ t ? 'core' : 'checkbox' ].selected, p = [], tt = this;
-			for(i = 0, j = s.length; i < j; i++) {
-				if(m[s[i]] && m[s[i]].parents) {
-					p = p.concat(m[s[i]].parents);
-				}
-			}
-			// attempt for server side undetermined state
-			this.element.find('.jstree-closed').not(':has(.jstree-children)')
-				.each(function () {
-					var tmp = tt.get_node(this), tmp2;
-					if(!tmp.state.loaded) {
-						if(tmp.original && tmp.original.state && tmp.original.state.undetermined && tmp.original.state.undetermined === true) {
-							p.push(tmp.id);
-							p = p.concat(tmp.parents);
-						}
-					}
-					else {
-						for(i = 0, j = tmp.children_d.length; i < j; i++) {
-							tmp2 = m[tmp.children_d[i]];
-							if(!tmp2.state.loaded && tmp2.original && tmp2.original.state && tmp2.original.state.undetermined && tmp2.original.state.undetermined === true) {
-								p.push(tmp2.id);
-								p = p.concat(tmp2.parents);
-							}
-						}
-					}
-				});
-			p = $.vakata.array_unique(p);
-			p = $.vakata.array_remove_item(p,'#');
-
-			this.element.find('.jstree-undetermined').removeClass('jstree-undetermined');
-			for(i = 0, j = p.length; i < j; i++) {
-				if(!m[p[i]].state[ t ? 'selected' : 'checked' ]) {
-					s = this.get_node(p[i], true);
-					if(s && s.length) {
-						s.children('.jstree-anchor').children('.jstree-checkbox').addClass('jstree-undetermined');
-					}
-				}
-			}
-		};
-		this.redraw_node = function(obj, deep, is_callback, force_render) {
-			obj = parent.redraw_node.apply(this, arguments);
-			if(obj) {
-				var i, j, tmp = null;
-				for(i = 0, j = obj.childNodes.length; i < j; i++) {
-					if(obj.childNodes[i] && obj.childNodes[i].className && obj.childNodes[i].className.indexOf("jstree-anchor") !== -1) {
-						tmp = obj.childNodes[i];
-						break;
-					}
-				}
-				if(tmp) {
-					if(!this.settings.checkbox.tie_selection && this._model.data[obj.id].state.checked) { tmp.className += ' jstree-checked'; }
-					tmp.insertBefore(_i.cloneNode(false), tmp.childNodes[0]);
-				}
-			}
-			if(!is_callback && this.settings.checkbox.cascade.indexOf('undetermined') !== -1) {
-				if(this._data.checkbox.uto) { clearTimeout(this._data.checkbox.uto); }
-				this._data.checkbox.uto = setTimeout($.proxy(this._undetermined, this), 50);
-			}
-			return obj;
-		};
-		/**
-		 * show the node checkbox icons
-		 * @name show_checkboxes()
-		 * @plugin checkbox
-		 */
-		this.show_checkboxes = function () { this._data.core.themes.checkboxes = true; this.get_container_ul().removeClass("jstree-no-checkboxes"); };
-		/**
-		 * hide the node checkbox icons
-		 * @name hide_checkboxes()
-		 * @plugin checkbox
-		 */
-		this.hide_checkboxes = function () { this._data.core.themes.checkboxes = false; this.get_container_ul().addClass("jstree-no-checkboxes"); };
-		/**
-		 * toggle the node icons
-		 * @name toggle_checkboxes()
-		 * @plugin checkbox
-		 */
-		this.toggle_checkboxes = function () { if(this._data.core.themes.checkboxes) { this.hide_checkboxes(); } else { this.show_checkboxes(); } };
-		/**
-		 * checks if a node is in an undetermined state
-		 * @name is_undetermined(obj)
-		 * @param  {mixed} obj
-		 * @return {Boolean}
-		 */
-		this.is_undetermined = function (obj) {
-			obj = this.get_node(obj);
-			var s = this.settings.checkbox.cascade, i, j, t = this.settings.checkbox.tie_selection, d = this._data[ t ? 'core' : 'checkbox' ].selected, m = this._model.data;
-			if(!obj || obj.state[ t ? 'selected' : 'checked' ] === true || s.indexOf('undetermined') === -1 || (s.indexOf('down') === -1 && s.indexOf('up') === -1)) {
-				return false;
-			}
-			if(!obj.state.loaded && obj.original.state.undetermined === true) {
-				return true;
-			}
-			for(i = 0, j = obj.children_d.length; i < j; i++) {
-				if($.inArray(obj.children_d[i], d) !== -1 || (!m[obj.children_d[i]].state.loaded && m[obj.children_d[i]].original.state.undetermined)) {
-					return true;
-				}
-			}
-			return false;
-		};
-
-		this.activate_node = function (obj, e) {
-			if(this.settings.checkbox.tie_selection && (this.settings.checkbox.whole_node || $(e.target).hasClass('jstree-checkbox'))) {
-				e.ctrlKey = true;
-			}
-			if(this.settings.checkbox.tie_selection || (!this.settings.checkbox.whole_node && !$(e.target).hasClass('jstree-checkbox'))) {
-				return parent.activate_node.call(this, obj, e);
-			}
-			if(this.is_disabled(obj)) {
-				return false;
-			}
-			if(this.is_checked(obj)) {
-				this.uncheck_node(obj, e);
-			}
-			else {
-				this.check_node(obj, e);
-			}
-			this.trigger('activate_node', { 'node' : this.get_node(obj) });
-		};
-
-		/**
-		 * check a node (only if tie_selection in checkbox settings is false, otherwise select_node will be called internally)
-		 * @name check_node(obj)
-		 * @param {mixed} obj an array can be used to check multiple nodes
-		 * @trigger check_node.jstree
-		 * @plugin checkbox
-		 */
-		this.check_node = function (obj, e) {
-			if(this.settings.checkbox.tie_selection) { return this.select_node(obj, false, true, e); }
-			var dom, t1, t2, th;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.check_node(obj[t1], e);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			dom = this.get_node(obj, true);
-			if(!obj.state.checked) {
-				obj.state.checked = true;
-				this._data.checkbox.selected.push(obj.id);
-				if(dom && dom.length) {
-					dom.children('.jstree-anchor').addClass('jstree-checked');
-				}
-				/**
-				 * triggered when an node is checked (only if tie_selection in checkbox settings is false)
-				 * @event
-				 * @name check_node.jstree
-				 * @param {Object} node
-				 * @param {Array} selected the current selection
-				 * @param {Object} event the event (if any) that triggered this check_node
-				 * @plugin checkbox
-				 */
-				this.trigger('check_node', { 'node' : obj, 'selected' : this._data.checkbox.selected, 'event' : e });
-			}
-		};
-		/**
-		 * uncheck a node (only if tie_selection in checkbox settings is false, otherwise deselect_node will be called internally)
-		 * @name deselect_node(obj)
-		 * @param {mixed} obj an array can be used to deselect multiple nodes
-		 * @trigger uncheck_node.jstree
-		 * @plugin checkbox
-		 */
-		this.uncheck_node = function (obj, e) {
-			if(this.settings.checkbox.tie_selection) { return this.deselect_node(obj, false, e); }
-			var t1, t2, dom;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.uncheck_node(obj[t1], e);
-				}
-				return true;
-			}
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') {
-				return false;
-			}
-			dom = this.get_node(obj, true);
-			if(obj.state.checked) {
-				obj.state.checked = false;
-				this._data.checkbox.selected = $.vakata.array_remove_item(this._data.checkbox.selected, obj.id);
-				if(dom.length) {
-					dom.children('.jstree-anchor').removeClass('jstree-checked');
-				}
-				/**
-				 * triggered when an node is unchecked (only if tie_selection in checkbox settings is false)
-				 * @event
-				 * @name uncheck_node.jstree
-				 * @param {Object} node
-				 * @param {Array} selected the current selection
-				 * @param {Object} event the event (if any) that triggered this uncheck_node
-				 * @plugin checkbox
-				 */
-				this.trigger('uncheck_node', { 'node' : obj, 'selected' : this._data.checkbox.selected, 'event' : e });
-			}
-		};
-		/**
-		 * checks all nodes in the tree (only if tie_selection in checkbox settings is false, otherwise select_all will be called internally)
-		 * @name check_all()
-		 * @trigger check_all.jstree, changed.jstree
-		 * @plugin checkbox
-		 */
-		this.check_all = function () {
-			if(this.settings.checkbox.tie_selection) { return this.select_all(); }
-			var tmp = this._data.checkbox.selected.concat([]), i, j;
-			this._data.checkbox.selected = this._model.data['#'].children_d.concat();
-			for(i = 0, j = this._data.checkbox.selected.length; i < j; i++) {
-				if(this._model.data[this._data.checkbox.selected[i]]) {
-					this._model.data[this._data.checkbox.selected[i]].state.checked = true;
-				}
-			}
-			this.redraw(true);
-			/**
-			 * triggered when all nodes are checked (only if tie_selection in checkbox settings is false)
-			 * @event
-			 * @name check_all.jstree
-			 * @param {Array} selected the current selection
-			 * @plugin checkbox
-			 */
-			this.trigger('check_all', { 'selected' : this._data.checkbox.selected });
-		};
-		/**
-		 * uncheck all checked nodes (only if tie_selection in checkbox settings is false, otherwise deselect_all will be called internally)
-		 * @name uncheck_all()
-		 * @trigger uncheck_all.jstree
-		 * @plugin checkbox
-		 */
-		this.uncheck_all = function () {
-			if(this.settings.checkbox.tie_selection) { return this.deselect_all(); }
-			var tmp = this._data.checkbox.selected.concat([]), i, j;
-			for(i = 0, j = this._data.checkbox.selected.length; i < j; i++) {
-				if(this._model.data[this._data.checkbox.selected[i]]) {
-					this._model.data[this._data.checkbox.selected[i]].state.checked = false;
-				}
-			}
-			this._data.checkbox.selected = [];
-			this.element.find('.jstree-checked').removeClass('jstree-checked');
-			/**
-			 * triggered when all nodes are unchecked (only if tie_selection in checkbox settings is false)
-			 * @event
-			 * @name uncheck_all.jstree
-			 * @param {Object} node the previous selection
-			 * @param {Array} selected the current selection
-			 * @plugin checkbox
-			 */
-			this.trigger('uncheck_all', { 'selected' : this._data.checkbox.selected, 'node' : tmp });
-		};
-		/**
-		 * checks if a node is checked (if tie_selection is on in the settings this function will return the same as is_selected)
-		 * @name is_checked(obj)
-		 * @param  {mixed}  obj
-		 * @return {Boolean}
-		 * @plugin checkbox
-		 */
-		this.is_checked = function (obj) {
-			if(this.settings.checkbox.tie_selection) { return this.is_selected(obj); }
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			return obj.state.checked;
-		};
-		/**
-		 * get an array of all checked nodes (if tie_selection is on in the settings this function will return the same as get_selected)
-		 * @name get_checked([full])
-		 * @param  {mixed}  full if set to `true` the returned array will consist of the full node objects, otherwise - only IDs will be returned
-		 * @return {Array}
-		 * @plugin checkbox
-		 */
-		this.get_checked = function (full) {
-			if(this.settings.checkbox.tie_selection) { return this.get_selected(full); }
-			return full ? $.map(this._data.checkbox.selected, $.proxy(function (i) { return this.get_node(i); }, this)) : this._data.checkbox.selected;
-		};
-		/**
-		 * get an array of all top level checked nodes (ignoring children of checked nodes) (if tie_selection is on in the settings this function will return the same as get_top_selected)
-		 * @name get_top_checked([full])
-		 * @param  {mixed}  full if set to `true` the returned array will consist of the full node objects, otherwise - only IDs will be returned
-		 * @return {Array}
-		 * @plugin checkbox
-		 */
-		this.get_top_checked = function (full) {
-			if(this.settings.checkbox.tie_selection) { return this.get_top_selected(full); }
-			var tmp = this.get_checked(true),
-				obj = {}, i, j, k, l;
-			for(i = 0, j = tmp.length; i < j; i++) {
-				obj[tmp[i].id] = tmp[i];
-			}
-			for(i = 0, j = tmp.length; i < j; i++) {
-				for(k = 0, l = tmp[i].children_d.length; k < l; k++) {
-					if(obj[tmp[i].children_d[k]]) {
-						delete obj[tmp[i].children_d[k]];
-					}
-				}
-			}
-			tmp = [];
-			for(i in obj) {
-				if(obj.hasOwnProperty(i)) {
-					tmp.push(i);
-				}
-			}
-			return full ? $.map(tmp, $.proxy(function (i) { return this.get_node(i); }, this)) : tmp;
-		};
-		/**
-		 * get an array of all bottom level checked nodes (ignoring selected parents) (if tie_selection is on in the settings this function will return the same as get_bottom_selected)
-		 * @name get_bottom_checked([full])
-		 * @param  {mixed}  full if set to `true` the returned array will consist of the full node objects, otherwise - only IDs will be returned
-		 * @return {Array}
-		 * @plugin checkbox
-		 */
-		this.get_bottom_checked = function (full) {
-			if(this.settings.checkbox.tie_selection) { return this.get_bottom_selected(full); }
-			var tmp = this.get_checked(true),
-				obj = [], i, j;
-			for(i = 0, j = tmp.length; i < j; i++) {
-				if(!tmp[i].children.length) {
-					obj.push(tmp[i].id);
-				}
-			}
-			return full ? $.map(obj, $.proxy(function (i) { return this.get_node(i); }, this)) : obj;
-		};
-		this.load_node = function (obj, callback) {
-			var k, l, i, j, c, tmp;
-			if(!$.isArray(obj) && !this.settings.checkbox.tie_selection) {
-				tmp = this.get_node(obj);
-				if(tmp && tmp.state.loaded) {
-					for(k = 0, l = tmp.children_d.length; k < l; k++) {
-						if(this._model.data[tmp.children_d[k]].state.checked) {
-							c = true;
-							this._data.checkbox.selected = $.vakata.array_remove_item(this._data.checkbox.selected, tmp.children_d[k]);
-						}
-					}
-				}
-			}
-			return parent.load_node.apply(this, arguments);
-		};
-		this.get_state = function () {
-			var state = parent.get_state.apply(this, arguments);
-			if(this.settings.checkbox.tie_selection) { return state; }
-			state.checkbox = this._data.checkbox.selected.slice();
-			return state;
-		};
-		this.set_state = function (state, callback) {
-			var res = parent.set_state.apply(this, arguments);
-			if(res && state.checkbox) {
-				if(!this.settings.checkbox.tie_selection) {
-					this.uncheck_all();
-					var _this = this;
-					$.each(state.checkbox, function (i, v) {
-						_this.check_node(v);
-					});
-				}
-				delete state.checkbox;
-				return false;
-			}
-			return res;
-		};
-	};
-
-	// include the checkbox plugin by default
-	// $.jstree.defaults.plugins.push("checkbox");
-
-/**
- * ### Contextmenu plugin
- *
- * Shows a context menu when a node is right-clicked.
- */
-
-	var cto = null, ex, ey;
-
-	/**
-	 * stores all defaults for the contextmenu plugin
-	 * @name $.jstree.defaults.contextmenu
-	 * @plugin contextmenu
-	 */
-	$.jstree.defaults.contextmenu = {
-		/**
-		 * a boolean indicating if the node should be selected when the context menu is invoked on it. Defaults to `true`.
-		 * @name $.jstree.defaults.contextmenu.select_node
-		 * @plugin contextmenu
-		 */
-		select_node : true,
-		/**
-		 * a boolean indicating if the menu should be shown aligned with the node. Defaults to `true`, otherwise the mouse coordinates are used.
-		 * @name $.jstree.defaults.contextmenu.show_at_node
-		 * @plugin contextmenu
-		 */
-		show_at_node : true,
-		/**
-		 * an object of actions, or a function that accepts a node and a callback function and calls the callback function with an object of actions available for that node (you can also return the items too).
-		 * 
-		 * Each action consists of a key (a unique name) and a value which is an object with the following properties (only label and action are required):
-		 * 
-		 * * `separator_before` - a boolean indicating if there should be a separator before this item
-		 * * `separator_after` - a boolean indicating if there should be a separator after this item
-		 * * `_disabled` - a boolean indicating if this action should be disabled
-		 * * `label` - a string - the name of the action (could be a function returning a string)
-		 * * `action` - a function to be executed if this item is chosen
-		 * * `icon` - a string, can be a path to an icon or a className, if using an image that is in the current directory use a `./` prefix, otherwise it will be detected as a class
-		 * * `shortcut` - keyCode which will trigger the action if the menu is open (for example `113` for rename, which equals F2)
-		 * * `shortcut_label` - shortcut label (like for example `F2` for rename)
-		 * 
-		 * @name $.jstree.defaults.contextmenu.items
-		 * @plugin contextmenu
-		 */
-		items : function (o, cb) { // Could be an object directly
-			return {
-				"create" : {
-					"separator_before"	: false,
-					"separator_after"	: true,
-					"_disabled"			: false, //(this.check("create_node", data.reference, {}, "last")),
-					"label"				: "Create",
-					"action"			: function (data) {
-						var inst = $.jstree.reference(data.reference),
-							obj = inst.get_node(data.reference);
-						inst.create_node(obj, {}, "last", function (new_node) {
-							setTimeout(function () { inst.edit(new_node); },0);
-						});
-					}
-				},
-				"rename" : {
-					"separator_before"	: false,
-					"separator_after"	: false,
-					"_disabled"			: false, //(this.check("rename_node", data.reference, this.get_parent(data.reference), "")),
-					"label"				: "Rename",
-					/*
-					"shortcut"			: 113,
-					"shortcut_label"	: 'F2',
-					"icon"				: "glyphicon glyphicon-leaf",
-					*/
-					"action"			: function (data) {
-						var inst = $.jstree.reference(data.reference),
-							obj = inst.get_node(data.reference);
-						inst.edit(obj);
-					}
-				},
-				"remove" : {
-					"separator_before"	: false,
-					"icon"				: false,
-					"separator_after"	: false,
-					"_disabled"			: false, //(this.check("delete_node", data.reference, this.get_parent(data.reference), "")),
-					"label"				: "Delete",
-					"action"			: function (data) {
-						var inst = $.jstree.reference(data.reference),
-							obj = inst.get_node(data.reference);
-						if(inst.is_selected(obj)) {
-							inst.delete_node(inst.get_selected());
-						}
-						else {
-							inst.delete_node(obj);
-						}
-					}
-				},
-				"ccp" : {
-					"separator_before"	: true,
-					"icon"				: false,
-					"separator_after"	: false,
-					"label"				: "Edit",
-					"action"			: false,
-					"submenu" : {
-						"cut" : {
-							"separator_before"	: false,
-							"separator_after"	: false,
-							"label"				: "Cut",
-							"action"			: function (data) {
-								var inst = $.jstree.reference(data.reference),
-									obj = inst.get_node(data.reference);
-								if(inst.is_selected(obj)) {
-									inst.cut(inst.get_selected());
-								}
-								else {
-									inst.cut(obj);
-								}
-							}
-						},
-						"copy" : {
-							"separator_before"	: false,
-							"icon"				: false,
-							"separator_after"	: false,
-							"label"				: "Copy",
-							"action"			: function (data) {
-								var inst = $.jstree.reference(data.reference),
-									obj = inst.get_node(data.reference);
-								if(inst.is_selected(obj)) {
-									inst.copy(inst.get_selected());
-								}
-								else {
-									inst.copy(obj);
-								}
-							}
-						},
-						"paste" : {
-							"separator_before"	: false,
-							"icon"				: false,
-							"_disabled"			: function (data) {
-								return !$.jstree.reference(data.reference).can_paste();
-							},
-							"separator_after"	: false,
-							"label"				: "Paste",
-							"action"			: function (data) {
-								var inst = $.jstree.reference(data.reference),
-									obj = inst.get_node(data.reference);
-								inst.paste(obj);
-							}
-						}
-					}
-				}
-			};
-		}
-	};
-
-	$.jstree.plugins.contextmenu = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-
-			var last_ts = 0;
-			this.element
-				.on("contextmenu.jstree", ".jstree-anchor", $.proxy(function (e, data) {
-						e.preventDefault();
-						last_ts = e.ctrlKey ? +new Date() : 0;
-						if(data || cto) {
-							last_ts = (+new Date()) + 10000;
-						}
-						if(cto) {
-							clearTimeout(cto);
-						}
-						if(!this.is_loading(e.currentTarget)) {
-							this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
-						}
-					}, this))
-				.on("click.jstree", ".jstree-anchor", $.proxy(function (e) {
-						if(this._data.contextmenu.visible && (!last_ts || (+new Date()) - last_ts > 250)) { // work around safari & macOS ctrl+click
-							$.vakata.context.hide();
-						}
-						last_ts = 0;
-					}, this))
-				.on("touchstart.jstree", ".jstree-anchor", function (e) {
-						if(!e.originalEvent || !e.originalEvent.changedTouches || !e.originalEvent.changedTouches[0]) {
-							return;
-						}
-						ex = e.pageX;
-						ey = e.pageY;
-						cto = setTimeout(function () {
-							$(e.currentTarget).trigger('contextmenu', true);
-						}, 750);
-					});
-			/*
-			if(!('oncontextmenu' in document.body) && ('ontouchstart' in document.body)) {
-				var el = null, tm = null;
-				this.element
-					.on("touchstart", ".jstree-anchor", function (e) {
-						el = e.currentTarget;
-						tm = +new Date();
-						$(document).one("touchend", function (e) {
-							e.target = document.elementFromPoint(e.originalEvent.targetTouches[0].pageX - window.pageXOffset, e.originalEvent.targetTouches[0].pageY - window.pageYOffset);
-							e.currentTarget = e.target;
-							tm = ((+(new Date())) - tm);
-							if(e.target === el && tm > 600 && tm < 1000) {
-								e.preventDefault();
-								$(el).trigger('contextmenu', e);
-							}
-							el = null;
-							tm = null;
-						});
-					});
-			}
-			*/
-			$(document).on("context_hide.vakata.jstree", $.proxy(function () { this._data.contextmenu.visible = false; }, this));
-		};
-		this.teardown = function () {
-			if(this._data.contextmenu.visible) {
-				$.vakata.context.hide();
-			}
-			parent.teardown.call(this);
-		};
-
-		/**
-		 * prepare and show the context menu for a node
-		 * @name show_contextmenu(obj [, x, y])
-		 * @param {mixed} obj the node
-		 * @param {Number} x the x-coordinate relative to the document to show the menu at
-		 * @param {Number} y the y-coordinate relative to the document to show the menu at
-		 * @param {Object} e the event if available that triggered the contextmenu
-		 * @plugin contextmenu
-		 * @trigger show_contextmenu.jstree
-		 */
-		this.show_contextmenu = function (obj, x, y, e) {
-			obj = this.get_node(obj);
-			if(!obj || obj.id === '#') { return false; }
-			var s = this.settings.contextmenu,
-				d = this.get_node(obj, true),
-				a = d.children(".jstree-anchor"),
-				o = false,
-				i = false;
-			if(s.show_at_node || x === undefined || y === undefined) {
-				o = a.offset();
-				x = o.left;
-				y = o.top + this._data.core.li_height;
-			}
-			if(this.settings.contextmenu.select_node && !this.is_selected(obj)) {
-				this.activate_node(obj, e);
-			}
-
-			i = s.items;
-			if($.isFunction(i)) {
-				i = i.call(this, obj, $.proxy(function (i) {
-					this._show_contextmenu(obj, x, y, i);
-				}, this));
-			}
-			if($.isPlainObject(i)) {
-				this._show_contextmenu(obj, x, y, i);
-			}
-		};
-		/**
-		 * show the prepared context menu for a node
-		 * @name _show_contextmenu(obj, x, y, i)
-		 * @param {mixed} obj the node
-		 * @param {Number} x the x-coordinate relative to the document to show the menu at
-		 * @param {Number} y the y-coordinate relative to the document to show the menu at
-		 * @param {Number} i the object of items to show
-		 * @plugin contextmenu
-		 * @trigger show_contextmenu.jstree
-		 * @private
-		 */
-		this._show_contextmenu = function (obj, x, y, i) {
-			var d = this.get_node(obj, true),
-				a = d.children(".jstree-anchor");
-			$(document).one("context_show.vakata.jstree", $.proxy(function (e, data) {
-				var cls = 'jstree-contextmenu jstree-' + this.get_theme() + '-contextmenu';
-				$(data.element).addClass(cls);
-			}, this));
-			this._data.contextmenu.visible = true;
-			$.vakata.context.show(a, { 'x' : x, 'y' : y }, i);
-			/**
-			 * triggered when the contextmenu is shown for a node
-			 * @event
-			 * @name show_contextmenu.jstree
-			 * @param {Object} node the node
-			 * @param {Number} x the x-coordinate of the menu relative to the document
-			 * @param {Number} y the y-coordinate of the menu relative to the document
-			 * @plugin contextmenu
-			 */
-			this.trigger('show_contextmenu', { "node" : obj, "x" : x, "y" : y });
-		};
-	};
-
-	$(function () {
-		$(document)
-			.on('touchmove.vakata.jstree', function (e) {
-				if(cto && e.originalEvent && e.originalEvent.changedTouches && e.originalEvent.changedTouches[0] && (Math.abs(ex - e.pageX) > 50 || Math.abs(ey - e.pageY) > 50)) {
-					clearTimeout(cto);
-				}
-			})
-			.on('touchend.vakata.jstree', function (e) {
-				if(cto) {
-					clearTimeout(cto);
-				}
-			});
-	});
-
-	// contextmenu helper
-	(function ($) {
-		var right_to_left = false,
-			vakata_context = {
-				element		: false,
-				reference	: false,
-				position_x	: 0,
-				position_y	: 0,
-				items		: [],
-				html		: "",
-				is_visible	: false
-			};
-
-		$.vakata.context = {
-			settings : {
-				hide_onmouseleave	: 0,
-				icons				: true
-			},
-			_trigger : function (event_name) {
-				$(document).triggerHandler("context_" + event_name + ".vakata", {
-					"reference"	: vakata_context.reference,
-					"element"	: vakata_context.element,
-					"position"	: {
-						"x" : vakata_context.position_x,
-						"y" : vakata_context.position_y
-					}
-				});
-			},
-			_execute : function (i) {
-				i = vakata_context.items[i];
-				return i && (!i._disabled || ($.isFunction(i._disabled) && !i._disabled({ "item" : i, "reference" : vakata_context.reference, "element" : vakata_context.element }))) && i.action ? i.action.call(null, {
-							"item"		: i,
-							"reference"	: vakata_context.reference,
-							"element"	: vakata_context.element,
-							"position"	: {
-								"x" : vakata_context.position_x,
-								"y" : vakata_context.position_y
-							}
-						}) : false;
-			},
-			_parse : function (o, is_callback) {
-				if(!o) { return false; }
-				if(!is_callback) {
-					vakata_context.html		= "";
-					vakata_context.items	= [];
-				}
-				var str = "",
-					sep = false,
-					tmp;
-
-				if(is_callback) { str += "<"+"ul>"; }
-				$.each(o, function (i, val) {
-					if(!val) { return true; }
-					vakata_context.items.push(val);
-					if(!sep && val.separator_before) {
-						str += "<"+"li class='vakata-context-separator'><"+"a href='#' " + ($.vakata.context.settings.icons ? '' : 'style="margin-left:0px;"') + ">&#160;<"+"/a><"+"/li>";
-					}
-					sep = false;
-					str += "<"+"li class='" + (val._class || "") + (val._disabled === true || ($.isFunction(val._disabled) && val._disabled({ "item" : val, "reference" : vakata_context.reference, "element" : vakata_context.element })) ? " vakata-contextmenu-disabled " : "") + "' "+(val.shortcut?" data-shortcut='"+val.shortcut+"' ":'')+">";
-					str += "<"+"a href='#' rel='" + (vakata_context.items.length - 1) + "'>";
-					if($.vakata.context.settings.icons) {
-						str += "<"+"i ";
-						if(val.icon) {
-							if(val.icon.indexOf("/") !== -1 || val.icon.indexOf(".") !== -1) { str += " style='background:url(\"" + val.icon + "\") center center no-repeat' "; }
-							else { str += " class='" + val.icon + "' "; }
-						}
-						str += "><"+"/i><"+"span class='vakata-contextmenu-sep'>&#160;<"+"/span>";
-					}
-					str += ($.isFunction(val.label) ? val.label({ "item" : i, "reference" : vakata_context.reference, "element" : vakata_context.element }) : val.label) + (val.shortcut?' <span class="vakata-contextmenu-shortcut vakata-contextmenu-shortcut-'+val.shortcut+'">'+ (val.shortcut_label || '') +'</span>':'') + "<"+"/a>";
-					if(val.submenu) {
-						tmp = $.vakata.context._parse(val.submenu, true);
-						if(tmp) { str += tmp; }
-					}
-					str += "<"+"/li>";
-					if(val.separator_after) {
-						str += "<"+"li class='vakata-context-separator'><"+"a href='#' " + ($.vakata.context.settings.icons ? '' : 'style="margin-left:0px;"') + ">&#160;<"+"/a><"+"/li>";
-						sep = true;
-					}
-				});
-				str  = str.replace(/<li class\='vakata-context-separator'\><\/li\>$/,"");
-				if(is_callback) { str += "</ul>"; }
-				/**
-				 * triggered on the document when the contextmenu is parsed (HTML is built)
-				 * @event
-				 * @plugin contextmenu
-				 * @name context_parse.vakata
-				 * @param {jQuery} reference the element that was right clicked
-				 * @param {jQuery} element the DOM element of the menu itself
-				 * @param {Object} position the x & y coordinates of the menu
-				 */
-				if(!is_callback) { vakata_context.html = str; $.vakata.context._trigger("parse"); }
-				return str.length > 10 ? str : false;
-			},
-			_show_submenu : function (o) {
-				o = $(o);
-				if(!o.length || !o.children("ul").length) { return; }
-				var e = o.children("ul"),
-					x = o.offset().left + o.outerWidth(),
-					y = o.offset().top,
-					w = e.width(),
-					h = e.height(),
-					dw = $(window).width() + $(window).scrollLeft(),
-					dh = $(window).height() + $(window).scrollTop();
-				// може да се спести е една проверка - дали няма някой от класовете вече нагоре
-				if(right_to_left) {
-					o[x - (w + 10 + o.outerWidth()) < 0 ? "addClass" : "removeClass"]("vakata-context-left");
-				}
-				else {
-					o[x + w + 10 > dw ? "addClass" : "removeClass"]("vakata-context-right");
-				}
-				if(y + h + 10 > dh) {
-					e.css("bottom","-1px");
-				}
-				e.show();
-			},
-			show : function (reference, position, data) {
-				var o, e, x, y, w, h, dw, dh, cond = true;
-				if(vakata_context.element && vakata_context.element.length) {
-					vakata_context.element.width('');
-				}
-				switch(cond) {
-					case (!position && !reference):
-						return false;
-					case (!!position && !!reference):
-						vakata_context.reference	= reference;
-						vakata_context.position_x	= position.x;
-						vakata_context.position_y	= position.y;
-						break;
-					case (!position && !!reference):
-						vakata_context.reference	= reference;
-						o = reference.offset();
-						vakata_context.position_x	= o.left + reference.outerHeight();
-						vakata_context.position_y	= o.top;
-						break;
-					case (!!position && !reference):
-						vakata_context.position_x	= position.x;
-						vakata_context.position_y	= position.y;
-						break;
-				}
-				if(!!reference && !data && $(reference).data('vakata_contextmenu')) {
-					data = $(reference).data('vakata_contextmenu');
-				}
-				if($.vakata.context._parse(data)) {
-					vakata_context.element.html(vakata_context.html);
-				}
-				if(vakata_context.items.length) {
-					vakata_context.element.appendTo("body");
-					e = vakata_context.element;
-					x = vakata_context.position_x;
-					y = vakata_context.position_y;
-					w = e.width();
-					h = e.height();
-					dw = $(window).width() + $(window).scrollLeft();
-					dh = $(window).height() + $(window).scrollTop();
-					if(right_to_left) {
-						x -= (e.outerWidth() - $(reference).outerWidth());
-						if(x < $(window).scrollLeft() + 20) {
-							x = $(window).scrollLeft() + 20;
-						}
-					}
-					if(x + w + 20 > dw) {
-						x = dw - (w + 20);
-					}
-					if(y + h + 20 > dh) {
-						y = dh - (h + 20);
-					}
-
-					vakata_context.element
-						.css({ "left" : x, "top" : y })
-						.show()
-						.find('a').first().focus().parent().addClass("vakata-context-hover");
-					vakata_context.is_visible = true;
-					/**
-					 * triggered on the document when the contextmenu is shown
-					 * @event
-					 * @plugin contextmenu
-					 * @name context_show.vakata
-					 * @param {jQuery} reference the element that was right clicked
-					 * @param {jQuery} element the DOM element of the menu itself
-					 * @param {Object} position the x & y coordinates of the menu
-					 */
-					$.vakata.context._trigger("show");
-				}
-			},
-			hide : function () {
-				if(vakata_context.is_visible) {
-					vakata_context.element.hide().find("ul").hide().end().find(':focus').blur().end().detach();
-					vakata_context.is_visible = false;
-					/**
-					 * triggered on the document when the contextmenu is hidden
-					 * @event
-					 * @plugin contextmenu
-					 * @name context_hide.vakata
-					 * @param {jQuery} reference the element that was right clicked
-					 * @param {jQuery} element the DOM element of the menu itself
-					 * @param {Object} position the x & y coordinates of the menu
-					 */
-					$.vakata.context._trigger("hide");
-				}
-			}
-		};
-		$(function () {
-			right_to_left = $("body").css("direction") === "rtl";
-			var to = false;
-
-			vakata_context.element = $("<ul class='vakata-context'></ul>");
-			vakata_context.element
-				.on("mouseenter", "li", function (e) {
-					e.stopImmediatePropagation();
-
-					if($.contains(this, e.relatedTarget)) {
-						// премахнато заради delegate mouseleave по-долу
-						// $(this).find(".vakata-context-hover").removeClass("vakata-context-hover");
-						return;
-					}
-
-					if(to) { clearTimeout(to); }
-					vakata_context.element.find(".vakata-context-hover").removeClass("vakata-context-hover").end();
-
-					$(this)
-						.siblings().find("ul").hide().end().end()
-						.parentsUntil(".vakata-context", "li").addBack().addClass("vakata-context-hover");
-					$.vakata.context._show_submenu(this);
-				})
-				// тестово - дали не натоварва?
-				.on("mouseleave", "li", function (e) {
-					if($.contains(this, e.relatedTarget)) { return; }
-					$(this).find(".vakata-context-hover").addBack().removeClass("vakata-context-hover");
-				})
-				.on("mouseleave", function (e) {
-					$(this).find(".vakata-context-hover").removeClass("vakata-context-hover");
-					if($.vakata.context.settings.hide_onmouseleave) {
-						to = setTimeout(
-							(function (t) {
-								return function () { $.vakata.context.hide(); };
-							}(this)), $.vakata.context.settings.hide_onmouseleave);
-					}
-				})
-				.on("click", "a", function (e) {
-					e.preventDefault();
-				//})
-				//.on("mouseup", "a", function (e) {
-					if(!$(this).blur().parent().hasClass("vakata-context-disabled") && $.vakata.context._execute($(this).attr("rel")) !== false) {
-						$.vakata.context.hide();
-					}
-				})
-				.on('keydown', 'a', function (e) {
-						var o = null;
-						switch(e.which) {
-							case 13:
-							case 32:
-								e.type = "mouseup";
-								e.preventDefault();
-								$(e.currentTarget).trigger(e);
-								break;
-							case 37:
-								if(vakata_context.is_visible) {
-									vakata_context.element.find(".vakata-context-hover").last().closest("li").first().find("ul").hide().find(".vakata-context-hover").removeClass("vakata-context-hover").end().end().children('a').focus();
-									e.stopImmediatePropagation();
-									e.preventDefault();
-								}
-								break;
-							case 38:
-								if(vakata_context.is_visible) {
-									o = vakata_context.element.find("ul:visible").addBack().last().children(".vakata-context-hover").removeClass("vakata-context-hover").prevAll("li:not(.vakata-context-separator)").first();
-									if(!o.length) { o = vakata_context.element.find("ul:visible").addBack().last().children("li:not(.vakata-context-separator)").last(); }
-									o.addClass("vakata-context-hover").children('a').focus();
-									e.stopImmediatePropagation();
-									e.preventDefault();
-								}
-								break;
-							case 39:
-								if(vakata_context.is_visible) {
-									vakata_context.element.find(".vakata-context-hover").last().children("ul").show().children("li:not(.vakata-context-separator)").removeClass("vakata-context-hover").first().addClass("vakata-context-hover").children('a').focus();
-									e.stopImmediatePropagation();
-									e.preventDefault();
-								}
-								break;
-							case 40:
-								if(vakata_context.is_visible) {
-									o = vakata_context.element.find("ul:visible").addBack().last().children(".vakata-context-hover").removeClass("vakata-context-hover").nextAll("li:not(.vakata-context-separator)").first();
-									if(!o.length) { o = vakata_context.element.find("ul:visible").addBack().last().children("li:not(.vakata-context-separator)").first(); }
-									o.addClass("vakata-context-hover").children('a').focus();
-									e.stopImmediatePropagation();
-									e.preventDefault();
-								}
-								break;
-							case 27:
-								$.vakata.context.hide();
-								e.preventDefault();
-								break;
-							default:
-								//console.log(e.which);
-								break;
-						}
-					})
-				.on('keydown', function (e) {
-					e.preventDefault();
-					var a = vakata_context.element.find('.vakata-contextmenu-shortcut-' + e.which).parent();
-					if(a.parent().not('.vakata-context-disabled')) {
-						a.click();
-					}
-				});
-
-			$(document)
-				.on("mousedown.vakata.jstree", function (e) {
-					if(vakata_context.is_visible && !$.contains(vakata_context.element[0], e.target)) {
-						$.vakata.context.hide();
-					}
-				})
-				.on("context_show.vakata.jstree", function (e, data) {
-					vakata_context.element.find("li:has(ul)").children("a").addClass("vakata-context-parent");
-					if(right_to_left) {
-						vakata_context.element.addClass("vakata-context-rtl").css("direction", "rtl");
-					}
-					// also apply a RTL class?
-					vakata_context.element.find("ul").hide().end();
-				});
-		});
-	}($));
-	// $.jstree.defaults.plugins.push("contextmenu");
-
-/**
- * ### Drag'n'drop plugin
- *
- * Enables dragging and dropping of nodes in the tree, resulting in a move or copy operations.
- */
-
-	/**
-	 * stores all defaults for the drag'n'drop plugin
-	 * @name $.jstree.defaults.dnd
-	 * @plugin dnd
-	 */
-	$.jstree.defaults.dnd = {
-		/**
-		 * a boolean indicating if a copy should be possible while dragging (by pressint the meta key or Ctrl). Defaults to `true`.
-		 * @name $.jstree.defaults.dnd.copy
-		 * @plugin dnd
-		 */
-		copy : true,
-		/**
-		 * a number indicating how long a node should remain hovered while dragging to be opened. Defaults to `500`.
-		 * @name $.jstree.defaults.dnd.open_timeout
-		 * @plugin dnd
-		 */
-		open_timeout : 500,
-		/**
-		 * a function invoked each time a node is about to be dragged, invoked in the tree's scope and receives the nodes about to be dragged as an argument (array) - return `false` to prevent dragging
-		 * @name $.jstree.defaults.dnd.is_draggable
-		 * @plugin dnd
-		 */
-		is_draggable : true,
-		/**
-		 * a boolean indicating if checks should constantly be made while the user is dragging the node (as opposed to checking only on drop), default is `true`
-		 * @name $.jstree.defaults.dnd.check_while_dragging
-		 * @plugin dnd
-		 */
-		check_while_dragging : true,
-		/**
-		 * a boolean indicating if nodes from this tree should only be copied with dnd (as opposed to moved), default is `false`
-		 * @name $.jstree.defaults.dnd.always_copy
-		 * @plugin dnd
-		 */
-		always_copy : false,
-		/**
-		 * when dropping a node "inside", this setting indicates the position the node should go to - it can be an integer or a string: "first" (same as 0) or "last", default is `0`
-		 * @name $.jstree.defaults.dnd.inside_pos
-		 * @plugin dnd
-		 */
-		inside_pos : 0,
-		/**
-		 * when starting the drag on a node that is selected this setting controls if all selected nodes are dragged or only the single node, default is `true`, which means all selected nodes are dragged when the drag is started on a selected node
-		 * @name $.jstree.defaults.dnd.drag_selection
-		 * @plugin dnd
-		 */
-		drag_selection : true,
-		/**
-		 * controls whether dnd works on touch devices. If left as boolean true dnd will work the same as in desktop browsers, which in some cases may impair scrolling. If set to boolean false dnd will not work on touch devices. There is a special third option - string "selected" which means only selected nodes can be dragged on touch devices.
-		 * @name $.jstree.defaults.dnd.touch
-		 * @plugin dnd
-		 */
-		touch : true
-	};
-	// TODO: now check works by checking for each node individually, how about max_children, unique, etc?
-	$.jstree.plugins.dnd = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-
-			this.element
-				.on('mousedown.jstree touchstart.jstree', '.jstree-anchor', $.proxy(function (e) {
-					if(e.type === "touchstart" && (!this.settings.dnd.touch || (this.settings.dnd.touch === 'selected' && !$(e.currentTarget).hasClass('jstree-clicked')))) {
-						return true;
-					}
-					var obj = this.get_node(e.target),
-						mlt = this.is_selected(obj) && this.settings.drag_selection ? this.get_selected().length : 1,
-						txt = (mlt > 1 ? mlt + ' ' + this.get_string('nodes') : this.get_text(e.currentTarget));
-					if(this.settings.core.force_text) {
-						txt = $('<div />').text(txt).html();
-					}
-					if(obj && obj.id && obj.id !== "#" && (e.which === 1 || e.type === "touchstart") &&
-						(this.settings.dnd.is_draggable === true || ($.isFunction(this.settings.dnd.is_draggable) && this.settings.dnd.is_draggable.call(this, (mlt > 1 ? this.get_selected(true) : [obj]))))
-					) {
-						this.element.trigger('mousedown.jstree');
-						return $.vakata.dnd.start(e, { 'jstree' : true, 'origin' : this, 'obj' : this.get_node(obj,true), 'nodes' : mlt > 1 ? this.get_selected() : [obj.id] }, '<div id="jstree-dnd" class="jstree-' + this.get_theme() + ' jstree-' + this.get_theme() + '-' + this.get_theme_variant() + ' ' + ( this.settings.core.themes.responsive ? ' jstree-dnd-responsive' : '' ) + '"><i class="jstree-icon jstree-er"></i>' + txt + '<ins class="jstree-copy" style="display:none;">+</ins></div>');
-					}
-				}, this));
-		};
-	};
-
-	$(function() {
-		// bind only once for all instances
-		var lastmv = false,
-			laster = false,
-			opento = false,
-			marker = $('<div id="jstree-marker">&#160;</div>').hide(); //.appendTo('body');
-
-		$(document)
-			.on('dnd_start.vakata.jstree', function (e, data) {
-				lastmv = false;
-				if(!data || !data.data || !data.data.jstree) { return; }
-				marker.appendTo('body'); //.show();
-			})
-			.on('dnd_move.vakata.jstree', function (e, data) {
-				if(opento) { clearTimeout(opento); }
-				if(!data || !data.data || !data.data.jstree) { return; }
-
-				// if we are hovering the marker image do nothing (can happen on "inside" drags)
-				if(data.event.target.id && data.event.target.id === 'jstree-marker') {
-					return;
-				}
-
-				var ins = $.jstree.reference(data.event.target),
-					ref = false,
-					off = false,
-					rel = false,
-					l, t, h, p, i, o, ok, t1, t2, op, ps, pr, ip, tm;
-				// if we are over an instance
-				if(ins && ins._data && ins._data.dnd) {
-					marker.attr('class', 'jstree-' + ins.get_theme() + ( ins.settings.core.themes.responsive ? ' jstree-dnd-responsive' : '' ));
-					data.helper
-						.children().attr('class', 'jstree-' + ins.get_theme() + ' jstree-' + ins.get_theme() + '-' + ins.get_theme_variant() + ' ' + ( ins.settings.core.themes.responsive ? ' jstree-dnd-responsive' : '' ))
-						.find('.jstree-copy').first()[ data.data.origin && (data.data.origin.settings.dnd.always_copy || (data.data.origin.settings.dnd.copy && (data.event.metaKey || data.event.ctrlKey))) ? 'show' : 'hide' ]();
-
-
-					// if are hovering the container itself add a new root node
-					if( (data.event.target === ins.element[0] || data.event.target === ins.get_container_ul()[0]) && ins.get_container_ul().children().length === 0) {
-						ok = true;
-						for(t1 = 0, t2 = data.data.nodes.length; t1 < t2; t1++) {
-							ok = ok && ins.check( (data.data.origin && (data.data.origin.settings.dnd.always_copy || (data.data.origin.settings.dnd.copy && (data.event.metaKey || data.event.ctrlKey)) ) ? "copy_node" : "move_node"), (data.data.origin && data.data.origin !== ins ? data.data.origin.get_node(data.data.nodes[t1]) : data.data.nodes[t1]), '#', 'last', { 'dnd' : true, 'ref' : ins.get_node('#'), 'pos' : 'i', 'is_multi' : (data.data.origin && data.data.origin !== ins), 'is_foreign' : (!data.data.origin) });
-							if(!ok) { break; }
-						}
-						if(ok) {
-							lastmv = { 'ins' : ins, 'par' : '#', 'pos' : 'last' };
-							marker.hide();
-							data.helper.find('.jstree-icon').first().removeClass('jstree-er').addClass('jstree-ok');
-							return;
-						}
-					}
-					else {
-						// if we are hovering a tree node
-						ref = $(data.event.target).closest('.jstree-anchor');
-						if(ref && ref.length && ref.parent().is('.jstree-closed, .jstree-open, .jstree-leaf')) {
-							off = ref.offset();
-							rel = data.event.pageY - off.top;
-							h = ref.height();
-							if(rel < h / 3) {
-								o = ['b', 'i', 'a'];
-							}
-							else if(rel > h - h / 3) {
-								o = ['a', 'i', 'b'];
-							}
-							else {
-								o = rel > h / 2 ? ['i', 'a', 'b'] : ['i', 'b', 'a'];
-							}
-							$.each(o, function (j, v) {
-								switch(v) {
-									case 'b':
-										l = off.left - 6;
-										t = off.top;
-										p = ins.get_parent(ref);
-										i = ref.parent().index();
-										break;
-									case 'i':
-										ip = ins.settings.dnd.inside_pos;
-										tm = ins.get_node(ref.parent());
-										l = off.left - 2;
-										t = off.top + h / 2 + 1;
-										p = tm.id;
-										i = ip === 'first' ? 0 : (ip === 'last' ? tm.children.length : Math.min(ip, tm.children.length));
-										break;
-									case 'a':
-										l = off.left - 6;
-										t = off.top + h;
-										p = ins.get_parent(ref);
-										i = ref.parent().index() + 1;
-										break;
-								}
-								ok = true;
-								for(t1 = 0, t2 = data.data.nodes.length; t1 < t2; t1++) {
-									op = data.data.origin && (data.data.origin.settings.dnd.always_copy || (data.data.origin.settings.dnd.copy && (data.event.metaKey || data.event.ctrlKey))) ? "copy_node" : "move_node";
-									ps = i;
-									if(op === "move_node" && v === 'a' && (data.data.origin && data.data.origin === ins) && p === ins.get_parent(data.data.nodes[t1])) {
-										pr = ins.get_node(p);
-										if(ps > $.inArray(data.data.nodes[t1], pr.children)) {
-											ps -= 1;
-										}
-									}
-									ok = ok && ( (ins && ins.settings && ins.settings.dnd && ins.settings.dnd.check_while_dragging === false) || ins.check(op, (data.data.origin && data.data.origin !== ins ? data.data.origin.get_node(data.data.nodes[t1]) : data.data.nodes[t1]), p, ps, { 'dnd' : true, 'ref' : ins.get_node(ref.parent()), 'pos' : v, 'is_multi' : (data.data.origin && data.data.origin !== ins), 'is_foreign' : (!data.data.origin) }) );
-									if(!ok) {
-										if(ins && ins.last_error) { laster = ins.last_error(); }
-										break;
-									}
-								}
-								if(v === 'i' && ref.parent().is('.jstree-closed') && ins.settings.dnd.open_timeout) {
-									opento = setTimeout((function (x, z) { return function () { x.open_node(z); }; }(ins, ref)), ins.settings.dnd.open_timeout);
-								}
-								if(ok) {
-									lastmv = { 'ins' : ins, 'par' : p, 'pos' : v === 'i' && ip === 'last' && i === 0 && !ins.is_loaded(tm) ? 'last' : i };
-									marker.css({ 'left' : l + 'px', 'top' : t + 'px' }).show();
-									data.helper.find('.jstree-icon').first().removeClass('jstree-er').addClass('jstree-ok');
-									laster = {};
-									o = true;
-									return false;
-								}
-							});
-							if(o === true) { return; }
-						}
-					}
-				}
-				lastmv = false;
-				data.helper.find('.jstree-icon').removeClass('jstree-ok').addClass('jstree-er');
-				marker.hide();
-			})
-			.on('dnd_scroll.vakata.jstree', function (e, data) {
-				if(!data || !data.data || !data.data.jstree) { return; }
-				marker.hide();
-				lastmv = false;
-				data.helper.find('.jstree-icon').first().removeClass('jstree-ok').addClass('jstree-er');
-			})
-			.on('dnd_stop.vakata.jstree', function (e, data) {
-				if(opento) { clearTimeout(opento); }
-				if(!data || !data.data || !data.data.jstree) { return; }
-				marker.hide().detach();
-				var i, j, nodes = [];
-				if(lastmv) {
-					for(i = 0, j = data.data.nodes.length; i < j; i++) {
-						nodes[i] = data.data.origin ? data.data.origin.get_node(data.data.nodes[i]) : data.data.nodes[i];
-						if(data.data.origin) {
-							nodes[i].instance = data.data.origin;
-						}
-					}
-					lastmv.ins[ data.data.origin && (data.data.origin.settings.dnd.always_copy || (data.data.origin.settings.dnd.copy && (data.event.metaKey || data.event.ctrlKey))) ? 'copy_node' : 'move_node' ](nodes, lastmv.par, lastmv.pos);
-					for(i = 0, j = nodes.length; i < j; i++) {
-						if(nodes[i].instance) {
-							nodes[i].instance = null;
-						}
-					}
-				}
-				else {
-					i = $(data.event.target).closest('.jstree');
-					if(i.length && laster && laster.error && laster.error === 'check') {
-						i = i.jstree(true);
-						if(i) {
-							i.settings.core.error.call(this, laster);
-						}
-					}
-				}
-			})
-			.on('keyup.jstree keydown.jstree', function (e, data) {
-				data = $.vakata.dnd._get();
-				if(data && data.data && data.data.jstree) {
-					data.helper.find('.jstree-copy').first()[ data.data.origin && (data.data.origin.settings.dnd.always_copy || (data.data.origin.settings.dnd.copy && (e.metaKey || e.ctrlKey))) ? 'show' : 'hide' ]();
-				}
-			});
-	});
-
-	// helpers
-	(function ($) {
-		// private variable
-		var vakata_dnd = {
-			element	: false,
-			target	: false,
-			is_down	: false,
-			is_drag	: false,
-			helper	: false,
-			helper_w: 0,
-			data	: false,
-			init_x	: 0,
-			init_y	: 0,
-			scroll_l: 0,
-			scroll_t: 0,
-			scroll_e: false,
-			scroll_i: false,
-			is_touch: false
-		};
-		$.vakata.dnd = {
-			settings : {
-				scroll_speed		: 10,
-				scroll_proximity	: 20,
-				helper_left			: 5,
-				helper_top			: 10,
-				threshold			: 5,
-				threshold_touch		: 50
-			},
-			_trigger : function (event_name, e) {
-				var data = $.vakata.dnd._get();
-				data.event = e;
-				$(document).triggerHandler("dnd_" + event_name + ".vakata", data);
-			},
-			_get : function () {
-				return {
-					"data"		: vakata_dnd.data,
-					"element"	: vakata_dnd.element,
-					"helper"	: vakata_dnd.helper
-				};
-			},
-			_clean : function () {
-				if(vakata_dnd.helper) { vakata_dnd.helper.remove(); }
-				if(vakata_dnd.scroll_i) { clearInterval(vakata_dnd.scroll_i); vakata_dnd.scroll_i = false; }
-				vakata_dnd = {
-					element	: false,
-					target	: false,
-					is_down	: false,
-					is_drag	: false,
-					helper	: false,
-					helper_w: 0,
-					data	: false,
-					init_x	: 0,
-					init_y	: 0,
-					scroll_l: 0,
-					scroll_t: 0,
-					scroll_e: false,
-					scroll_i: false,
-					is_touch: false
-				};
-				$(document).off("mousemove.vakata.jstree touchmove.vakata.jstree", $.vakata.dnd.drag);
-				$(document).off("mouseup.vakata.jstree touchend.vakata.jstree", $.vakata.dnd.stop);
-			},
-			_scroll : function (init_only) {
-				if(!vakata_dnd.scroll_e || (!vakata_dnd.scroll_l && !vakata_dnd.scroll_t)) {
-					if(vakata_dnd.scroll_i) { clearInterval(vakata_dnd.scroll_i); vakata_dnd.scroll_i = false; }
-					return false;
-				}
-				if(!vakata_dnd.scroll_i) {
-					vakata_dnd.scroll_i = setInterval($.vakata.dnd._scroll, 100);
-					return false;
-				}
-				if(init_only === true) { return false; }
-
-				var i = vakata_dnd.scroll_e.scrollTop(),
-					j = vakata_dnd.scroll_e.scrollLeft();
-				vakata_dnd.scroll_e.scrollTop(i + vakata_dnd.scroll_t * $.vakata.dnd.settings.scroll_speed);
-				vakata_dnd.scroll_e.scrollLeft(j + vakata_dnd.scroll_l * $.vakata.dnd.settings.scroll_speed);
-				if(i !== vakata_dnd.scroll_e.scrollTop() || j !== vakata_dnd.scroll_e.scrollLeft()) {
-					/**
-					 * triggered on the document when a drag causes an element to scroll
-					 * @event
-					 * @plugin dnd
-					 * @name dnd_scroll.vakata
-					 * @param {Mixed} data any data supplied with the call to $.vakata.dnd.start
-					 * @param {DOM} element the DOM element being dragged
-					 * @param {jQuery} helper the helper shown next to the mouse
-					 * @param {jQuery} event the element that is scrolling
-					 */
-					$.vakata.dnd._trigger("scroll", vakata_dnd.scroll_e);
-				}
-			},
-			start : function (e, data, html) {
-				if(e.type === "touchstart" && e.originalEvent && e.originalEvent.changedTouches && e.originalEvent.changedTouches[0]) {
-					e.pageX = e.originalEvent.changedTouches[0].pageX;
-					e.pageY = e.originalEvent.changedTouches[0].pageY;
-					e.target = document.elementFromPoint(e.originalEvent.changedTouches[0].pageX - window.pageXOffset, e.originalEvent.changedTouches[0].pageY - window.pageYOffset);
-				}
-				if(vakata_dnd.is_drag) { $.vakata.dnd.stop({}); }
-				try {
-					e.currentTarget.unselectable = "on";
-					e.currentTarget.onselectstart = function() { return false; };
-					if(e.currentTarget.style) { e.currentTarget.style.MozUserSelect = "none"; }
-				} catch(ignore) { }
-				vakata_dnd.init_x	= e.pageX;
-				vakata_dnd.init_y	= e.pageY;
-				vakata_dnd.data		= data;
-				vakata_dnd.is_down	= true;
-				vakata_dnd.element	= e.currentTarget;
-				vakata_dnd.target	= e.target;
-				vakata_dnd.is_touch	= e.type === "touchstart";
-				if(html !== false) {
-					vakata_dnd.helper = $("<div id='vakata-dnd'></div>").html(html).css({
-						"display"		: "block",
-						"margin"		: "0",
-						"padding"		: "0",
-						"position"		: "absolute",
-						"top"			: "-2000px",
-						"lineHeight"	: "16px",
-						"zIndex"		: "10000"
-					});
-				}
-				$(document).on("mousemove.vakata.jstree touchmove.vakata.jstree", $.vakata.dnd.drag);
-				$(document).on("mouseup.vakata.jstree touchend.vakata.jstree", $.vakata.dnd.stop);
-				return false;
-			},
-			drag : function (e) {
-				if(e.type === "touchmove" && e.originalEvent && e.originalEvent.changedTouches && e.originalEvent.changedTouches[0]) {
-					e.pageX = e.originalEvent.changedTouches[0].pageX;
-					e.pageY = e.originalEvent.changedTouches[0].pageY;
-					e.target = document.elementFromPoint(e.originalEvent.changedTouches[0].pageX - window.pageXOffset, e.originalEvent.changedTouches[0].pageY - window.pageYOffset);
-				}
-				if(!vakata_dnd.is_down) { return; }
-				if(!vakata_dnd.is_drag) {
-					if(
-						Math.abs(e.pageX - vakata_dnd.init_x) > (vakata_dnd.is_touch ? $.vakata.dnd.settings.threshold_touch : $.vakata.dnd.settings.threshold) ||
-						Math.abs(e.pageY - vakata_dnd.init_y) > (vakata_dnd.is_touch ? $.vakata.dnd.settings.threshold_touch : $.vakata.dnd.settings.threshold)
-					) {
-						if(vakata_dnd.helper) {
-							vakata_dnd.helper.appendTo("body");
-							vakata_dnd.helper_w = vakata_dnd.helper.outerWidth();
-						}
-						vakata_dnd.is_drag = true;
-						/**
-						 * triggered on the document when a drag starts
-						 * @event
-						 * @plugin dnd
-						 * @name dnd_start.vakata
-						 * @param {Mixed} data any data supplied with the call to $.vakata.dnd.start
-						 * @param {DOM} element the DOM element being dragged
-						 * @param {jQuery} helper the helper shown next to the mouse
-						 * @param {Object} event the event that caused the start (probably mousemove)
-						 */
-						$.vakata.dnd._trigger("start", e);
-					}
-					else { return; }
-				}
-
-				var d  = false, w  = false,
-					dh = false, wh = false,
-					dw = false, ww = false,
-					dt = false, dl = false,
-					ht = false, hl = false;
-
-				vakata_dnd.scroll_t = 0;
-				vakata_dnd.scroll_l = 0;
-				vakata_dnd.scroll_e = false;
-				$($(e.target).parentsUntil("body").addBack().get().reverse())
-					.filter(function () {
-						return	(/^auto|scroll$/).test($(this).css("overflow")) &&
-								(this.scrollHeight > this.offsetHeight || this.scrollWidth > this.offsetWidth);
-					})
-					.each(function () {
-						var t = $(this), o = t.offset();
-						if(this.scrollHeight > this.offsetHeight) {
-							if(o.top + t.height() - e.pageY < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_t = 1; }
-							if(e.pageY - o.top < $.vakata.dnd.settings.scroll_proximity)				{ vakata_dnd.scroll_t = -1; }
-						}
-						if(this.scrollWidth > this.offsetWidth) {
-							if(o.left + t.width() - e.pageX < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_l = 1; }
-							if(e.pageX - o.left < $.vakata.dnd.settings.scroll_proximity)				{ vakata_dnd.scroll_l = -1; }
-						}
-						if(vakata_dnd.scroll_t || vakata_dnd.scroll_l) {
-							vakata_dnd.scroll_e = $(this);
-							return false;
-						}
-					});
-
-				if(!vakata_dnd.scroll_e) {
-					d  = $(document); w = $(window);
-					dh = d.height(); wh = w.height();
-					dw = d.width(); ww = w.width();
-					dt = d.scrollTop(); dl = d.scrollLeft();
-					if(dh > wh && e.pageY - dt < $.vakata.dnd.settings.scroll_proximity)		{ vakata_dnd.scroll_t = -1;  }
-					if(dh > wh && wh - (e.pageY - dt) < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_t = 1; }
-					if(dw > ww && e.pageX - dl < $.vakata.dnd.settings.scroll_proximity)		{ vakata_dnd.scroll_l = -1; }
-					if(dw > ww && ww - (e.pageX - dl) < $.vakata.dnd.settings.scroll_proximity)	{ vakata_dnd.scroll_l = 1; }
-					if(vakata_dnd.scroll_t || vakata_dnd.scroll_l) {
-						vakata_dnd.scroll_e = d;
-					}
-				}
-				if(vakata_dnd.scroll_e) { $.vakata.dnd._scroll(true); }
-
-				if(vakata_dnd.helper) {
-					ht = parseInt(e.pageY + $.vakata.dnd.settings.helper_top, 10);
-					hl = parseInt(e.pageX + $.vakata.dnd.settings.helper_left, 10);
-					if(dh && ht + 25 > dh) { ht = dh - 50; }
-					if(dw && hl + vakata_dnd.helper_w > dw) { hl = dw - (vakata_dnd.helper_w + 2); }
-					vakata_dnd.helper.css({
-						left	: hl + "px",
-						top		: ht + "px"
-					});
-				}
-				/**
-				 * triggered on the document when a drag is in progress
-				 * @event
-				 * @plugin dnd
-				 * @name dnd_move.vakata
-				 * @param {Mixed} data any data supplied with the call to $.vakata.dnd.start
-				 * @param {DOM} element the DOM element being dragged
-				 * @param {jQuery} helper the helper shown next to the mouse
-				 * @param {Object} event the event that caused this to trigger (most likely mousemove)
-				 */
-				$.vakata.dnd._trigger("move", e);
-				return false;
-			},
-			stop : function (e) {
-				if(e.type === "touchend" && e.originalEvent && e.originalEvent.changedTouches && e.originalEvent.changedTouches[0]) {
-					e.pageX = e.originalEvent.changedTouches[0].pageX;
-					e.pageY = e.originalEvent.changedTouches[0].pageY;
-					e.target = document.elementFromPoint(e.originalEvent.changedTouches[0].pageX - window.pageXOffset, e.originalEvent.changedTouches[0].pageY - window.pageYOffset);
-				}
-				if(vakata_dnd.is_drag) {
-					/**
-					 * triggered on the document when a drag stops (the dragged element is dropped)
-					 * @event
-					 * @plugin dnd
-					 * @name dnd_stop.vakata
-					 * @param {Mixed} data any data supplied with the call to $.vakata.dnd.start
-					 * @param {DOM} element the DOM element being dragged
-					 * @param {jQuery} helper the helper shown next to the mouse
-					 * @param {Object} event the event that caused the stop
-					 */
-					$.vakata.dnd._trigger("stop", e);
-				}
-				else {
-					if(e.type === "touchend" && e.target === vakata_dnd.target) {
-						var to = setTimeout(function () { $(e.target).click(); }, 100);
-						$(e.target).one('click', function() { if(to) { clearTimeout(to); } });
-					}
-				}
-				$.vakata.dnd._clean();
-				return false;
-			}
-		};
-	}($));
-
-	// include the dnd plugin by default
-	// $.jstree.defaults.plugins.push("dnd");
-
-
-/**
- * ### Search plugin
- *
- * Adds search functionality to jsTree.
- */
-
-	/**
-	 * stores all defaults for the search plugin
-	 * @name $.jstree.defaults.search
-	 * @plugin search
-	 */
-	$.jstree.defaults.search = {
-		/**
-		 * a jQuery-like AJAX config, which jstree uses if a server should be queried for results. 
-		 * 
-		 * A `str` (which is the search string) parameter will be added with the request. The expected result is a JSON array with nodes that need to be opened so that matching nodes will be revealed.
-		 * Leave this setting as `false` to not query the server. You can also set this to a function, which will be invoked in the instance's scope and receive 2 parameters - the search string and the callback to call with the array of nodes to load.
-		 * @name $.jstree.defaults.search.ajax
-		 * @plugin search
-		 */
-		ajax : false,
-		/**
-		 * Indicates if the search should be fuzzy or not (should `chnd3` match `child node 3`). Default is `false`.
-		 * @name $.jstree.defaults.search.fuzzy
-		 * @plugin search
-		 */
-		fuzzy : false,
-		/**
-		 * Indicates if the search should be case sensitive. Default is `false`.
-		 * @name $.jstree.defaults.search.case_sensitive
-		 * @plugin search
-		 */
-		case_sensitive : false,
-		/**
-		 * Indicates if the tree should be filtered (by default) to show only matching nodes (keep in mind this can be a heavy on large trees in old browsers). 
-		 * This setting can be changed at runtime when calling the search method. Default is `false`.
-		 * @name $.jstree.defaults.search.show_only_matches
-		 * @plugin search
-		 */
-		show_only_matches : false,
-		/**
-		 * Indicates if all nodes opened to reveal the search result, should be closed when the search is cleared or a new search is performed. Default is `true`.
-		 * @name $.jstree.defaults.search.close_opened_onclear
-		 * @plugin search
-		 */
-		close_opened_onclear : true,
-		/**
-		 * Indicates if only leaf nodes should be included in search results. Default is `false`.
-		 * @name $.jstree.defaults.search.search_leaves_only
-		 * @plugin search
-		 */
-		search_leaves_only : false,
-		/**
-		 * If set to a function it wil be called in the instance's scope with two arguments - search string and node (where node will be every node in the structure, so use with caution).
-		 * If the function returns a truthy value the node will be considered a match (it might not be displayed if search_only_leaves is set to true and the node is not a leaf). Default is `false`.
-		 * @name $.jstree.defaults.search.search_callback
-		 * @plugin search
-		 */
-		search_callback : false
-	};
-
-	$.jstree.plugins.search = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-
-			this._data.search.str = "";
-			this._data.search.dom = $();
-			this._data.search.res = [];
-			this._data.search.opn = [];
-			this._data.search.som = false;
-
-			this.element
-				.on('before_open.jstree', $.proxy(function (e, data) {
-						var i, j, f, r = this._data.search.res, s = [], o = $();
-						if(r && r.length) {
-							this._data.search.dom = $(this.element[0].querySelectorAll('#' + $.map(r, function (v) { return "0123456789".indexOf(v[0]) !== -1 ? '\\3' + v[0] + ' ' + v.substr(1).replace($.jstree.idregex,'\\$&') : v.replace($.jstree.idregex,'\\$&'); }).join(', #')));
-							this._data.search.dom.children(".jstree-anchor").addClass('jstree-search');
-							if(this._data.search.som && this._data.search.res.length) {
-								for(i = 0, j = r.length; i < j; i++) {
-									s = s.concat(this.get_node(r[i]).parents);
-								}
-								s = $.vakata.array_remove_item($.vakata.array_unique(s),'#');
-								o = s.length ? $(this.element[0].querySelectorAll('#' + $.map(s, function (v) { return "0123456789".indexOf(v[0]) !== -1 ? '\\3' + v[0] + ' ' + v.substr(1).replace($.jstree.idregex,'\\$&') : v.replace($.jstree.idregex,'\\$&'); }).join(', #'))) : $();
-
-								this.element.find(".jstree-node").hide().filter('.jstree-last').filter(function() { return this.nextSibling; }).removeClass('jstree-last');
-								o = o.add(this._data.search.dom);
-								o.parentsUntil(".jstree").addBack().show()
-									.filter(".jstree-children").each(function () { $(this).children(".jstree-node:visible").eq(-1).addClass("jstree-last"); });
-							}
-						}
-					}, this))
-				.on("search.jstree", $.proxy(function (e, data) {
-						if(this._data.search.som) {
-							if(data.nodes.length) {
-								this.element.find(".jstree-node").hide().filter('.jstree-last').filter(function() { return this.nextSibling; }).removeClass('jstree-last');
-								data.nodes.parentsUntil(".jstree").addBack().show()
-									.filter(".jstree-children").each(function () { $(this).children(".jstree-node:visible").eq(-1).addClass("jstree-last"); });
-							}
-						}
-					}, this))
-				.on("clear_search.jstree", $.proxy(function (e, data) {
-						if(this._data.search.som && data.nodes.length) {
-							this.element.find(".jstree-node").css("display","").filter('.jstree-last').filter(function() { return this.nextSibling; }).removeClass('jstree-last');
-						}
-					}, this));
-		};
-		/**
-		 * used to search the tree nodes for a given string
-		 * @name search(str [, skip_async])
-		 * @param {String} str the search string
-		 * @param {Boolean} skip_async if set to true server will not be queried even if configured
-		 * @param {Boolean} show_only_matches if set to true only matching nodes will be shown (keep in mind this can be very slow on large trees or old browsers)
-		 * @plugin search
-		 * @trigger search.jstree
-		 */
-		this.search = function (str, skip_async, show_only_matches) {
-			if(str === false || $.trim(str.toString()) === "") {
-				return this.clear_search();
-			}
-			str = str.toString();
-			var s = this.settings.search,
-				a = s.ajax ? s.ajax : false,
-				f = null,
-				r = [],
-				p = [], i, j;
-			if(this._data.search.res.length) {
-				this.clear_search();
-			}
-			if(show_only_matches === undefined) {
-				show_only_matches = s.show_only_matches;
-			}
-			if(!skip_async && a !== false) {
-				if($.isFunction(a)) {
-					return a.call(this, str, $.proxy(function (d) {
-							if(d && d.d) { d = d.d; }
-							this._load_nodes(!$.isArray(d) ? [] : $.vakata.array_unique(d), function () {
-								this.search(str, true, show_only_matches);
-							}, true);
-						}, this));
-				}
-				else {
-					a = $.extend({}, a);
-					if(!a.data) { a.data = {}; }
-					a.data.str = str;
-					return $.ajax(a)
-						.fail($.proxy(function () {
-							this._data.core.last_error = { 'error' : 'ajax', 'plugin' : 'search', 'id' : 'search_01', 'reason' : 'Could not load search parents', 'data' : JSON.stringify(a) };
-							this.settings.core.error.call(this, this._data.core.last_error);
-						}, this))
-						.done($.proxy(function (d) {
-							if(d && d.d) { d = d.d; }
-							this._load_nodes(!$.isArray(d) ? [] : $.vakata.array_unique(d), function () {
-								this.search(str, true, show_only_matches);
-							}, true);
-						}, this));
-				}
-			}
-			this._data.search.str = str;
-			this._data.search.dom = $();
-			this._data.search.res = [];
-			this._data.search.opn = [];
-			this._data.search.som = show_only_matches;
-
-			f = new $.vakata.search(str, true, { caseSensitive : s.case_sensitive, fuzzy : s.fuzzy });
-
-			$.each(this._model.data, function (i, v) {
-				if(v.text && ( (s.search_callback && s.search_callback.call(this, str, v)) || (!s.search_callback && f.search(v.text).isMatch) ) && (!s.search_leaves_only || (v.state.loaded && v.children.length === 0)) ) {
-					r.push(i);
-					p = p.concat(v.parents);
-				}
-			});
-			if(r.length) {
-				p = $.vakata.array_unique(p);
-				this._search_open(p);
-				this._data.search.dom = $(this.element[0].querySelectorAll('#' + $.map(r, function (v) { return "0123456789".indexOf(v[0]) !== -1 ? '\\3' + v[0] + ' ' + v.substr(1).replace($.jstree.idregex,'\\$&') : v.replace($.jstree.idregex,'\\$&'); }).join(', #')));
-				this._data.search.res = r;
-				this._data.search.dom.children(".jstree-anchor").addClass('jstree-search');
-			}
-			/**
-			 * triggered after search is complete
-			 * @event
-			 * @name search.jstree
-			 * @param {jQuery} nodes a jQuery collection of matching nodes
-			 * @param {String} str the search string
-			 * @param {Array} res a collection of objects represeing the matching nodes
-			 * @plugin search
-			 */
-			this.trigger('search', { nodes : this._data.search.dom, str : str, res : this._data.search.res, show_only_matches : show_only_matches });
-		};
-		/**
-		 * used to clear the last search (removes classes and shows all nodes if filtering is on)
-		 * @name clear_search()
-		 * @plugin search
-		 * @trigger clear_search.jstree
-		 */
-		this.clear_search = function () {
-			this._data.search.dom.children(".jstree-anchor").removeClass("jstree-search");
-			if(this.settings.search.close_opened_onclear) {
-				this.close_node(this._data.search.opn, 0);
-			}
-			/**
-			 * triggered after search is complete
-			 * @event
-			 * @name clear_search.jstree
-			 * @param {jQuery} nodes a jQuery collection of matching nodes (the result from the last search)
-			 * @param {String} str the search string (the last search string)
-			 * @param {Array} res a collection of objects represeing the matching nodes (the result from the last search)
-			 * @plugin search
-			 */
-			this.trigger('clear_search', { 'nodes' : this._data.search.dom, str : this._data.search.str, res : this._data.search.res });
-			this._data.search.str = "";
-			this._data.search.res = [];
-			this._data.search.opn = [];
-			this._data.search.dom = $();
-		};
-		/**
-		 * opens nodes that need to be opened to reveal the search results. Used only internally.
-		 * @private
-		 * @name _search_open(d)
-		 * @param {Array} d an array of node IDs
-		 * @plugin search
-		 */
-		this._search_open = function (d) {
-			var t = this;
-			$.each(d.concat([]), function (i, v) {
-				if(v === "#") { return true; }
-				try { v = $('#' + v.replace($.jstree.idregex,'\\$&'), t.element); } catch(ignore) { }
-				if(v && v.length) {
-					if(t.is_closed(v)) {
-						t._data.search.opn.push(v[0].id);
-						t.open_node(v, function () { t._search_open(d); }, 0);
-					}
-				}
-			});
-		};
-	};
-
-	// helpers
-	(function ($) {
-		// from http://kiro.me/projects/fuse.html
-		$.vakata.search = function(pattern, txt, options) {
-			options = options || {};
-			if(options.fuzzy !== false) {
-				options.fuzzy = true;
-			}
-			pattern = options.caseSensitive ? pattern : pattern.toLowerCase();
-			var MATCH_LOCATION	= options.location || 0,
-				MATCH_DISTANCE	= options.distance || 100,
-				MATCH_THRESHOLD	= options.threshold || 0.6,
-				patternLen = pattern.length,
-				matchmask, pattern_alphabet, match_bitapScore, search;
-			if(patternLen > 32) {
-				options.fuzzy = false;
-			}
-			if(options.fuzzy) {
-				matchmask = 1 << (patternLen - 1);
-				pattern_alphabet = (function () {
-					var mask = {},
-						i = 0;
-					for (i = 0; i < patternLen; i++) {
-						mask[pattern.charAt(i)] = 0;
-					}
-					for (i = 0; i < patternLen; i++) {
-						mask[pattern.charAt(i)] |= 1 << (patternLen - i - 1);
-					}
-					return mask;
-				}());
-				match_bitapScore = function (e, x) {
-					var accuracy = e / patternLen,
-						proximity = Math.abs(MATCH_LOCATION - x);
-					if(!MATCH_DISTANCE) {
-						return proximity ? 1.0 : accuracy;
-					}
-					return accuracy + (proximity / MATCH_DISTANCE);
-				};
-			}
-			search = function (text) {
-				text = options.caseSensitive ? text : text.toLowerCase();
-				if(pattern === text || text.indexOf(pattern) !== -1) {
-					return {
-						isMatch: true,
-						score: 0
-					};
-				}
-				if(!options.fuzzy) {
-					return {
-						isMatch: false,
-						score: 1
-					};
-				}
-				var i, j,
-					textLen = text.length,
-					scoreThreshold = MATCH_THRESHOLD,
-					bestLoc = text.indexOf(pattern, MATCH_LOCATION),
-					binMin, binMid,
-					binMax = patternLen + textLen,
-					lastRd, start, finish, rd, charMatch,
-					score = 1,
-					locations = [];
-				if (bestLoc !== -1) {
-					scoreThreshold = Math.min(match_bitapScore(0, bestLoc), scoreThreshold);
-					bestLoc = text.lastIndexOf(pattern, MATCH_LOCATION + patternLen);
-					if (bestLoc !== -1) {
-						scoreThreshold = Math.min(match_bitapScore(0, bestLoc), scoreThreshold);
-					}
-				}
-				bestLoc = -1;
-				for (i = 0; i < patternLen; i++) {
-					binMin = 0;
-					binMid = binMax;
-					while (binMin < binMid) {
-						if (match_bitapScore(i, MATCH_LOCATION + binMid) <= scoreThreshold) {
-							binMin = binMid;
-						} else {
-							binMax = binMid;
-						}
-						binMid = Math.floor((binMax - binMin) / 2 + binMin);
-					}
-					binMax = binMid;
-					start = Math.max(1, MATCH_LOCATION - binMid + 1);
-					finish = Math.min(MATCH_LOCATION + binMid, textLen) + patternLen;
-					rd = new Array(finish + 2);
-					rd[finish + 1] = (1 << i) - 1;
-					for (j = finish; j >= start; j--) {
-						charMatch = pattern_alphabet[text.charAt(j - 1)];
-						if (i === 0) {
-							rd[j] = ((rd[j + 1] << 1) | 1) & charMatch;
-						} else {
-							rd[j] = ((rd[j + 1] << 1) | 1) & charMatch | (((lastRd[j + 1] | lastRd[j]) << 1) | 1) | lastRd[j + 1];
-						}
-						if (rd[j] & matchmask) {
-							score = match_bitapScore(i, j - 1);
-							if (score <= scoreThreshold) {
-								scoreThreshold = score;
-								bestLoc = j - 1;
-								locations.push(bestLoc);
-								if (bestLoc > MATCH_LOCATION) {
-									start = Math.max(1, 2 * MATCH_LOCATION - bestLoc);
-								} else {
-									break;
-								}
-							}
-						}
-					}
-					if (match_bitapScore(i + 1, MATCH_LOCATION) > scoreThreshold) {
-						break;
-					}
-					lastRd = rd;
-				}
-				return {
-					isMatch: bestLoc >= 0,
-					score: score
-				};
-			};
-			return txt === true ? { 'search' : search } : search(txt);
-		};
-	}($));
-
-	// include the search plugin by default
-	// $.jstree.defaults.plugins.push("search");
-
-/**
- * ### Sort plugin
- *
- * Automatically sorts all siblings in the tree according to a sorting function.
- */
-
-	/**
-	 * the settings function used to sort the nodes.
-	 * It is executed in the tree's context, accepts two nodes as arguments and should return `1` or `-1`.
-	 * @name $.jstree.defaults.sort
-	 * @plugin sort
-	 */
-	$.jstree.defaults.sort = function (a, b) {
-		//return this.get_type(a) === this.get_type(b) ? (this.get_text(a) > this.get_text(b) ? 1 : -1) : this.get_type(a) >= this.get_type(b);
-		return this.get_text(a) > this.get_text(b) ? 1 : -1;
-	};
-	$.jstree.plugins.sort = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-			this.element
-				.on("model.jstree", $.proxy(function (e, data) {
-						this.sort(data.parent, true);
-					}, this))
-				.on("rename_node.jstree create_node.jstree", $.proxy(function (e, data) {
-						this.sort(data.parent || data.node.parent, false);
-						this.redraw_node(data.parent || data.node.parent, true);
-					}, this))
-				.on("move_node.jstree copy_node.jstree", $.proxy(function (e, data) {
-						this.sort(data.parent, false);
-						this.redraw_node(data.parent, true);
-					}, this));
-		};
-		/**
-		 * used to sort a node's children
-		 * @private
-		 * @name sort(obj [, deep])
-		 * @param  {mixed} obj the node
-		 * @param {Boolean} deep if set to `true` nodes are sorted recursively.
-		 * @plugin sort
-		 * @trigger search.jstree
-		 */
-		this.sort = function (obj, deep) {
-			var i, j;
-			obj = this.get_node(obj);
-			if(obj && obj.children && obj.children.length) {
-				obj.children.sort($.proxy(this.settings.sort, this));
-				if(deep) {
-					for(i = 0, j = obj.children_d.length; i < j; i++) {
-						this.sort(obj.children_d[i], false);
-					}
-				}
-			}
-		};
-	};
-
-	// include the sort plugin by default
-	// $.jstree.defaults.plugins.push("sort");
-
-/**
- * ### State plugin
- *
- * Saves the state of the tree (selected nodes, opened nodes) on the user's computer using available options (localStorage, cookies, etc)
- */
-
-	var to = false;
-	/**
-	 * stores all defaults for the state plugin
-	 * @name $.jstree.defaults.state
-	 * @plugin state
-	 */
-	$.jstree.defaults.state = {
-		/**
-		 * A string for the key to use when saving the current tree (change if using multiple trees in your project). Defaults to `jstree`.
-		 * @name $.jstree.defaults.state.key
-		 * @plugin state
-		 */
-		key		: 'jstree',
-		/**
-		 * A space separated list of events that trigger a state save. Defaults to `changed.jstree open_node.jstree close_node.jstree`.
-		 * @name $.jstree.defaults.state.events
-		 * @plugin state
-		 */
-		events	: 'changed.jstree open_node.jstree close_node.jstree check_node.jstree uncheck_node.jstree',
-		/**
-		 * Time in milliseconds after which the state will expire. Defaults to 'false' meaning - no expire.
-		 * @name $.jstree.defaults.state.ttl
-		 * @plugin state
-		 */
-		ttl		: false,
-		/**
-		 * A function that will be executed prior to restoring state with one argument - the state object. Can be used to clear unwanted parts of the state.
-		 * @name $.jstree.defaults.state.filter
-		 * @plugin state
-		 */
-		filter	: false
-	};
-	$.jstree.plugins.state = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-			var bind = $.proxy(function () {
-				this.element.on(this.settings.state.events, $.proxy(function () {
-					if(to) { clearTimeout(to); }
-					to = setTimeout($.proxy(function () { this.save_state(); }, this), 100);
-				}, this));
-				/**
-				 * triggered when the state plugin is finished restoring the state (and immediately after ready if there is no state to restore).
-				 * @event
-				 * @name state_ready.jstree
-				 * @plugin state
-				 */
-				this.trigger('state_ready');
-			}, this);
-			this.element
-				.on("ready.jstree", $.proxy(function (e, data) {
-						this.element.one("restore_state.jstree", bind);
-						if(!this.restore_state()) { bind(); }
-					}, this));
-		};
-		/**
-		 * save the state
-		 * @name save_state()
-		 * @plugin state
-		 */
-		this.save_state = function () {
-			var st = { 'state' : this.get_state(), 'ttl' : this.settings.state.ttl, 'sec' : +(new Date()) };
-			$.vakata.storage.set(this.settings.state.key, JSON.stringify(st));
-		};
-		/**
-		 * restore the state from the user's computer
-		 * @name restore_state()
-		 * @plugin state
-		 */
-		this.restore_state = function () {
-			var k = $.vakata.storage.get(this.settings.state.key);
-			if(!!k) { try { k = JSON.parse(k); } catch(ex) { return false; } }
-			if(!!k && k.ttl && k.sec && +(new Date()) - k.sec > k.ttl) { return false; }
-			if(!!k && k.state) { k = k.state; }
-			if(!!k && $.isFunction(this.settings.state.filter)) { k = this.settings.state.filter.call(this, k); }
-			if(!!k) {
-				this.element.one("set_state.jstree", function (e, data) { data.instance.trigger('restore_state', { 'state' : $.extend(true, {}, k) }); });
-				this.set_state(k);
-				return true;
-			}
-			return false;
-		};
-		/**
-		 * clear the state on the user's computer
-		 * @name clear_state()
-		 * @plugin state
-		 */
-		this.clear_state = function () {
-			return $.vakata.storage.del(this.settings.state.key);
-		};
-	};
-
-	(function ($, undefined) {
-		$.vakata.storage = {
-			// simply specifying the functions in FF throws an error
-			set : function (key, val) { return window.localStorage.setItem(key, val); },
-			get : function (key) { return window.localStorage.getItem(key); },
-			del : function (key) { return window.localStorage.removeItem(key); }
-		};
-	}($));
-
-	// include the state plugin by default
-	// $.jstree.defaults.plugins.push("state");
-
-/**
- * ### Types plugin
- *
- * Makes it possible to add predefined types for groups of nodes, which make it possible to easily control nesting rules and icon for each group.
- */
-
-	/**
-	 * An object storing all types as key value pairs, where the key is the type name and the value is an object that could contain following keys (all optional).
-	 * 
-	 * * `max_children` the maximum number of immediate children this node type can have. Do not specify or set to `-1` for unlimited.
-	 * * `max_depth` the maximum number of nesting this node type can have. A value of `1` would mean that the node can have children, but no grandchildren. Do not specify or set to `-1` for unlimited.
-	 * * `valid_children` an array of node type strings, that nodes of this type can have as children. Do not specify or set to `-1` for no limits.
-	 * * `icon` a string - can be a path to an icon or a className, if using an image that is in the current directory use a `./` prefix, otherwise it will be detected as a class. Omit to use the default icon from your theme.
-	 *
-	 * There are two predefined types:
-	 * 
-	 * * `#` represents the root of the tree, for example `max_children` would control the maximum number of root nodes.
-	 * * `default` represents the default node - any settings here will be applied to all nodes that do not have a type specified.
-	 * 
-	 * @name $.jstree.defaults.types
-	 * @plugin types
-	 */
-	$.jstree.defaults.types = {
-		'#' : {},
-		'default' : {}
-	};
-
-	$.jstree.plugins.types = function (options, parent) {
-		this.init = function (el, options) {
-			var i, j;
-			if(options && options.types && options.types['default']) {
-				for(i in options.types) {
-					if(i !== "default" && i !== "#" && options.types.hasOwnProperty(i)) {
-						for(j in options.types['default']) {
-							if(options.types['default'].hasOwnProperty(j) && options.types[i][j] === undefined) {
-								options.types[i][j] = options.types['default'][j];
-							}
-						}
-					}
-				}
-			}
-			parent.init.call(this, el, options);
-			this._model.data['#'].type = '#';
-		};
-		this.refresh = function (skip_loading, forget_state) {
-			parent.refresh.call(this, skip_loading, forget_state);
-			this._model.data['#'].type = '#';
-		};
-		this.bind = function () {
-			this.element
-				.on('model.jstree', $.proxy(function (e, data) {
-						var m = this._model.data,
-							dpc = data.nodes,
-							t = this.settings.types,
-							i, j, c = 'default';
-						for(i = 0, j = dpc.length; i < j; i++) {
-							c = 'default';
-							if(m[dpc[i]].original && m[dpc[i]].original.type && t[m[dpc[i]].original.type]) {
-								c = m[dpc[i]].original.type;
-							}
-							if(m[dpc[i]].data && m[dpc[i]].data.jstree && m[dpc[i]].data.jstree.type && t[m[dpc[i]].data.jstree.type]) {
-								c = m[dpc[i]].data.jstree.type;
-							}
-							m[dpc[i]].type = c;
-							if(m[dpc[i]].icon === true && t[c].icon !== undefined) {
-								m[dpc[i]].icon = t[c].icon;
-							}
-						}
-						m['#'].type = '#';
-					}, this));
-			parent.bind.call(this);
-		};
-		this.get_json = function (obj, options, flat) {
-			var i, j,
-				m = this._model.data,
-				opt = options ? $.extend(true, {}, options, {no_id:false}) : {},
-				tmp = parent.get_json.call(this, obj, opt, flat);
-			if(tmp === false) { return false; }
-			if($.isArray(tmp)) {
-				for(i = 0, j = tmp.length; i < j; i++) {
-					tmp[i].type = tmp[i].id && m[tmp[i].id] && m[tmp[i].id].type ? m[tmp[i].id].type : "default";
-					if(options && options.no_id) {
-						delete tmp[i].id;
-						if(tmp[i].li_attr && tmp[i].li_attr.id) {
-							delete tmp[i].li_attr.id;
-						}
-						if(tmp[i].a_attr && tmp[i].a_attr.id) {
-							delete tmp[i].a_attr.id;
-						}
-					}
-				}
-			}
-			else {
-				tmp.type = tmp.id && m[tmp.id] && m[tmp.id].type ? m[tmp.id].type : "default";
-				if(options && options.no_id) {
-					tmp = this._delete_ids(tmp);
-				}
-			}
-			return tmp;
-		};
-		this._delete_ids = function (tmp) {
-			if($.isArray(tmp)) {
-				for(var i = 0, j = tmp.length; i < j; i++) {
-					tmp[i] = this._delete_ids(tmp[i]);
-				}
-				return tmp;
-			}
-			delete tmp.id;
-			if(tmp.li_attr && tmp.li_attr.id) {
-				delete tmp.li_attr.id;
-			}
-			if(tmp.a_attr && tmp.a_attr.id) {
-				delete tmp.a_attr.id;
-			}
-			if(tmp.children && $.isArray(tmp.children)) {
-				tmp.children = this._delete_ids(tmp.children);
-			}
-			return tmp;
-		};
-		this.check = function (chk, obj, par, pos, more) {
-			if(parent.check.call(this, chk, obj, par, pos, more) === false) { return false; }
-			obj = obj && obj.id ? obj : this.get_node(obj);
-			par = par && par.id ? par : this.get_node(par);
-			var m = obj && obj.id ? $.jstree.reference(obj.id) : null, tmp, d, i, j;
-			m = m && m._model && m._model.data ? m._model.data : null;
-			switch(chk) {
-				case "create_node":
-				case "move_node":
-				case "copy_node":
-					if(chk !== 'move_node' || $.inArray(obj.id, par.children) === -1) {
-						tmp = this.get_rules(par);
-						if(tmp.max_children !== undefined && tmp.max_children !== -1 && tmp.max_children === par.children.length) {
-							this._data.core.last_error = { 'error' : 'check', 'plugin' : 'types', 'id' : 'types_01', 'reason' : 'max_children prevents function: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-							return false;
-						}
-						if(tmp.valid_children !== undefined && tmp.valid_children !== -1 && $.inArray((obj.type || 'default'), tmp.valid_children) === -1) {
-							this._data.core.last_error = { 'error' : 'check', 'plugin' : 'types', 'id' : 'types_02', 'reason' : 'valid_children prevents function: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-							return false;
-						}
-						if(m && obj.children_d && obj.parents) {
-							d = 0;
-							for(i = 0, j = obj.children_d.length; i < j; i++) {
-								d = Math.max(d, m[obj.children_d[i]].parents.length);
-							}
-							d = d - obj.parents.length + 1;
-						}
-						if(d <= 0 || d === undefined) { d = 1; }
-						do {
-							if(tmp.max_depth !== undefined && tmp.max_depth !== -1 && tmp.max_depth < d) {
-								this._data.core.last_error = { 'error' : 'check', 'plugin' : 'types', 'id' : 'types_03', 'reason' : 'max_depth prevents function: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-								return false;
-							}
-							par = this.get_node(par.parent);
-							tmp = this.get_rules(par);
-							d++;
-						} while(par);
-					}
-					break;
-			}
-			return true;
-		};
-		/**
-		 * used to retrieve the type settings object for a node
-		 * @name get_rules(obj)
-		 * @param {mixed} obj the node to find the rules for
-		 * @return {Object}
-		 * @plugin types
-		 */
-		this.get_rules = function (obj) {
-			obj = this.get_node(obj);
-			if(!obj) { return false; }
-			var tmp = this.get_type(obj, true);
-			if(tmp.max_depth === undefined) { tmp.max_depth = -1; }
-			if(tmp.max_children === undefined) { tmp.max_children = -1; }
-			if(tmp.valid_children === undefined) { tmp.valid_children = -1; }
-			return tmp;
-		};
-		/**
-		 * used to retrieve the type string or settings object for a node
-		 * @name get_type(obj [, rules])
-		 * @param {mixed} obj the node to find the rules for
-		 * @param {Boolean} rules if set to `true` instead of a string the settings object will be returned
-		 * @return {String|Object}
-		 * @plugin types
-		 */
-		this.get_type = function (obj, rules) {
-			obj = this.get_node(obj);
-			return (!obj) ? false : ( rules ? $.extend({ 'type' : obj.type }, this.settings.types[obj.type]) : obj.type);
-		};
-		/**
-		 * used to change a node's type
-		 * @name set_type(obj, type)
-		 * @param {mixed} obj the node to change
-		 * @param {String} type the new type
-		 * @plugin types
-		 */
-		this.set_type = function (obj, type) {
-			var t, t1, t2, old_type, old_icon;
-			if($.isArray(obj)) {
-				obj = obj.slice();
-				for(t1 = 0, t2 = obj.length; t1 < t2; t1++) {
-					this.set_type(obj[t1], type);
-				}
-				return true;
-			}
-			t = this.settings.types;
-			obj = this.get_node(obj);
-			if(!t[type] || !obj) { return false; }
-			old_type = obj.type;
-			old_icon = this.get_icon(obj);
-			obj.type = type;
-			if(old_icon === true || (t[old_type] && t[old_type].icon !== undefined && old_icon === t[old_type].icon)) {
-				this.set_icon(obj, t[type].icon !== undefined ? t[type].icon : true);
-			}
-			return true;
-		};
-	};
-	// include the types plugin by default
-	// $.jstree.defaults.plugins.push("types");
-
-/**
- * ### Unique plugin
- *
- * Enforces that no nodes with the same name can coexist as siblings.
- */
-
-	/**
-	 * stores all defaults for the unique plugin
-	 * @name $.jstree.defaults.unique
-	 * @plugin unique
-	 */
-	$.jstree.defaults.unique = {
-		/**
-		 * Indicates if the comparison should be case sensitive. Default is `false`.
-		 * @name $.jstree.defaults.unique.case_sensitive
-		 * @plugin unique
-		 */
-		case_sensitive : false,
-		/**
-		 * A callback executed in the instance's scope when a new node is created and the name is already taken, the two arguments are the conflicting name and the counter. The default will produce results like `New node (2)`.
-		 * @name $.jstree.defaults.unique.duplicate
-		 * @plugin unique
-		 */
-		duplicate : function (name, counter) {
-			return name + ' (' + counter + ')';
-		}
-	};
-
-	$.jstree.plugins.unique = function (options, parent) {
-		this.check = function (chk, obj, par, pos, more) {
-			if(parent.check.call(this, chk, obj, par, pos, more) === false) { return false; }
-			obj = obj && obj.id ? obj : this.get_node(obj);
-			par = par && par.id ? par : this.get_node(par);
-			if(!par || !par.children) { return true; }
-			var n = chk === "rename_node" ? pos : obj.text,
-				c = [],
-				s = this.settings.unique.case_sensitive,
-				m = this._model.data, i, j;
-			for(i = 0, j = par.children.length; i < j; i++) {
-				c.push(s ? m[par.children[i]].text : m[par.children[i]].text.toLowerCase());
-			}
-			if(!s) { n = n.toLowerCase(); }
-			switch(chk) {
-				case "delete_node":
-					return true;
-				case "rename_node":
-					i = ($.inArray(n, c) === -1 || (obj.text && obj.text[ s ? 'toString' : 'toLowerCase']() === n));
-					if(!i) {
-						this._data.core.last_error = { 'error' : 'check', 'plugin' : 'unique', 'id' : 'unique_01', 'reason' : 'Child with name ' + n + ' already exists. Preventing: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-					}
-					return i;
-				case "create_node":
-					i = ($.inArray(n, c) === -1);
-					if(!i) {
-						this._data.core.last_error = { 'error' : 'check', 'plugin' : 'unique', 'id' : 'unique_04', 'reason' : 'Child with name ' + n + ' already exists. Preventing: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-					}
-					return i;
-				case "copy_node":
-					i = ($.inArray(n, c) === -1);
-					if(!i) {
-						this._data.core.last_error = { 'error' : 'check', 'plugin' : 'unique', 'id' : 'unique_02', 'reason' : 'Child with name ' + n + ' already exists. Preventing: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-					}
-					return i;
-				case "move_node":
-					i = (obj.parent === par.id || $.inArray(n, c) === -1);
-					if(!i) {
-						this._data.core.last_error = { 'error' : 'check', 'plugin' : 'unique', 'id' : 'unique_03', 'reason' : 'Child with name ' + n + ' already exists. Preventing: ' + chk, 'data' : JSON.stringify({ 'chk' : chk, 'pos' : pos, 'obj' : obj && obj.id ? obj.id : false, 'par' : par && par.id ? par.id : false }) };
-					}
-					return i;
-			}
-			return true;
-		};
-		this.create_node = function (par, node, pos, callback, is_loaded) {
-			if(!node || node.text === undefined) {
-				if(par === null) {
-					par = "#";
-				}
-				par = this.get_node(par);
-				if(!par) {
-					return parent.create_node.call(this, par, node, pos, callback, is_loaded);
-				}
-				pos = pos === undefined ? "last" : pos;
-				if(!pos.toString().match(/^(before|after)$/) && !is_loaded && !this.is_loaded(par)) {
-					return parent.create_node.call(this, par, node, pos, callback, is_loaded);
-				}
-				if(!node) { node = {}; }
-				var tmp, n, dpc, i, j, m = this._model.data, s = this.settings.unique.case_sensitive, cb = this.settings.unique.duplicate;
-				n = tmp = this.get_string('New node');
-				dpc = [];
-				for(i = 0, j = par.children.length; i < j; i++) {
-					dpc.push(s ? m[par.children[i]].text : m[par.children[i]].text.toLowerCase());
-				}
-				i = 1;
-				while($.inArray(s ? n : n.toLowerCase(), dpc) !== -1) {
-					n = cb.call(this, tmp, (++i)).toString();
-				}
-				node.text = n;
-			}
-			return parent.create_node.call(this, par, node, pos, callback, is_loaded);
-		};
-	};
-
-	// include the unique plugin by default
-	// $.jstree.defaults.plugins.push("unique");
-
-
-/**
- * ### Wholerow plugin
- *
- * Makes each node appear block level. Making selection easier. May cause slow down for large trees in old browsers.
- */
-
-	var div = document.createElement('DIV');
-	div.setAttribute('unselectable','on');
-	div.setAttribute('role','presentation');
-	div.className = 'jstree-wholerow';
-	div.innerHTML = '&#160;';
-	$.jstree.plugins.wholerow = function (options, parent) {
-		this.bind = function () {
-			parent.bind.call(this);
-
-			this.element
-				.on('ready.jstree set_state.jstree', $.proxy(function () {
-						this.hide_dots();
-					}, this))
-				.on("init.jstree loading.jstree ready.jstree", $.proxy(function () {
-						//div.style.height = this._data.core.li_height + 'px';
-						this.get_container_ul().addClass('jstree-wholerow-ul');
-					}, this))
-				.on("deselect_all.jstree", $.proxy(function (e, data) {
-						this.element.find('.jstree-wholerow-clicked').removeClass('jstree-wholerow-clicked');
-					}, this))
-				.on("changed.jstree", $.proxy(function (e, data) {
-						this.element.find('.jstree-wholerow-clicked').removeClass('jstree-wholerow-clicked');
-						var tmp = false, i, j;
-						for(i = 0, j = data.selected.length; i < j; i++) {
-							tmp = this.get_node(data.selected[i], true);
-							if(tmp && tmp.length) {
-								tmp.children('.jstree-wholerow').addClass('jstree-wholerow-clicked');
-							}
-						}
-					}, this))
-				.on("open_node.jstree", $.proxy(function (e, data) {
-						this.get_node(data.node, true).find('.jstree-clicked').parent().children('.jstree-wholerow').addClass('jstree-wholerow-clicked');
-					}, this))
-				.on("hover_node.jstree dehover_node.jstree", $.proxy(function (e, data) {
-						if(e.type === "hover_node" && this.is_disabled(data.node)) { return; }
-						this.get_node(data.node, true).children('.jstree-wholerow')[e.type === "hover_node"?"addClass":"removeClass"]('jstree-wholerow-hovered');
-					}, this))
-				.on("contextmenu.jstree", ".jstree-wholerow", $.proxy(function (e) {
-						e.preventDefault();
-						var tmp = $.Event('contextmenu', { metaKey : e.metaKey, ctrlKey : e.ctrlKey, altKey : e.altKey, shiftKey : e.shiftKey, pageX : e.pageX, pageY : e.pageY });
-						$(e.currentTarget).closest(".jstree-node").children(".jstree-anchor").first().trigger(tmp);
-					}, this))
-				.on("click.jstree", ".jstree-wholerow", function (e) {
-						e.stopImmediatePropagation();
-						var tmp = $.Event('click', { metaKey : e.metaKey, ctrlKey : e.ctrlKey, altKey : e.altKey, shiftKey : e.shiftKey });
-						$(e.currentTarget).closest(".jstree-node").children(".jstree-anchor").first().trigger(tmp).focus();
-					})
-				.on("click.jstree", ".jstree-leaf > .jstree-ocl", $.proxy(function (e) {
-						e.stopImmediatePropagation();
-						var tmp = $.Event('click', { metaKey : e.metaKey, ctrlKey : e.ctrlKey, altKey : e.altKey, shiftKey : e.shiftKey });
-						$(e.currentTarget).closest(".jstree-node").children(".jstree-anchor").first().trigger(tmp).focus();
-					}, this))
-				.on("mouseover.jstree", ".jstree-wholerow, .jstree-icon", $.proxy(function (e) {
-						e.stopImmediatePropagation();
-						if(!this.is_disabled(e.currentTarget)) {
-							this.hover_node(e.currentTarget);
-						}
-						return false;
-					}, this))
-				.on("mouseleave.jstree", ".jstree-node", $.proxy(function (e) {
-						this.dehover_node(e.currentTarget);
-					}, this));
-		};
-		this.teardown = function () {
-			if(this.settings.wholerow) {
-				this.element.find(".jstree-wholerow").remove();
-			}
-			parent.teardown.call(this);
-		};
-		this.redraw_node = function(obj, deep, callback, force_render) {
-			obj = parent.redraw_node.apply(this, arguments);
-			if(obj) {
-				var tmp = div.cloneNode(true);
-				//tmp.style.height = this._data.core.li_height + 'px';
-				if($.inArray(obj.id, this._data.core.selected) !== -1) { tmp.className += ' jstree-wholerow-clicked'; }
-				if(this._data.core.focused && this._data.core.focused === obj.id) { tmp.className += ' jstree-wholerow-hovered'; }
-				obj.insertBefore(tmp, obj.childNodes[0]);
-			}
-			return obj;
-		};
-	};
-	// include the wholerow plugin by default
-	// $.jstree.defaults.plugins.push("wholerow");
-
-
-(function ($) {
-	if(document.registerElement && Object && Object.create) {
-		var proto = Object.create(HTMLElement.prototype);
-		proto.createdCallback = function () {
-			var c = { core : {}, plugins : [] }, i;
-			for(i in $.jstree.plugins) {
-				if($.jstree.plugins.hasOwnProperty(i) && this.attributes[i]) {
-					c.plugins.push(i);
-					if(this.getAttribute(i) && JSON.parse(this.getAttribute(i))) {
-						c[i] = JSON.parse(this.getAttribute(i));
-					}
-				}
-			}
-			for(i in $.jstree.defaults.core) {
-				if($.jstree.defaults.core.hasOwnProperty(i) && this.attributes[i]) {
-					c.core[i] = JSON.parse(this.getAttribute(i)) || this.getAttribute(i);
-				}
-			}
-			jQuery(this).jstree(c);
-		};
-		// proto.attributeChangedCallback = function (name, previous, value) { };
-		try {
-			document.registerElement("vakata-jstree", { prototype: proto });
-		} catch(ignore) { }
-	}
-}(jQuery));
-}));
 /*
 
  bootpag - jQuery plugin for dynamic pagination
@@ -28155,5401 +21338,627 @@ h(this);if(!b.hasClass(a.disabledClass)&&!b.hasClass(a.activeClass)){var c=parse
     }
 }(this));
 
-(function (root) {
-
-    /**
-     * @license almond 0.3.0 Copyright (c) 2011-2014, The Dojo Foundation All Rights Reserved.
-     * Available via the MIT or new BSD license.
-     * see: http://github.com/jrburke/almond for details
-     */
-//Going sloppy to avoid 'use strict' string cost, but strict practices should
-//be followed.
-    /*jslint sloppy: true */
-    /*global setTimeout: false */
-
-    var requirejs, require, define;
-    (function (undef) {
-        var main, req, makeMap, handlers,
-            defined = {},
-            waiting = {},
-            config = {},
-            defining = {},
-            hasOwn = Object.prototype.hasOwnProperty,
-            aps = [].slice,
-            jsSuffixRegExp = /\.js$/;
-
-        function hasProp(obj, prop) {
-            return hasOwn.call(obj, prop);
-        }
-
-        /**
-         * Given a relative module name, like ./something, normalize it to
-         * a real name that can be mapped to a path.
-         * @param {String} name the relative name
-         * @param {String} baseName a real name that the name arg is relative
-         * to.
-         * @returns {String} normalized name
-         */
-        function normalize(name, baseName) {
-            var nameParts, nameSegment, mapValue, foundMap, lastIndex,
-                foundI, foundStarMap, starI, i, j, part,
-                baseParts = baseName && baseName.split("/"),
-                map = config.map,
-                starMap = (map && map['*']) || {};
-
-            //Adjust any relative paths.
-            if (name && name.charAt(0) === ".") {
-                //If have a base name, try to normalize against it,
-                //otherwise, assume it is a top-level require that will
-                //be relative to baseUrl in the end.
-                if (baseName) {
-                    //Convert baseName to array, and lop off the last part,
-                    //so that . matches that "directory" and not name of the baseName's
-                    //module. For instance, baseName of "one/two/three", maps to
-                    //"one/two/three.js", but we want the directory, "one/two" for
-                    //this normalization.
-                    baseParts = baseParts.slice(0, baseParts.length - 1);
-                    name = name.split('/');
-                    lastIndex = name.length - 1;
-
-                    // Node .js allowance:
-                    if (config.nodeIdCompat && jsSuffixRegExp.test(name[lastIndex])) {
-                        name[lastIndex] = name[lastIndex].replace(jsSuffixRegExp, '');
-                    }
-
-                    name = baseParts.concat(name);
-
-                    //start trimDots
-                    for (i = 0; i < name.length; i += 1) {
-                        part = name[i];
-                        if (part === ".") {
-                            name.splice(i, 1);
-                            i -= 1;
-                        } else if (part === "..") {
-                            if (i === 1 && (name[2] === '..' || name[0] === '..')) {
-                                //End of the line. Keep at least one non-dot
-                                //path segment at the front so it can be mapped
-                                //correctly to disk. Otherwise, there is likely
-                                //no path mapping for a path starting with '..'.
-                                //This can still fail, but catches the most reasonable
-                                //uses of ..
-                                break;
-                            } else if (i > 0) {
-                                name.splice(i - 1, 2);
-                                i -= 2;
-                            }
-                        }
-                    }
-                    //end trimDots
-
-                    name = name.join("/");
-                } else if (name.indexOf('./') === 0) {
-                    // No baseName, so this is ID is resolved relative
-                    // to baseUrl, pull off the leading dot.
-                    name = name.substring(2);
-                }
-            }
-
-            //Apply map config if available.
-            if ((baseParts || starMap) && map) {
-                nameParts = name.split('/');
-
-                for (i = nameParts.length; i > 0; i -= 1) {
-                    nameSegment = nameParts.slice(0, i).join("/");
-
-                    if (baseParts) {
-                        //Find the longest baseName segment match in the config.
-                        //So, do joins on the biggest to smallest lengths of baseParts.
-                        for (j = baseParts.length; j > 0; j -= 1) {
-                            mapValue = map[baseParts.slice(0, j).join('/')];
-
-                            //baseName segment has  config, find if it has one for
-                            //this name.
-                            if (mapValue) {
-                                mapValue = mapValue[nameSegment];
-                                if (mapValue) {
-                                    //Match, update name to the new value.
-                                    foundMap = mapValue;
-                                    foundI = i;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (foundMap) {
-                        break;
-                    }
-
-                    //Check for a star map match, but just hold on to it,
-                    //if there is a shorter segment match later in a matching
-                    //config, then favor over this star map.
-                    if (!foundStarMap && starMap && starMap[nameSegment]) {
-                        foundStarMap = starMap[nameSegment];
-                        starI = i;
-                    }
-                }
-
-                if (!foundMap && foundStarMap) {
-                    foundMap = foundStarMap;
-                    foundI = starI;
-                }
-
-                if (foundMap) {
-                    nameParts.splice(0, foundI, foundMap);
-                    name = nameParts.join('/');
-                }
-            }
-
-            return name;
-        }
-
-        function makeRequire(relName, forceSync) {
-            return function () {
-                //A version of a require function that passes a moduleName
-                //value for items that may need to
-                //look up paths relative to the moduleName
-                var args = aps.call(arguments, 0);
-
-                //If first arg is not require('string'), and there is only
-                //one arg, it is the array form without a callback. Insert
-                //a null so that the following concat is correct.
-                if (typeof args[0] !== 'string' && args.length === 1) {
-                    args.push(null);
-                }
-                return req.apply(undef, args.concat([relName, forceSync]));
-            };
-        }
-
-        function makeNormalize(relName) {
-            return function (name) {
-                return normalize(name, relName);
-            };
-        }
-
-        function makeLoad(depName) {
-            return function (value) {
-                defined[depName] = value;
-            };
-        }
-
-        function callDep(name) {
-            if (hasProp(waiting, name)) {
-                var args = waiting[name];
-                delete waiting[name];
-                defining[name] = true;
-                main.apply(undef, args);
-            }
-
-            if (!hasProp(defined, name) && !hasProp(defining, name)) {
-                throw new Error('No ' + name);
-            }
-            return defined[name];
-        }
-
-        //Turns a plugin!resource to [plugin, resource]
-        //with the plugin being undefined if the name
-        //did not have a plugin prefix.
-        function splitPrefix(name) {
-            var prefix,
-                index = name ? name.indexOf('!') : -1;
-            if (index > -1) {
-                prefix = name.substring(0, index);
-                name = name.substring(index + 1, name.length);
-            }
-            return [prefix, name];
-        }
-
-        /**
-         * Makes a name map, normalizing the name, and using a plugin
-         * for normalization if necessary. Grabs a ref to plugin
-         * too, as an optimization.
-         */
-        makeMap = function (name, relName) {
-            var plugin,
-                parts = splitPrefix(name),
-                prefix = parts[0];
-
-            name = parts[1];
-
-            if (prefix) {
-                prefix = normalize(prefix, relName);
-                plugin = callDep(prefix);
-            }
-
-            //Normalize according
-            if (prefix) {
-                if (plugin && plugin.normalize) {
-                    name = plugin.normalize(name, makeNormalize(relName));
-                } else {
-                    name = normalize(name, relName);
-                }
-            } else {
-                name = normalize(name, relName);
-                parts = splitPrefix(name);
-                prefix = parts[0];
-                name = parts[1];
-                if (prefix) {
-                    plugin = callDep(prefix);
-                }
-            }
-
-            //Using ridiculous property names for space reasons
-            return {
-                f: prefix ? prefix + '!' + name : name, //fullName
-                n: name,
-                pr: prefix,
-                p: plugin
-            };
-        };
-
-        function makeConfig(name) {
-            return function () {
-                return (config && config.config && config.config[name]) || {};
-            };
-        }
-
-        handlers = {
-            require: function (name) {
-                return makeRequire(name);
-            },
-            exports: function (name) {
-                var e = defined[name];
-                if (typeof e !== 'undefined') {
-                    return e;
-                } else {
-                    return (defined[name] = {});
-                }
-            },
-            module: function (name) {
-                return {
-                    id: name,
-                    uri: '',
-                    exports: defined[name],
-                    config: makeConfig(name)
-                };
-            }
-        };
-
-        main = function (name, deps, callback, relName) {
-            var cjsModule, depName, ret, map, i,
-                args = [],
-                callbackType = typeof callback,
-                usingExports;
-
-            //Use name if no relName
-            relName = relName || name;
-
-            //Call the callback to define the module, if necessary.
-            if (callbackType === 'undefined' || callbackType === 'function') {
-                //Pull out the defined dependencies and pass the ordered
-                //values to the callback.
-                //Default to [require, exports, module] if no deps
-                deps = !deps.length && callback.length ? ['require', 'exports', 'module'] : deps;
-                for (i = 0; i < deps.length; i += 1) {
-                    map = makeMap(deps[i], relName);
-                    depName = map.f;
-
-                    //Fast path CommonJS standard dependencies.
-                    if (depName === "require") {
-                        args[i] = handlers.require(name);
-                    } else if (depName === "exports") {
-                        //CommonJS module spec 1.1
-                        args[i] = handlers.exports(name);
-                        usingExports = true;
-                    } else if (depName === "module") {
-                        //CommonJS module spec 1.1
-                        cjsModule = args[i] = handlers.module(name);
-                    } else if (hasProp(defined, depName) ||
-                        hasProp(waiting, depName) ||
-                        hasProp(defining, depName)) {
-                        args[i] = callDep(depName);
-                    } else if (map.p) {
-                        map.p.load(map.n, makeRequire(relName, true), makeLoad(depName), {});
-                        args[i] = defined[depName];
-                    } else {
-                        throw new Error(name + ' missing ' + depName);
-                    }
-                }
-
-                ret = callback ? callback.apply(defined[name], args) : undefined;
-
-                if (name) {
-                    //If setting exports via "module" is in play,
-                    //favor that over return value and exports. After that,
-                    //favor a non-undefined return value over exports use.
-                    if (cjsModule && cjsModule.exports !== undef &&
-                        cjsModule.exports !== defined[name]) {
-                        defined[name] = cjsModule.exports;
-                    } else if (ret !== undef || !usingExports) {
-                        //Use the return value from the function.
-                        defined[name] = ret;
-                    }
-                }
-            } else if (name) {
-                //May just be an object definition for the module. Only
-                //worry about defining if have a module name.
-                defined[name] = callback;
-            }
-        };
-
-        requirejs = require = req = function (deps, callback, relName, forceSync, alt) {
-            if (typeof deps === "string") {
-                if (handlers[deps]) {
-                    //callback in this case is really relName
-                    return handlers[deps](callback);
-                }
-                //Just return the module wanted. In this scenario, the
-                //deps arg is the module name, and second arg (if passed)
-                //is just the relName.
-                //Normalize module name, if it contains . or ..
-                return callDep(makeMap(deps, callback).f);
-            } else if (!deps.splice) {
-                //deps is a config object, not an array.
-                config = deps;
-                if (config.deps) {
-                    req(config.deps, config.callback);
-                }
-                if (!callback) {
-                    return;
-                }
-
-                if (callback.splice) {
-                    //callback is an array, which means it is a dependency list.
-                    //Adjust args if there are dependencies
-                    deps = callback;
-                    callback = relName;
-                    relName = null;
-                } else {
-                    deps = undef;
-                }
-            }
-
-            //Support require(['a'])
-            callback = callback || function () {};
-
-            //If relName is a function, it is an errback handler,
-            //so remove it.
-            if (typeof relName === 'function') {
-                relName = forceSync;
-                forceSync = alt;
-            }
-
-            //Simulate async callback;
-            if (forceSync) {
-                main(undef, deps, callback, relName);
-            } else {
-                //Using a non-zero value because of concern for what old browsers
-                //do, and latest browsers "upgrade" to 4 if lower value is used:
-                //http://www.whatwg.org/specs/web-apps/current-work/multipage/timers.html#dom-windowtimers-settimeout:
-                //If want a value immediately, use require('id') instead -- something
-                //that works in almond on the global level, but not guaranteed and
-                //unlikely to work in other AMD implementations.
-                setTimeout(function () {
-                    main(undef, deps, callback, relName);
-                }, 4);
-            }
-
-            return req;
-        };
-
-        /**
-         * Just drops the config on the floor, but returns req in case
-         * the config return value is used.
-         */
-        req.config = function (cfg) {
-            return req(cfg);
-        };
-
-        /**
-         * Expose module registry for debugging and tooling
-         */
-        requirejs._defined = defined;
-
-        define = function (name, deps, callback) {
-
-            //This module may not have dependencies
-            if (!deps.splice) {
-                //deps is not an array, so probably means
-                //an object literal or factory function for
-                //the value. Adjust args.
-                callback = deps;
-                deps = [];
-            }
-
-            if (!hasProp(defined, name) && !hasProp(waiting, name)) {
-                waiting[name] = [name, deps, callback];
-            }
-        };
-
-        define.amd = {
-            jQuery: true
-        };
-    }());
-//     Underscore.js 1.6.0
-//     http://underscorejs.org
-//     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-//     Underscore may be freely distributed under the MIT license.
-
-    define('underscore', [], function() {
-        return _;
-    });
-
-    define('Excel/XMLDOM',['underscore'], function (_) {
-
-        var XMLDOM = function (ns, rootNodeName) {
-            this.documentElement = this.createElement(rootNodeName);
-            this.documentElement.setAttribute('xmlns', ns);
-        };
-
-        _.extend(XMLDOM.prototype, {
-            createElement: function (name) {
-                return new XMLDOM.XMLNode({
-                    nodeName: name
-                });
-            },
-            createTextNode: function (text) {
-                return new XMLDOM.TextNode(text);
-            },
-            toString: function () {
-                return this.documentElement.toString();
-            }
-        });
-
-        XMLDOM.Node = function () {};
-        XMLDOM.Node.Create = function (config) {
-            switch(config.type) {
-                case "XML":
-                    return new XMLDOM.XMLNode(config);
-                case "TEXT":
-                    return new XMLDOM.TextNode(config.nodeValue);
-            }
-        };
-
-        XMLDOM.TextNode = function (text) {
-            this.nodeValue = text;
-        };
-        _.extend(XMLDOM.TextNode.prototype, {
-            toJSON: function () {
-                return {
-                    nodeValue: this.nodeValue,
-                    type: 'TEXT'
-                };
-            },
-            toString: function () {
-                return _.escape(this.nodeValue);
-            }
-        });
-
-        XMLDOM.XMLNode = function (config) {
-            this.nodeName = config.nodeName;
-            this.children = [];
-            this.nodeValue = config.nodeValue || "";
-            this.attributes = {};
-
-            if(config.children) {
-                for(var i = 0; i < config.children.length; i++) {
-                    this.appendChild(XMLDOM.Node.Create(config.children[i]));
-                }
-            }
-
-            if(config.attributes) {
-                for(var attr in config.attributes) {
-                    if(config.attributes.hasOwnProperty(attr)) {
-                        this.setAttribute(attr, config.attributes[attr]);
-                    }
-                }
-            }
-        };
-        _.extend(XMLDOM.XMLNode.prototype, {
-
-            toString: function () {
-                var string = "<" + this.nodeName;
-                var attrs = [];
-                for(var attr in this.attributes) {
-                    if(this.attributes.hasOwnProperty(attr)) {
-                        attrs.push(attr + "=\""+_.escape(this.attributes[attr])+"\"");
-                    }
-                }
-                if (attrs.length > 0){
-                    string+= " " + attrs.join(" ");
-                }
-
-                var childContent = "";
-                for(var i = 0, l = this.children.length; i < l; i++) {
-                    childContent += this.children[i].toString();
-                }
-
-                if (childContent){
-                    string +=  ">" + childContent + "</" + this.nodeName + ">";
-                } else {
-                    string += "/>";
-                }
-
-                return string;
-            },
-
-            toJSON: function () {
-                var children = [];
-                for(var i = 0, l = this.children.length; i < l; i++) {
-                    children.push(this.children[i].toJSON());
-                }
-                return {
-                    nodeName: this.nodeName,
-                    children: children,
-                    nodeValue: this.nodeValue,
-                    attributes: this.attributes,
-                    type: "XML"
-                };
-            },
-
-            setAttribute: function (name, val) {
-                if(val === null) {
-                    delete this.attributes[name];
-                    delete this[name];
-                    return;
-                }
-                this.attributes[name] = val;
-                this[name] = val;
-            },
-            setAttributeNS: function (ns, name, val) {
-                this.setAttribute(name, val);
-            },
-            appendChild: function (child) {
-                this.children.push(child);
-                this.firstChild = this.children[0];
-            },
-            cloneNode: function () {
-                return new XMLDOM.XMLNode(this.toJSON());
-            }
-        });
-
-        return XMLDOM;
-    });
-    /**
-     * @module Excel/util
-     */
-    define('Excel/util',['./XMLDOM'], function (XMLDOM) {
-
-        var util = {
-
-            _idSpaces: {},
-
-            /**
-             * Returns a number based on a namespace. So, running with 'Picture' will return 1. Run again, you will get 2. Run with 'Foo', you'll get 1.
-             * @param {String} space
-             * @returns {Number}
-             */
-            uniqueId: function (space) {
-                if(!this._idSpaces[space]) {
-                    this._idSpaces[space] = 1;
-                }
-                return this._idSpaces[space]++;
-            },
-
-            /**
-             * Attempts to create an XML document. Due to limitations in web workers,
-             * it may return a 'fake' xml document created from the XMLDOM.js file.
-             *
-             * Takes a namespace to start the xml file in, as well as the root element
-             * of the xml file.
-             *
-             * @param {type} ns
-             * @param {type} base
-             * @returns {ActiveXObject|@exp;document@pro;implementation@call;createDocument|@new;XMLDOM}
-             */
-            createXmlDoc: function (ns, base) {
-                if(typeof document === 'undefined') {
-                    return new XMLDOM(ns || null, base, null);
-                }
-                if(document.implementation && document.implementation.createDocument) {
-                    return document.implementation.createDocument(ns || null, base, null);
-                } else if (window.ActiveXObject) {
-                    var doc = new window.ActiveXObject( "Microsoft.XMLDOM" );
-                    var rootNode = doc.createElement(base);
-                    rootNode.setAttribute('xmlns', ns);
-                    doc.appendChild(rootNode);
-                    return doc;
-                }
-                throw "No xml document generator";
-            },
-
-            /**
-             * Creates an xml node (element). Used to simplify some calls, as IE is
-             * very particular about namespaces and such.
-             *
-             * @param {XMLDOM} doc An xml document (actual DOM or fake DOM, not a string)
-             * @param {type} name The name of the element
-             * @param {type} attributes
-             * @returns {XML Node}
-             */
-            createElement: function (doc, name, attributes) {
-                var el = doc.createElement(name);
-                var ie = !el.setAttributeNS;
-                attributes = attributes || [];
-                var i = attributes.length;
-                while (i--) {
-                    if(!ie && attributes[i][0].indexOf('xmlns') !== -1) {
-                        el.setAttributeNS("http://www.w3.org/2000/xmlns/", attributes[i][0], attributes[i][1]);
-                    } else {
-                        el.setAttribute(attributes[i][0], attributes[i][1]);
-                    }
-                }
-                return el;
-            },
-
-            LETTER_REFS: {},
-
-            positionToLetterRef: function (x, y) {
-                var digit = 1, index, num = x, string = "", alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                if(this.LETTER_REFS[x]) {
-                    return this.LETTER_REFS[x].concat(y);
-                }
-                while (num > 0) {
-                    num -= Math.pow(26, digit -1);
-                    index = num % Math.pow(26, digit);
-                    num -= index;
-                    index = index / Math.pow(26, digit - 1);
-                    string = alphabet.charAt(index) + string;
-                    digit += 1;
-                }
-                this.LETTER_REFS[x] = string;
-                return string.concat(y);
-            },
-
-            schemas: {
-                'worksheet': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet',
-                'sharedStrings': "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings",
-                'stylesheet': "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-                'relationships': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
-                'relationshipPackage': "http://schemas.openxmlformats.org/package/2006/relationships",
-                'contentTypes': "http://schemas.openxmlformats.org/package/2006/content-types",
-                'spreadsheetml': "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
-                'markupCompat': "http://schemas.openxmlformats.org/markup-compatibility/2006",
-                'x14ac': "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac",
-                'officeDocument': "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
-                'package': "http://schemas.openxmlformats.org/package/2006/relationships",
-                'table': "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table",
-                'spreadsheetDrawing': 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing',
-                'drawing': 'http://schemas.openxmlformats.org/drawingml/2006/main',
-                'drawingRelationship': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing',
-                'image': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
-                'chart': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart'
-            }
-        };
-
-        return util;
-    });
-    /**
-     * This is mostly a global spot where all of the relationship managers can get and set
-     * path information from/to.
-     * @module Excel/Paths
-     */
-    define('Excel/Paths',{});
-    /**
-     * @module Excel/RelationshipManager
-     */
-    define('Excel/RelationshipManager',['underscore', './util', './Paths'], function (_, util, Paths) {
-
-        var RelationshipManager = function () {
-            this.relations = {};
-            this.lastId = 1;
-        };
-
-        _.uniqueId('rId'); //priming
-
-        _.extend(RelationshipManager.prototype, {
-
-            importData: function (data) {
-                this.relations = data.relations;
-                this.lastId = data.lastId;
-            },
-            exportData: function () {
-                return {
-                    relations: this.relations,
-                    lastId: this.lastId
-                };
-            },
-
-            addRelation: function (object, type) {
-                this.relations[object.id] = {
-                    id: _.uniqueId('rId'),
-                    schema: util.schemas[type]
-                };
-                return this.relations[object.id].id;
-            },
-
-            getRelationshipId: function (object) {
-                return this.relations[object.id] ? this.relations[object.id].id : null;
-            },
-
-            toXML: function () {
-                var doc = util.createXmlDoc(util.schemas.relationshipPackage, 'Relationships');
-                var relationships = doc.documentElement;
-
-                _.each(this.relations, function (data, id) {
-                    var relationship = util.createElement(doc, 'Relationship', [
-                        ['Id', data.id],
-                        ['Type', data.schema],
-                        ['Target', Paths[id]]
-                    ]);
-                    relationships.appendChild(relationship);
-                });
-                return doc;
-            }
-        });
-
-        return RelationshipManager;
-    });
-    /**
-     * @module Excel/Drawings
-     */
-    define('Excel/Drawings',['underscore', './RelationshipManager', './util'], function (_, RelationshipManager, util) {
-
-        var Drawings = function () {
-            this.drawings = [];
-            this.relations = new RelationshipManager();
-            this.id = _.uniqueId('Drawings');
-        };
-
-        _.extend(Drawings.prototype, {
-            /**
-             * Adds a drawing (more likely a subclass of a Drawing) to the 'Drawings' for a particular worksheet.
-             *
-             * @param {Drawing} drawing
-             * @returns {undefined}
-             */
-            addDrawing: function (drawing) {
-                this.drawings.push(drawing);
-            },
-            getCount: function () {
-                return this.drawings.length;
-            },
-            toXML: function () {
-                var doc = util.createXmlDoc(util.schemas.spreadsheetDrawing, 'xdr:wsDr');
-                var drawings = doc.documentElement;
-                drawings.setAttribute('xmlns:xdr', util.schemas.spreadsheetDrawing);
-                drawings.setAttribute('xmlns:a', util.schemas.drawing);
-
-                for(var i = 0, l = this.drawings.length; i < l; i++) {
-
-                    var rId = this.relations.getRelationshipId(this.drawings[i].getMediaData());
-                    if(!rId) {
-                        rId = this.relations.addRelation(this.drawings[i].getMediaData(), this.drawings[i].getMediaType()); //chart
-                    }
-                    this.drawings[i].setRelationshipId(rId);
-                    drawings.appendChild(this.drawings[i].toXML(doc));
-                }
-                return doc;
-            }
-        });
-
-        return Drawings;
-    });
-    define('Excel/Drawings/AbsoluteAnchor',['underscore', '../util'], function (_, util) {
-
-        /**
-         *
-         * @param {Object} config
-         * @param {Number} config.x X offset in EMU's
-         * @param {Number} config.y Y offset in EMU's
-         * @param {Number} config.width Width in EMU's
-         * @param {Number} config.height Height in EMU's
-         * @constructor
-         */
-        var AbsoluteAnchor = function (config) {
-            this.x = null;
-            this.y = null;
-            this.width = null;
-            this.height = null;
-            if(config) {
-                this.setPos(config.x, config.y);
-                this.setDimensions(config.width, config.height);
-            }
-        };
-        _.extend(AbsoluteAnchor.prototype, {
-            /**
-             * Sets the X and Y offsets.
-             *
-             * @param {Number} x
-             * @param {Number} y
-             * @returns {undefined}
-             */
-            setPos: function (x, y) {
-                this.x = x;
-                this.y = y;
-            },
-            /**
-             * Sets the width and height of the image.
-             *
-             * @param {Number} width
-             * @param {Number} height
-             * @returns {undefined}
-             */
-            setDimensions: function (width, height) {
-                this.width = width;
-                this.height = height;
-            },
-            toXML: function (xmlDoc, content) {
-                var root = util.createElement(xmlDoc, 'xdr:absoluteAnchor');
-                var pos = util.createElement(xmlDoc, 'xdr:pos');
-                pos.setAttribute('x', this.x);
-                pos.setAttribute('y', this.y);
-                root.appendChild(pos);
-
-                var dimensions = util.createElement(xmlDoc, 'xdr:ext');
-                dimensions.setAttribute('cx', this.width);
-                dimensions.setAttribute('cy', this.height);
-                root.appendChild(dimensions);
-
-                root.appendChild(content);
-
-                root.appendChild(util.createElement(xmlDoc, 'xdr:clientData'));
-                return root;
-            }
-        });
-        return AbsoluteAnchor;
-    });
-    define('Excel/Drawings/Chart',['underscore', '../util'], function (_) {
-
-        var Chart = function () {
-
-        };
-        _.extend(Chart.prototype, {
-
-        });
-        return Chart;
-    });
-    define('Excel/Drawings/OneCellAnchor',['underscore', '../util'], function (_, util) {
-
-        /**
-         *
-         * @param {Object} config
-         * @param {Number} config.x The cell column number that the top left of the picture will start in
-         * @param {Number} config.y The cell row number that the top left of the picture will start in
-         * @param {Number} config.width Width in EMU's
-         * @param {Number} config.height Height in EMU's
-         * @constructor
-         */
-        var OneCellAnchor = function (config) {
-            this.x = null;
-            this.y = null;
-            this.xOff = null;
-            this.yOff = null;
-            this.width = null;
-            this.height = null;
-            if(config) {
-                this.setPos(config.x, config.y, config.xOff, config.yOff);
-                this.setDimensions(config.width, config.height);
-            }
-        };
-        _.extend(OneCellAnchor.prototype, {
-            setPos: function (x, y, xOff, yOff) {
-                this.x = x;
-                this.y = y;
-                if(xOff !== undefined) {
-                    this.xOff = xOff;
-                }
-                if(yOff !== undefined) {
-                    this.yOff = yOff;
-                }
-            },
-            setDimensions: function (width, height) {
-                this.width = width;
-                this.height = height;
-            },
-            toXML: function (xmlDoc, content) {
-                var root = util.createElement(xmlDoc, 'xdr:oneCellAnchor');
-                var from = util.createElement(xmlDoc, 'xdr:from');
-                var fromCol = util.createElement(xmlDoc, 'xdr:col');
-                fromCol.appendChild(xmlDoc.createTextNode(this.x));
-                var fromColOff = util.createElement(xmlDoc, 'xdr:colOff');
-                fromColOff.appendChild(xmlDoc.createTextNode(this.xOff || 0));
-                var fromRow = util.createElement(xmlDoc, 'xdr:row');
-                fromRow.appendChild(xmlDoc.createTextNode(this.y));
-                var fromRowOff = util.createElement(xmlDoc, 'xdr:rowOff');
-                fromRowOff.appendChild(xmlDoc.createTextNode(this.yOff || 0));
-                from.appendChild(fromCol);
-                from.appendChild(fromColOff);
-                from.appendChild(fromRow);
-                from.appendChild(fromRowOff);
-
-                root.appendChild(from);
-
-                var dimensions = util.createElement(xmlDoc, 'xdr:ext');
-                dimensions.setAttribute('cx', this.width);
-                dimensions.setAttribute('cy', this.height);
-                root.appendChild(dimensions);
-
-                root.appendChild(content);
-
-                root.appendChild(util.createElement(xmlDoc, 'xdr:clientData'));
-                return root;
-            }
-        });
-        return OneCellAnchor;
-    });
-    define('Excel/Drawings/TwoCellAnchor',['underscore', '../util'], function (_, util) {
-
-        var TwoCellAnchor = function (config) {
-            this.from = {xOff: 0, yOff: 0};
-            this.to = {xOff: 0, yOff: 0};
-            if(config) {
-                this.setFrom(config.from.x, config.from.y, config.to.xOff, config.to.yOff);
-                this.setTo(config.to.x, config.to.y, config.to.xOff, config.to.yOff);
-            }
-        };
-        _.extend(TwoCellAnchor.prototype, {
-            setFrom: function (x, y, xOff, yOff) {
-                this.from.x = x;
-                this.from.y = y;
-                if(xOff !== undefined) {
-                    this.from.xOff = xOff;
-                }
-                if(yOff !== undefined) {
-                    this.from.yOff = xOff;
-                }
-            },
-            setTo: function (x, y, xOff, yOff) {
-                this.to.x = x;
-                this.to.y = y;
-                if(xOff !== undefined) {
-                    this.to.xOff = xOff;
-                }
-                if(yOff !== undefined) {
-                    this.to.yOff = xOff;
-                }
-            },
-            toXML: function (xmlDoc, content) {
-                var root = util.createElement(xmlDoc, 'xdr:twoCellAnchor');
-
-                var from = util.createElement(xmlDoc, 'xdr:from');
-                var fromCol = util.createElement(xmlDoc, 'xdr:col');
-                fromCol.appendChild(xmlDoc.createTextNode(this.from.x));
-                var fromColOff = util.createElement(xmlDoc, 'xdr:colOff');
-                fromColOff.appendChild(xmlDoc.createTextNode(this.from.xOff));
-                var fromRow = util.createElement(xmlDoc, 'xdr:row');
-                fromRow.appendChild(xmlDoc.createTextNode(this.from.y));
-                var fromRowOff = util.createElement(xmlDoc, 'xdr:rowOff');
-                fromRowOff.appendChild(xmlDoc.createTextNode(this.from.yOff));
-
-                from.appendChild(fromCol);
-                from.appendChild(fromColOff);
-                from.appendChild(fromRow);
-                from.appendChild(fromRowOff);
-
-                var to = util.createElement(xmlDoc, 'xdr:to');
-                var toCol = util.createElement(xmlDoc, 'xdr:col');
-                toCol.appendChild(xmlDoc.createTextNode(this.to.x));
-                var toColOff = util.createElement(xmlDoc, 'xdr:colOff');
-                toColOff.appendChild(xmlDoc.createTextNode(this.from.xOff));
-                var toRow = util.createElement(xmlDoc, 'xdr:row');
-                toRow.appendChild(xmlDoc.createTextNode(this.to.y));
-                var toRowOff = util.createElement(xmlDoc, 'xdr:rowOff');
-                toRowOff.appendChild(xmlDoc.createTextNode(this.from.yOff));
-
-                to.appendChild(toCol);
-                to.appendChild(toColOff);
-                to.appendChild(toRow);
-                to.appendChild(toRowOff);
-
-
-                root.appendChild(from);
-                root.appendChild(to);
-
-                root.appendChild(content);
-
-                root.appendChild(util.createElement(xmlDoc, 'xdr:clientData'));
-                return root;
-            }
-        });
-        return TwoCellAnchor;
-    });
-    /**
-     * This is mostly a global spot where all of the relationship managers can get and set
-     * path information from/to.
-     * @module Excel/Drawing
-     */
-    define('Excel/Drawings/Drawing',[
-        'underscore', './AbsoluteAnchor', './OneCellAnchor', './TwoCellAnchor'
-    ], function (_, AbsoluteAnchor, OneCellAnchor, TwoCellAnchor) {
-
-        /**
-         * @constructor
-         */
-        var Drawing = function () {
-            this.id = _.uniqueId('Drawing');
-        };
-
-        _.extend(Drawing.prototype, {
-            /**
-             *
-             * @param {String} type Can be 'absoluteAnchor', 'oneCellAnchor', or 'twoCellAnchor'.
-             * @param {Object} config Shorthand - pass the created anchor coords that can normally be used to construct it.
-             * @returns {Anchor}
-             */
-            createAnchor: function (type, config) {
-                config = config || {};
-                config.drawing = this;
-                switch(type) {
-                    case 'absoluteAnchor':
-                        this.anchor = new AbsoluteAnchor(config);
-                        break;
-                    case 'oneCellAnchor':
-                        this.anchor = new OneCellAnchor(config);
-                        break;
-                    case 'twoCellAnchor':
-                        this.anchor = new TwoCellAnchor(config);
-                        break;
-                }
-                return this.anchor;
-            }
-        });
-
-        return Drawing;
-    });
-    define('Excel/Drawings/Picture',['./Drawing', 'underscore', '../util'], function (Drawing, _, util) {
-
-        var Picture = function () {
-            this.media = null;
-            this.id = _.uniqueId('Picture');
-            this.pictureId = util.uniqueId('Picture');
-            this.fill = {};
-            this.mediaData = null;
-        };
-        //
-        Picture.prototype = new Drawing();
-
-        _.extend(Picture.prototype, {
-            setMedia: function (mediaRef) {
-                this.mediaData = mediaRef;
-            },
-            setDescription: function (description) {
-                this.description = description;
-            },
-            setFillType: function (type) {
-                this.fill.type = type;
-            },
-            setFillConfig: function (config) {
-                _.extend(this.fill, config);
-            },
-            getMediaType: function () {
-                return 'image';
-            },
-            getMediaData: function () {
-                return this.mediaData;
-            },
-            setRelationshipId: function (rId) {
-                this.mediaData.rId = rId;
-            },
-            toXML: function (xmlDoc) {
-                var pictureNode = util.createElement(xmlDoc, 'xdr:pic');
-
-                var nonVisibleProperties = util.createElement(xmlDoc, 'xdr:nvPicPr');
-
-                var nameProperties = util.createElement(xmlDoc, 'xdr:cNvPr', [
-                    ['id', this.pictureId],
-                    ['name', this.mediaData.fileName],
-                    ['descr', this.description || ""]
-                ]);
-                nonVisibleProperties.appendChild(nameProperties);
-                var nvPicProperties = util.createElement(xmlDoc, 'xdr:cNvPicPr');
-                nvPicProperties.appendChild(util.createElement(xmlDoc, 'a:picLocks', [
-                    ['noChangeAspect', '1'],
-                    ['noChangeArrowheads', '1']
-                ]));
-                nonVisibleProperties.appendChild(nvPicProperties);
-                pictureNode.appendChild(nonVisibleProperties);
-                var pictureFill = util.createElement(xmlDoc, 'xdr:blipFill');
-                pictureFill.appendChild(util.createElement(xmlDoc, 'a:blip', [
-                    ['xmlns:r', util.schemas.relationships],
-                    ['r:embed', this.mediaData.rId]
-                ]));
-                pictureFill.appendChild(util.createElement(xmlDoc, 'a:srcRect'));
-                var stretch = util.createElement(xmlDoc, 'a:stretch');
-                stretch.appendChild(util.createElement(xmlDoc, 'a:fillRect'));
-                pictureFill.appendChild(stretch);
-                pictureNode.appendChild(pictureFill);
-
-                var shapeProperties = util.createElement(xmlDoc, 'xdr:spPr', [
-                    ['bwMode', 'auto']
-                ]);
-
-                var transform2d = util.createElement(xmlDoc, 'a:xfrm');
-                shapeProperties.appendChild(transform2d);
-
-                var presetGeometry = util.createElement(xmlDoc, 'a:prstGeom', [
-                    ['prst', 'rect']
-                ]);
-                shapeProperties.appendChild(presetGeometry);
-
-
-
-                pictureNode.appendChild(shapeProperties);
-//            <xdr:spPr bwMode="auto">
-//                <a:xfrm>
-//                    <a:off x="1" y="1"/>
-//                    <a:ext cx="1640253" cy="1885949"/>
-//                </a:xfrm>
-//                <a:prstGeom prst="rect">
-//                    <a:avLst/>
-//                </a:prstGeom>
-//                <a:noFill/>
-//                <a:extLst>
-//                    <a:ext uri="{909E8E84-426E-40DD-AFC4-6F175D3DCCD1}">
-//                        <a14:hiddenFill xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main">
-//                            <a:solidFill>
-//                                <a:srgbClr val="FFFFFF"/>
-//                            </a:solidFill>
-//                        </a14:hiddenFill>
-//                    </a:ext>
-//                </a:extLst>
-//            </xdr:spPr>
-//            
-                return this.anchor.toXML(xmlDoc, pictureNode);
-            }
-        });
-        return Picture;
-    });
-    define('Excel/Positioning',[], function () {
-
-        return {
-            /**
-             * Converts pixel sizes to 'EMU's, which is what Open XML uses.
-             *
-             * @todo clean this up. Code borrowed from http://polymathprogrammer.com/2009/10/22/english-metric-units-and-open-xml/,
-             * but not sure that it's going to be as accurate as it needs to be.
-             *
-             * @param int pixels
-             * @returns int
-             */
-            pixelsToEMUs: function (pixels) {
-                return Math.round(pixels * 914400 / 96);
-            }
-        };
-    });
-    /**
-     * @module Excel/SharedStrings
-     */
-    define('Excel/SharedStrings',['underscore', './util'], function (_, util) {
-
-        var sharedStrings = function () {
-            this.strings = {};
-            this.stringArray = [];
-            this.id = _.uniqueId('SharedStrings');
-        };
-        _.extend(sharedStrings.prototype, {
-            /**
-             * Adds a string to the shared string file, and returns the ID of the
-             * string which can be used to reference it in worksheets.
-             *
-             * @param string {String}
-             * @return int
-             */
-            addString: function (string) {
-                this.strings[string] = this.stringArray.length;
-                this.stringArray[this.stringArray.length] = string;
-                return this.strings[string];
-            },
-
-            exportData: function () {
-                return this.strings;
-            },
-
-            toXML: function () {
-                var doc = util.createXmlDoc(util.schemas.spreadsheetml, 'sst');
-                var sharedStringTable = doc.documentElement;
-                this.stringArray.reverse();
-                var l = this.stringArray.length;
-                sharedStringTable.setAttribute('count', l);
-                sharedStringTable.setAttribute('uniqueCount', l);
-
-                var template = doc.createElement('si');
-                var templateValue = doc.createElement('t');
-                templateValue.appendChild(doc.createTextNode('--placeholder--'));
-                template.appendChild(templateValue);
-                var strings = this.stringArray;
-
-                while (l--) {
-                    var clone = template.cloneNode(true);
-                    clone.firstChild.firstChild.nodeValue = strings[l];
-                    sharedStringTable.appendChild(clone);
-                }
-
-                return doc;
-            }
-        });
-        return sharedStrings;
-    });
-    /**
-     * @module Excel/StyleSheet
-     */
-    define('Excel/StyleSheet',['underscore', './util'], function (_, util) {
-
-        var StyleSheet = function () {
-            this.id = _.uniqueId('StyleSheet');
-            this.cellStyles = [{
-                name:"Normal",
-                xfId:"0",
-                builtinId:"0"
-            }];
-            this.defaultTableStyle = false;
-            this.differentialStyles = [{}];
-            this.masterCellFormats = [{
-                numFmtId: 0,
-                fontId: 0,
-                fillId: 0,
-                borderId: 0,
-                xfid: 0
-            }];
-            this.masterCellStyles = [{
-                numFmtId: 0,
-                fontId: 0,
-                fillId: 0,
-                borderId: 0
-            }];
-            this.fonts = [{}];
-            this.numberFormatters = [];
-            this.fills = [{}, {
-                type: 'pattern',
-                patternType: 'gray125',
-                fgColor: 'FF333333',
-                bgColor: 'FF333333'
-            }];
-            this.borders = [{
-                top: {},
-                left: {},
-                right: {},
-                bottom: {},
-                diagonal: {}
-            }];
-            this.tableStyles = [];
-        };
-        _.extend(StyleSheet.prototype, {
-            createSimpleFormatter: function (type) {
-                var sid = this.masterCellFormats.length;
-                var style = {
-                    id: sid
-                };
-                switch(type) {
-                    case 'date':
-                        style.numFmtId = 14;
-                        break;
-                }
-                this.masterCellFormats.push(style);
-                return style;
-            },
-
-            createFill: function (fillInstructions) {
-                var id = this.fills.length;
-                var fill = fillInstructions;
-                fill.id = id;
-                this.fills.push(fill);
-                return fill;
-            },
-
-            createNumberFormatter: function (formatInstructions) {
-                var id = this.numberFormatters.length + 100;
-                var format = {
-                    id: id,
-                    formatCode: formatInstructions
-                };
-                this.numberFormatters.push(format);
-                return format;
-            },
-
-            /**
-             * alignment: {
-        *  horizontal: http://www.schemacentral.com/sc/ooxml/t-ssml_ST_HorizontalAlignment.html
-        *  vertical: http://www.schemacentral.com/sc/ooxml/t-ssml_ST_VerticalAlignment.html
-        *  @param {Object} styleInstructions
-             */
-            createFormat: function (styleInstructions) {
-                var sid = this.masterCellFormats.length;
-                var style = {
-                    id: sid
-                };
-                if(styleInstructions.font && _.isObject(styleInstructions.font)) {
-                    style.fontId = this.createFontStyle(styleInstructions.font).id;
-                } else if(styleInstructions.font) {
-                    if(_.isNaN(parseInt(styleInstructions.font, 10))) {
-                        throw "Passing a non-numeric font id is not supported";
-                    }
-                    style.fontId = styleInstructions.font;
-                }
-
-                if (styleInstructions.format && _.isString(styleInstructions.format)) {
-                    style.numFmtId = this.createNumberFormatter(styleInstructions.format).id;
-                } else if(styleInstructions.format) {
-                    if(_.isNaN(parseInt(styleInstructions.format, 10))) {
-                        throw "Invalid number formatter id";
-                    }
-                    style.numFmtId = styleInstructions.format;
-                }
-
-                if (styleInstructions.border && _.isObject(styleInstructions.border)) {
-                    style.borderId = this.createBorderFormatter(styleInstructions.border).id;
-                } else if (styleInstructions.border) {
-                    if(_.isNaN(parseInt(styleInstructions.border, 10))) {
-                        throw "Passing a non-numeric border id is not supported";
-                    }
-                    style.borderId = styleInstructions.border;
-                }
-
-                if (styleInstructions.fill && _.isObject(styleInstructions.fill)) {
-                    style.fillId = this.createFill(styleInstructions.fill).id;
-                } else if (styleInstructions.fill) {
-                    if(_.isNaN(parseInt(styleInstructions.fill, 10))) {
-                        throw "Passing a non-numeric fill id is not supported";
-                    }
-                    style.fillId = styleInstructions.fill;
-                }
-
-                if (styleInstructions.alignment && _.isObject(styleInstructions.alignment)) {
-                    style.alignment = _.pick(
-                        styleInstructions.alignment,
-                        'horizontal',
-                        'justifyLastLine',
-                        'readingOrder',
-                        'relativeIndent',
-                        'shrinkToFit',
-                        'textRotation',
-                        'vertical',
-                        'wrapText'
-                    );
-                }
-
-                this.masterCellFormats.push(style);
-                return style;
-            },
-
-            createDifferentialStyle: function (styleInstructions) {
-                var id = this.differentialStyles.length;
-                var style = {
-                    id: id
-                };
-                if(styleInstructions.font && _.isObject(styleInstructions.font)) {
-                    style.font = styleInstructions.font;
-                }
-                if (styleInstructions.border && _.isObject(styleInstructions.border)) {
-                    style.border = _.defaults(styleInstructions.border, {
-                        top: {},
-                        left: {},
-                        right: {},
-                        bottom: {},
-                        diagonal: {}
-                    });
-                }
-                if (styleInstructions.fill && _.isObject(styleInstructions.fill)) {
-                    style.fill = styleInstructions.fill;
-                }
-                if (styleInstructions.alignment && _.isObject(styleInstructions.alignment)) {
-                    style.alignment = styleInstructions.alignment;
-                }
-                if (styleInstructions.format && _.isString(styleInstructions.format)) {
-                    style.numFmt = styleInstructions.format;
-                }
-                this.differentialStyles[id] = style;
-                return style;
-            },
-
-            /**
-             * Should be an object containing keys that match with one of the keys from this list:
-             * http://www.schemacentral.com/sc/ooxml/t-ssml_ST_TableStyleType.html
-             *
-             * The value should be a reference to a differential format (dxf)
-             * @param {Object} instructions
-             */
-            createTableStyle: function (instructions) {
-                this.tableStyles.push(instructions);
-            },
-
-            /**
-             * All params optional
-             * Expects: {
-        * top: {},
-        * left: {},
-        * right: {},
-        * bottom: {},
-        * diagonal: {},
-        * outline: boolean,
-        * diagonalUp: boolean,
-        * diagonalDown: boolean
-        * }
-             * Each border should follow:
-             * {
-        * style: styleString, http://www.schemacentral.com/sc/ooxml/t-ssml_ST_BorderStyle.html
-        * color: ARBG color (requires the A, so for example FF006666)
-        * }
-             * @param {Object} border
-             */
-            createBorderFormatter: function (border) {
-                _.defaults(border, {
-                    top: {},
-                    left: {},
-                    right: {},
-                    bottom: {},
-                    diagonal: {},
-                    id: this.borders.length
-                });
-                this.borders.push(border);
-                return border;
-            },
-
-            /**
-             * Supported font styles:
-             * bold
-             * italic
-             * underline (single, double, singleAccounting, doubleAccounting)
-             * size
-             * color
-             * fontName
-             * strike (strikethrough)
-             * outline (does this actually do anything?)
-             * shadow (does this actually do anything?)
-             * superscript
-             * subscript
-             *
-             * Color is a future goal - at the moment it's looking a bit complicated
-             * @param {Object} instructions
-             */
-            createFontStyle: function (instructions) {
-                var fontId = this.fonts.length;
-                var fontStyle = {
-                    id: fontId
-                };
-                if(instructions.bold) {
-                    fontStyle.bold = true;
-                }
-                if(instructions.italic) {
-                    fontStyle.italic = true;
-                }
-                if(instructions.superscript) {
-                    fontStyle.vertAlign = 'superscript';
-                }
-                if(instructions.subscript) {
-                    fontStyle.vertAlign = 'subscript';
-                }
-                if(instructions.underline) {
-                    if(_.indexOf([
-                        'double',
-                        'singleAccounting',
-                        'doubleAccounting'
-                    ], instructions.underline) !== -1) {
-                        fontStyle.underline = instructions.underline;
-                    } else {
-                        fontStyle.underline = true;
-                    }
-                }
-                if(instructions.strike) {
-                    fontStyle.strike = true;
-                }
-                if(instructions.outline) {
-                    fontStyle.outline = true;
-                }
-                if(instructions.shadow) {
-                    fontStyle.shadow = true;
-                }
-                if(instructions.size) {
-                    fontStyle.size = instructions.size;
-                }
-                if(instructions.color) {
-                    fontStyle.color = instructions.color;
-                }
-                if(instructions.fontName) {
-                    fontStyle.fontName = instructions.fontName;
-                }
-                this.fonts.push(fontStyle);
-                return fontStyle;
-            },
-
-            exportBorders: function (doc) {
-                var borders = doc.createElement('borders');
-                borders.setAttribute('count', this.borders.length);
-
-                for(var i = 0, l = this.borders.length; i < l; i++) {
-                    borders.appendChild(this.exportBorder(doc, this.borders[i]));
-                }
-                return borders;
-            },
-
-            exportBorder: function (doc, data) {
-                var border = doc.createElement('border');
-                var self = this;
-                var borderGenerator = function (name) {
-                    var b = doc.createElement(name);
-                    if(data[name].style) {
-                        b.setAttribute('style', data[name].style);
-                    }
-                    if(data[name].color) {
-                        b.appendChild(self.exportColor(doc, data[name].color));
-                    }
-                    return b;
-                };
-                border.appendChild(borderGenerator('left'));
-                border.appendChild(borderGenerator('right'));
-                border.appendChild(borderGenerator('top'));
-                border.appendChild(borderGenerator('bottom'));
-                border.appendChild(borderGenerator('diagonal'));
-                return border;
-            },
-
-            exportColor: function (doc, color) {
-                var colorEl = doc.createElement('color');
-                if(_.isString(color)) {
-                    colorEl.setAttribute('rgb', color);
-                    return colorEl;
-                }
-
-                if (!_.isUndefined(color.tint)) {
-                    colorEl.setAttribute('tint', color.tint);
-                }
-                if (!_.isUndefined(color.auto)) {
-                    colorEl.setAttribute('auto', !!color.auto);
-                }
-                if (!_.isUndefined(color.theme)) {
-                    colorEl.setAttribute('theme', color.theme);
-                }
-
-                return colorEl;
-            },
-
-            exportMasterCellFormats: function (doc) {
-                var cellFormats = util.createElement(doc, 'cellXfs', [
-                    ['count', this.masterCellFormats.length]
-                ]);
-                for(var i = 0, l = this.masterCellFormats.length; i < l; i++) {
-                    var mformat = this.masterCellFormats[i];
-                    cellFormats.appendChild(this.exportCellFormatElement(doc, mformat));
-                }
-                return cellFormats;
-            },
-
-            exportMasterCellStyles: function (doc) {
-                var records = util.createElement(doc, 'cellStyleXfs', [
-                    ['count', this.masterCellStyles.length]
-                ]);
-                for(var i = 0, l = this.masterCellStyles.length; i < l; i++) {
-                    var mstyle = this.masterCellStyles[i];
-                    records.appendChild(this.exportCellFormatElement(doc, mstyle));
-                }
-                return records;
-            },
-
-            exportCellFormatElement: function (doc, styleInstructions) {
-                var xf = doc.createElement('xf');
-                var allowed = ['applyAlignment', 'applyBorder', 'applyFill', 'applyFont', 'applyNumberFormat',
-                    'applyProtection', 'borderId', 'fillId', 'fontId', 'numFmtId', 'pivotButton', 'quotePrefix', 'xfId'];
-                var attributes = _.filter(_.keys(styleInstructions), function (key) {
-                    if(_.indexOf(allowed, key) !== -1) {
-                        return true;
-                    }
-                });
-                if(styleInstructions.alignment) {
-                    var alignmentData = styleInstructions.alignment;
-                    xf.appendChild(this.exportAlignment(doc, alignmentData));
-                }
-                var a = attributes.length;
-                while(a--) {
-                    xf.setAttribute(attributes[a], styleInstructions[attributes[a]]);
-                }
-                if(styleInstructions.fillId) {
-                    xf.setAttribute('applyFill', '1');
-                }
-                return xf;
-            },
-
-            exportAlignment: function (doc, alignmentData) {
-                var alignment = doc.createElement('alignment');
-                var keys = _.keys(alignmentData);
-                for(var i = 0, l = keys.length; i < l; i++) {
-                    alignment.setAttribute(keys[i], alignmentData[keys[i]]);
-                }
-                return alignment;
-            },
-
-            exportFonts: function (doc) {
-                var fonts = doc.createElement('fonts');
-                fonts.setAttribute('count', this.fonts.length);
-                for(var i = 0, l = this.fonts.length; i < l; i++) {
-                    var fd = this.fonts[i];
-                    fonts.appendChild(this.exportFont(doc, fd));
-                }
-                return fonts;
-            },
-
-            exportFont: function (doc, fd) {
-                var font = doc.createElement('font');
-                if(fd.size) {
-                    var size = doc.createElement('sz');
-                    size.setAttribute('val', fd.size);
-                    font.appendChild(size);
-                }
-
-                if(fd.fontName) {
-                    var fontName = doc.createElement('name');
-                    fontName.setAttribute('val', fd.fontName);
-                    font.appendChild(fontName);
-                }
-
-                if(fd.bold) {
-                    font.appendChild(doc.createElement('b'));
-                }
-                if(fd.italic) {
-                    font.appendChild(doc.createElement('i'));
-                }
-                if(fd.vertAlign) {
-                    var vertAlign = doc.createElement('vertAlign');
-                    vertAlign.setAttribute('val', fd.vertAlign);
-                    font.appendChild(vertAlign);
-                }
-                if(fd.underline) {
-                    var u = doc.createElement('u');
-                    if(fd.underline !== true) {
-                        u.setAttribute('val', fd.underline);
-                    }
-                    font.appendChild(u);
-                }
-                if(fd.strike) {
-                    font.appendChild(doc.createElement('strike'));
-                }
-                if(fd.shadow) {
-                    font.appendChild(doc.createElement('shadow'));
-                }
-                if(fd.outline) {
-                    font.appendChild(doc.createElement('outline'));
-                }
-                if(fd.color) {
-                    font.appendChild(this.exportColor(doc, fd.color));
-                }
-                return font;
-            },
-
-            exportFills: function (doc) {
-                var fills = doc.createElement('fills');
-                fills.setAttribute('count', this.fills.length);
-                for(var i = 0, l = this.fills.length; i < l; i++) {
-                    var fd = this.fills[i];
-                    fills.appendChild(this.exportFill(doc, fd));
-                }
-                return fills;
-            },
-
-            exportFill: function (doc, fd) {
-                var fillDef;
-                var fill = doc.createElement('fill');
-                if (fd.type === 'pattern') {
-                    fillDef = this.exportPatternFill(doc, fd);
-                    fill.appendChild(fillDef);
-                } else if (fd.type === 'gradient') {
-                    fillDef = this.exportGradientFill(doc, fd);
-                    fill.appendChild(fillDef);
-                }
-                return fill;
-            },
-
-            exportGradientFill: function (doc, data) {
-                var fillDef = doc.createElement('gradientFill');
-                if(data.degree) {
-                    fillDef.setAttribute('degree', data.degree);
-                } else if (data.left) {
-                    fillDef.setAttribute('left', data.left);
-                    fillDef.setAttribute('right', data.right);
-                    fillDef.setAttribute('top', data.top);
-                    fillDef.setAttribute('bottom', data.bottom);
-                }
-                var start = doc.createElement('stop');
-                start.setAttribute('position', data.start.pureAt || 0);
-                var startColor = doc.createElement('color');
-                if (typeof data.start === 'string' || data.start.color) {
-                    startColor.setAttribute('rgb', data.start.color || data.start);
-                } else if (typeof data.start.theme) {
-                    startColor.setAttribute('theme', data.start.theme);
-                }
-
-                var end = doc.createElement('stop');
-                var endColor = doc.createElement('color');
-                end.setAttribute('position', data.end.pureAt || 1);
-                if (typeof data.start === 'string' || data.end.color) {
-                    endColor.setAttribute('rgb', data.end.color || data.end);
-                } else if (typeof data.end.theme) {
-                    endColor.setAttribute('theme', data.end.theme);
-                }
-                start.appendChild(startColor);
-                end.appendChild(endColor);
-                fillDef.appendChild(start);
-                fillDef.appendChild(end);
-                return fillDef;
-            },
-
-            /**
-             * Pattern types: http://www.schemacentral.com/sc/ooxml/t-ssml_ST_PatternType.html
-             * @param {XMLDoc} doc
-             * @param {Object} data
-             */
-            exportPatternFill: function (doc, data) {
-                var fillDef = util.createElement(doc, 'patternFill', [
-                    ['patternType', data.patternType]
-                ]);
-                if(!data.bgColor) {
-                    data.bgColor = 'FFFFFFFF';
-                }
-                if(!data.fgColor) {
-                    data.fgColor = 'FFFFFFFF';
-                }
-
-                var bgColor = doc.createElement('bgColor');
-                if(_.isString(data.bgColor)) {
-                    bgColor.setAttribute('rgb', data.bgColor);
-                } else {
-                    if(data.bgColor.theme) {
-                        bgColor.setAttribute('theme', data.bgColor.theme);
-                    } else {
-                        bgColor.setAttribute('rgb', data.bgColor.rbg);
-                    }
-                }
-
-                var fgColor = doc.createElement('fgColor');
-                if(_.isString(data.fgColor)) {
-                    fgColor.setAttribute('rgb', data.fgColor);
-                } else {
-                    if(data.fgColor.theme) {
-                        fgColor.setAttribute('theme', data.fgColor.theme);
-                    } else {
-                        fgColor.setAttribute('rgb', data.fgColor.rbg);
-                    }
-                }
-                fillDef.appendChild(fgColor);
-                fillDef.appendChild(bgColor);
-                return fillDef;
-            },
-
-            exportNumberFormatters: function (doc) {
-                var formatters = doc.createElement('numFmts');
-                formatters.setAttribute('count', this.numberFormatters.length);
-                for(var i = 0, l = this.numberFormatters.length; i < l; i++) {
-                    var fd = this.numberFormatters[i];
-                    formatters.appendChild(this.exportNumberFormatter(doc, fd));
-                }
-                return formatters;
-            },
-
-            exportNumberFormatter: function (doc, fd) {
-                var numFmt = doc.createElement('numFmt');
-                numFmt.setAttribute('numFmtId', fd.id);
-                numFmt.setAttribute('formatCode', fd.formatCode);
-                return numFmt;
-            },
-
-            exportCellStyles: function (doc) {
-                var cellStyles = doc.createElement('cellStyles');
-                cellStyles.setAttribute('count', this.cellStyles.length);
-
-                for(var i = 0, l = this.cellStyles.length; i < l; i++) {
-                    var style = this.cellStyles[i];
-                    delete style.id; //Remove internal id
-                    var record = util.createElement(doc, 'cellStyle');
-                    cellStyles.appendChild(record);
-                    var attributes = _.keys(style);
-                    var a = attributes.length;
-                    while(a--) {
-                        record.setAttribute(attributes[a], style[attributes[a]]);
-                    }
-                }
-
-                return cellStyles;
-            },
-
-            exportDifferentialStyles: function (doc) {
-                var dxfs = doc.createElement('dxfs');
-                dxfs.setAttribute('count', this.differentialStyles.length);
-
-                for(var i = 0, l = this.differentialStyles.length; i < l; i++) {
-                    var style = this.differentialStyles[i];
-                    dxfs.appendChild(this.exportDFX(doc, style));
-                }
-
-                return dxfs;
-            },
-
-            exportDFX: function (doc, style) {
-                var dxf = doc.createElement('dxf');
-                if(style.font) {
-                    dxf.appendChild(this.exportFont(doc, style.font));
-                }
-                if(style.fill) {
-                    dxf.appendChild(this.exportFill(doc, style.fill));
-                }
-                if(style.border) {
-                    dxf.appendChild(this.exportBorder(doc, style.border));
-                }
-                if(style.numFmt) {
-                    dxf.appendChild(this.exportNumberFormatter(doc, style.numFmt));
-                }
-                if(style.alignment) {
-                    dxf.appendChild(this.exportAlignment(doc, style.alignment));
-                }
-                return dxf;
-            },
-
-            exportTableStyles: function (doc) {
-                var tableStyles = doc.createElement('tableStyles');
-                tableStyles.setAttribute('count', this.tableStyles.length);
-                if(this.defaultTableStyle) {
-                    tableStyles.setAttribute('defaultTableStyle', this.defaultTableStyle);
-                }
-                for(var i = 0, l = this.tableStyles.length; i < l; i++) {
-                    tableStyles.appendChild(this.exportTableStyle(doc, this.tableStyles[i]));
-                }
-                return tableStyles;
-            },
-
-            exportTableStyle: function (doc, style) {
-                var tableStyle = doc.createElement('tableStyle');
-                tableStyle.setAttribute('name', style.name);
-                tableStyle.setAttribute('pivot', 0);
-                var i = 0;
-
-                _.each(style, function (value, key) {
-                    if(key === 'name') {return;}
-                    i++;
-                    var styleEl = doc.createElement('tableStyleElement');
-                    styleEl.setAttribute('type', key);
-                    styleEl.setAttribute('dxfId', value);
-                    tableStyle.appendChild(styleEl);
-                });
-                tableStyle.setAttribute('count', i);
-                return tableStyle;
-            },
-
-            toXML: function () {
-                var doc = util.createXmlDoc(util.schemas.spreadsheetml, 'styleSheet');
-                var styleSheet = doc.documentElement;
-                styleSheet.appendChild(this.exportNumberFormatters(doc));
-                styleSheet.appendChild(this.exportFonts(doc));
-                styleSheet.appendChild(this.exportFills(doc));
-                styleSheet.appendChild(this.exportBorders(doc));
-                styleSheet.appendChild(this.exportMasterCellStyles(doc));
-                styleSheet.appendChild(this.exportMasterCellFormats(doc));
-                styleSheet.appendChild(this.exportCellStyles(doc));
-                styleSheet.appendChild(this.exportDifferentialStyles(doc));
-                if(this.tableStyles.length) {
-                    styleSheet.appendChild(this.exportTableStyles(doc));
-                }
-                return doc;
-            }
-        });
-        return StyleSheet;
-    });
-
-    /**
-     * @module Excel/Table
-     */
-    define('Excel/Table',['underscore', './util'], function (_, util) {
-
-        var Table = function (config) {
-            _.defaults(this, {
-                name: "",
-                displayName: "",
-                dataCellStyle: null,
-                dataDfxId: null,
-                headerRowBorderDxfId: null,
-                headerRowCellStyle: null,
-                headerRowCount: 1,
-                headerRowDxfId: null,
-                insertRow: false,
-                insertRowShift: false,
-                ref: null,
-                tableBorderDxfId: null,
-                totalsRowBorderDxfId: null,
-                totalsRowCellStyle: null,
-                totalsRowCount: 0,
-                totalsRowDxfId: null,
-                tableColumns: [],
-                autoFilter: null,
-                sortState: null,
-                styleInfo: {}
-            });
-            this.initialize(config);
-        };
-        _.extend(Table.prototype, {
-
-            initialize: function (config) {
-                this.displayName = _.uniqueId("Table");
-                this.name = this.displayName;
-                this.id = this.name;
-                this.tableId = this.id.replace('Table', '');
-                _.extend(this, config);
-            },
-
-            setReferenceRange: function (start, end) {
-                this.ref = [start, end];
-            },
-
-            setTableColumns: function (columns) {
-                _.each(columns, function (column) {
-                    this.addTableColumn(column);
-                }, this);
-            },
-
-            /**
-             * Expects an object with the following optional properties:
-             * name (required)
-             * dataCellStyle
-             * dataDxfId
-             * headerRowCellStyle
-             * headerRowDxfId
-             * totalsRowCellStyle
-             * totalsRowDxfId
-             * totalsRowFunction
-             * totalsRowLabel
-             * columnFormula
-             * columnFormulaIsArrayType (boolean)
-             * totalFormula
-             * totalFormulaIsArrayType (boolean)
-             */
-            addTableColumn: function (column) {
-                if(_.isString(column)) {
-                    column = {
-                        name: column
-                    };
-                }
-                if(!column.name) {
-                    throw "Invalid argument for addTableColumn - minimum requirement is a name property";
-                }
-                this.tableColumns.push(column);
-            },
-
-            /**
-             * Expects an object with the following properties:
-             * caseSensitive (boolean)
-             * dataRange
-             * columnSort (assumes true)
-             * sortDirection
-             * sortRange (defaults to dataRange)
-             */
-            setSortState: function (state) {
-                this.sortState = state;
-            },
-
-            toXML: function () {
-                var doc = util.createXmlDoc(util.schemas.spreadsheetml, 'table');
-                var table = doc.documentElement;
-                table.setAttribute('id', this.tableId);
-                table.setAttribute('name', this.name);
-                table.setAttribute('displayName', this.displayName);
-                var s = this.ref[0];
-                var e = this.ref[1];
-                table.setAttribute('ref', util.positionToLetterRef(s[0], s[1]) + ":" + util.positionToLetterRef(e[0], e[1]));
-
-                /** TOTALS **/
-                table.setAttribute('totalsRowCount', this.totalsRowCount);
-
-                /** HEADER **/
-                table.setAttribute('headerRowCount', this.headerRowCount);
-                if(this.headerRowDxfId) {
-                    table.setAttribute('headerRowDxfId', this.headerRowDxfId);
-                }
-                if(this.headerRowBorderDxfId) {
-                    table.setAttribute('headerRowBorderDxfId', this.headerRowBorderDxfId);
-                }
-
-                if(!this.ref) {
-                    throw "Needs at least a reference range";
-                }
-                if(!this.autoFilter) {
-                    this.addAutoFilter(this.ref[0], this.ref[1]);
-                }
-
-                table.appendChild(this.exportAutoFilter(doc));
-
-                table.appendChild(this.exportTableColumns(doc));
-                table.appendChild(this.exportTableStyleInfo(doc));
-                return doc;
-            },
-
-            exportTableColumns: function (doc) {
-                var tableColumns = doc.createElement('tableColumns');
-                tableColumns.setAttribute('count', this.tableColumns.length);
-                var tcs = this.tableColumns;
-                for(var i = 0, l = tcs.length; i < l; i++) {
-                    var tc = tcs[i];
-                    var tableColumn = doc.createElement('tableColumn');
-                    tableColumn.setAttribute('id', i + 1);
-                    tableColumn.setAttribute('name', tc.name);
-                    tableColumns.appendChild(tableColumn);
-
-                    if(tc.totalsRowFunction) {
-                        tableColumn.setAttribute('totalsRowFunction', tc.totalsRowFunction);
-                    }
-                    if(tc.totalsRowLabel) {
-                        tableColumn.setAttribute('totalsRowLabel', tc.totalsRowLabel);
-                    }
-                }
-                return tableColumns;
-            },
-
-            exportAutoFilter: function (doc) {
-                var autoFilter = doc.createElement('autoFilter');
-                var s = this.autoFilter[0];
-                var e = this.autoFilter[1];
-                autoFilter.setAttribute('ref', util.positionToLetterRef(s[0], s[1]) + ":" + util.positionToLetterRef(e[0], e[1]  - this.totalsRowCount));
-                return autoFilter;
-            },
-
-            exportTableStyleInfo: function (doc) {
-                var ts = this.styleInfo;
-                var tableStyle = doc.createElement('tableStyleInfo');
-                tableStyle.setAttribute('name', ts.themeStyle);
-                tableStyle.setAttribute('showFirstColumn', ts.showFirstColumn ? "1" : "0");
-                tableStyle.setAttribute('showLastColumn', ts.showLastColumn ? "1" : "0");
-                tableStyle.setAttribute('showColumnStripes', ts.showColumnStripes ? "1" : "0");
-                tableStyle.setAttribute('showRowStripes', ts.showRowStripes ? "1" : "0");
-                return tableStyle;
-            },
-
-            addAutoFilter: function (startRef, endRef) {
-                this.autoFilter = [startRef, endRef];
-            }
-        });
-        return Table;
-    });
-
-    /**
-     * This module represents an excel worksheet in its basic form - no tables, charts, etc. Its purpose is
-     * to hold data, the data's link to how it should be styled, and any links to other outside resources.
-     *
-     * @module Excel/Worksheet
-     */
-    define('Excel/Worksheet',['underscore', './util', './RelationshipManager'], function (_, util, RelationshipManager) {
-
-        /**
-         * @constructor
-         */
-        var Worksheet = function (config) {
-            this.relations = null;
-            this.columnFormats = [];
-            this.data = [];
-            this.mergedCells = [];
-            this.columns = [];
-            this._headers = [];
-            this._footers = [];
-            this._tables = [];
-            this._drawings = [];
-            this._rowInstructions = {};
-            this.initialize(config);
-        };
-        _.extend(Worksheet.prototype, {
-
-            initialize: function (config) {
-                config = config || {};
-                this.name = config.name;
-                this.id = _.uniqueId('Worksheet');
-                this._timezoneOffset = new Date().getTimezoneOffset() * 60 * 1000;
-                if(config.columns) {
-                    this.setColumns(config.columns);
-                }
-
-                this.relations = new RelationshipManager();
-            },
-
-            /**
-             * Returns an object that can be consumed by a WorksheetExportWorker
-             * @returns {Object}
-             */
-            exportData: function () {
-                return {
-                    relations: this.relations.exportData(),
-                    columnFormats: this.columnFormats,
-                    data: this.data,
-                    columns: this.columns,
-                    mergedCells: this.mergedCells,
-                    _headers: this._headers,
-                    _footers: this._footers,
-                    _tables: this._tables,
-                    _rowInstructions: this._rowInstructions,
-                    name: this.name,
-                    id: this.id
-                };
-            },
-
-            /**
-             * Imports data - to be used while inside of a WorksheetExportWorker.
-             * @param {Object} data
-             */
-            importData: function (data) {
-                this.relations.importData(data.relations);
-                delete data.relations;
-                _.extend(this, data);
-            },
-
-            setSharedStringCollection: function (stringCollection) {
-                this.sharedStrings = stringCollection;
-            },
-
-            addTable: function (table) {
-                this._tables.push(table);
-                this.relations.addRelation(table, 'table');
-            },
-
-            addDrawings: function (table) {
-                this._drawings.push(table);
-                this.relations.addRelation(table, 'drawingRelationship');
-            },
-
-            setRowInstructions: function (rowIndex, instructions) {
-                this._rowInstructions[rowIndex] = instructions;
-            },
-
-            /**
-             * Expects an array length of three.
-             *
-             * @see Excel/Worksheet compilePageDetailPiece
-             * @see <a href='/cookbook/addingHeadersAndFooters.html'>Adding headers and footers to a worksheet</a>
-             *
-             * @param {Array} headers [left, center, right]
-             */
-            setHeader: function (headers) {
-                if(!_.isArray(headers)) {
-                    throw "Invalid argument type - setHeader expects an array of three instructions";
-                }
-                this._headers = headers;
-            },
-
-            /**
-             * Expects an array length of three.
-             *
-             * @see Excel/Worksheet compilePageDetailPiece
-             * @see <a href='/cookbook/addingHeadersAndFooters.html'>Adding headers and footers to a worksheet</a>
-             *
-             * @param {Array} footers [left, center, right]
-             */
-            setFooter: function (footers) {
-                if(!_.isArray(footers)) {
-                    throw "Invalid argument type - setFooter expects an array of three instructions";
-                }
-                this._footers = footers;
-            },
-
-            /**
-             * Turns page header/footer details into the proper format for Excel.
-             * @param {type} data
-             * @returns {String}
-             */
-            compilePageDetailPackage: function (data) {
-                data = data || "";
-                return [
-                    "&L", this.compilePageDetailPiece(data[0] || ""),
-                    "&C", this.compilePageDetailPiece(data[1] || ""),
-                    "&R", this.compilePageDetailPiece(data[2] || "")
-                ].join('');
-            },
-
-            /**
-             * Turns instructions on page header/footer details into something
-             * usable by Excel.
-             *
-             * @param {type} data
-             * @returns {String|@exp;_@call;reduce}
-             */
-            compilePageDetailPiece: function (data) {
-                if(_.isString(data)) {
-                    return '&"-,Regular"'.concat(data);
-                }
-                if(_.isObject(data) && !_.isArray(data)) {
-                    var string = "";
-                    if(data.font || data.bold) {
-                        var weighting = data.bold ? "Bold" : "Regular";
-                        string += '&"' + (data.font || '-');
-                        string += ',' + weighting + '"';
-                    } else {
-                        string += '&"-,Regular"';
-                    }
-                    if(data.underline) {
-                        string += "&U";
-                    }
-                    if(data.fontSize) {
-                        string += "&"+data.fontSize;
-                    }
-                    string += data.text;
-
-                    return string;
-                }
-
-                if(_.isArray(data)) {
-                    var self = this;
-                    return _.reduce(data, function (m, v) {
-                        return m.concat(self.compilePageDetailPiece(v));
-                    }, "");
-                }
-            },
-
-            /**
-             * Creates the header node.
-             *
-             * @todo implement the ability to do even/odd headers
-             * @param {XML Doc} doc
-             * @returns {XML Node}
-             */
-            exportHeader: function (doc) {
-                var oddHeader = doc.createElement('oddHeader');
-                oddHeader.appendChild(doc.createTextNode(this.compilePageDetailPackage(this._headers)));
-                return oddHeader;
-            },
-
-            /**
-             * Creates the footer node.
-             *
-             * @todo implement the ability to do even/odd footers
-             * @param {XML Doc} doc
-             * @returns {XML Node}
-             */
-            exportFooter: function (doc) {
-                var oddFooter = doc.createElement('oddFooter');
-                oddFooter.appendChild(doc.createTextNode(this.compilePageDetailPackage(this._footers)));
-                return oddFooter;
-            },
-
-            /**
-             * This creates some nodes ahead of time, which cuts down on generation time due to
-             * most cell definitions being essentially the same, but having multiple nodes that need
-             * to be created. Cloning takes less time than creation.
-             *
-             * @private
-             * @param {XML Doc} doc
-             * @returns {_L8.Anonym$0._buildCache.Anonym$2}
-             */
-            _buildCache: function (doc) {
-                var numberNode = doc.createElement('c');
-                var value = doc.createElement('v');
-                value.appendChild(doc.createTextNode("--temp--"));
-                numberNode.appendChild(value);
-
-                var formulaNode = doc.createElement('c');
-                var formulaValue = doc.createElement('f');
-                formulaValue.appendChild(doc.createTextNode("--temp--"));
-                formulaNode.appendChild(formulaValue);
-
-                var stringNode = doc.createElement('c');
-                stringNode.setAttribute('t', 's');
-                var stringValue = doc.createElement('v');
-                stringValue.appendChild(doc.createTextNode("--temp--"));
-                stringNode.appendChild(stringValue);
-
-
-                return {
-                    number: numberNode,
-                    date: numberNode,
-                    string: stringNode,
-                    formula: formulaNode
-                };
-            },
-
-            /**
-             * Runs through the XML document and grabs all of the strings that will
-             * be sent to the 'shared strings' document.
-             *
-             * @returns {Array}
-             */
-            collectSharedStrings: function () {
-                var data = this.data;
-                var maxX = 0;
-                var strings = {};
-                for(var row = 0, l = data.length; row < l; row++) {
-                    var dataRow = data[row];
-                    var cellCount = dataRow.length;
-                    maxX = cellCount > maxX ? cellCount : maxX;
-                    for(var c = 0; c < cellCount; c++) {
-                        var cellValue = dataRow[c];
-                        var metadata = cellValue && cellValue.metadata || {};
-                        if (cellValue && typeof cellValue === 'object') {
-                            cellValue = cellValue.value;
-                        }
-
-                        if(!metadata.type) {
-                            if(typeof cellValue === 'number') {
-                                metadata.type = 'number';
-                            }
-                        }
-                        if(metadata.type === "text" || !metadata.type) {
-                            if(typeof strings[cellValue] === 'undefined') {
-                                strings[cellValue] = true;
-                            }
-                        }
-                    }
-                }
-                return _.keys(strings);
-            },
-
-            toXML: function () {
-                var data = this.data;
-                var columns = this.columns || [];
-                var doc = util.createXmlDoc(util.schemas.spreadsheetml, 'worksheet');
-                var worksheet = doc.documentElement;
-                var i, l, row;
-                worksheet.setAttribute('xmlns:r', util.schemas.relationships);
-                worksheet.setAttribute('xmlns:mc', util.schemas.markupCompat);
-
-                var maxX = 0;
-                var sheetData = util.createElement(doc, 'sheetData');
-
-                var cellCache = this._buildCache(doc);
-
-                for(row = 0, l = data.length; row < l; row++) {
-                    var dataRow = data[row];
-                    var cellCount = dataRow.length;
-                    maxX = cellCount > maxX ? cellCount : maxX;
-                    var rowNode = doc.createElement('row');
-
-                    for(var c = 0; c < cellCount; c++) {
-                        columns[c] = columns[c] || {};
-                        var cellValue = dataRow[c];
-                        var cell, metadata = cellValue && cellValue.metadata || {};
-
-                        if (cellValue && typeof cellValue === 'object') {
-                            cellValue = cellValue.value;
-                        }
-
-                        if(!metadata.type) {
-                            if(typeof cellValue === 'number') {
-                                metadata.type = 'number';
-                            }
-                        }
-
-                        switch(metadata.type) {
-                            case "number":
-                                cell = cellCache.number.cloneNode(true);
-                                cell.firstChild.firstChild.nodeValue = cellValue;
-                                break;
-                            case "date":
-                                cell = cellCache.date.cloneNode(true);
-                                cell.firstChild.firstChild.nodeValue = 25569.0 + ((cellValue - this._timezoneOffset)  / (60 * 60 * 24 * 1000));
-                                break;
-                            case "formula":
-                                cell = cellCache.formula.cloneNode(true);
-                                cell.firstChild.firstChild.nodeValue = cellValue;
-                                break;
-                            case "text":
-                            /*falls through*/
-                            default:
-                                var id;
-                                if(typeof this.sharedStrings.strings[cellValue] !== 'undefined') {
-                                    id = this.sharedStrings.strings[cellValue];
-                                } else {
-                                    id = this.sharedStrings.addString(cellValue);
-                                }
-                                cell = cellCache.string.cloneNode(true);
-                                cell.firstChild.firstChild.nodeValue = id;
-                                break;
-                        }
-                        if(metadata.style) {
-                            cell.setAttribute('s', metadata.style);
-                        }
-                        cell.setAttribute('r', util.positionToLetterRef(c + 1, row + 1));
-                        rowNode.appendChild(cell);
-                    }
-                    rowNode.setAttribute('r', row + 1);
-
-                    if (this._rowInstructions[row]) {
-                        var rowInst = this._rowInstructions[row];
-
-                        if (rowInst.height !== undefined) {
-                            rowNode.setAttribute('customHeight', '1');
-                            rowNode.setAttribute('ht', rowInst.height);
-                        }
-
-                        if (rowInst.style !== undefined) {
-                            rowNode.setAttribute('customFormat', '1');
-                            rowNode.setAttribute('s', rowInst.style);
-                        }
-                    }
-
-                    sheetData.appendChild(rowNode);
-                }
-
-                if(maxX !== 0) {
-                    worksheet.appendChild(util.createElement(doc, 'dimension', [
-                        ['ref',  util.positionToLetterRef(1, 1) + ':' + util.positionToLetterRef(maxX, data.length)]
-                    ]));
-                } else {
-                    worksheet.appendChild(util.createElement(doc, 'dimension', [
-                        ['ref',  util.positionToLetterRef(1, 1)]
-                    ]));
-                }
-
-                if(this.columns.length) {
-                    worksheet.appendChild(this.exportColumns(doc));
-                }
-                worksheet.appendChild(sheetData);
-
-                // 'mergeCells' should be written before 'headerFoot' and 'drawing' due to issue
-                // with Microsoft Excel (2007, 2013)
-                if (this.mergedCells.length > 0) {
-                    var mergeCells = doc.createElement('mergeCells');
-                    for (i = 0, l = this.mergedCells.length; i < l; i++) {
-                        var mergeCell = doc.createElement('mergeCell');
-                        mergeCell.setAttribute('ref', this.mergedCells[i][0] + ':' + this.mergedCells[i][1]);
-                        mergeCells.appendChild(mergeCell);
-                    }
-                    worksheet.appendChild(mergeCells);
-                }
-
-                this.exportPageSettings(doc, worksheet);
-
-                if(this._headers.length > 0 || this._footers.length > 0) {
-                    var headerFooter = doc.createElement('headerFooter');
-                    if(this._headers.length > 0) {
-                        headerFooter.appendChild(this.exportHeader(doc));
-                    }
-                    if(this._footers.length > 0) {
-                        headerFooter.appendChild(this.exportFooter(doc));
-                    }
-                    worksheet.appendChild(headerFooter);
-                }
-
-                if(this._tables.length > 0) {
-                    var tables = doc.createElement('tableParts');
-                    tables.setAttribute('count', this._tables.length);
-                    for(i = 0, l = this._tables.length; i < l; i++) {
-                        var table = doc.createElement('tablePart');
-                        table.setAttribute('r:id', this.relations.getRelationshipId(this._tables[i]));
-                        tables.appendChild(table);
-                    }
-                    worksheet.appendChild(tables);
-                }
-
-                // the 'drawing' element should be written last, after 'headerFooter', 'mergeCells', etc. due
-                // to issue with Microsoft Excel (2007, 2013)
-                for(i = 0, l = this._drawings.length; i < l; i++) {
-                    var drawing = doc.createElement('drawing');
-                    drawing.setAttribute('r:id', this.relations.getRelationshipId(this._drawings[i]));
-                    worksheet.appendChild(drawing);
-                }
-                return doc;
-            },
-
-            /**
-             *
-             * @param {XML Doc} doc
-             * @returns {XML Node}
-             */
-            exportColumns: function (doc) {
-                var cols = util.createElement(doc, 'cols');
-                for(var i = 0, l = this.columns.length; i < l; i++) {
-                    var cd = this.columns[i];
-                    var col = util.createElement(doc, 'col', [
-                        ['min', cd.min || i + 1],
-                        ['max', cd.max || i + 1]
-                    ]);
-                    if (cd.hidden) {
-                        col.setAttribute('hidden', 1);
-                    }
-                    if(cd.bestFit) {
-                        col.setAttribute('bestFit', 1);
-                    }
-                    if(cd.customWidth || cd.width) {
-                        col.setAttribute('customWidth', 1);
-                    }
-                    if(cd.width) {
-                        col.setAttribute('width', cd.width);
-                    } else {
-                        col.setAttribute('width', 9.140625);
-                    }
-
-                    cols.appendChild(col);
-                }
-                return cols;
-            },
-
-            /**
-             * Sets the page settings on a worksheet node.
-             *
-             * @param {XML Doc} doc
-             * @param {XML Node} worksheet
-             * @returns {undefined}
-             */
-            exportPageSettings: function (doc, worksheet) {
-
-                if(this._orientation) {
-                    worksheet.appendChild(util.createElement(doc, 'pageSetup', [
-                        ['orientation', this._orientation]
-                    ]));
-                }
-            },
-
-            /**
-             * http://www.schemacentral.com/sc/ooxml/t-ssml_ST_Orientation.html
-             *
-             * Can be one of 'portrait' or 'landscape'.
-             *
-             * @param {String} orientation
-             * @returns {undefined}
-             */
-            setPageOrientation: function (orientation) {
-                this._orientation = orientation;
-            },
-
-            /**
-             * Expects an array of column definitions. Each column definition needs to have a width assigned to it.
-             *
-             * @param {Array} columns
-             */
-            setColumns: function (columns) {
-                this.columns = columns;
-            },
-
-            /**
-             * Expects an array of data to be translated into cells.
-             *
-             * @param {Array} data Two dimensional array - [ [A1, A2], [B1, B2] ]
-             * @see <a href='/cookbook/addingDataToAWorksheet.html'>Adding data to a worksheet</a>
-             */
-            setData: function (data) {
-                this.data = data;
-            },
-
-            /**
-             * Merge cells in given range
-             *
-             * @param cell1 - A1, A2...
-             * @param cell2 - A2, A3...
-             */
-            mergeCells: function(cell1, cell2) {
-                this.mergedCells.push([cell1, cell2]);
-            },
-
-            /**
-             * Expects an array containing an object full of column format definitions.
-             * http://msdn.microsoft.com/en-us/library/documentformat.openxml.spreadsheet.column.aspx
-             * bestFit
-             * collapsed
-             * customWidth
-             * hidden
-             * max
-             * min
-             * outlineLevel
-             * phonetic
-             * style
-             * width
-             * @param {Array} columnFormats
-             */
-            setColumnFormats: function (columnFormats) {
-                this.columnFormats = columnFormats;
-            }
-        });
-        return Worksheet;
-    });
-
-    /**
-     * @module Excel/Workbook
-     */
-    define('Excel/Workbook',[
-        'require',
-        'underscore',
-        './util',
-        './StyleSheet',
-        './Worksheet',
-        './SharedStrings',
-        './RelationshipManager',
-        './Paths',
-        './XMLDOM'
-    ],
-        function (require, _, util, StyleSheet, Worksheet, SharedStrings, RelationshipManager, Paths, XMLDOM) {
-
-            var Workbook = function (config) {
-                this.worksheets = [];
-                this.tables = [];
-                this.drawings = [];
-                this.media = {};
-                this.initialize(config);
-            };
-            _.extend(Workbook.prototype, {
-
-                initialize: function () {
-                    this.id = _.uniqueId('Workbook');
-                    this.styleSheet = new StyleSheet();
-                    this.sharedStrings = new SharedStrings();
-                    this.relations = new RelationshipManager();
-                    this.relations.addRelation(this.styleSheet, 'stylesheet');
-                    this.relations.addRelation(this.sharedStrings, 'sharedStrings');
-                },
-
-                createWorksheet: function (config) {
-                    config = config || {};
-                    _.defaults(config, {
-                        name: 'Sheet '.concat(this.worksheets.length + 1)
-                    });
-                    return new Worksheet(config);
-                },
-
-                getStyleSheet: function () {
-                    return this.styleSheet;
-                },
-
-                addTable: function (table) {
-                    this.tables.push(table);
-                },
-
-                addDrawings: function (drawings) {
-                    this.drawings.push(drawings);
-                },
-
-                addMedia: function (type, fileName, fileData, contentType) {
-                    var fileNamePieces = fileName.split('.');
-                    var extension = fileNamePieces[fileNamePieces.length - 1];
-                    if(!contentType) {
-                        switch(extension.toLowerCase()) {
-                            case 'jpeg':
-                            case 'jpg':
-                                contentType = "image/jpeg";
-                                break;
-                            case 'png':
-                                contentType = "image/png";
-                                break;
-                            case 'gif':
-                                contentType = "image/gif";
-                                break;
-                            default:
-                                contentType = null;
-                                break;
-                        }
-                    }
-                    if(!this.media[fileName]) {
-                        this.media[fileName] = {
-                            id: fileName,
-                            data: fileData,
-                            fileName: fileName,
-                            contentType: contentType,
-                            extension: extension
-                        };
-                    }
-                    return this.media[fileName];
-                },
-
-                addWorksheet: function (worksheet) {
-                    this.relations.addRelation(worksheet, 'worksheet');
-                    worksheet.setSharedStringCollection(this.sharedStrings);
-                    this.worksheets.push(worksheet);
-                },
-
-                createContentTypes: function () {
-                    var doc = util.createXmlDoc(util.schemas.contentTypes, 'Types');
-                    var types = doc.documentElement;
-                    var i, l;
-
-                    types.appendChild(util.createElement(doc, 'Default', [
-                        ['Extension', "rels"],
-                        ['ContentType', "application/vnd.openxmlformats-package.relationships+xml"]
-                    ]));
-                    types.appendChild(util.createElement(doc, 'Default', [
-                        ['Extension', "xml"],
-                        ['ContentType', "application/xml"]
-                    ]));
-
-                    var extensions = {};
-                    for(var filename in this.media) {
-                        if(this.media.hasOwnProperty(filename)) {
-                            extensions[this.media[filename].extension] = this.media[filename].contentType;
-                        }
-                    }
-                    for(var extension in extensions) {
-                        if(extensions.hasOwnProperty(extension)) {
-                            types.appendChild(util.createElement(doc, 'Default', [
-                                ['Extension', extension],
-                                ['ContentType', extensions[extension]]
-                            ]));
-                        }
-                    }
-
-                    types.appendChild(util.createElement(doc, 'Override', [
-                        ['PartName', "/xl/workbook.xml"],
-                        ['ContentType', "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"]
-                    ]));
-                    types.appendChild(util.createElement(doc, 'Override', [
-                        ['PartName', "/xl/sharedStrings.xml"],
-                        ['ContentType', "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"]
-                    ]));
-                    types.appendChild(util.createElement(doc, 'Override', [
-                        ['PartName', "/xl/styles.xml"],
-                        ['ContentType', "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"]
-                    ]));
-
-                    for(i = 0, l = this.worksheets.length; i < l; i++) {
-                        types.appendChild(util.createElement(doc, 'Override', [
-                            ['PartName', "/xl/worksheets/sheet" + (i + 1) + ".xml"],
-                            ['ContentType', "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"]
-                        ]));
-                    }
-                    for(i = 0, l = this.tables.length; i < l; i++) {
-                        types.appendChild(util.createElement(doc, 'Override', [
-                            ['PartName', "/xl/tables/table" + (i + 1) + ".xml"],
-                            ['ContentType', "application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml"]
-                        ]));
-                    }
-
-                    for(i = 0, l = this.drawings.length; i < l; i++) {
-                        types.appendChild(util.createElement(doc, 'Override', [
-                            ['PartName', '/xl/drawings/drawing' + (i + 1) + '.xml'],
-                            ['ContentType', 'application/vnd.openxmlformats-officedocument.drawing+xml']
-                        ]));
-                    }
-
-                    return doc;
-                },
-
-                toXML: function () {
-                    var doc = util.createXmlDoc(util.schemas.spreadsheetml, 'workbook');
-                    var wb = doc.documentElement;
-                    wb.setAttribute('xmlns:r', util.schemas.relationships);
-
-                    var maxWorksheetNameLength = 31;
-                    var sheets = util.createElement(doc, 'sheets');
-                    for(var i = 0, l = this.worksheets.length; i < l; i++) {
-                        var sheet = doc.createElement('sheet');
-                        // Microsoft Excel (2007, 2013) do not allow worksheet names longer than 31 characters
-                        // if the worksheet name is longer, Excel displays an "Excel found unreadable content..." popup when opening the file
-                        if(console != null && this.worksheets[i].name.length > maxWorksheetNameLength) {
-                            console.log('Microsoft Excel requires work sheet names to be less than ' + (maxWorksheetNameLength+1) +
-                                ' characters long, work sheet name "' + this.worksheets[i].name +
-                                '" is ' + this.worksheets[i].name.length + ' characters long');
-                        }
-                        sheet.setAttribute('name', this.worksheets[i].name);
-                        sheet.setAttribute('sheetId', i + 1);
-                        sheet.setAttribute('r:id', this.relations.getRelationshipId(this.worksheets[i]));
-                        sheets.appendChild(sheet);
-                    }
-                    wb.appendChild(sheets);
-                    return doc;
-                },
-
-                createWorkbookRelationship: function () {
-                    var doc = util.createXmlDoc(util.schemas.relationshipPackage, 'Relationships');
-                    var relationships = doc.documentElement;
-                    relationships.appendChild(util.createElement(doc, 'Relationship', [
-                        ['Id', 'rId1'],
-                        ['Type', util.schemas.officeDocument],
-                        ['Target', 'xl/workbook.xml']
-                    ]));
-                    return doc;
-                },
-
-                _generateCorePaths: function (files) {
-                    var i, l;
-                    Paths[this.styleSheet.id] = 'styles.xml';
-                    Paths[this.sharedStrings.id] = 'sharedStrings.xml';
-                    Paths[this.id] = '/xl/workbook.xml';
-
-                    for(i = 0, l = this.tables.length; i < l; i++) {
-                        files['/xl/tables/table' + (i + 1) + '.xml'] = this.tables[i].toXML();
-                        Paths[this.tables[i].id] = '/xl/tables/table' + (i + 1) + '.xml';
-                    }
-
-                    for(var fileName in this.media) {
-                        if(this.media.hasOwnProperty(fileName)) {
-                            var media = this.media[fileName];
-                            files['/xl/media/' + fileName] = media.data;
-                            Paths[fileName] = '/xl/media/' + fileName;
-                        }
-                    }
-
-                    for(i = 0, l = this.drawings.length; i < l; i++) {
-                        files['/xl/drawings/drawing' + (i + 1) + '.xml'] = this.drawings[i].toXML();
-                        Paths[this.drawings[i].id] = '/xl/drawings/drawing' + (i + 1) + '.xml';
-                        files['/xl/drawings/_rels/drawing' + (i + 1) + '.xml.rels'] = this.drawings[i].relations.toXML();
-                    }
-
-
-                },
-
-                _prepareFilesForPackaging: function (files) {
-
-                    _.extend(files, {
-                        '/[Content_Types].xml': this.createContentTypes(),
-                        '/_rels/.rels': this.createWorkbookRelationship(),
-                        '/xl/styles.xml': this.styleSheet.toXML(),
-                        '/xl/workbook.xml': this.toXML(),
-                        '/xl/sharedStrings.xml': this.sharedStrings.toXML(),
-                        '/xl/_rels/workbook.xml.rels': this.relations.toXML()
-                    });
-
-                    _.each(files, function (value, key) {
-                        if(key.indexOf('.xml') !== -1 || key.indexOf('.rels') !== -1) {
-                            if (value instanceof XMLDOM){
-                                files[key] = value.toString();
-                            } else {
-                                files[key] = value.xml || new window.XMLSerializer().serializeToString(value);
-                            }
-                            var content = files[key].replace(/xmlns=""/g, '');
-                            content = content.replace(/NS[\d]+:/g, '');
-                            content = content.replace(/xmlns:NS[\d]+=""/g, '');
-                            files[key] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + "\n" + content;
-                        }
-                    });
-                },
-
-                generateFilesAsync: function (options) {
-                    var requireJsPath = options.requireJsPath;
-                    var self = this;
-                    if(!options.requireJsPath) {
-                        requireJsPath = document.getElementById('requirejs') ? document.getElementById('requirejs').src : '';
-                    }
-                    if(!requireJsPath) {
-                        throw "Please add 'requirejs' to the script that includes requirejs, or specify the path as an argument";
-                    }
-                    var files = {},
-                        doneCount = this.worksheets.length,
-                        stringsCollectedCount = this.worksheets.length,
-                        workers = [];
-
-                    var result = {
-                        status: "Not Started",
-                        terminate: function () {
-                            for(var i = 0; i < workers.length; i++) {
-                                workers[i].terminate();
-                            }
-                        }
-                    };
-                    this._generateCorePaths(files);
-
-                    var done = function () {
-                        if(--doneCount === 0) {
-                            self._prepareFilesForPackaging(files);
-                            for(var i = 0; i < workers.length; i++) {
-                                workers[i].terminate();
-                            }
-                            options.success(files);
-                        }
-                    };
-                    var stringsCollected = function () {
-                        if(--stringsCollectedCount === 0) {
-                            for(var i = 0; i < workers.length; i++) {
-                                workers[i].postMessage({
-                                    instruction: 'export',
-                                    sharedStrings: self.sharedStrings.exportData()
-                                });
-                            }
-                        }
-                    };
-
-
-                    var worksheetWorker = function (worksheetIndex) {
-                        return {
-                            error: function () {
-                                for(var i = 0; i < workers.length; i++) {
-                                    workers[i].terminate();
-                                }
-                                //message, filename, lineno
-                                options.error.apply(this, arguments);
-                            },
-                            stringsCollected: function () {
-                                stringsCollected();
-                            },
-                            finished: function (data) {
-                                files['/xl/worksheets/sheet' + (worksheetIndex + 1) + '.xml'] = {xml: data};
-                                Paths[self.worksheets[worksheetIndex].id] = 'worksheets/sheet' + (worksheetIndex + 1) + '.xml';
-                                files['/xl/worksheets/_rels/sheet' + (worksheetIndex + 1) + '.xml.rels'] = self.worksheets[worksheetIndex].relations.toXML();
-                                done();
-                            }
-                        };
-                    };
-
-                    for(var i = 0, l = this.worksheets.length; i < l; i++) {
-                        workers.push(
-                            this._createWorker(requireJsPath, i, worksheetWorker(i))
-                        );
-                    }
-
-                    return result;
-                },
-
-                _createWorker: function (requireJsPath, worksheetIndex, callbacks) {
-                    var worker = new window.Worker(require.toUrl('./WorksheetExportWorker.js'));
-                    var self = this;
-                    worker.addEventListener('error', callbacks.error);
-                    worker.addEventListener('message', function(event) {
-//                console.log("Called back by the worker!\n", event.data);
-                        switch(event.data.status) {
-                            case "ready":
-                                worker.postMessage({
-                                    instruction: 'start',
-                                    data: self.worksheets[worksheetIndex].exportData()
-                                });
-                                break;
-                            case "sharedStrings":
-                                for(var i = 0; i < event.data.data.length; i++) {
-                                    self.sharedStrings.addString(event.data.data[i]);
-                                }
-                                callbacks.stringsCollected();
-                                break;
-                            case "finished":
-                                callbacks.finished(event.data.data);
-                                break;
-                        }
-                    }, false);
-                    worker.postMessage({
-                        instruction: 'setup',
-                        config: {
-                            paths: {
-                                underscore: require.toUrl('underscore').slice(0, -3)
-                            },
-                            shim: {
-                                'underscore': {
-                                    exports: '_'
-                                }
-                            }
-                        },
-                        requireJsPath: requireJsPath
-                    });
-                    return worker;
-                },
-
-                generateFiles: function () {
-                    var files = {};
-                    this._generateCorePaths(files);
-
-
-                    for(var i = 0, l = this.worksheets.length; i < l; i++) {
-                        files['/xl/worksheets/sheet' + (i + 1) + '.xml'] = this.worksheets[i].toXML();
-                        Paths[this.worksheets[i].id] = 'worksheets/sheet' + (i + 1) + '.xml';
-                        files['/xl/worksheets/_rels/sheet' + (i + 1) + '.xml.rels'] = this.worksheets[i].relations.toXML();
-                    }
-
-                    this._prepareFilesForPackaging(files);
-
-                    return files;
-                }
-            });
-            return Workbook;
-        });
-
-
-    onmessage = function(event) {
-        importScripts(event.data.ziplib);
-
-        var zip = new JSZip();
-        var files = event.data.files;
-        for(var path in files) {
-            var content = files[path];
-            path = path.substr(1);
-            zip.file(path, content, {base64: false});
-        };
-        postMessage({
-            base64: !!event.data.base64
-        });
-        postMessage({
-            status: 'done',
-            data: zip.generate({
-                base64: !!event.data.base64
-            })
-        });
-    };
-
-
-
-
-    define("Excel/ZipWorker", function(){});
-
-    /*!
-
-     JSZip - A Javascript class for generating and reading zip files
-     <http://stuartk.com/jszip>
-
-     (c) 2009-2012 Stuart Knightley <stuart [at] stuartk.com>
-     Dual licenced under the MIT license or GPLv3. See https://raw.github.com/Stuk/jszip/master/LICENSE.markdown.
-
-     JSZip uses the library zlib.js released under the following license :
-     zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License
-     */
-    !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define('JSZip',e):"undefined"!=typeof window?window.JSZip=e():"undefined"!=typeof global?global.JSZip=e():"undefined"!=typeof self&&(self.JSZip=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-// private property
-        var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-
-
-// public method for encoding
-        exports.encode = function(input, utf8) {
-            var output = "";
-            var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
-            var i = 0;
-
-            while (i < input.length) {
-
-                chr1 = input.charCodeAt(i++);
-                chr2 = input.charCodeAt(i++);
-                chr3 = input.charCodeAt(i++);
-
-                enc1 = chr1 >> 2;
-                enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-                enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-                enc4 = chr3 & 63;
-
-                if (isNaN(chr2)) {
-                    enc3 = enc4 = 64;
-                }
-                else if (isNaN(chr3)) {
-                    enc4 = 64;
-                }
-
-                output = output + _keyStr.charAt(enc1) + _keyStr.charAt(enc2) + _keyStr.charAt(enc3) + _keyStr.charAt(enc4);
-
-            }
-
-            return output;
-        };
-
-// public method for decoding
-        exports.decode = function(input, utf8) {
-            var output = "";
-            var chr1, chr2, chr3;
-            var enc1, enc2, enc3, enc4;
-            var i = 0;
-
-            input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-
-            while (i < input.length) {
-
-                enc1 = _keyStr.indexOf(input.charAt(i++));
-                enc2 = _keyStr.indexOf(input.charAt(i++));
-                enc3 = _keyStr.indexOf(input.charAt(i++));
-                enc4 = _keyStr.indexOf(input.charAt(i++));
-
-                chr1 = (enc1 << 2) | (enc2 >> 4);
-                chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-                chr3 = ((enc3 & 3) << 6) | enc4;
-
-                output = output + String.fromCharCode(chr1);
-
-                if (enc3 != 64) {
-                    output = output + String.fromCharCode(chr2);
-                }
-                if (enc4 != 64) {
-                    output = output + String.fromCharCode(chr3);
-                }
-
-            }
-
-            return output;
-
-        };
-
-    },{}],2:[function(require,module,exports){
-
-        function CompressedObject() {
-            this.compressedSize = 0;
-            this.uncompressedSize = 0;
-            this.crc32 = 0;
-            this.compressionMethod = null;
-            this.compressedContent = null;
-        }
-
-        CompressedObject.prototype = {
-            /**
-             * Return the decompressed content in an unspecified format.
-             * The format will depend on the decompressor.
-             * @return {Object} the decompressed content.
-             */
-            getContent: function() {
-                return null; // see implementation
-            },
-            /**
-             * Return the compressed content in an unspecified format.
-             * The format will depend on the compressed conten source.
-             * @return {Object} the compressed content.
-             */
-            getCompressedContent: function() {
-                return null; // see implementation
-            }
-        };
-        module.exports = CompressedObject;
-
-    },{}],3:[function(require,module,exports){
-
-        exports.STORE = {
-            magic: "\x00\x00",
-            compress: function(content) {
-                return content; // no compression
-            },
-            uncompress: function(content) {
-                return content; // no compression
-            },
-            compressInputType: null,
-            uncompressInputType: null
-        };
-        exports.DEFLATE = require('./flate');
-
-    },{"./flate":6}],4:[function(require,module,exports){
-
-        var utils = require('./utils');
-
-        function DataReader(data) {
-            this.data = null; // type : see implementation
-            this.length = 0;
-            this.index = 0;
-        }
-        DataReader.prototype = {
-            /**
-             * Check that the offset will not go too far.
-             * @param {string} offset the additional offset to check.
-             * @throws {Error} an Error if the offset is out of bounds.
-             */
-            checkOffset: function(offset) {
-                this.checkIndex(this.index + offset);
-            },
-            /**
-             * Check that the specifed index will not be too far.
-             * @param {string} newIndex the index to check.
-             * @throws {Error} an Error if the index is out of bounds.
-             */
-            checkIndex: function(newIndex) {
-                if (this.length < newIndex || newIndex < 0) {
-                    throw new Error("End of data reached (data length = " + this.length + ", asked index = " + (newIndex) + "). Corrupted zip ?");
-                }
-            },
-            /**
-             * Change the index.
-             * @param {number} newIndex The new index.
-             * @throws {Error} if the new index is out of the data.
-             */
-            setIndex: function(newIndex) {
-                this.checkIndex(newIndex);
-                this.index = newIndex;
-            },
-            /**
-             * Skip the next n bytes.
-             * @param {number} n the number of bytes to skip.
-             * @throws {Error} if the new index is out of the data.
-             */
-            skip: function(n) {
-                this.setIndex(this.index + n);
-            },
-            /**
-             * Get the byte at the specified index.
-             * @param {number} i the index to use.
-             * @return {number} a byte.
-             */
-            byteAt: function(i) {
-                // see implementations
-            },
-            /**
-             * Get the next number with a given byte size.
-             * @param {number} size the number of bytes to read.
-             * @return {number} the corresponding number.
-             */
-            readInt: function(size) {
-                var result = 0,
-                    i;
-                this.checkOffset(size);
-                for (i = this.index + size - 1; i >= this.index; i--) {
-                    result = (result << 8) + this.byteAt(i);
-                }
-                this.index += size;
-                return result;
-            },
-            /**
-             * Get the next string with a given byte size.
-             * @param {number} size the number of bytes to read.
-             * @return {string} the corresponding string.
-             */
-            readString: function(size) {
-                return utils.transformTo("string", this.readData(size));
-            },
-            /**
-             * Get raw data without conversion, <size> bytes.
-             * @param {number} size the number of bytes to read.
-             * @return {Object} the raw data, implementation specific.
-             */
-            readData: function(size) {
-                // see implementations
-            },
-            /**
-             * Find the last occurence of a zip signature (4 bytes).
-             * @param {string} sig the signature to find.
-             * @return {number} the index of the last occurence, -1 if not found.
-             */
-            lastIndexOfSignature: function(sig) {
-                // see implementations
-            },
-            /**
-             * Get the next date.
-             * @return {Date} the date.
-             */
-            readDate: function() {
-                var dostime = this.readInt(4);
-                return new Date(
-                    ((dostime >> 25) & 0x7f) + 1980, // year
-                    ((dostime >> 21) & 0x0f) - 1, // month
-                    (dostime >> 16) & 0x1f, // day
-                    (dostime >> 11) & 0x1f, // hour
-                    (dostime >> 5) & 0x3f, // minute
-                    (dostime & 0x1f) << 1); // second
-            }
-        };
-        module.exports = DataReader;
-
-    },{"./utils":14}],5:[function(require,module,exports){
-
-        exports.base64 = false;
-        exports.binary = false;
-        exports.dir = false;
-        exports.date = null;
-        exports.compression = null;
-
-    },{}],6:[function(require,module,exports){
-
-        var USE_TYPEDARRAY = (typeof Uint8Array !== 'undefined') && (typeof Uint16Array !== 'undefined') && (typeof Uint32Array !== 'undefined');
-
-        var  ZlibDeflate = require('zlibjs/bin/rawdeflate.min').Zlib;
-        var  ZlibInflate = require('zlibjs/bin/rawinflate.min').Zlib;
-        exports.uncompressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
-        exports.compressInputType = USE_TYPEDARRAY ? "uint8array" : "array";
-
-        exports.magic = "\x08\x00";
-        exports.compress = function(input) {
-            var deflate = new ZlibDeflate.RawDeflate(input);
-            return deflate.compress();
-        };
-        exports.uncompress =  function(input) {
-            var inflate = new ZlibInflate.RawInflate(input);
-            return inflate.decompress();
-        };
-
-    },{"zlibjs/bin/rawdeflate.min":19,"zlibjs/bin/rawinflate.min":20}],7:[function(require,module,exports){
-
-        /**
-         Usage:
-         zip = new JSZip();
-         zip.file("hello.txt", "Hello, World!").file("tempfile", "nothing");
-         zip.folder("images").file("smile.gif", base64Data, {base64: true});
-         zip.file("Xmas.txt", "Ho ho ho !", {date : new Date("December 25, 2007 00:00:01")});
-         zip.remove("tempfile");
-
-         base64zip = zip.generate();
-
-         **/
-
-        /**
-         * Representation a of zip file in js
-         * @constructor
-         * @param {String=|ArrayBuffer=|Uint8Array=} data the data to load, if any (optional).
-         * @param {Object=} options the options for creating this objects (optional).
-         */
-        function JSZip(data, options) {
-            // object containing the files :
-            // {
-            //   "folder/" : {...},
-            //   "folder/data.txt" : {...}
-            // }
-
-            this.files = {};
-
-            // Where we are in the hierarchy
-            this.root = "";
-            if (data) {
-                this.load(data, options);
-            }
-            this.clone = function() {
-                var newObj = new JSZip();
-                for (var i in this) {
-                    if (typeof this[i] !== "function") {
-                        newObj[i] = this[i];
-                    }
-                }
-                return newObj;
-            };
-        }
-        JSZip.prototype = require('./object');
-        JSZip.prototype.load = require('./load');
-        JSZip.support = require('./support');
-        JSZip.defaults = require('./defaults');
-        JSZip.utils = require('./utils');
-        JSZip.base64 = require('./base64');
-        JSZip.compressions = require('./compressions');
-        module.exports = JSZip;
-
-    },{"./base64":1,"./compressions":3,"./defaults":5,"./load":8,"./object":9,"./support":12,"./utils":14}],8:[function(require,module,exports){
-
-        var base64 = require('./base64');
-        var ZipEntries = require('./zipEntries');
-        module.exports = function(data, options) {
-            var files, zipEntries, i, input;
-            options = options || {};
-            if (options.base64) {
-                data = base64.decode(data);
-            }
-
-            zipEntries = new ZipEntries(data, options);
-            files = zipEntries.files;
-            for (i = 0; i < files.length; i++) {
-                input = files[i];
-                this.file(input.fileName, input.decompressed, {
-                    binary: true,
-                    optimizedBinaryString: true,
-                    date: input.date,
-                    dir: input.dir
-                });
-            }
-
-            return this;
-        };
-
-    },{"./base64":1,"./zipEntries":15}],9:[function(require,module,exports){
-
-        var support = require('./support');
-        var utils = require('./utils');
-        var signature = require('./signature');
-        var defaults = require('./defaults');
-        var base64 = require('./base64');
-        var compressions = require('./compressions');
-        var CompressedObject = require('./compressedObject');
-        var nodeBuffer = require('./nodeBuffer');
-        /**
-         * Returns the raw data of a ZipObject, decompress the content if necessary.
-         * @param {ZipObject} file the file to use.
-         * @return {String|ArrayBuffer|Uint8Array|Buffer} the data.
-         */
-
-        var textEncoder, textDecoder;
-        if (
-            support.uint8array &&
-                typeof TextEncoder === "function" &&
-                typeof TextDecoder === "function"
-            ) {
-            textEncoder = new TextEncoder("utf-8");
-            textDecoder = new TextDecoder("utf-8");
-        }
-
-        var getRawData = function(file) {
-            if (file._data instanceof CompressedObject) {
-                file._data = file._data.getContent();
-                file.options.binary = true;
-                file.options.base64 = false;
-
-                if (utils.getTypeOf(file._data) === "uint8array") {
-                    var copy = file._data;
-                    // when reading an arraybuffer, the CompressedObject mechanism will keep it and subarray() a Uint8Array.
-                    // if we request a file in the same format, we might get the same Uint8Array or its ArrayBuffer (the original zip file).
-                    file._data = new Uint8Array(copy.length);
-                    // with an empty Uint8Array, Opera fails with a "Offset larger than array size"
-                    if (copy.length !== 0) {
-                        file._data.set(copy, 0);
-                    }
-                }
-            }
-            return file._data;
-        };
-
-        /**
-         * Returns the data of a ZipObject in a binary form. If the content is an unicode string, encode it.
-         * @param {ZipObject} file the file to use.
-         * @return {String|ArrayBuffer|Uint8Array|Buffer} the data.
-         */
-        var getBinaryData = function(file) {
-            var result = getRawData(file),
-                type = utils.getTypeOf(result);
-            if (type === "string") {
-                if (!file.options.binary) {
-                    // unicode text !
-                    // unicode string => binary string is a painful process, check if we can avoid it.
-                    if (textEncoder) {
-                        return textEncoder.encode(result);
-                    }
-                    if (support.nodebuffer) {
-                        return nodeBuffer(result, "utf-8");
-                    }
-                }
-                return file.asBinary();
-            }
-            return result;
-        };
-
-        /**
-         * Transform this._data into a string.
-         * @param {function} filter a function String -> String, applied if not null on the result.
-         * @return {String} the string representing this._data.
-         */
-        var dataToString = function(asUTF8) {
-            var result = getRawData(this);
-            if (result === null || typeof result === "undefined") {
-                return "";
-            }
-            // if the data is a base64 string, we decode it before checking the encoding !
-            if (this.options.base64) {
-                result = base64.decode(result);
-            }
-            if (asUTF8 && this.options.binary) {
-                // JSZip.prototype.utf8decode supports arrays as input
-                // skip to array => string step, utf8decode will do it.
-                result = out.utf8decode(result);
-            }
-            else {
-                // no utf8 transformation, do the array => string step.
-                result = utils.transformTo("string", result);
-            }
-
-            if (!asUTF8 && !this.options.binary) {
-                result = out.utf8encode(result);
-            }
-            return result;
-        };
-        /**
-         * A simple object representing a file in the zip file.
-         * @constructor
-         * @param {string} name the name of the file
-         * @param {String|ArrayBuffer|Uint8Array|Buffer} data the data
-         * @param {Object} options the options of the file
-         */
-        var ZipObject = function(name, data, options) {
-            this.name = name;
-            this._data = data;
-            this.options = options;
-        };
-
-        ZipObject.prototype = {
-            /**
-             * Return the content as UTF8 string.
-             * @return {string} the UTF8 string.
-             */
-            asText: function() {
-                return dataToString.call(this, true);
-            },
-            /**
-             * Returns the binary content.
-             * @return {string} the content as binary.
-             */
-            asBinary: function() {
-                return dataToString.call(this, false);
-            },
-            /**
-             * Returns the content as a nodejs Buffer.
-             * @return {Buffer} the content as a Buffer.
-             */
-            asNodeBuffer: function() {
-                var result = getBinaryData(this);
-                return utils.transformTo("nodebuffer", result);
-            },
-            /**
-             * Returns the content as an Uint8Array.
-             * @return {Uint8Array} the content as an Uint8Array.
-             */
-            asUint8Array: function() {
-                var result = getBinaryData(this);
-                return utils.transformTo("uint8array", result);
-            },
-            /**
-             * Returns the content as an ArrayBuffer.
-             * @return {ArrayBuffer} the content as an ArrayBufer.
-             */
-            asArrayBuffer: function() {
-                return this.asUint8Array().buffer;
-            }
-        };
-
-        /**
-         * Transform an integer into a string in hexadecimal.
-         * @private
-         * @param {number} dec the number to convert.
-         * @param {number} bytes the number of bytes to generate.
-         * @returns {string} the result.
-         */
-        var decToHex = function(dec, bytes) {
-            var hex = "",
-                i;
-            for (i = 0; i < bytes; i++) {
-                hex += String.fromCharCode(dec & 0xff);
-                dec = dec >>> 8;
-            }
-            return hex;
-        };
-
-        /**
-         * Merge the objects passed as parameters into a new one.
-         * @private
-         * @param {...Object} var_args All objects to merge.
-         * @return {Object} a new object with the data of the others.
-         */
-        var extend = function() {
-            var result = {}, i, attr;
-            for (i = 0; i < arguments.length; i++) { // arguments is not enumerable in some browsers
-                for (attr in arguments[i]) {
-                    if (arguments[i].hasOwnProperty(attr) && typeof result[attr] === "undefined") {
-                        result[attr] = arguments[i][attr];
-                    }
-                }
-            }
-            return result;
-        };
-
-        /**
-         * Transforms the (incomplete) options from the user into the complete
-         * set of options to create a file.
-         * @private
-         * @param {Object} o the options from the user.
-         * @return {Object} the complete set of options.
-         */
-        var prepareFileAttrs = function(o) {
-            o = o || {};
-            if (o.base64 === true && (o.binary === null || o.binary === undefined)) {
-                o.binary = true;
-            }
-            o = extend(o, defaults);
-            o.date = o.date || new Date();
-            if (o.compression !== null) o.compression = o.compression.toUpperCase();
-
-            return o;
-        };
-
-        /**
-         * Add a file in the current folder.
-         * @private
-         * @param {string} name the name of the file
-         * @param {String|ArrayBuffer|Uint8Array|Buffer} data the data of the file
-         * @param {Object} o the options of the file
-         * @return {Object} the new file.
-         */
-        var fileAdd = function(name, data, o) {
-            // be sure sub folders exist
-            var parent = parentFolder(name),
-                dataType = utils.getTypeOf(data);
-            if (parent) {
-                folderAdd.call(this, parent);
-            }
-
-            o = prepareFileAttrs(o);
-
-            if (o.dir || data === null || typeof data === "undefined") {
-                o.base64 = false;
-                o.binary = false;
-                data = null;
-            }
-            else if (dataType === "string") {
-                if (o.binary && !o.base64) {
-                    // optimizedBinaryString == true means that the file has already been filtered with a 0xFF mask
-                    if (o.optimizedBinaryString !== true) {
-                        // this is a string, not in a base64 format.
-                        // Be sure that this is a correct "binary string"
-                        data = utils.string2binary(data);
-                    }
-                }
-            }
-            else { // arraybuffer, uint8array, ...
-                o.base64 = false;
-                o.binary = true;
-
-                if (!dataType && !(data instanceof CompressedObject)) {
-                    throw new Error("The data of '" + name + "' is in an unsupported format !");
-                }
-
-                // special case : it's way easier to work with Uint8Array than with ArrayBuffer
-                if (dataType === "arraybuffer") {
-                    data = utils.transformTo("uint8array", data);
-                }
-            }
-
-            var object = new ZipObject(name, data, o);
-            this.files[name] = object;
-            return object;
-        };
-
-
-        /**
-         * Find the parent folder of the path.
-         * @private
-         * @param {string} path the path to use
-         * @return {string} the parent folder, or ""
-         */
-        var parentFolder = function(path) {
-            if (path.slice(-1) == '/') {
-                path = path.substring(0, path.length - 1);
-            }
-            var lastSlash = path.lastIndexOf('/');
-            return (lastSlash > 0) ? path.substring(0, lastSlash) : "";
-        };
-
-        /**
-         * Add a (sub) folder in the current folder.
-         * @private
-         * @param {string} name the folder's name
-         * @return {Object} the new folder.
-         */
-        var folderAdd = function(name) {
-            // Check the name ends with a /
-            if (name.slice(-1) != "/") {
-                name += "/"; // IE doesn't like substr(-1)
-            }
-
-            // Does this folder already exist?
-            if (!this.files[name]) {
-                fileAdd.call(this, name, null, {
-                    dir: true
-                });
-            }
-            return this.files[name];
-        };
-
-        /**
-         * Generate a JSZip.CompressedObject for a given zipOject.
-         * @param {ZipObject} file the object to read.
-         * @param {JSZip.compression} compression the compression to use.
-         * @return {JSZip.CompressedObject} the compressed result.
-         */
-        var generateCompressedObjectFrom = function(file, compression) {
-            var result = new CompressedObject(),
-                content;
-
-            // the data has not been decompressed, we might reuse things !
-            if (file._data instanceof CompressedObject) {
-                result.uncompressedSize = file._data.uncompressedSize;
-                result.crc32 = file._data.crc32;
-
-                if (result.uncompressedSize === 0 || file.options.dir) {
-                    compression = compressions['STORE'];
-                    result.compressedContent = "";
-                    result.crc32 = 0;
-                }
-                else if (file._data.compressionMethod === compression.magic) {
-                    result.compressedContent = file._data.getCompressedContent();
-                }
-                else {
-                    content = file._data.getContent();
-                    // need to decompress / recompress
-                    result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content));
-                }
-            }
-            else {
-                // have uncompressed data
-                content = getBinaryData(file);
-                if (!content || content.length === 0 || file.options.dir) {
-                    compression = compressions['STORE'];
-                    content = "";
-                }
-                result.uncompressedSize = content.length;
-                result.crc32 = this.crc32(content);
-                result.compressedContent = compression.compress(utils.transformTo(compression.compressInputType, content));
-            }
-
-            result.compressedSize = result.compressedContent.length;
-            result.compressionMethod = compression.magic;
-
-            return result;
-        };
-
-        /**
-         * Generate the various parts used in the construction of the final zip file.
-         * @param {string} name the file name.
-         * @param {ZipObject} file the file content.
-         * @param {JSZip.CompressedObject} compressedObject the compressed object.
-         * @param {number} offset the current offset from the start of the zip file.
-         * @return {object} the zip parts.
-         */
-        var generateZipParts = function(name, file, compressedObject, offset) {
-            var data = compressedObject.compressedContent,
-                utfEncodedFileName = this.utf8encode(file.name),
-                useUTF8 = utfEncodedFileName !== file.name,
-                o = file.options,
-                dosTime,
-                dosDate,
-                extraFields = "",
-                unicodePathExtraField = "";
-
-            // date
-            // @see http://www.delorie.com/djgpp/doc/rbinter/it/52/13.html
-            // @see http://www.delorie.com/djgpp/doc/rbinter/it/65/16.html
-            // @see http://www.delorie.com/djgpp/doc/rbinter/it/66/16.html
-
-            dosTime = o.date.getHours();
-            dosTime = dosTime << 6;
-            dosTime = dosTime | o.date.getMinutes();
-            dosTime = dosTime << 5;
-            dosTime = dosTime | o.date.getSeconds() / 2;
-
-            dosDate = o.date.getFullYear() - 1980;
-            dosDate = dosDate << 4;
-            dosDate = dosDate | (o.date.getMonth() + 1);
-            dosDate = dosDate << 5;
-            dosDate = dosDate | o.date.getDate();
-
-            if (useUTF8) {
-                // set the unicode path extra field. unzip needs at least one extra
-                // field to correctly handle unicode path, so using the path is as good
-                // as any other information. This could improve the situation with
-                // other archive managers too.
-                // This field is usually used without the utf8 flag, with a non
-                // unicode path in the header (winrar, winzip). This helps (a bit)
-                // with the messy Windows' default compressed folders feature but
-                // breaks on p7zip which doesn't seek the unicode path extra field.
-                // So for now, UTF-8 everywhere !
-                unicodePathExtraField =
-                    // Version
-                    decToHex(1, 1) +
-                        // NameCRC32
-                        decToHex(this.crc32(utfEncodedFileName), 4) +
-                        // UnicodeName
-                        utfEncodedFileName;
-
-                extraFields +=
-                    // Info-ZIP Unicode Path Extra Field
-                    "\x75\x70" +
-                        // size
-                        decToHex(unicodePathExtraField.length, 2) +
-                        // content
-                        unicodePathExtraField;
-            }
-
-            var header = "";
-
-            // version needed to extract
-            header += "\x0A\x00";
-            // general purpose bit flag
-            // set bit 11 if utf8
-            header += useUTF8 ? "\x00\x08" : "\x00\x00";
-            // compression method
-            header += compressedObject.compressionMethod;
-            // last mod file time
-            header += decToHex(dosTime, 2);
-            // last mod file date
-            header += decToHex(dosDate, 2);
-            // crc-32
-            header += decToHex(compressedObject.crc32, 4);
-            // compressed size
-            header += decToHex(compressedObject.compressedSize, 4);
-            // uncompressed size
-            header += decToHex(compressedObject.uncompressedSize, 4);
-            // file name length
-            header += decToHex(utfEncodedFileName.length, 2);
-            // extra field length
-            header += decToHex(extraFields.length, 2);
-
-
-            var fileRecord = signature.LOCAL_FILE_HEADER + header + utfEncodedFileName + extraFields;
-
-            var dirRecord = signature.CENTRAL_FILE_HEADER +
-                // version made by (00: DOS)
-                "\x14\x00" +
-                // file header (common to file and central directory)
-                header +
-                // file comment length
-                "\x00\x00" +
-                // disk number start
-                "\x00\x00" +
-                // internal file attributes TODO
-                "\x00\x00" +
-                // external file attributes
-                (file.options.dir === true ? "\x10\x00\x00\x00" : "\x00\x00\x00\x00") +
-                // relative offset of local header
-                decToHex(offset, 4) +
-                // file name
-                utfEncodedFileName +
-                // extra field
-                extraFields;
-
-
-            return {
-                fileRecord: fileRecord,
-                dirRecord: dirRecord,
-                compressedObject: compressedObject
-            };
-        };
-
-        /**
-         * An object to write any content to a string.
-         * @constructor
-         */
-        var StringWriter = function() {
-            this.data = [];
-        };
-        StringWriter.prototype = {
-            /**
-             * Append any content to the current string.
-             * @param {Object} input the content to add.
-             */
-            append: function(input) {
-                input = utils.transformTo("string", input);
-                this.data.push(input);
-            },
-            /**
-             * Finalize the construction an return the result.
-             * @return {string} the generated string.
-             */
-            finalize: function() {
-                return this.data.join("");
-            }
-        };
-        /**
-         * An object to write any content to an Uint8Array.
-         * @constructor
-         * @param {number} length The length of the array.
-         */
-        var Uint8ArrayWriter = function(length) {
-            this.data = new Uint8Array(length);
-            this.index = 0;
-        };
-        Uint8ArrayWriter.prototype = {
-            /**
-             * Append any content to the current array.
-             * @param {Object} input the content to add.
-             */
-            append: function(input) {
-                if (input.length !== 0) {
-                    // with an empty Uint8Array, Opera fails with a "Offset larger than array size"
-                    input = utils.transformTo("uint8array", input);
-                    this.data.set(input, this.index);
-                    this.index += input.length;
-                }
-            },
-            /**
-             * Finalize the construction an return the result.
-             * @return {Uint8Array} the generated array.
-             */
-            finalize: function() {
-                return this.data;
-            }
-        };
-
-// return the actual prototype of JSZip
-        var out = {
-            /**
-             * Read an existing zip and merge the data in the current JSZip object.
-             * The implementation is in jszip-load.js, don't forget to include it.
-             * @param {String|ArrayBuffer|Uint8Array|Buffer} stream  The stream to load
-             * @param {Object} options Options for loading the stream.
-             *  options.base64 : is the stream in base64 ? default : false
-             * @return {JSZip} the current JSZip object
-             */
-            load: function(stream, options) {
-                throw new Error("Load method is not defined. Is the file jszip-load.js included ?");
-            },
-
-            /**
-             * Filter nested files/folders with the specified function.
-             * @param {Function} search the predicate to use :
-             * function (relativePath, file) {...}
-             * It takes 2 arguments : the relative path and the file.
-             * @return {Array} An array of matching elements.
-             */
-            filter: function(search) {
-                var result = [],
-                    filename, relativePath, file, fileClone;
-                for (filename in this.files) {
-                    if (!this.files.hasOwnProperty(filename)) {
-                        continue;
-                    }
-                    file = this.files[filename];
-                    // return a new object, don't let the user mess with our internal objects :)
-                    fileClone = new ZipObject(file.name, file._data, extend(file.options));
-                    relativePath = filename.slice(this.root.length, filename.length);
-                    if (filename.slice(0, this.root.length) === this.root && // the file is in the current root
-                        search(relativePath, fileClone)) { // and the file matches the function
-                        result.push(fileClone);
-                    }
-                }
-                return result;
-            },
-
-            /**
-             * Add a file to the zip file, or search a file.
-             * @param   {string|RegExp} name The name of the file to add (if data is defined),
-             * the name of the file to find (if no data) or a regex to match files.
-             * @param   {String|ArrayBuffer|Uint8Array|Buffer} data  The file data, either raw or base64 encoded
-             * @param   {Object} o     File options
-             * @return  {JSZip|Object|Array} this JSZip object (when adding a file),
-             * a file (when searching by string) or an array of files (when searching by regex).
-             */
-            file: function(name, data, o) {
-                if (arguments.length === 1) {
-                    if (utils.isRegExp(name)) {
-                        var regexp = name;
-                        return this.filter(function(relativePath, file) {
-                            return !file.options.dir && regexp.test(relativePath);
-                        });
-                    }
-                    else { // text
-                        return this.filter(function(relativePath, file) {
-                            return !file.options.dir && relativePath === name;
-                        })[0] || null;
-                    }
-                }
-                else { // more than one argument : we have data !
-                    name = this.root + name;
-                    fileAdd.call(this, name, data, o);
-                }
-                return this;
-            },
-
-            /**
-             * Add a directory to the zip file, or search.
-             * @param   {String|RegExp} arg The name of the directory to add, or a regex to search folders.
-             * @return  {JSZip} an object with the new directory as the root, or an array containing matching folders.
-             */
-            folder: function(arg) {
-                if (!arg) {
-                    return this;
-                }
-
-                if (utils.isRegExp(arg)) {
-                    return this.filter(function(relativePath, file) {
-                        return file.options.dir && arg.test(relativePath);
-                    });
-                }
-
-                // else, name is a new folder
-                var name = this.root + arg;
-                var newFolder = folderAdd.call(this, name);
-
-                // Allow chaining by returning a new object with this folder as the root
-                var ret = this.clone();
-                ret.root = newFolder.name;
-                return ret;
-            },
-
-            /**
-             * Delete a file, or a directory and all sub-files, from the zip
-             * @param {string} name the name of the file to delete
-             * @return {JSZip} this JSZip object
-             */
-            remove: function(name) {
-                name = this.root + name;
-                var file = this.files[name];
-                if (!file) {
-                    // Look for any folders
-                    if (name.slice(-1) != "/") {
-                        name += "/";
-                    }
-                    file = this.files[name];
-                }
-
-                if (file) {
-                    if (!file.options.dir) {
-                        // file
-                        delete this.files[name];
-                    }
-                    else {
-                        // folder
-                        var kids = this.filter(function(relativePath, file) {
-                            return file.name.slice(0, name.length) === name;
-                        });
-                        for (var i = 0; i < kids.length; i++) {
-                            delete this.files[kids[i].name];
-                        }
-                    }
-                }
-
-                return this;
-            },
-
-            /**
-             * Generate the complete zip file
-             * @param {Object} options the options to generate the zip file :
-             * - base64, (deprecated, use type instead) true to generate base64.
-             * - compression, "STORE" by default.
-             * - type, "base64" by default. Values are : string, base64, uint8array, arraybuffer, blob.
-             * @return {String|Uint8Array|ArrayBuffer|Buffer|Blob} the zip file
-             */
-            generate: function(options) {
-                options = extend(options || {}, {
-                    base64: true,
-                    compression: "STORE",
-                    type: "base64"
-                });
-
-                utils.checkSupport(options.type);
-
-                var zipData = [],
-                    localDirLength = 0,
-                    centralDirLength = 0,
-                    writer, i;
-
-
-                // first, generate all the zip parts.
-                for (var name in this.files) {
-                    if (!this.files.hasOwnProperty(name)) {
-                        continue;
-                    }
-                    var file = this.files[name];
-
-                    var compressionName = file.options.compression || options.compression.toUpperCase();
-                    var compression = compressions[compressionName];
-                    if (!compression) {
-                        throw new Error(compressionName + " is not a valid compression method !");
-                    }
-
-                    var compressedObject = generateCompressedObjectFrom.call(this, file, compression);
-
-                    var zipPart = generateZipParts.call(this, name, file, compressedObject, localDirLength);
-                    localDirLength += zipPart.fileRecord.length + compressedObject.compressedSize;
-                    centralDirLength += zipPart.dirRecord.length;
-                    zipData.push(zipPart);
-                }
-
-                var dirEnd = "";
-
-                // end of central dir signature
-                dirEnd = signature.CENTRAL_DIRECTORY_END +
-                    // number of this disk
-                    "\x00\x00" +
-                    // number of the disk with the start of the central directory
-                    "\x00\x00" +
-                    // total number of entries in the central directory on this disk
-                    decToHex(zipData.length, 2) +
-                    // total number of entries in the central directory
-                    decToHex(zipData.length, 2) +
-                    // size of the central directory   4 bytes
-                    decToHex(centralDirLength, 4) +
-                    // offset of start of central directory with respect to the starting disk number
-                    decToHex(localDirLength, 4) +
-                    // .ZIP file comment length
-                    "\x00\x00";
-
-
-                // we have all the parts (and the total length)
-                // time to create a writer !
-                var typeName = options.type.toLowerCase();
-                if(typeName==="uint8array"||typeName==="arraybuffer"||typeName==="blob"||typeName==="nodebuffer") {
-                    writer = new Uint8ArrayWriter(localDirLength + centralDirLength + dirEnd.length);
-                }else{
-                    writer = new StringWriter(localDirLength + centralDirLength + dirEnd.length);
-                }
-
-                for (i = 0; i < zipData.length; i++) {
-                    writer.append(zipData[i].fileRecord);
-                    writer.append(zipData[i].compressedObject.compressedContent);
-                }
-                for (i = 0; i < zipData.length; i++) {
-                    writer.append(zipData[i].dirRecord);
-                }
-
-                writer.append(dirEnd);
-
-                var zip = writer.finalize();
-
-
-
-                switch(options.type.toLowerCase()) {
-                    // case "zip is an Uint8Array"
-                    case "uint8array" :
-                    case "arraybuffer" :
-                    case "nodebuffer" :
-                        return utils.transformTo(options.type.toLowerCase(), zip);
-                    case "blob" :
-                        return utils.arrayBuffer2Blob(utils.transformTo("arraybuffer", zip));
-                    // case "zip is a string"
-                    case "base64" :
-                        return (options.base64) ? base64.encode(zip) : zip;
-                    default : // case "string" :
-                        return zip;
-                }
-
-            },
-
-            /**
-             *
-             *  Javascript crc32
-             *  http://www.webtoolkit.info/
-             *
-             */
-            crc32: function crc32(input, crc) {
-                if (typeof input === "undefined" || !input.length) {
-                    return 0;
-                }
-
-                var isArray = utils.getTypeOf(input) !== "string";
-
-                var table = [
-                    0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
-                    0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
-                    0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988,
-                    0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
-                    0x1DB71064, 0x6AB020F2, 0xF3B97148, 0x84BE41DE,
-                    0x1ADAD47D, 0x6DDDE4EB, 0xF4D4B551, 0x83D385C7,
-                    0x136C9856, 0x646BA8C0, 0xFD62F97A, 0x8A65C9EC,
-                    0x14015C4F, 0x63066CD9, 0xFA0F3D63, 0x8D080DF5,
-                    0x3B6E20C8, 0x4C69105E, 0xD56041E4, 0xA2677172,
-                    0x3C03E4D1, 0x4B04D447, 0xD20D85FD, 0xA50AB56B,
-                    0x35B5A8FA, 0x42B2986C, 0xDBBBC9D6, 0xACBCF940,
-                    0x32D86CE3, 0x45DF5C75, 0xDCD60DCF, 0xABD13D59,
-                    0x26D930AC, 0x51DE003A, 0xC8D75180, 0xBFD06116,
-                    0x21B4F4B5, 0x56B3C423, 0xCFBA9599, 0xB8BDA50F,
-                    0x2802B89E, 0x5F058808, 0xC60CD9B2, 0xB10BE924,
-                    0x2F6F7C87, 0x58684C11, 0xC1611DAB, 0xB6662D3D,
-                    0x76DC4190, 0x01DB7106, 0x98D220BC, 0xEFD5102A,
-                    0x71B18589, 0x06B6B51F, 0x9FBFE4A5, 0xE8B8D433,
-                    0x7807C9A2, 0x0F00F934, 0x9609A88E, 0xE10E9818,
-                    0x7F6A0DBB, 0x086D3D2D, 0x91646C97, 0xE6635C01,
-                    0x6B6B51F4, 0x1C6C6162, 0x856530D8, 0xF262004E,
-                    0x6C0695ED, 0x1B01A57B, 0x8208F4C1, 0xF50FC457,
-                    0x65B0D9C6, 0x12B7E950, 0x8BBEB8EA, 0xFCB9887C,
-                    0x62DD1DDF, 0x15DA2D49, 0x8CD37CF3, 0xFBD44C65,
-                    0x4DB26158, 0x3AB551CE, 0xA3BC0074, 0xD4BB30E2,
-                    0x4ADFA541, 0x3DD895D7, 0xA4D1C46D, 0xD3D6F4FB,
-                    0x4369E96A, 0x346ED9FC, 0xAD678846, 0xDA60B8D0,
-                    0x44042D73, 0x33031DE5, 0xAA0A4C5F, 0xDD0D7CC9,
-                    0x5005713C, 0x270241AA, 0xBE0B1010, 0xC90C2086,
-                    0x5768B525, 0x206F85B3, 0xB966D409, 0xCE61E49F,
-                    0x5EDEF90E, 0x29D9C998, 0xB0D09822, 0xC7D7A8B4,
-                    0x59B33D17, 0x2EB40D81, 0xB7BD5C3B, 0xC0BA6CAD,
-                    0xEDB88320, 0x9ABFB3B6, 0x03B6E20C, 0x74B1D29A,
-                    0xEAD54739, 0x9DD277AF, 0x04DB2615, 0x73DC1683,
-                    0xE3630B12, 0x94643B84, 0x0D6D6A3E, 0x7A6A5AA8,
-                    0xE40ECF0B, 0x9309FF9D, 0x0A00AE27, 0x7D079EB1,
-                    0xF00F9344, 0x8708A3D2, 0x1E01F268, 0x6906C2FE,
-                    0xF762575D, 0x806567CB, 0x196C3671, 0x6E6B06E7,
-                    0xFED41B76, 0x89D32BE0, 0x10DA7A5A, 0x67DD4ACC,
-                    0xF9B9DF6F, 0x8EBEEFF9, 0x17B7BE43, 0x60B08ED5,
-                    0xD6D6A3E8, 0xA1D1937E, 0x38D8C2C4, 0x4FDFF252,
-                    0xD1BB67F1, 0xA6BC5767, 0x3FB506DD, 0x48B2364B,
-                    0xD80D2BDA, 0xAF0A1B4C, 0x36034AF6, 0x41047A60,
-                    0xDF60EFC3, 0xA867DF55, 0x316E8EEF, 0x4669BE79,
-                    0xCB61B38C, 0xBC66831A, 0x256FD2A0, 0x5268E236,
-                    0xCC0C7795, 0xBB0B4703, 0x220216B9, 0x5505262F,
-                    0xC5BA3BBE, 0xB2BD0B28, 0x2BB45A92, 0x5CB36A04,
-                    0xC2D7FFA7, 0xB5D0CF31, 0x2CD99E8B, 0x5BDEAE1D,
-                    0x9B64C2B0, 0xEC63F226, 0x756AA39C, 0x026D930A,
-                    0x9C0906A9, 0xEB0E363F, 0x72076785, 0x05005713,
-                    0x95BF4A82, 0xE2B87A14, 0x7BB12BAE, 0x0CB61B38,
-                    0x92D28E9B, 0xE5D5BE0D, 0x7CDCEFB7, 0x0BDBDF21,
-                    0x86D3D2D4, 0xF1D4E242, 0x68DDB3F8, 0x1FDA836E,
-                    0x81BE16CD, 0xF6B9265B, 0x6FB077E1, 0x18B74777,
-                    0x88085AE6, 0xFF0F6A70, 0x66063BCA, 0x11010B5C,
-                    0x8F659EFF, 0xF862AE69, 0x616BFFD3, 0x166CCF45,
-                    0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2,
-                    0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB,
-                    0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0,
-                    0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
-                    0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6,
-                    0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF,
-                    0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
-                    0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D];
-
-                if (typeof(crc) == "undefined") {
-                    crc = 0;
-                }
-                var x = 0;
-                var y = 0;
-                var b = 0;
-
-                crc = crc ^ (-1);
-                for (var i = 0, iTop = input.length; i < iTop; i++) {
-                    b = isArray ? input[i] : input.charCodeAt(i);
-                    y = (crc ^ b) & 0xFF;
-                    x = table[y];
-                    crc = (crc >>> 8) ^ x;
-                }
-
-                return crc ^ (-1);
-            },
-
-            // Inspired by http://my.opera.com/GreyWyvern/blog/show.dml/1725165
-
-            /**
-             * http://www.webtoolkit.info/javascript-utf8.html
-             */
-            utf8encode: function(string) {
-                // TextEncoder + Uint8Array to binary string is faster than checking every bytes on long strings.
-                // http://jsperf.com/utf8encode-vs-textencoder
-                // On short strings (file names for example), the TextEncoder API is (currently) slower.
-                if (textEncoder) {
-                    var u8 = textEncoder.encode(string);
-                    return utils.transformTo("string", u8);
-                }
-                if (support.nodebuffer) {
-                    return utils.transformTo("string", nodeBuffer(string, "utf-8"));
-                }
-
-                // array.join may be slower than string concatenation but generates less objects (less time spent garbage collecting).
-                // See also http://jsperf.com/array-direct-assignment-vs-push/31
-                var result = [],
-                    resIndex = 0;
-
-                for (var n = 0; n < string.length; n++) {
-
-                    var c = string.charCodeAt(n);
-
-                    if (c < 128) {
-                        result[resIndex++] = String.fromCharCode(c);
-                    }
-                    else if ((c > 127) && (c < 2048)) {
-                        result[resIndex++] = String.fromCharCode((c >> 6) | 192);
-                        result[resIndex++] = String.fromCharCode((c & 63) | 128);
-                    }
-                    else {
-                        result[resIndex++] = String.fromCharCode((c >> 12) | 224);
-                        result[resIndex++] = String.fromCharCode(((c >> 6) & 63) | 128);
-                        result[resIndex++] = String.fromCharCode((c & 63) | 128);
-                    }
-
-                }
-
-                return result.join("");
-            },
-
-            /**
-             * http://www.webtoolkit.info/javascript-utf8.html
-             */
-            utf8decode: function(input) {
-                var result = [],
-                    resIndex = 0;
-                var type = utils.getTypeOf(input);
-                var isArray = type !== "string";
-                var i = 0;
-                var c = 0,
-                    c1 = 0,
-                    c2 = 0,
-                    c3 = 0;
-
-                // check if we can use the TextDecoder API
-                // see http://encoding.spec.whatwg.org/#api
-                if (textDecoder) {
-                    return textDecoder.decode(
-                        utils.transformTo("uint8array", input)
-                    );
-                }
-                if (support.nodebuffer) {
-                    return utils.transformTo("nodebuffer", input).toString("utf-8");
-                }
-
-                while (i < input.length) {
-
-                    c = isArray ? input[i] : input.charCodeAt(i);
-
-                    if (c < 128) {
-                        result[resIndex++] = String.fromCharCode(c);
-                        i++;
-                    }
-                    else if ((c > 191) && (c < 224)) {
-                        c2 = isArray ? input[i + 1] : input.charCodeAt(i + 1);
-                        result[resIndex++] = String.fromCharCode(((c & 31) << 6) | (c2 & 63));
-                        i += 2;
-                    }
-                    else {
-                        c2 = isArray ? input[i + 1] : input.charCodeAt(i + 1);
-                        c3 = isArray ? input[i + 2] : input.charCodeAt(i + 2);
-                        result[resIndex++] = String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
-                        i += 3;
-                    }
-
-                }
-
-                return result.join("");
-            }
-        };
-        module.exports = out;
-
-    },{"./base64":1,"./compressedObject":2,"./compressions":3,"./defaults":5,"./nodeBuffer":17,"./signature":10,"./support":12,"./utils":14}],10:[function(require,module,exports){
-
-        exports.LOCAL_FILE_HEADER = "PK\x03\x04";
-        exports.CENTRAL_FILE_HEADER = "PK\x01\x02";
-        exports.CENTRAL_DIRECTORY_END = "PK\x05\x06";
-        exports.ZIP64_CENTRAL_DIRECTORY_LOCATOR = "PK\x06\x07";
-        exports.ZIP64_CENTRAL_DIRECTORY_END = "PK\x06\x06";
-        exports.DATA_DESCRIPTOR = "PK\x07\x08";
-
-    },{}],11:[function(require,module,exports){
-
-        var DataReader = require('./dataReader');
-        var utils = require('./utils');
-
-        function StringReader(data, optimizedBinaryString) {
-            this.data = data;
-            if (!optimizedBinaryString) {
-                this.data = utils.string2binary(this.data);
-            }
-            this.length = this.data.length;
-            this.index = 0;
-        }
-        StringReader.prototype = new DataReader();
-        /**
-         * @see DataReader.byteAt
-         */
-        StringReader.prototype.byteAt = function(i) {
-            return this.data.charCodeAt(i);
-        };
-        /**
-         * @see DataReader.lastIndexOfSignature
-         */
-        StringReader.prototype.lastIndexOfSignature = function(sig) {
-            return this.data.lastIndexOf(sig);
-        };
-        /**
-         * @see DataReader.readData
-         */
-        StringReader.prototype.readData = function(size) {
-            this.checkOffset(size);
-            // this will work because the constructor applied the "& 0xff" mask.
-            var result = this.data.slice(this.index, this.index + size);
-            this.index += size;
-            return result;
-        };
-        module.exports = StringReader;
-
-    },{"./dataReader":4,"./utils":14}],12:[function(require,module,exports){
-        var process=require("__browserify_process");
-        exports.base64 = true;
-        exports.array = true;
-        exports.string = true;
-        exports.arraybuffer = typeof ArrayBuffer !== "undefined" && typeof Uint8Array !== "undefined";
-// contains true if JSZip can read/generate nodejs Buffer, false otherwise, aka checks if we arn't in a browser.
-        exports.nodebuffer = !process.browser;
-// contains true if JSZip can read/generate Uint8Array, false otherwise.
-        exports.uint8array = typeof Uint8Array !== "undefined";
-
-        if (typeof ArrayBuffer === "undefined") {
-            exports.blob = false;
-        }
-        else {
-            var buffer = new ArrayBuffer(0);
-            try {
-                exports.blob = new Blob([buffer], {
-                    type: "application/zip"
-                }).size === 0;
-            }
-            catch (e) {
-                try {
-                    var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-                    var builder = new Builder();
-                    builder.append(buffer);
-                    exports.blob = builder.getBlob('application/zip').size === 0;
-                }
-                catch (e) {
-                    exports.blob = false;
-                }
-            }
-        }
-
-    },{"__browserify_process":18}],13:[function(require,module,exports){
-
-        var DataReader = require('./dataReader');
-
-        function Uint8ArrayReader(data) {
-            if (data) {
-                this.data = data;
-                this.length = this.data.length;
-                this.index = 0;
-            }
-        }
-        Uint8ArrayReader.prototype = new DataReader();
-        /**
-         * @see DataReader.byteAt
-         */
-        Uint8ArrayReader.prototype.byteAt = function(i) {
-            return this.data[i];
-        };
-        /**
-         * @see DataReader.lastIndexOfSignature
-         */
-        Uint8ArrayReader.prototype.lastIndexOfSignature = function(sig) {
-            var sig0 = sig.charCodeAt(0),
-                sig1 = sig.charCodeAt(1),
-                sig2 = sig.charCodeAt(2),
-                sig3 = sig.charCodeAt(3);
-            for (var i = this.length - 4; i >= 0; --i) {
-                if (this.data[i] === sig0 && this.data[i + 1] === sig1 && this.data[i + 2] === sig2 && this.data[i + 3] === sig3) {
-                    return i;
-                }
-            }
-
-            return -1;
-        };
-        /**
-         * @see DataReader.readData
-         */
-        Uint8ArrayReader.prototype.readData = function(size) {
-            this.checkOffset(size);
-            var result = this.data.subarray(this.index, this.index + size);
-            this.index += size;
-            return result;
-        };
-        module.exports = Uint8ArrayReader;
-
-    },{"./dataReader":4}],14:[function(require,module,exports){
-
-        var support = require('./support');
-        var compressions = require('./compressions');
-        var nodeBuffer = require('./nodeBuffer');
-        /**
-         * Convert a string to a "binary string" : a string containing only char codes between 0 and 255.
-         * @param {string} str the string to transform.
-         * @return {String} the binary string.
-         */
-        exports.string2binary = function(str) {
-            var result = "";
-            for (var i = 0; i < str.length; i++) {
-                result += String.fromCharCode(str.charCodeAt(i) & 0xff);
-            }
-            return result;
-        };
-        /**
-         * Create a Uint8Array from the string.
-         * @param {string} str the string to transform.
-         * @return {Uint8Array} the typed array.
-         * @throws {Error} an Error if the browser doesn't support the requested feature.
-         */
-        exports.string2Uint8Array = function(str) {
-            return exports.transformTo("uint8array", str);
-        };
-
-        /**
-         * Create a string from the Uint8Array.
-         * @param {Uint8Array} array the array to transform.
-         * @return {string} the string.
-         * @throws {Error} an Error if the browser doesn't support the requested feature.
-         */
-        exports.uint8Array2String = function(array) {
-            return exports.transformTo("string", array);
-        };
-        /**
-         * Create a blob from the given string.
-         * @param {string} str the string to transform.
-         * @return {Blob} the string.
-         * @throws {Error} an Error if the browser doesn't support the requested feature.
-         */
-        exports.string2Blob = function(str) {
-            var buffer = exports.transformTo("arraybuffer", str);
-            return exports.arrayBuffer2Blob(buffer);
-        };
-        exports.arrayBuffer2Blob = function(buffer) {
-            exports.checkSupport("blob");
-
-            try {
-                // Blob constructor
-                return new Blob([buffer], {
-                    type: "application/zip"
-                });
-            }
-            catch (e) {
-
-                try {
-                    // deprecated, browser only, old way
-                    var Builder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-                    var builder = new Builder();
-                    builder.append(buffer);
-                    return builder.getBlob('application/zip');
-                }
-                catch (e) {
-
-                    // well, fuck ?!
-                    throw new Error("Bug : can't construct the Blob.");
-                }
-            }
-
-
-        };
-        /**
-         * The identity function.
-         * @param {Object} input the input.
-         * @return {Object} the same input.
-         */
-        function identity(input) {
-            return input;
-        }
-
-        /**
-         * Fill in an array with a string.
-         * @param {String} str the string to use.
-         * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to fill in (will be mutated).
-         * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated array.
-         */
-        function stringToArrayLike(str, array) {
-            for (var i = 0; i < str.length; ++i) {
-                array[i] = str.charCodeAt(i) & 0xFF;
-            }
-            return array;
-        }
-
-        /**
-         * Transform an array-like object to a string.
-         * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to transform.
-         * @return {String} the result.
-         */
-        function arrayLikeToString(array) {
-            // Performances notes :
-            // --------------------
-            // String.fromCharCode.apply(null, array) is the fastest, see
-            // see http://jsperf.com/converting-a-uint8array-to-a-string/2
-            // but the stack is limited (and we can get huge arrays !).
-            //
-            // result += String.fromCharCode(array[i]); generate too many strings !
-            //
-            // This code is inspired by http://jsperf.com/arraybuffer-to-string-apply-performance/2
-            var chunk = 65536;
-            var result = [],
-                len = array.length,
-                type = exports.getTypeOf(array),
-                k = 0,
-                canUseApply = true;
-            try {
-                switch(type) {
-                    case "uint8array":
-                        String.fromCharCode.apply(null, new Uint8Array(0));
-                        break;
-                    case "nodebuffer":
-                        String.fromCharCode.apply(null, nodeBuffer(0));
-                        break;
-                }
-            } catch(e) {
-                canUseApply = false;
-            }
-
-            // no apply : slow and painful algorithm
-            // default browser on android 4.*
-            if (!canUseApply) {
-                var resultStr = "";
-                for(var i = 0; i < array.length;i++) {
-                    resultStr += String.fromCharCode(array[i]);
-                }
-                return resultStr;
-            }
-            while (k < len && chunk > 1) {
-                try {
-                    if (type === "array" || type === "nodebuffer") {
-                        result.push(String.fromCharCode.apply(null, array.slice(k, Math.min(k + chunk, len))));
-                    }
-                    else {
-                        result.push(String.fromCharCode.apply(null, array.subarray(k, Math.min(k + chunk, len))));
-                    }
-                    k += chunk;
-                }
-                catch (e) {
-                    chunk = Math.floor(chunk / 2);
-                }
-            }
-            return result.join("");
-        }
-
-        /**
-         * Copy the data from an array-like to an other array-like.
-         * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayFrom the origin array.
-         * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayTo the destination array which will be mutated.
-         * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated destination array.
-         */
-        function arrayLikeToArrayLike(arrayFrom, arrayTo) {
-            for (var i = 0; i < arrayFrom.length; i++) {
-                arrayTo[i] = arrayFrom[i];
-            }
-            return arrayTo;
-        }
-
-// a matrix containing functions to transform everything into everything.
-        var transform = {};
-
-// string to ?
-        transform["string"] = {
-            "string": identity,
-            "array": function(input) {
-                return stringToArrayLike(input, new Array(input.length));
-            },
-            "arraybuffer": function(input) {
-                return transform["string"]["uint8array"](input).buffer;
-            },
-            "uint8array": function(input) {
-                return stringToArrayLike(input, new Uint8Array(input.length));
-            },
-            "nodebuffer": function(input) {
-                return stringToArrayLike(input, nodeBuffer(input.length));
-            }
-        };
-
-// array to ?
-        transform["array"] = {
-            "string": arrayLikeToString,
-            "array": identity,
-            "arraybuffer": function(input) {
-                return (new Uint8Array(input)).buffer;
-            },
-            "uint8array": function(input) {
-                return new Uint8Array(input);
-            },
-            "nodebuffer": function(input) {
-                return nodeBuffer(input);
-            }
-        };
-
-// arraybuffer to ?
-        transform["arraybuffer"] = {
-            "string": function(input) {
-                return arrayLikeToString(new Uint8Array(input));
-            },
-            "array": function(input) {
-                return arrayLikeToArrayLike(new Uint8Array(input), new Array(input.byteLength));
-            },
-            "arraybuffer": identity,
-            "uint8array": function(input) {
-                return new Uint8Array(input);
-            },
-            "nodebuffer": function(input) {
-                return nodeBuffer(new Uint8Array(input));
-            }
-        };
-
-// uint8array to ?
-        transform["uint8array"] = {
-            "string": arrayLikeToString,
-            "array": function(input) {
-                return arrayLikeToArrayLike(input, new Array(input.length));
-            },
-            "arraybuffer": function(input) {
-                return input.buffer;
-            },
-            "uint8array": identity,
-            "nodebuffer": function(input) {
-                return nodeBuffer(input);
-            }
-        };
-
-// nodebuffer to ?
-        transform["nodebuffer"] = {
-            "string": arrayLikeToString,
-            "array": function(input) {
-                return arrayLikeToArrayLike(input, new Array(input.length));
-            },
-            "arraybuffer": function(input) {
-                return transform["nodebuffer"]["uint8array"](input).buffer;
-            },
-            "uint8array": function(input) {
-                return arrayLikeToArrayLike(input, new Uint8Array(input.length));
-            },
-            "nodebuffer": identity
-        };
-
-        /**
-         * Transform an input into any type.
-         * The supported output type are : string, array, uint8array, arraybuffer, nodebuffer.
-         * If no output type is specified, the unmodified input will be returned.
-         * @param {String} outputType the output type.
-         * @param {String|Array|ArrayBuffer|Uint8Array|Buffer} input the input to convert.
-         * @throws {Error} an Error if the browser doesn't support the requested output type.
-         */
-        exports.transformTo = function(outputType, input) {
-            if (!input) {
-                // undefined, null, etc
-                // an empty string won't harm.
-                input = "";
-            }
-            if (!outputType) {
-                return input;
-            }
-            exports.checkSupport(outputType);
-            var inputType = exports.getTypeOf(input);
-            var result = transform[inputType][outputType](input);
-            return result;
-        };
-
-        /**
-         * Return the type of the input.
-         * The type will be in a format valid for JSZip.utils.transformTo : string, array, uint8array, arraybuffer.
-         * @param {Object} input the input to identify.
-         * @return {String} the (lowercase) type of the input.
-         */
-        exports.getTypeOf = function(input) {
-            if (typeof input === "string") {
-                return "string";
-            }
-            if (Object.prototype.toString.call(input) === "[object Array]") {
-                return "array";
-            }
-            if (support.nodebuffer && nodeBuffer.test(input)) {
-                return "nodebuffer";
-            }
-            if (support.uint8array && input instanceof Uint8Array) {
-                return "uint8array";
-            }
-            if (support.arraybuffer && input instanceof ArrayBuffer) {
-                return "arraybuffer";
-            }
-        };
-
-        /**
-         * Throw an exception if the type is not supported.
-         * @param {String} type the type to check.
-         * @throws {Error} an Error if the browser doesn't support the requested type.
-         */
-        exports.checkSupport = function(type) {
-            var supported = support[type.toLowerCase()];
-            if (!supported) {
-                throw new Error(type + " is not supported by this browser");
-            }
-        };
-        exports.MAX_VALUE_16BITS = 65535;
-        exports.MAX_VALUE_32BITS = -1; // well, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF" is parsed as -1
-
-        /**
-         * Prettify a string read as binary.
-         * @param {string} str the string to prettify.
-         * @return {string} a pretty string.
-         */
-        exports.pretty = function(str) {
-            var res = '',
-                code, i;
-            for (i = 0; i < (str || "").length; i++) {
-                code = str.charCodeAt(i);
-                res += '\\x' + (code < 16 ? "0" : "") + code.toString(16).toUpperCase();
-            }
-            return res;
-        };
-
-        /**
-         * Find a compression registered in JSZip.
-         * @param {string} compressionMethod the method magic to find.
-         * @return {Object|null} the JSZip compression object, null if none found.
-         */
-        exports.findCompression = function(compressionMethod) {
-            for (var method in compressions) {
-                if (!compressions.hasOwnProperty(method)) {
-                    continue;
-                }
-                if (compressions[method].magic === compressionMethod) {
-                    return compressions[method];
-                }
-            }
-            return null;
-        };
-        /**
-         * Cross-window, cross-Node-context regular expression detection
-         * @param  {Object}  object Anything
-         * @return {Boolean}        true if the object is a regular expression,
-         * false otherwise
-         */
-        exports.isRegExp = function (object) {
-            return Object.prototype.toString.call(object) === "[object RegExp]";
-        };
-
-
-    },{"./compressions":3,"./nodeBuffer":17,"./support":12}],15:[function(require,module,exports){
-
-        var StringReader = require('./stringReader');
-        var NodeBufferReader = require('./nodeBufferReader');
-        var Uint8ArrayReader = require('./uint8ArrayReader');
-        var utils = require('./utils');
-        var sig = require('./signature');
-        var ZipEntry = require('./zipEntry');
-        var support = require('./support');
-//  class ZipEntries {{{
-        /**
-         * All the entries in the zip file.
-         * @constructor
-         * @param {String|ArrayBuffer|Uint8Array} data the binary stream to load.
-         * @param {Object} loadOptions Options for loading the stream.
-         */
-        function ZipEntries(data, loadOptions) {
-            this.files = [];
-            this.loadOptions = loadOptions;
-            if (data) {
-                this.load(data);
-            }
-        }
-        ZipEntries.prototype = {
-            /**
-             * Check that the reader is on the speficied signature.
-             * @param {string} expectedSignature the expected signature.
-             * @throws {Error} if it is an other signature.
-             */
-            checkSignature: function(expectedSignature) {
-                var signature = this.reader.readString(4);
-                if (signature !== expectedSignature) {
-                    throw new Error("Corrupted zip or bug : unexpected signature " + "(" + utils.pretty(signature) + ", expected " + utils.pretty(expectedSignature) + ")");
-                }
-            },
-            /**
-             * Read the end of the central directory.
-             */
-            readBlockEndOfCentral: function() {
-                this.diskNumber = this.reader.readInt(2);
-                this.diskWithCentralDirStart = this.reader.readInt(2);
-                this.centralDirRecordsOnThisDisk = this.reader.readInt(2);
-                this.centralDirRecords = this.reader.readInt(2);
-                this.centralDirSize = this.reader.readInt(4);
-                this.centralDirOffset = this.reader.readInt(4);
-
-                this.zipCommentLength = this.reader.readInt(2);
-                this.zipComment = this.reader.readString(this.zipCommentLength);
-            },
-            /**
-             * Read the end of the Zip 64 central directory.
-             * Not merged with the method readEndOfCentral :
-             * The end of central can coexist with its Zip64 brother,
-             * I don't want to read the wrong number of bytes !
-             */
-            readBlockZip64EndOfCentral: function() {
-                this.zip64EndOfCentralSize = this.reader.readInt(8);
-                this.versionMadeBy = this.reader.readString(2);
-                this.versionNeeded = this.reader.readInt(2);
-                this.diskNumber = this.reader.readInt(4);
-                this.diskWithCentralDirStart = this.reader.readInt(4);
-                this.centralDirRecordsOnThisDisk = this.reader.readInt(8);
-                this.centralDirRecords = this.reader.readInt(8);
-                this.centralDirSize = this.reader.readInt(8);
-                this.centralDirOffset = this.reader.readInt(8);
-
-                this.zip64ExtensibleData = {};
-                var extraDataSize = this.zip64EndOfCentralSize - 44,
-                    index = 0,
-                    extraFieldId,
-                    extraFieldLength,
-                    extraFieldValue;
-                while (index < extraDataSize) {
-                    extraFieldId = this.reader.readInt(2);
-                    extraFieldLength = this.reader.readInt(4);
-                    extraFieldValue = this.reader.readString(extraFieldLength);
-                    this.zip64ExtensibleData[extraFieldId] = {
-                        id: extraFieldId,
-                        length: extraFieldLength,
-                        value: extraFieldValue
-                    };
-                }
-            },
-            /**
-             * Read the end of the Zip 64 central directory locator.
-             */
-            readBlockZip64EndOfCentralLocator: function() {
-                this.diskWithZip64CentralDirStart = this.reader.readInt(4);
-                this.relativeOffsetEndOfZip64CentralDir = this.reader.readInt(8);
-                this.disksCount = this.reader.readInt(4);
-                if (this.disksCount > 1) {
-                    throw new Error("Multi-volumes zip are not supported");
-                }
-            },
-            /**
-             * Read the local files, based on the offset read in the central part.
-             */
-            readLocalFiles: function() {
-                var i, file;
-                for (i = 0; i < this.files.length; i++) {
-                    file = this.files[i];
-                    this.reader.setIndex(file.localHeaderOffset);
-                    this.checkSignature(sig.LOCAL_FILE_HEADER);
-                    file.readLocalPart(this.reader);
-                    file.handleUTF8();
-                }
-            },
-            /**
-             * Read the central directory.
-             */
-            readCentralDir: function() {
-                var file;
-
-                this.reader.setIndex(this.centralDirOffset);
-                while (this.reader.readString(4) === sig.CENTRAL_FILE_HEADER) {
-                    file = new ZipEntry({
-                        zip64: this.zip64
-                    }, this.loadOptions);
-                    file.readCentralPart(this.reader);
-                    this.files.push(file);
-                }
-            },
-            /**
-             * Read the end of central directory.
-             */
-            readEndOfCentral: function() {
-                var offset = this.reader.lastIndexOfSignature(sig.CENTRAL_DIRECTORY_END);
-                if (offset === -1) {
-                    throw new Error("Corrupted zip : can't find end of central directory");
-                }
-                this.reader.setIndex(offset);
-                this.checkSignature(sig.CENTRAL_DIRECTORY_END);
-                this.readBlockEndOfCentral();
-
-
-                /* extract from the zip spec :
-                 4)  If one of the fields in the end of central directory
-                 record is too small to hold required data, the field
-                 should be set to -1 (0xFFFF or 0xFFFFFFFF) and the
-                 ZIP64 format record should be created.
-                 5)  The end of central directory record and the
-                 Zip64 end of central directory locator record must
-                 reside on the same disk when splitting or spanning
-                 an archive.
-                 */
-                if (this.diskNumber === utils.MAX_VALUE_16BITS || this.diskWithCentralDirStart === utils.MAX_VALUE_16BITS || this.centralDirRecordsOnThisDisk === utils.MAX_VALUE_16BITS || this.centralDirRecords === utils.MAX_VALUE_16BITS || this.centralDirSize === utils.MAX_VALUE_32BITS || this.centralDirOffset === utils.MAX_VALUE_32BITS) {
-                    this.zip64 = true;
-
-                    /*
-                     Warning : the zip64 extension is supported, but ONLY if the 64bits integer read from
-                     the zip file can fit into a 32bits integer. This cannot be solved : Javascript represents
-                     all numbers as 64-bit double precision IEEE 754 floating point numbers.
-                     So, we have 53bits for integers and bitwise operations treat everything as 32bits.
-                     see https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Operators/Bitwise_Operators
-                     and http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf section 8.5
-                     */
-
-                    // should look for a zip64 EOCD locator
-                    offset = this.reader.lastIndexOfSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
-                    if (offset === -1) {
-                        throw new Error("Corrupted zip : can't find the ZIP64 end of central directory locator");
-                    }
-                    this.reader.setIndex(offset);
-                    this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_LOCATOR);
-                    this.readBlockZip64EndOfCentralLocator();
-
-                    // now the zip64 EOCD record
-                    this.reader.setIndex(this.relativeOffsetEndOfZip64CentralDir);
-                    this.checkSignature(sig.ZIP64_CENTRAL_DIRECTORY_END);
-                    this.readBlockZip64EndOfCentral();
-                }
-            },
-            prepareReader: function(data) {
-                var type = utils.getTypeOf(data);
-                if (type === "string" && !support.uint8array) {
-                    this.reader = new StringReader(data, this.loadOptions.optimizedBinaryString);
-                }
-                else if (type === "nodebuffer") {
-                    this.reader = new NodeBufferReader(data);
-                }
-                else {
-                    this.reader = new Uint8ArrayReader(utils.transformTo("uint8array", data));
-                }
-            },
-            /**
-             * Read a zip file and create ZipEntries.
-             * @param {String|ArrayBuffer|Uint8Array|Buffer} data the binary string representing a zip file.
-             */
-            load: function(data) {
-                this.prepareReader(data);
-                this.readEndOfCentral();
-                this.readCentralDir();
-                this.readLocalFiles();
-            }
-        };
-// }}} end of ZipEntries
-        module.exports = ZipEntries;
-
-    },{"./nodeBufferReader":17,"./signature":10,"./stringReader":11,"./support":12,"./uint8ArrayReader":13,"./utils":14,"./zipEntry":16}],16:[function(require,module,exports){
-
-        var StringReader = require('./stringReader');
-        var utils = require('./utils');
-        var CompressedObject = require('./compressedObject');
-        var jszipProto = require('./object');
-// class ZipEntry {{{
-        /**
-         * An entry in the zip file.
-         * @constructor
-         * @param {Object} options Options of the current file.
-         * @param {Object} loadOptions Options for loading the stream.
-         */
-        function ZipEntry(options, loadOptions) {
-            this.options = options;
-            this.loadOptions = loadOptions;
-        }
-        ZipEntry.prototype = {
-            /**
-             * say if the file is encrypted.
-             * @return {boolean} true if the file is encrypted, false otherwise.
-             */
-            isEncrypted: function() {
-                // bit 1 is set
-                return (this.bitFlag & 0x0001) === 0x0001;
-            },
-            /**
-             * say if the file has utf-8 filename/comment.
-             * @return {boolean} true if the filename/comment is in utf-8, false otherwise.
-             */
-            useUTF8: function() {
-                // bit 11 is set
-                return (this.bitFlag & 0x0800) === 0x0800;
-            },
-            /**
-             * Prepare the function used to generate the compressed content from this ZipFile.
-             * @param {DataReader} reader the reader to use.
-             * @param {number} from the offset from where we should read the data.
-             * @param {number} length the length of the data to read.
-             * @return {Function} the callback to get the compressed content (the type depends of the DataReader class).
-             */
-            prepareCompressedContent: function(reader, from, length) {
-                return function() {
-                    var previousIndex = reader.index;
-                    reader.setIndex(from);
-                    var compressedFileData = reader.readData(length);
-                    reader.setIndex(previousIndex);
-
-                    return compressedFileData;
-                };
-            },
-            /**
-             * Prepare the function used to generate the uncompressed content from this ZipFile.
-             * @param {DataReader} reader the reader to use.
-             * @param {number} from the offset from where we should read the data.
-             * @param {number} length the length of the data to read.
-             * @param {JSZip.compression} compression the compression used on this file.
-             * @param {number} uncompressedSize the uncompressed size to expect.
-             * @return {Function} the callback to get the uncompressed content (the type depends of the DataReader class).
-             */
-            prepareContent: function(reader, from, length, compression, uncompressedSize) {
-                return function() {
-
-                    var compressedFileData = utils.transformTo(compression.uncompressInputType, this.getCompressedContent());
-                    var uncompressedFileData = compression.uncompress(compressedFileData);
-
-                    if (uncompressedFileData.length !== uncompressedSize) {
-                        throw new Error("Bug : uncompressed data size mismatch");
-                    }
-
-                    return uncompressedFileData;
-                };
-            },
-            /**
-             * Read the local part of a zip file and add the info in this object.
-             * @param {DataReader} reader the reader to use.
-             */
-            readLocalPart: function(reader) {
-                var compression, localExtraFieldsLength;
-
-                // we already know everything from the central dir !
-                // If the central dir data are false, we are doomed.
-                // On the bright side, the local part is scary  : zip64, data descriptors, both, etc.
-                // The less data we get here, the more reliable this should be.
-                // Let's skip the whole header and dash to the data !
-                reader.skip(22);
-                // in some zip created on windows, the filename stored in the central dir contains \ instead of /.
-                // Strangely, the filename here is OK.
-                // I would love to treat these zip files as corrupted (see http://www.info-zip.org/FAQ.html#backslashes
-                // or APPNOTE#4.4.17.1, "All slashes MUST be forward slashes '/'") but there are a lot of bad zip generators...
-                // Search "unzip mismatching "local" filename continuing with "central" filename version" on
-                // the internet.
-                //
-                // I think I see the logic here : the central directory is used to display
-                // content and the local directory is used to extract the files. Mixing / and \
-                // may be used to display \ to windows users and use / when extracting the files.
-                // Unfortunately, this lead also to some issues : http://seclists.org/fulldisclosure/2009/Sep/394
-                this.fileNameLength = reader.readInt(2);
-                localExtraFieldsLength = reader.readInt(2); // can't be sure this will be the same as the central dir
-                this.fileName = reader.readString(this.fileNameLength);
-                reader.skip(localExtraFieldsLength);
-
-                if (this.compressedSize == -1 || this.uncompressedSize == -1) {
-                    throw new Error("Bug or corrupted zip : didn't get enough informations from the central directory " + "(compressedSize == -1 || uncompressedSize == -1)");
-                }
-
-                compression = utils.findCompression(this.compressionMethod);
-                if (compression === null) { // no compression found
-                    throw new Error("Corrupted zip : compression " + utils.pretty(this.compressionMethod) + " unknown (inner file : " + this.fileName + ")");
-                }
-                this.decompressed = new CompressedObject();
-                this.decompressed.compressedSize = this.compressedSize;
-                this.decompressed.uncompressedSize = this.uncompressedSize;
-                this.decompressed.crc32 = this.crc32;
-                this.decompressed.compressionMethod = this.compressionMethod;
-                this.decompressed.getCompressedContent = this.prepareCompressedContent(reader, reader.index, this.compressedSize, compression);
-                this.decompressed.getContent = this.prepareContent(reader, reader.index, this.compressedSize, compression, this.uncompressedSize);
-
-                // we need to compute the crc32...
-                if (this.loadOptions.checkCRC32) {
-                    this.decompressed = utils.transformTo("string", this.decompressed.getContent());
-                    if (jszipProto.crc32(this.decompressed) !== this.crc32) {
-                        throw new Error("Corrupted zip : CRC32 mismatch");
-                    }
-                }
-            },
-
-            /**
-             * Read the central part of a zip file and add the info in this object.
-             * @param {DataReader} reader the reader to use.
-             */
-            readCentralPart: function(reader) {
-                this.versionMadeBy = reader.readString(2);
-                this.versionNeeded = reader.readInt(2);
-                this.bitFlag = reader.readInt(2);
-                this.compressionMethod = reader.readString(2);
-                this.date = reader.readDate();
-                this.crc32 = reader.readInt(4);
-                this.compressedSize = reader.readInt(4);
-                this.uncompressedSize = reader.readInt(4);
-                this.fileNameLength = reader.readInt(2);
-                this.extraFieldsLength = reader.readInt(2);
-                this.fileCommentLength = reader.readInt(2);
-                this.diskNumberStart = reader.readInt(2);
-                this.internalFileAttributes = reader.readInt(2);
-                this.externalFileAttributes = reader.readInt(4);
-                this.localHeaderOffset = reader.readInt(4);
-
-                if (this.isEncrypted()) {
-                    throw new Error("Encrypted zip are not supported");
-                }
-
-                this.fileName = reader.readString(this.fileNameLength);
-                this.readExtraFields(reader);
-                this.parseZIP64ExtraField(reader);
-                this.fileComment = reader.readString(this.fileCommentLength);
-
-                // warning, this is true only for zip with madeBy == DOS (plateform dependent feature)
-                this.dir = this.externalFileAttributes & 0x00000010 ? true : false;
-            },
-            /**
-             * Parse the ZIP64 extra field and merge the info in the current ZipEntry.
-             * @param {DataReader} reader the reader to use.
-             */
-            parseZIP64ExtraField: function(reader) {
-
-                if (!this.extraFields[0x0001]) {
-                    return;
-                }
-
-                // should be something, preparing the extra reader
-                var extraReader = new StringReader(this.extraFields[0x0001].value);
-
-                // I really hope that these 64bits integer can fit in 32 bits integer, because js
-                // won't let us have more.
-                if (this.uncompressedSize === utils.MAX_VALUE_32BITS) {
-                    this.uncompressedSize = extraReader.readInt(8);
-                }
-                if (this.compressedSize === utils.MAX_VALUE_32BITS) {
-                    this.compressedSize = extraReader.readInt(8);
-                }
-                if (this.localHeaderOffset === utils.MAX_VALUE_32BITS) {
-                    this.localHeaderOffset = extraReader.readInt(8);
-                }
-                if (this.diskNumberStart === utils.MAX_VALUE_32BITS) {
-                    this.diskNumberStart = extraReader.readInt(4);
-                }
-            },
-            /**
-             * Read the central part of a zip file and add the info in this object.
-             * @param {DataReader} reader the reader to use.
-             */
-            readExtraFields: function(reader) {
-                var start = reader.index,
-                    extraFieldId,
-                    extraFieldLength,
-                    extraFieldValue;
-
-                this.extraFields = this.extraFields || {};
-
-                while (reader.index < start + this.extraFieldsLength) {
-                    extraFieldId = reader.readInt(2);
-                    extraFieldLength = reader.readInt(2);
-                    extraFieldValue = reader.readString(extraFieldLength);
-
-                    this.extraFields[extraFieldId] = {
-                        id: extraFieldId,
-                        length: extraFieldLength,
-                        value: extraFieldValue
-                    };
-                }
-            },
-            /**
-             * Apply an UTF8 transformation if needed.
-             */
-            handleUTF8: function() {
-                if (this.useUTF8()) {
-                    this.fileName = jszipProto.utf8decode(this.fileName);
-                    this.fileComment = jszipProto.utf8decode(this.fileComment);
-                } else {
-                    var upath = this.findExtraFieldUnicodePath();
-                    if (upath !== null) {
-                        this.fileName = upath;
-                    }
-                }
-            },
-
-            /**
-             * Find the unicode path declared in the extra field, if any.
-             * @return {String} the unicode path, null otherwise.
-             */
-            findExtraFieldUnicodePath: function() {
-                var upathField = this.extraFields[0x7075];
-                if (upathField) {
-                    var extraReader = new StringReader(upathField.value);
-
-                    // wrong version
-                    if (extraReader.readInt(1) !== 1) {
-                        return null;
-                    }
-
-                    // the crc of the filename changed, this field is out of date.
-                    if (jszipProto.crc32(this.fileName) !== extraReader.readInt(4)) {
-                        return null;
-                    }
-
-                    return jszipProto.utf8decode(extraReader.readString(upathField.length - 5));
-                }
-                return null;
-            }
-        };
-        module.exports = ZipEntry;
-
-    },{"./compressedObject":2,"./object":9,"./stringReader":11,"./utils":14}],17:[function(require,module,exports){
-
-    },{}],18:[function(require,module,exports){
-// shim for using process in browser
-
-        var process = module.exports = {};
-
-        process.nextTick = (function () {
-            var canSetImmediate = typeof window !== 'undefined'
-                && window.setImmediate;
-            var canPost = typeof window !== 'undefined'
-                    && window.postMessage && window.addEventListener
-                ;
-
-            if (canSetImmediate) {
-                return function (f) { return window.setImmediate(f) };
-            }
-
-            if (canPost) {
-                var queue = [];
-                window.addEventListener('message', function (ev) {
-                    var source = ev.source;
-                    if ((source === window || source === null) && ev.data === 'process-tick') {
-                        ev.stopPropagation();
-                        if (queue.length > 0) {
-                            var fn = queue.shift();
-                            fn();
-                        }
-                    }
-                }, true);
-
-                return function nextTick(fn) {
-                    queue.push(fn);
-                    window.postMessage('process-tick', '*');
-                };
-            }
-
-            return function nextTick(fn) {
-                setTimeout(fn, 0);
-            };
-        })();
-
-        process.title = 'browser';
-        process.browser = true;
-        process.env = {};
-        process.argv = [];
-
-        process.binding = function (name) {
-            throw new Error('process.binding is not supported');
-        }
-
-// TODO(shtylman)
-        process.cwd = function () { return '/' };
-        process.chdir = function (dir) {
-            throw new Error('process.chdir is not supported');
-        };
-
-    },{}],19:[function(require,module,exports){
-        /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {var n=void 0,u=!0,aa=this;function ba(e,d){var c=e.split("."),f=aa;!(c[0]in f)&&f.execScript&&f.execScript("var "+c[0]);for(var a;c.length&&(a=c.shift());)!c.length&&d!==n?f[a]=d:f=f[a]?f[a]:f[a]={}};var C="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function K(e,d){this.index="number"===typeof d?d:0;this.d=0;this.buffer=e instanceof(C?Uint8Array:Array)?e:new (C?Uint8Array:Array)(32768);if(2*this.buffer.length<=this.index)throw Error("invalid index");this.buffer.length<=this.index&&ca(this)}function ca(e){var d=e.buffer,c,f=d.length,a=new (C?Uint8Array:Array)(f<<1);if(C)a.set(d);else for(c=0;c<f;++c)a[c]=d[c];return e.buffer=a}
-            K.prototype.a=function(e,d,c){var f=this.buffer,a=this.index,b=this.d,k=f[a],m;c&&1<d&&(e=8<d?(L[e&255]<<24|L[e>>>8&255]<<16|L[e>>>16&255]<<8|L[e>>>24&255])>>32-d:L[e]>>8-d);if(8>d+b)k=k<<d|e,b+=d;else for(m=0;m<d;++m)k=k<<1|e>>d-m-1&1,8===++b&&(b=0,f[a++]=L[k],k=0,a===f.length&&(f=ca(this)));f[a]=k;this.buffer=f;this.d=b;this.index=a};K.prototype.finish=function(){var e=this.buffer,d=this.index,c;0<this.d&&(e[d]<<=8-this.d,e[d]=L[e[d]],d++);C?c=e.subarray(0,d):(e.length=d,c=e);return c};
-            var ga=new (C?Uint8Array:Array)(256),M;for(M=0;256>M;++M){for(var R=M,S=R,ha=7,R=R>>>1;R;R>>>=1)S<<=1,S|=R&1,--ha;ga[M]=(S<<ha&255)>>>0}var L=ga;function ja(e){this.buffer=new (C?Uint16Array:Array)(2*e);this.length=0}ja.prototype.getParent=function(e){return 2*((e-2)/4|0)};ja.prototype.push=function(e,d){var c,f,a=this.buffer,b;c=this.length;a[this.length++]=d;for(a[this.length++]=e;0<c;)if(f=this.getParent(c),a[c]>a[f])b=a[c],a[c]=a[f],a[f]=b,b=a[c+1],a[c+1]=a[f+1],a[f+1]=b,c=f;else break;return this.length};
-            ja.prototype.pop=function(){var e,d,c=this.buffer,f,a,b;d=c[0];e=c[1];this.length-=2;c[0]=c[this.length];c[1]=c[this.length+1];for(b=0;;){a=2*b+2;if(a>=this.length)break;a+2<this.length&&c[a+2]>c[a]&&(a+=2);if(c[a]>c[b])f=c[b],c[b]=c[a],c[a]=f,f=c[b+1],c[b+1]=c[a+1],c[a+1]=f;else break;b=a}return{index:e,value:d,length:this.length}};function ka(e,d){this.e=ma;this.f=0;this.input=C&&e instanceof Array?new Uint8Array(e):e;this.c=0;d&&(d.lazy&&(this.f=d.lazy),"number"===typeof d.compressionType&&(this.e=d.compressionType),d.outputBuffer&&(this.b=C&&d.outputBuffer instanceof Array?new Uint8Array(d.outputBuffer):d.outputBuffer),"number"===typeof d.outputIndex&&(this.c=d.outputIndex));this.b||(this.b=new (C?Uint8Array:Array)(32768))}var ma=2,T=[],U;
-            for(U=0;288>U;U++)switch(u){case 143>=U:T.push([U+48,8]);break;case 255>=U:T.push([U-144+400,9]);break;case 279>=U:T.push([U-256+0,7]);break;case 287>=U:T.push([U-280+192,8]);break;default:throw"invalid literal: "+U;}
-            ka.prototype.h=function(){var e,d,c,f,a=this.input;switch(this.e){case 0:c=0;for(f=a.length;c<f;){d=C?a.subarray(c,c+65535):a.slice(c,c+65535);c+=d.length;var b=d,k=c===f,m=n,g=n,p=n,v=n,x=n,l=this.b,h=this.c;if(C){for(l=new Uint8Array(this.b.buffer);l.length<=h+b.length+5;)l=new Uint8Array(l.length<<1);l.set(this.b)}m=k?1:0;l[h++]=m|0;g=b.length;p=~g+65536&65535;l[h++]=g&255;l[h++]=g>>>8&255;l[h++]=p&255;l[h++]=p>>>8&255;if(C)l.set(b,h),h+=b.length,l=l.subarray(0,h);else{v=0;for(x=b.length;v<x;++v)l[h++]=
-                b[v];l.length=h}this.c=h;this.b=l}break;case 1:var q=new K(C?new Uint8Array(this.b.buffer):this.b,this.c);q.a(1,1,u);q.a(1,2,u);var t=na(this,a),w,da,z;w=0;for(da=t.length;w<da;w++)if(z=t[w],K.prototype.a.apply(q,T[z]),256<z)q.a(t[++w],t[++w],u),q.a(t[++w],5),q.a(t[++w],t[++w],u);else if(256===z)break;this.b=q.finish();this.c=this.b.length;break;case ma:var B=new K(C?new Uint8Array(this.b.buffer):this.b,this.c),ra,J,N,O,P,Ia=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],W,sa,X,ta,ea,ia=Array(19),
-                ua,Q,fa,y,va;ra=ma;B.a(1,1,u);B.a(ra,2,u);J=na(this,a);W=oa(this.j,15);sa=pa(W);X=oa(this.i,7);ta=pa(X);for(N=286;257<N&&0===W[N-1];N--);for(O=30;1<O&&0===X[O-1];O--);var wa=N,xa=O,F=new (C?Uint32Array:Array)(wa+xa),r,G,s,Y,E=new (C?Uint32Array:Array)(316),D,A,H=new (C?Uint8Array:Array)(19);for(r=G=0;r<wa;r++)F[G++]=W[r];for(r=0;r<xa;r++)F[G++]=X[r];if(!C){r=0;for(Y=H.length;r<Y;++r)H[r]=0}r=D=0;for(Y=F.length;r<Y;r+=G){for(G=1;r+G<Y&&F[r+G]===F[r];++G);s=G;if(0===F[r])if(3>s)for(;0<s--;)E[D++]=0,
-                H[0]++;else for(;0<s;)A=138>s?s:138,A>s-3&&A<s&&(A=s-3),10>=A?(E[D++]=17,E[D++]=A-3,H[17]++):(E[D++]=18,E[D++]=A-11,H[18]++),s-=A;else if(E[D++]=F[r],H[F[r]]++,s--,3>s)for(;0<s--;)E[D++]=F[r],H[F[r]]++;else for(;0<s;)A=6>s?s:6,A>s-3&&A<s&&(A=s-3),E[D++]=16,E[D++]=A-3,H[16]++,s-=A}e=C?E.subarray(0,D):E.slice(0,D);ea=oa(H,7);for(y=0;19>y;y++)ia[y]=ea[Ia[y]];for(P=19;4<P&&0===ia[P-1];P--);ua=pa(ea);B.a(N-257,5,u);B.a(O-1,5,u);B.a(P-4,4,u);for(y=0;y<P;y++)B.a(ia[y],3,u);y=0;for(va=e.length;y<va;y++)if(Q=
-                e[y],B.a(ua[Q],ea[Q],u),16<=Q){y++;switch(Q){case 16:fa=2;break;case 17:fa=3;break;case 18:fa=7;break;default:throw"invalid code: "+Q;}B.a(e[y],fa,u)}var ya=[sa,W],za=[ta,X],I,Aa,Z,la,Ba,Ca,Da,Ea;Ba=ya[0];Ca=ya[1];Da=za[0];Ea=za[1];I=0;for(Aa=J.length;I<Aa;++I)if(Z=J[I],B.a(Ba[Z],Ca[Z],u),256<Z)B.a(J[++I],J[++I],u),la=J[++I],B.a(Da[la],Ea[la],u),B.a(J[++I],J[++I],u);else if(256===Z)break;this.b=B.finish();this.c=this.b.length;break;default:throw"invalid compression type";}return this.b};
-            function qa(e,d){this.length=e;this.g=d}
-            var Fa=function(){function e(a){switch(u){case 3===a:return[257,a-3,0];case 4===a:return[258,a-4,0];case 5===a:return[259,a-5,0];case 6===a:return[260,a-6,0];case 7===a:return[261,a-7,0];case 8===a:return[262,a-8,0];case 9===a:return[263,a-9,0];case 10===a:return[264,a-10,0];case 12>=a:return[265,a-11,1];case 14>=a:return[266,a-13,1];case 16>=a:return[267,a-15,1];case 18>=a:return[268,a-17,1];case 22>=a:return[269,a-19,2];case 26>=a:return[270,a-23,2];case 30>=a:return[271,a-27,2];case 34>=a:return[272,
-                a-31,2];case 42>=a:return[273,a-35,3];case 50>=a:return[274,a-43,3];case 58>=a:return[275,a-51,3];case 66>=a:return[276,a-59,3];case 82>=a:return[277,a-67,4];case 98>=a:return[278,a-83,4];case 114>=a:return[279,a-99,4];case 130>=a:return[280,a-115,4];case 162>=a:return[281,a-131,5];case 194>=a:return[282,a-163,5];case 226>=a:return[283,a-195,5];case 257>=a:return[284,a-227,5];case 258===a:return[285,a-258,0];default:throw"invalid length: "+a;}}var d=[],c,f;for(c=3;258>=c;c++)f=e(c),d[c]=f[2]<<24|
-                f[1]<<16|f[0];return d}(),Ga=C?new Uint32Array(Fa):Fa;
-            function na(e,d){function c(a,c){var b=a.g,d=[],f=0,e;e=Ga[a.length];d[f++]=e&65535;d[f++]=e>>16&255;d[f++]=e>>24;var g;switch(u){case 1===b:g=[0,b-1,0];break;case 2===b:g=[1,b-2,0];break;case 3===b:g=[2,b-3,0];break;case 4===b:g=[3,b-4,0];break;case 6>=b:g=[4,b-5,1];break;case 8>=b:g=[5,b-7,1];break;case 12>=b:g=[6,b-9,2];break;case 16>=b:g=[7,b-13,2];break;case 24>=b:g=[8,b-17,3];break;case 32>=b:g=[9,b-25,3];break;case 48>=b:g=[10,b-33,4];break;case 64>=b:g=[11,b-49,4];break;case 96>=b:g=[12,b-
-                65,5];break;case 128>=b:g=[13,b-97,5];break;case 192>=b:g=[14,b-129,6];break;case 256>=b:g=[15,b-193,6];break;case 384>=b:g=[16,b-257,7];break;case 512>=b:g=[17,b-385,7];break;case 768>=b:g=[18,b-513,8];break;case 1024>=b:g=[19,b-769,8];break;case 1536>=b:g=[20,b-1025,9];break;case 2048>=b:g=[21,b-1537,9];break;case 3072>=b:g=[22,b-2049,10];break;case 4096>=b:g=[23,b-3073,10];break;case 6144>=b:g=[24,b-4097,11];break;case 8192>=b:g=[25,b-6145,11];break;case 12288>=b:g=[26,b-8193,12];break;case 16384>=
-                b:g=[27,b-12289,12];break;case 24576>=b:g=[28,b-16385,13];break;case 32768>=b:g=[29,b-24577,13];break;default:throw"invalid distance";}e=g;d[f++]=e[0];d[f++]=e[1];d[f++]=e[2];var k,m;k=0;for(m=d.length;k<m;++k)l[h++]=d[k];t[d[0]]++;w[d[3]]++;q=a.length+c-1;x=null}var f,a,b,k,m,g={},p,v,x,l=C?new Uint16Array(2*d.length):[],h=0,q=0,t=new (C?Uint32Array:Array)(286),w=new (C?Uint32Array:Array)(30),da=e.f,z;if(!C){for(b=0;285>=b;)t[b++]=0;for(b=0;29>=b;)w[b++]=0}t[256]=1;f=0;for(a=d.length;f<a;++f){b=
-                m=0;for(k=3;b<k&&f+b!==a;++b)m=m<<8|d[f+b];g[m]===n&&(g[m]=[]);p=g[m];if(!(0<q--)){for(;0<p.length&&32768<f-p[0];)p.shift();if(f+3>=a){x&&c(x,-1);b=0;for(k=a-f;b<k;++b)z=d[f+b],l[h++]=z,++t[z];break}0<p.length?(v=Ha(d,f,p),x?x.length<v.length?(z=d[f-1],l[h++]=z,++t[z],c(v,0)):c(x,-1):v.length<da?x=v:c(v,0)):x?c(x,-1):(z=d[f],l[h++]=z,++t[z])}p.push(f)}l[h++]=256;t[256]++;e.j=t;e.i=w;return C?l.subarray(0,h):l}
-            function Ha(e,d,c){var f,a,b=0,k,m,g,p,v=e.length;m=0;p=c.length;a:for(;m<p;m++){f=c[p-m-1];k=3;if(3<b){for(g=b;3<g;g--)if(e[f+g-1]!==e[d+g-1])continue a;k=b}for(;258>k&&d+k<v&&e[f+k]===e[d+k];)++k;k>b&&(a=f,b=k);if(258===k)break}return new qa(b,d-a)}
-            function oa(e,d){var c=e.length,f=new ja(572),a=new (C?Uint8Array:Array)(c),b,k,m,g,p;if(!C)for(g=0;g<c;g++)a[g]=0;for(g=0;g<c;++g)0<e[g]&&f.push(g,e[g]);b=Array(f.length/2);k=new (C?Uint32Array:Array)(f.length/2);if(1===b.length)return a[f.pop().index]=1,a;g=0;for(p=f.length/2;g<p;++g)b[g]=f.pop(),k[g]=b[g].value;m=Ja(k,k.length,d);g=0;for(p=b.length;g<p;++g)a[b[g].index]=m[g];return a}
-            function Ja(e,d,c){function f(a){var b=g[a][p[a]];b===d?(f(a+1),f(a+1)):--k[b];++p[a]}var a=new (C?Uint16Array:Array)(c),b=new (C?Uint8Array:Array)(c),k=new (C?Uint8Array:Array)(d),m=Array(c),g=Array(c),p=Array(c),v=(1<<c)-d,x=1<<c-1,l,h,q,t,w;a[c-1]=d;for(h=0;h<c;++h)v<x?b[h]=0:(b[h]=1,v-=x),v<<=1,a[c-2-h]=(a[c-1-h]/2|0)+d;a[0]=b[0];m[0]=Array(a[0]);g[0]=Array(a[0]);for(h=1;h<c;++h)a[h]>2*a[h-1]+b[h]&&(a[h]=2*a[h-1]+b[h]),m[h]=Array(a[h]),g[h]=Array(a[h]);for(l=0;l<d;++l)k[l]=c;for(q=0;q<a[c-1];++q)m[c-
-                1][q]=e[q],g[c-1][q]=q;for(l=0;l<c;++l)p[l]=0;1===b[c-1]&&(--k[0],++p[c-1]);for(h=c-2;0<=h;--h){t=l=0;w=p[h+1];for(q=0;q<a[h];q++)t=m[h+1][w]+m[h+1][w+1],t>e[l]?(m[h][q]=t,g[h][q]=d,w+=2):(m[h][q]=e[l],g[h][q]=l,++l);p[h]=0;1===b[h]&&f(h)}return k}
-            function pa(e){var d=new (C?Uint16Array:Array)(e.length),c=[],f=[],a=0,b,k,m,g;b=0;for(k=e.length;b<k;b++)c[e[b]]=(c[e[b]]|0)+1;b=1;for(k=16;b<=k;b++)f[b]=a,a+=c[b]|0,a<<=1;b=0;for(k=e.length;b<k;b++){a=f[e[b]];f[e[b]]+=1;m=d[b]=0;for(g=e[b];m<g;m++)d[b]=d[b]<<1|a&1,a>>>=1}return d};ba("Zlib.RawDeflate",ka);ba("Zlib.RawDeflate.prototype.compress",ka.prototype.h);var Ka={NONE:0,FIXED:1,DYNAMIC:ma},V,La,$,Ma;if(Object.keys)V=Object.keys(Ka);else for(La in V=[],$=0,Ka)V[$++]=La;$=0;for(Ma=V.length;$<Ma;++$)La=V[$],ba("Zlib.RawDeflate.CompressionType."+La,Ka[La]);}).call(this);
-
-    },{}],20:[function(require,module,exports){
-        /** @license zlib.js 2012 - imaya [ https://github.com/imaya/zlib.js ] The MIT License */(function() {var l=this;function p(c,e){var a=c.split("."),b=l;!(a[0]in b)&&b.execScript&&b.execScript("var "+a[0]);for(var d;a.length&&(d=a.shift());)!a.length&&void 0!==e?b[d]=e:b=b[d]?b[d]:b[d]={}};var q="undefined"!==typeof Uint8Array&&"undefined"!==typeof Uint16Array&&"undefined"!==typeof Uint32Array&&"undefined"!==typeof DataView;function t(c){var e=c.length,a=0,b=Number.POSITIVE_INFINITY,d,f,g,h,k,m,r,n,s;for(n=0;n<e;++n)c[n]>a&&(a=c[n]),c[n]<b&&(b=c[n]);d=1<<a;f=new (q?Uint32Array:Array)(d);g=1;h=0;for(k=2;g<=a;){for(n=0;n<e;++n)if(c[n]===g){m=0;r=h;for(s=0;s<g;++s)m=m<<1|r&1,r>>=1;for(s=m;s<d;s+=k)f[s]=g<<16|n;++h}++g;h<<=1;k<<=1}return[f,a,b]};function u(c,e){this.g=[];this.h=32768;this.c=this.f=this.d=this.k=0;this.input=q?new Uint8Array(c):c;this.l=!1;this.i=v;this.p=!1;if(e||!(e={}))e.index&&(this.d=e.index),e.bufferSize&&(this.h=e.bufferSize),e.bufferType&&(this.i=e.bufferType),e.resize&&(this.p=e.resize);switch(this.i){case w:this.a=32768;this.b=new (q?Uint8Array:Array)(32768+this.h+258);break;case v:this.a=0;this.b=new (q?Uint8Array:Array)(this.h);this.e=this.u;this.m=this.r;this.j=this.s;break;default:throw Error("invalid inflate mode");
-        }}var w=0,v=1;
-            u.prototype.t=function(){for(;!this.l;){var c=x(this,3);c&1&&(this.l=!0);c>>>=1;switch(c){case 0:var e=this.input,a=this.d,b=this.b,d=this.a,f=e.length,g=void 0,h=void 0,k=b.length,m=void 0;this.c=this.f=0;if(a+1>=f)throw Error("invalid uncompressed block header: LEN");g=e[a++]|e[a++]<<8;if(a+1>=f)throw Error("invalid uncompressed block header: NLEN");h=e[a++]|e[a++]<<8;if(g===~h)throw Error("invalid uncompressed block header: length verify");if(a+g>e.length)throw Error("input buffer is broken");switch(this.i){case w:for(;d+
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                g>b.length;){m=k-d;g-=m;if(q)b.set(e.subarray(a,a+m),d),d+=m,a+=m;else for(;m--;)b[d++]=e[a++];this.a=d;b=this.e();d=this.a}break;case v:for(;d+g>b.length;)b=this.e({o:2});break;default:throw Error("invalid inflate mode");}if(q)b.set(e.subarray(a,a+g),d),d+=g,a+=g;else for(;g--;)b[d++]=e[a++];this.d=a;this.a=d;this.b=b;break;case 1:this.j(y,z);break;case 2:A(this);break;default:throw Error("unknown BTYPE: "+c);}}return this.m()};
-            var B=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],C=q?new Uint16Array(B):B,D=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258,258,258],E=q?new Uint16Array(D):D,F=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0],G=q?new Uint8Array(F):F,H=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577],I=q?new Uint16Array(H):H,J=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,
-                13],K=q?new Uint8Array(J):J,L=new (q?Uint8Array:Array)(288),M,N;M=0;for(N=L.length;M<N;++M)L[M]=143>=M?8:255>=M?9:279>=M?7:8;var y=t(L),O=new (q?Uint8Array:Array)(30),P,Q;P=0;for(Q=O.length;P<Q;++P)O[P]=5;var z=t(O);function x(c,e){for(var a=c.f,b=c.c,d=c.input,f=c.d,g=d.length,h;b<e;){if(f>=g)throw Error("input buffer is broken");a|=d[f++]<<b;b+=8}h=a&(1<<e)-1;c.f=a>>>e;c.c=b-e;c.d=f;return h}
-            function R(c,e){for(var a=c.f,b=c.c,d=c.input,f=c.d,g=d.length,h=e[0],k=e[1],m,r;b<k&&!(f>=g);)a|=d[f++]<<b,b+=8;m=h[a&(1<<k)-1];r=m>>>16;c.f=a>>r;c.c=b-r;c.d=f;return m&65535}
-            function A(c){function e(a,c,b){var e,d,f,g;for(g=0;g<a;)switch(e=R(this,c),e){case 16:for(f=3+x(this,2);f--;)b[g++]=d;break;case 17:for(f=3+x(this,3);f--;)b[g++]=0;d=0;break;case 18:for(f=11+x(this,7);f--;)b[g++]=0;d=0;break;default:d=b[g++]=e}return b}var a=x(c,5)+257,b=x(c,5)+1,d=x(c,4)+4,f=new (q?Uint8Array:Array)(C.length),g,h,k,m;for(m=0;m<d;++m)f[C[m]]=x(c,3);if(!q){m=d;for(d=f.length;m<d;++m)f[C[m]]=0}g=t(f);h=new (q?Uint8Array:Array)(a);k=new (q?Uint8Array:Array)(b);c.j(t(e.call(c,a,g,h)),
-                t(e.call(c,b,g,k)))}u.prototype.j=function(c,e){var a=this.b,b=this.a;this.n=c;for(var d=a.length-258,f,g,h,k;256!==(f=R(this,c));)if(256>f)b>=d&&(this.a=b,a=this.e(),b=this.a),a[b++]=f;else{g=f-257;k=E[g];0<G[g]&&(k+=x(this,G[g]));f=R(this,e);h=I[f];0<K[f]&&(h+=x(this,K[f]));b>=d&&(this.a=b,a=this.e(),b=this.a);for(;k--;)a[b]=a[b++-h]}for(;8<=this.c;)this.c-=8,this.d--;this.a=b};
-            u.prototype.s=function(c,e){var a=this.b,b=this.a;this.n=c;for(var d=a.length,f,g,h,k;256!==(f=R(this,c));)if(256>f)b>=d&&(a=this.e(),d=a.length),a[b++]=f;else{g=f-257;k=E[g];0<G[g]&&(k+=x(this,G[g]));f=R(this,e);h=I[f];0<K[f]&&(h+=x(this,K[f]));b+k>d&&(a=this.e(),d=a.length);for(;k--;)a[b]=a[b++-h]}for(;8<=this.c;)this.c-=8,this.d--;this.a=b};
-            u.prototype.e=function(){var c=new (q?Uint8Array:Array)(this.a-32768),e=this.a-32768,a,b,d=this.b;if(q)c.set(d.subarray(32768,c.length));else{a=0;for(b=c.length;a<b;++a)c[a]=d[a+32768]}this.g.push(c);this.k+=c.length;if(q)d.set(d.subarray(e,e+32768));else for(a=0;32768>a;++a)d[a]=d[e+a];this.a=32768;return d};
-            u.prototype.u=function(c){var e,a=this.input.length/this.d+1|0,b,d,f,g=this.input,h=this.b;c&&("number"===typeof c.o&&(a=c.o),"number"===typeof c.q&&(a+=c.q));2>a?(b=(g.length-this.d)/this.n[2],f=258*(b/2)|0,d=f<h.length?h.length+f:h.length<<1):d=h.length*a;q?(e=new Uint8Array(d),e.set(h)):e=h;return this.b=e};
-            u.prototype.m=function(){var c=0,e=this.b,a=this.g,b,d=new (q?Uint8Array:Array)(this.k+(this.a-32768)),f,g,h,k;if(0===a.length)return q?this.b.subarray(32768,this.a):this.b.slice(32768,this.a);f=0;for(g=a.length;f<g;++f){b=a[f];h=0;for(k=b.length;h<k;++h)d[c++]=b[h]}f=32768;for(g=this.a;f<g;++f)d[c++]=e[f];this.g=[];return this.buffer=d};
-            u.prototype.r=function(){var c,e=this.a;q?this.p?(c=new Uint8Array(e),c.set(this.b.subarray(0,e))):c=this.b.subarray(0,e):(this.b.length>e&&(this.b.length=e),c=this.b);return this.buffer=c};p("Zlib.RawInflate",u);p("Zlib.RawInflate.prototype.decompress",u.prototype.t);var S={ADAPTIVE:v,BLOCK:w},T,U,V,W;if(Object.keys)T=Object.keys(S);else for(U in T=[],V=0,S)T[V++]=U;V=0;for(W=T.length;V<W;++V)U=T[V],p("Zlib.RawInflate.BufferType."+U,S[U]);}).call(this);
-
-    },{}]},{},[7])
-        (7)
-    });
-    ;
-    define('excel-builder',[
-        'require',
-        'underscore',
-        './Excel/Workbook',
-        'JSZip'
-    ], function (require, _, Workbook, JSZip) {
-
-        /**
-         * @name Excel
-         * @public
-         * @author Stephen Liberty
-         * @requires underscore
-         * @requires Excel/Workbook
-         * @requires JSZIP
-         * @exports excel-builder
-         */
-        var Factory = {
-            /**
-             * Creates a new workbook.
-             */
-            createWorkbook: function () {
-                return new Workbook();
-            },
-
-            /**
-             * Turns a workbook into a downloadable file.
-             * @param {Excel/Workbook} workbook The workbook that is being converted
-             * @param {Object} options
-             * @param {Boolean} options.base64 Whether to 'return' the generated file as a base64 string
-             * @param {Function} options.success The callback function to run after workbook creation is successful.
-             * @param {Function} options.error The callback function to run if there is an error creating the workbook.
-             * @param {String} options.requireJsPath (Optional) The path to requirejs. Will use the id 'requirejs' to look up the script if not specified.
-             */
-            createFileAsync: function (workbook, options) {
-
-
-                workbook.generateFilesAsync({
-                    success: function (files) {
-
-                        var worker = new Worker(require.toUrl('./Excel/ZipWorker.js'));
-                        worker.addEventListener('message', function(event, data) {
-                            if(event.data.status == 'done') {
-                                options.success(event.data.data);
-                            }
-                        });
-                        worker.postMessage({
-                            files: files,
-                            ziplib: require.toUrl('JSZip'),
-                            base64: (!options || options.base64 !== false)
-                        });
-                    },
-                    error: function () {
-                        options.error();
-                    }
-                });
-            },
-
-            /**
-             * Turns a workbook into a downloadable file.
-             * @param {Excel/Workbook} workbook The workbook that is being converted
-             * @param {Object} options - options to modify how the zip is created. See http://stuk.github.io/jszip/#doc_generate_options
-             */
-            createFile: function (workbook, options) {
-                var zip = new JSZip();
-                var files = workbook.generateFiles();
-                _.each(files, function (content, path) {
-                    path = path.substr(1);
-                    if(path.indexOf('.xml') !== -1 || path.indexOf('.rel') !== -1) {
-                        zip.file(path, content, {base64: false});
-                    } else {
-                        zip.file(path, content, {base64: true, binary: true});
-                    }
-                })
-                return zip.generate(_.defaults(options || {}, {
-                    type: "base64"
-                }));
-            }
-        }
-
-
-        return Factory;
-    });
-    define('buildtools/index',["../Excel/Drawings","../Excel/Drawings/AbsoluteAnchor","../Excel/Drawings/Chart","../Excel/Drawings/Drawing","../Excel/Drawings/OneCellAnchor","../Excel/Drawings/Picture","../Excel/Drawings/TwoCellAnchor","../Excel/Paths","../Excel/Positioning","../Excel/RelationshipManager","../Excel/SharedStrings","../Excel/StyleSheet","../Excel/Table","../Excel/Workbook","../Excel/Worksheet","../Excel/XMLDOM","../Excel/ZipWorker","../Excel/util","../excel-builder"], function () {});
-    root.ExcelBuilder = require('excel-builder');
-})(window);
+/*!
+ * jQuery blockUI plugin
+ * Version 2.70.0-2014.11.23
+ * Requires jQuery v1.7 or later
+ *
+ * Examples at: http://malsup.com/jquery/block/
+ * Copyright (c) 2007-2013 M. Alsup
+ * Dual licensed under the MIT and GPL licenses:
+ * http://www.opensource.org/licenses/mit-license.php
+ * http://www.gnu.org/licenses/gpl.html
+ *
+ * Thanks to Amir-Hossein Sobhi for some excellent contributions!
+ */
+
+;(function() {
+/*jshint eqeqeq:false curly:false latedef:false */
+"use strict";
+
+	function setup($) {
+		$.fn._fadeIn = $.fn.fadeIn;
+
+		var noOp = $.noop || function() {};
+
+		// this bit is to ensure we don't call setExpression when we shouldn't (with extra muscle to handle
+		// confusing userAgent strings on Vista)
+		var msie = /MSIE/.test(navigator.userAgent);
+		var ie6  = /MSIE 6.0/.test(navigator.userAgent) && ! /MSIE 8.0/.test(navigator.userAgent);
+		var mode = document.documentMode || 0;
+		var setExpr = $.isFunction( document.createElement('div').style.setExpression );
+
+		// global $ methods for blocking/unblocking the entire page
+		$.blockUI   = function(opts) { install(window, opts); };
+		$.unblockUI = function(opts) { remove(window, opts); };
+
+		// convenience method for quick growl-like notifications  (http://www.google.com/search?q=growl)
+		$.growlUI = function(title, message, timeout, onClose) {
+			var $m = $('<div class="growlUI"></div>');
+			if (title) $m.append('<h1>'+title+'</h1>');
+			if (message) $m.append('<h2>'+message+'</h2>');
+			if (timeout === undefined) timeout = 3000;
+
+			// Added by konapun: Set timeout to 30 seconds if this growl is moused over, like normal toast notifications
+			var callBlock = function(opts) {
+				opts = opts || {};
+
+				$.blockUI({
+					message: $m,
+					fadeIn : typeof opts.fadeIn  !== 'undefined' ? opts.fadeIn  : 700,
+					fadeOut: typeof opts.fadeOut !== 'undefined' ? opts.fadeOut : 1000,
+					timeout: typeof opts.timeout !== 'undefined' ? opts.timeout : timeout,
+					centerY: false,
+					showOverlay: false,
+					onUnblock: onClose,
+					css: $.blockUI.defaults.growlCSS
+				});
+			};
+
+			callBlock();
+			var nonmousedOpacity = $m.css('opacity');
+			$m.mouseover(function() {
+				callBlock({
+					fadeIn: 0,
+					timeout: 30000
+				});
+
+				var displayBlock = $('.blockMsg');
+				displayBlock.stop(); // cancel fadeout if it has started
+				displayBlock.fadeTo(300, 1); // make it easier to read the message by removing transparency
+			}).mouseout(function() {
+				$('.blockMsg').fadeOut(1000);
+			});
+			// End konapun additions
+		};
+
+		// plugin method for blocking element content
+		$.fn.block = function(opts) {
+			if ( this[0] === window ) {
+				$.blockUI( opts );
+				return this;
+			}
+			var fullOpts = $.extend({}, $.blockUI.defaults, opts || {});
+			this.each(function() {
+				var $el = $(this);
+				if (fullOpts.ignoreIfBlocked && $el.data('blockUI.isBlocked'))
+					return;
+				$el.unblock({ fadeOut: 0 });
+			});
+
+			return this.each(function() {
+				if ($.css(this,'position') == 'static') {
+					this.style.position = 'relative';
+					$(this).data('blockUI.static', true);
+				}
+				this.style.zoom = 1; // force 'hasLayout' in ie
+				install(this, opts);
+			});
+		};
+
+		// plugin method for unblocking element content
+		$.fn.unblock = function(opts) {
+			if ( this[0] === window ) {
+				$.unblockUI( opts );
+				return this;
+			}
+			return this.each(function() {
+				remove(this, opts);
+			});
+		};
+
+		$.blockUI.version = 2.70; // 2nd generation blocking at no extra cost!
+
+		// override these in your code to change the default behavior and style
+		$.blockUI.defaults = {
+			// message displayed when blocking (use null for no message)
+			message:  '<h1>Please wait...</h1>',
+
+			title: null,		// title string; only used when theme == true
+			draggable: true,	// only used when theme == true (requires jquery-ui.js to be loaded)
+
+			theme: false, // set to true to use with jQuery UI themes
+
+			// styles for the message when blocking; if you wish to disable
+			// these and use an external stylesheet then do this in your code:
+			// $.blockUI.defaults.css = {};
+			css: {
+				padding:	0,
+				margin:		0,
+				width:		'30%',
+				top:		'40%',
+				left:		'35%',
+				textAlign:	'center',
+				color:		'#000',
+				border:		'3px solid #aaa',
+				backgroundColor:'#fff',
+				cursor:		'wait'
+			},
+
+			// minimal style set used when themes are used
+			themedCSS: {
+				width:	'30%',
+				top:	'40%',
+				left:	'35%'
+			},
+
+			// styles for the overlay
+			overlayCSS:  {
+				backgroundColor:	'#000',
+				opacity:			0.6,
+				cursor:				'wait'
+			},
+
+			// style to replace wait cursor before unblocking to correct issue
+			// of lingering wait cursor
+			cursorReset: 'default',
+
+			// styles applied when using $.growlUI
+			growlCSS: {
+				width:		'350px',
+				top:		'10px',
+				left:		'',
+				right:		'10px',
+				border:		'none',
+				padding:	'5px',
+				opacity:	0.6,
+				cursor:		'default',
+				color:		'#fff',
+				backgroundColor: '#000',
+				'-webkit-border-radius':'10px',
+				'-moz-border-radius':	'10px',
+				'border-radius':		'10px'
+			},
+
+			// IE issues: 'about:blank' fails on HTTPS and javascript:false is s-l-o-w
+			// (hat tip to Jorge H. N. de Vasconcelos)
+			/*jshint scripturl:true */
+			iframeSrc: /^https/i.test(window.location.href || '') ? 'javascript:false' : 'about:blank',
+
+			// force usage of iframe in non-IE browsers (handy for blocking applets)
+			forceIframe: false,
+
+			// z-index for the blocking overlay
+			baseZ: 1000,
+
+			// set these to true to have the message automatically centered
+			centerX: true, // <-- only effects element blocking (page block controlled via css above)
+			centerY: true,
+
+			// allow body element to be stetched in ie6; this makes blocking look better
+			// on "short" pages.  disable if you wish to prevent changes to the body height
+			allowBodyStretch: true,
+
+			// enable if you want key and mouse events to be disabled for content that is blocked
+			bindEvents: true,
+
+			// be default blockUI will supress tab navigation from leaving blocking content
+			// (if bindEvents is true)
+			constrainTabKey: true,
+
+			// fadeIn time in millis; set to 0 to disable fadeIn on block
+			fadeIn:  200,
+
+			// fadeOut time in millis; set to 0 to disable fadeOut on unblock
+			fadeOut:  400,
+
+			// time in millis to wait before auto-unblocking; set to 0 to disable auto-unblock
+			timeout: 0,
+
+			// disable if you don't want to show the overlay
+			showOverlay: true,
+
+			// if true, focus will be placed in the first available input field when
+			// page blocking
+			focusInput: true,
+
+            // elements that can receive focus
+            focusableElements: ':input:enabled:visible',
+
+			// suppresses the use of overlay styles on FF/Linux (due to performance issues with opacity)
+			// no longer needed in 2012
+			// applyPlatformOpacityRules: true,
+
+			// callback method invoked when fadeIn has completed and blocking message is visible
+			onBlock: null,
+
+			// callback method invoked when unblocking has completed; the callback is
+			// passed the element that has been unblocked (which is the window object for page
+			// blocks) and the options that were passed to the unblock call:
+			//	onUnblock(element, options)
+			onUnblock: null,
+
+			// callback method invoked when the overlay area is clicked.
+			// setting this will turn the cursor to a pointer, otherwise cursor defined in overlayCss will be used.
+			onOverlayClick: null,
+
+			// don't ask; if you really must know: http://groups.google.com/group/jquery-en/browse_thread/thread/36640a8730503595/2f6a79a77a78e493#2f6a79a77a78e493
+			quirksmodeOffsetHack: 4,
+
+			// class name of the message block
+			blockMsgClass: 'blockMsg',
+
+			// if it is already blocked, then ignore it (don't unblock and reblock)
+			ignoreIfBlocked: false
+		};
+
+		// private data and functions follow...
+
+		var pageBlock = null;
+		var pageBlockEls = [];
+
+		function install(el, opts) {
+			var css, themedCSS;
+			var full = (el == window);
+			var msg = (opts && opts.message !== undefined ? opts.message : undefined);
+			opts = $.extend({}, $.blockUI.defaults, opts || {});
+
+			if (opts.ignoreIfBlocked && $(el).data('blockUI.isBlocked'))
+				return;
+
+			opts.overlayCSS = $.extend({}, $.blockUI.defaults.overlayCSS, opts.overlayCSS || {});
+			css = $.extend({}, $.blockUI.defaults.css, opts.css || {});
+			if (opts.onOverlayClick)
+				opts.overlayCSS.cursor = 'pointer';
+
+			themedCSS = $.extend({}, $.blockUI.defaults.themedCSS, opts.themedCSS || {});
+			msg = msg === undefined ? opts.message : msg;
+
+			// remove the current block (if there is one)
+			if (full && pageBlock)
+				remove(window, {fadeOut:0});
+
+			// if an existing element is being used as the blocking content then we capture
+			// its current place in the DOM (and current display style) so we can restore
+			// it when we unblock
+			if (msg && typeof msg != 'string' && (msg.parentNode || msg.jquery)) {
+				var node = msg.jquery ? msg[0] : msg;
+				var data = {};
+				$(el).data('blockUI.history', data);
+				data.el = node;
+				data.parent = node.parentNode;
+				data.display = node.style.display;
+				data.position = node.style.position;
+				if (data.parent)
+					data.parent.removeChild(node);
+			}
+
+			$(el).data('blockUI.onUnblock', opts.onUnblock);
+			var z = opts.baseZ;
+
+			// blockUI uses 3 layers for blocking, for simplicity they are all used on every platform;
+			// layer1 is the iframe layer which is used to supress bleed through of underlying content
+			// layer2 is the overlay layer which has opacity and a wait cursor (by default)
+			// layer3 is the message content that is displayed while blocking
+			var lyr1, lyr2, lyr3, s;
+			if (msie || opts.forceIframe)
+				lyr1 = $('<iframe class="blockUI" style="z-index:'+ (z++) +';display:none;border:none;margin:0;padding:0;position:absolute;width:100%;height:100%;top:0;left:0" src="'+opts.iframeSrc+'"></iframe>');
+			else
+				lyr1 = $('<div class="blockUI" style="display:none"></div>');
+
+			if (opts.theme)
+				lyr2 = $('<div class="blockUI blockOverlay ui-widget-overlay" style="z-index:'+ (z++) +';display:none"></div>');
+			else
+				lyr2 = $('<div class="blockUI blockOverlay" style="z-index:'+ (z++) +';display:none;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0"></div>');
+
+			if (opts.theme && full) {
+				s = '<div class="blockUI ' + opts.blockMsgClass + ' blockPage ui-dialog ui-widget ui-corner-all" style="z-index:'+(z+10)+';display:none;position:fixed">';
+				if ( opts.title ) {
+					s += '<div class="ui-widget-header ui-dialog-titlebar ui-corner-all blockTitle">'+(opts.title || '&nbsp;')+'</div>';
+				}
+				s += '<div class="ui-widget-content ui-dialog-content"></div>';
+				s += '</div>';
+			}
+			else if (opts.theme) {
+				s = '<div class="blockUI ' + opts.blockMsgClass + ' blockElement ui-dialog ui-widget ui-corner-all" style="z-index:'+(z+10)+';display:none;position:absolute">';
+				if ( opts.title ) {
+					s += '<div class="ui-widget-header ui-dialog-titlebar ui-corner-all blockTitle">'+(opts.title || '&nbsp;')+'</div>';
+				}
+				s += '<div class="ui-widget-content ui-dialog-content"></div>';
+				s += '</div>';
+			}
+			else if (full) {
+				s = '<div class="blockUI ' + opts.blockMsgClass + ' blockPage" style="z-index:'+(z+10)+';display:none;position:fixed"></div>';
+			}
+			else {
+				s = '<div class="blockUI ' + opts.blockMsgClass + ' blockElement" style="z-index:'+(z+10)+';display:none;position:absolute"></div>';
+			}
+			lyr3 = $(s);
+
+			// if we have a message, style it
+			if (msg) {
+				if (opts.theme) {
+					lyr3.css(themedCSS);
+					lyr3.addClass('ui-widget-content');
+				}
+				else
+					lyr3.css(css);
+			}
+
+			// style the overlay
+			if (!opts.theme /*&& (!opts.applyPlatformOpacityRules)*/)
+				lyr2.css(opts.overlayCSS);
+			lyr2.css('position', full ? 'fixed' : 'absolute');
+
+			// make iframe layer transparent in IE
+			if (msie || opts.forceIframe)
+				lyr1.css('opacity',0.0);
+
+			//$([lyr1[0],lyr2[0],lyr3[0]]).appendTo(full ? 'body' : el);
+			var layers = [lyr1,lyr2,lyr3], $par = full ? $('body') : $(el);
+			$.each(layers, function() {
+				this.appendTo($par);
+			});
+
+			if (opts.theme && opts.draggable && $.fn.draggable) {
+				lyr3.draggable({
+					handle: '.ui-dialog-titlebar',
+					cancel: 'li'
+				});
+			}
+
+			// ie7 must use absolute positioning in quirks mode and to account for activex issues (when scrolling)
+			var expr = setExpr && (!$.support.boxModel || $('object,embed', full ? null : el).length > 0);
+			if (ie6 || expr) {
+				// give body 100% height
+				if (full && opts.allowBodyStretch && $.support.boxModel)
+					$('html,body').css('height','100%');
+
+				// fix ie6 issue when blocked element has a border width
+				if ((ie6 || !$.support.boxModel) && !full) {
+					var t = sz(el,'borderTopWidth'), l = sz(el,'borderLeftWidth');
+					var fixT = t ? '(0 - '+t+')' : 0;
+					var fixL = l ? '(0 - '+l+')' : 0;
+				}
+
+				// simulate fixed position
+				$.each(layers, function(i,o) {
+					var s = o[0].style;
+					s.position = 'absolute';
+					if (i < 2) {
+						if (full)
+							s.setExpression('height','Math.max(document.body.scrollHeight, document.body.offsetHeight) - (jQuery.support.boxModel?0:'+opts.quirksmodeOffsetHack+') + "px"');
+						else
+							s.setExpression('height','this.parentNode.offsetHeight + "px"');
+						if (full)
+							s.setExpression('width','jQuery.support.boxModel && document.documentElement.clientWidth || document.body.clientWidth + "px"');
+						else
+							s.setExpression('width','this.parentNode.offsetWidth + "px"');
+						if (fixL) s.setExpression('left', fixL);
+						if (fixT) s.setExpression('top', fixT);
+					}
+					else if (opts.centerY) {
+						if (full) s.setExpression('top','(document.documentElement.clientHeight || document.body.clientHeight) / 2 - (this.offsetHeight / 2) + (blah = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop) + "px"');
+						s.marginTop = 0;
+					}
+					else if (!opts.centerY && full) {
+						var top = (opts.css && opts.css.top) ? parseInt(opts.css.top, 10) : 0;
+						var expression = '((document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop) + '+top+') + "px"';
+						s.setExpression('top',expression);
+					}
+				});
+			}
+
+			// show the message
+			if (msg) {
+				if (opts.theme)
+					lyr3.find('.ui-widget-content').append(msg);
+				else
+					lyr3.append(msg);
+				if (msg.jquery || msg.nodeType)
+					$(msg).show();
+			}
+
+			if ((msie || opts.forceIframe) && opts.showOverlay)
+				lyr1.show(); // opacity is zero
+			if (opts.fadeIn) {
+				var cb = opts.onBlock ? opts.onBlock : noOp;
+				var cb1 = (opts.showOverlay && !msg) ? cb : noOp;
+				var cb2 = msg ? cb : noOp;
+				if (opts.showOverlay)
+					lyr2._fadeIn(opts.fadeIn, cb1);
+				if (msg)
+					lyr3._fadeIn(opts.fadeIn, cb2);
+			}
+			else {
+				if (opts.showOverlay)
+					lyr2.show();
+				if (msg)
+					lyr3.show();
+				if (opts.onBlock)
+					opts.onBlock.bind(lyr3)();
+			}
+
+			// bind key and mouse events
+			bind(1, el, opts);
+
+			if (full) {
+				pageBlock = lyr3[0];
+				pageBlockEls = $(opts.focusableElements,pageBlock);
+				if (opts.focusInput)
+					setTimeout(focus, 20);
+			}
+			else
+				center(lyr3[0], opts.centerX, opts.centerY);
+
+			if (opts.timeout) {
+				// auto-unblock
+				var to = setTimeout(function() {
+					if (full)
+						$.unblockUI(opts);
+					else
+						$(el).unblock(opts);
+				}, opts.timeout);
+				$(el).data('blockUI.timeout', to);
+			}
+		}
+
+		// remove the block
+		function remove(el, opts) {
+			var count;
+			var full = (el == window);
+			var $el = $(el);
+			var data = $el.data('blockUI.history');
+			var to = $el.data('blockUI.timeout');
+			if (to) {
+				clearTimeout(to);
+				$el.removeData('blockUI.timeout');
+			}
+			opts = $.extend({}, $.blockUI.defaults, opts || {});
+			bind(0, el, opts); // unbind events
+
+			if (opts.onUnblock === null) {
+				opts.onUnblock = $el.data('blockUI.onUnblock');
+				$el.removeData('blockUI.onUnblock');
+			}
+
+			var els;
+			if (full) // crazy selector to handle odd field errors in ie6/7
+				els = $('body').children().filter('.blockUI').add('body > .blockUI');
+			else
+				els = $el.find('>.blockUI');
+
+			// fix cursor issue
+			if ( opts.cursorReset ) {
+				if ( els.length > 1 )
+					els[1].style.cursor = opts.cursorReset;
+				if ( els.length > 2 )
+					els[2].style.cursor = opts.cursorReset;
+			}
+
+			if (full)
+				pageBlock = pageBlockEls = null;
+
+			if (opts.fadeOut) {
+				count = els.length;
+				els.stop().fadeOut(opts.fadeOut, function() {
+					if ( --count === 0)
+						reset(els,data,opts,el);
+				});
+			}
+			else
+				reset(els, data, opts, el);
+		}
+
+		// move blocking element back into the DOM where it started
+		function reset(els,data,opts,el) {
+			var $el = $(el);
+			if ( $el.data('blockUI.isBlocked') )
+				return;
+
+			els.each(function(i,o) {
+				// remove via DOM calls so we don't lose event handlers
+				if (this.parentNode)
+					this.parentNode.removeChild(this);
+			});
+
+			if (data && data.el) {
+				data.el.style.display = data.display;
+				data.el.style.position = data.position;
+				data.el.style.cursor = 'default'; // #59
+				if (data.parent)
+					data.parent.appendChild(data.el);
+				$el.removeData('blockUI.history');
+			}
+
+			if ($el.data('blockUI.static')) {
+				$el.css('position', 'static'); // #22
+			}
+
+			if (typeof opts.onUnblock == 'function')
+				opts.onUnblock(el,opts);
+
+			// fix issue in Safari 6 where block artifacts remain until reflow
+			var body = $(document.body), w = body.width(), cssW = body[0].style.width;
+			body.width(w-1).width(w);
+			body[0].style.width = cssW;
+		}
+
+		// bind/unbind the handler
+		function bind(b, el, opts) {
+			var full = el == window, $el = $(el);
+
+			// don't bother unbinding if there is nothing to unbind
+			if (!b && (full && !pageBlock || !full && !$el.data('blockUI.isBlocked')))
+				return;
+
+			$el.data('blockUI.isBlocked', b);
+
+			// don't bind events when overlay is not in use or if bindEvents is false
+			if (!full || !opts.bindEvents || (b && !opts.showOverlay))
+				return;
+
+			// bind anchors and inputs for mouse and key events
+			var events = 'mousedown mouseup keydown keypress keyup touchstart touchend touchmove';
+			if (b)
+				$(document).bind(events, opts, handler);
+			else
+				$(document).unbind(events, handler);
+
+		// former impl...
+		//		var $e = $('a,:input');
+		//		b ? $e.bind(events, opts, handler) : $e.unbind(events, handler);
+		}
+
+		// event handler to suppress keyboard/mouse events when blocking
+		function handler(e) {
+			// allow tab navigation (conditionally)
+			if (e.type === 'keydown' && e.keyCode && e.keyCode == 9) {
+				if (pageBlock && e.data.constrainTabKey) {
+					var els = pageBlockEls;
+					var fwd = !e.shiftKey && e.target === els[els.length-1];
+					var back = e.shiftKey && e.target === els[0];
+					if (fwd || back) {
+						setTimeout(function(){focus(back);},10);
+						return false;
+					}
+				}
+			}
+			var opts = e.data;
+			var target = $(e.target);
+			if (target.hasClass('blockOverlay') && opts.onOverlayClick)
+				opts.onOverlayClick(e);
+
+			// allow events within the message content
+			if (target.parents('div.' + opts.blockMsgClass).length > 0)
+				return true;
+
+			// allow events for content that is not being blocked
+			return target.parents().children().filter('div.blockUI').length === 0;
+		}
+
+		function focus(back) {
+			if (!pageBlockEls)
+				return;
+			var e = pageBlockEls[back===true ? pageBlockEls.length-1 : 0];
+			if (e)
+				e.focus();
+		}
+
+		function center(el, x, y) {
+			var p = el.parentNode, s = el.style;
+			var l = ((p.offsetWidth - el.offsetWidth)/2) - sz(p,'borderLeftWidth');
+			var t = ((p.offsetHeight - el.offsetHeight)/2) - sz(p,'borderTopWidth');
+			if (x) s.left = l > 0 ? (l+'px') : '0';
+			if (y) s.top  = t > 0 ? (t+'px') : '0';
+		}
+
+		function sz(el, p) {
+			return parseInt($.css(el,p),10)||0;
+		}
+
+	}
+
+
+	/*global define:true */
+	if (typeof define === 'function' && define.amd && define.amd.jQuery) {
+		define(['jquery'], setup);
+	} else {
+		setup(jQuery);
+	}
+
+})();
+
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /* Copyright 2012 Mozilla Foundation
@@ -42641,6 +31050,2575 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
 	};
 
 }));
+
+/*! Hammer.JS - v2.0.6 - 2015-12-23
+ * http://hammerjs.github.io/
+ *
+ * Copyright (c) 2015 Jorik Tangelder;
+ * Licensed under the  license */
+(function(window, document, exportName, undefined) {
+  'use strict';
+
+var VENDOR_PREFIXES = ['', 'webkit', 'Moz', 'MS', 'ms', 'o'];
+var TEST_ELEMENT = document.createElement('div');
+
+var TYPE_FUNCTION = 'function';
+
+var round = Math.round;
+var abs = Math.abs;
+var now = Date.now;
+
+/**
+ * set a timeout with a given scope
+ * @param {Function} fn
+ * @param {Number} timeout
+ * @param {Object} context
+ * @returns {number}
+ */
+function setTimeoutContext(fn, timeout, context) {
+    return setTimeout(bindFn(fn, context), timeout);
+}
+
+/**
+ * if the argument is an array, we want to execute the fn on each entry
+ * if it aint an array we don't want to do a thing.
+ * this is used by all the methods that accept a single and array argument.
+ * @param {*|Array} arg
+ * @param {String} fn
+ * @param {Object} [context]
+ * @returns {Boolean}
+ */
+function invokeArrayArg(arg, fn, context) {
+    if (Array.isArray(arg)) {
+        each(arg, context[fn], context);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * walk objects and arrays
+ * @param {Object} obj
+ * @param {Function} iterator
+ * @param {Object} context
+ */
+function each(obj, iterator, context) {
+    var i;
+
+    if (!obj) {
+        return;
+    }
+
+    if (obj.forEach) {
+        obj.forEach(iterator, context);
+    } else if (obj.length !== undefined) {
+        i = 0;
+        while (i < obj.length) {
+            iterator.call(context, obj[i], i, obj);
+            i++;
+        }
+    } else {
+        for (i in obj) {
+            obj.hasOwnProperty(i) && iterator.call(context, obj[i], i, obj);
+        }
+    }
+}
+
+/**
+ * wrap a method with a deprecation warning and stack trace
+ * @param {Function} method
+ * @param {String} name
+ * @param {String} message
+ * @returns {Function} A new function wrapping the supplied method.
+ */
+function deprecate(method, name, message) {
+    var deprecationMessage = 'DEPRECATED METHOD: ' + name + '\n' + message + ' AT \n';
+    return function() {
+        var e = new Error('get-stack-trace');
+        var stack = e && e.stack ? e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+            .replace(/^\s+at\s+/gm, '')
+            .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@') : 'Unknown Stack Trace';
+
+        var log = window.console && (window.console.warn || window.console.log);
+        if (log) {
+            log.call(window.console, deprecationMessage, stack);
+        }
+        return method.apply(this, arguments);
+    };
+}
+
+/**
+ * extend object.
+ * means that properties in dest will be overwritten by the ones in src.
+ * @param {Object} target
+ * @param {...Object} objects_to_assign
+ * @returns {Object} target
+ */
+var assign;
+if (typeof Object.assign !== 'function') {
+    assign = function assign(target) {
+        if (target === undefined || target === null) {
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        var output = Object(target);
+        for (var index = 1; index < arguments.length; index++) {
+            var source = arguments[index];
+            if (source !== undefined && source !== null) {
+                for (var nextKey in source) {
+                    if (source.hasOwnProperty(nextKey)) {
+                        output[nextKey] = source[nextKey];
+                    }
+                }
+            }
+        }
+        return output;
+    };
+} else {
+    assign = Object.assign;
+}
+
+/**
+ * extend object.
+ * means that properties in dest will be overwritten by the ones in src.
+ * @param {Object} dest
+ * @param {Object} src
+ * @param {Boolean=false} [merge]
+ * @returns {Object} dest
+ */
+var extend = deprecate(function extend(dest, src, merge) {
+    var keys = Object.keys(src);
+    var i = 0;
+    while (i < keys.length) {
+        if (!merge || (merge && dest[keys[i]] === undefined)) {
+            dest[keys[i]] = src[keys[i]];
+        }
+        i++;
+    }
+    return dest;
+}, 'extend', 'Use `assign`.');
+
+/**
+ * merge the values from src in the dest.
+ * means that properties that exist in dest will not be overwritten by src
+ * @param {Object} dest
+ * @param {Object} src
+ * @returns {Object} dest
+ */
+var merge = deprecate(function merge(dest, src) {
+    return extend(dest, src, true);
+}, 'merge', 'Use `assign`.');
+
+/**
+ * simple class inheritance
+ * @param {Function} child
+ * @param {Function} base
+ * @param {Object} [properties]
+ */
+function inherit(child, base, properties) {
+    var baseP = base.prototype,
+        childP;
+
+    childP = child.prototype = Object.create(baseP);
+    childP.constructor = child;
+    childP._super = baseP;
+
+    if (properties) {
+        assign(childP, properties);
+    }
+}
+
+/**
+ * simple function bind
+ * @param {Function} fn
+ * @param {Object} context
+ * @returns {Function}
+ */
+function bindFn(fn, context) {
+    return function boundFn() {
+        return fn.apply(context, arguments);
+    };
+}
+
+/**
+ * let a boolean value also be a function that must return a boolean
+ * this first item in args will be used as the context
+ * @param {Boolean|Function} val
+ * @param {Array} [args]
+ * @returns {Boolean}
+ */
+function boolOrFn(val, args) {
+    if (typeof val == TYPE_FUNCTION) {
+        return val.apply(args ? args[0] || undefined : undefined, args);
+    }
+    return val;
+}
+
+/**
+ * use the val2 when val1 is undefined
+ * @param {*} val1
+ * @param {*} val2
+ * @returns {*}
+ */
+function ifUndefined(val1, val2) {
+    return (val1 === undefined) ? val2 : val1;
+}
+
+/**
+ * addEventListener with multiple events at once
+ * @param {EventTarget} target
+ * @param {String} types
+ * @param {Function} handler
+ */
+function addEventListeners(target, types, handler) {
+    each(splitStr(types), function(type) {
+        target.addEventListener(type, handler, false);
+    });
+}
+
+/**
+ * removeEventListener with multiple events at once
+ * @param {EventTarget} target
+ * @param {String} types
+ * @param {Function} handler
+ */
+function removeEventListeners(target, types, handler) {
+    each(splitStr(types), function(type) {
+        target.removeEventListener(type, handler, false);
+    });
+}
+
+/**
+ * find if a node is in the given parent
+ * @method hasParent
+ * @param {HTMLElement} node
+ * @param {HTMLElement} parent
+ * @return {Boolean} found
+ */
+function hasParent(node, parent) {
+    while (node) {
+        if (node == parent) {
+            return true;
+        }
+        node = node.parentNode;
+    }
+    return false;
+}
+
+/**
+ * small indexOf wrapper
+ * @param {String} str
+ * @param {String} find
+ * @returns {Boolean} found
+ */
+function inStr(str, find) {
+    return str.indexOf(find) > -1;
+}
+
+/**
+ * split string on whitespace
+ * @param {String} str
+ * @returns {Array} words
+ */
+function splitStr(str) {
+    return str.trim().split(/\s+/g);
+}
+
+/**
+ * find if a array contains the object using indexOf or a simple polyFill
+ * @param {Array} src
+ * @param {String} find
+ * @param {String} [findByKey]
+ * @return {Boolean|Number} false when not found, or the index
+ */
+function inArray(src, find, findByKey) {
+    if (src.indexOf && !findByKey) {
+        return src.indexOf(find);
+    } else {
+        var i = 0;
+        while (i < src.length) {
+            if ((findByKey && src[i][findByKey] == find) || (!findByKey && src[i] === find)) {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+}
+
+/**
+ * convert array-like objects to real arrays
+ * @param {Object} obj
+ * @returns {Array}
+ */
+function toArray(obj) {
+    return Array.prototype.slice.call(obj, 0);
+}
+
+/**
+ * unique array with objects based on a key (like 'id') or just by the array's value
+ * @param {Array} src [{id:1},{id:2},{id:1}]
+ * @param {String} [key]
+ * @param {Boolean} [sort=False]
+ * @returns {Array} [{id:1},{id:2}]
+ */
+function uniqueArray(src, key, sort) {
+    var results = [];
+    var values = [];
+    var i = 0;
+
+    while (i < src.length) {
+        var val = key ? src[i][key] : src[i];
+        if (inArray(values, val) < 0) {
+            results.push(src[i]);
+        }
+        values[i] = val;
+        i++;
+    }
+
+    if (sort) {
+        if (!key) {
+            results = results.sort();
+        } else {
+            results = results.sort(function sortUniqueArray(a, b) {
+                return a[key] > b[key];
+            });
+        }
+    }
+
+    return results;
+}
+
+/**
+ * get the prefixed property
+ * @param {Object} obj
+ * @param {String} property
+ * @returns {String|Undefined} prefixed
+ */
+function prefixed(obj, property) {
+    var prefix, prop;
+    var camelProp = property[0].toUpperCase() + property.slice(1);
+
+    var i = 0;
+    while (i < VENDOR_PREFIXES.length) {
+        prefix = VENDOR_PREFIXES[i];
+        prop = (prefix) ? prefix + camelProp : property;
+
+        if (prop in obj) {
+            return prop;
+        }
+        i++;
+    }
+    return undefined;
+}
+
+/**
+ * get a unique id
+ * @returns {number} uniqueId
+ */
+var _uniqueId = 1;
+function uniqueId() {
+    return _uniqueId++;
+}
+
+/**
+ * get the window object of an element
+ * @param {HTMLElement} element
+ * @returns {DocumentView|Window}
+ */
+function getWindowForElement(element) {
+    var doc = element.ownerDocument || element;
+    return (doc.defaultView || doc.parentWindow || window);
+}
+
+var MOBILE_REGEX = /mobile|tablet|ip(ad|hone|od)|android/i;
+
+var SUPPORT_TOUCH = ('ontouchstart' in window);
+var SUPPORT_POINTER_EVENTS = prefixed(window, 'PointerEvent') !== undefined;
+var SUPPORT_ONLY_TOUCH = SUPPORT_TOUCH && MOBILE_REGEX.test(navigator.userAgent);
+
+var INPUT_TYPE_TOUCH = 'touch';
+var INPUT_TYPE_PEN = 'pen';
+var INPUT_TYPE_MOUSE = 'mouse';
+var INPUT_TYPE_KINECT = 'kinect';
+
+var COMPUTE_INTERVAL = 25;
+
+var INPUT_START = 1;
+var INPUT_MOVE = 2;
+var INPUT_END = 4;
+var INPUT_CANCEL = 8;
+
+var DIRECTION_NONE = 1;
+var DIRECTION_LEFT = 2;
+var DIRECTION_RIGHT = 4;
+var DIRECTION_UP = 8;
+var DIRECTION_DOWN = 16;
+
+var DIRECTION_HORIZONTAL = DIRECTION_LEFT | DIRECTION_RIGHT;
+var DIRECTION_VERTICAL = DIRECTION_UP | DIRECTION_DOWN;
+var DIRECTION_ALL = DIRECTION_HORIZONTAL | DIRECTION_VERTICAL;
+
+var PROPS_XY = ['x', 'y'];
+var PROPS_CLIENT_XY = ['clientX', 'clientY'];
+
+/**
+ * create new input type manager
+ * @param {Manager} manager
+ * @param {Function} callback
+ * @returns {Input}
+ * @constructor
+ */
+function Input(manager, callback) {
+    var self = this;
+    this.manager = manager;
+    this.callback = callback;
+    this.element = manager.element;
+    this.target = manager.options.inputTarget;
+
+    // smaller wrapper around the handler, for the scope and the enabled state of the manager,
+    // so when disabled the input events are completely bypassed.
+    this.domHandler = function(ev) {
+        if (boolOrFn(manager.options.enable, [manager])) {
+            self.handler(ev);
+        }
+    };
+
+    this.init();
+
+}
+
+Input.prototype = {
+    /**
+     * should handle the inputEvent data and trigger the callback
+     * @virtual
+     */
+    handler: function() { },
+
+    /**
+     * bind the events
+     */
+    init: function() {
+        this.evEl && addEventListeners(this.element, this.evEl, this.domHandler);
+        this.evTarget && addEventListeners(this.target, this.evTarget, this.domHandler);
+        this.evWin && addEventListeners(getWindowForElement(this.element), this.evWin, this.domHandler);
+    },
+
+    /**
+     * unbind the events
+     */
+    destroy: function() {
+        this.evEl && removeEventListeners(this.element, this.evEl, this.domHandler);
+        this.evTarget && removeEventListeners(this.target, this.evTarget, this.domHandler);
+        this.evWin && removeEventListeners(getWindowForElement(this.element), this.evWin, this.domHandler);
+    }
+};
+
+/**
+ * create new input type manager
+ * called by the Manager constructor
+ * @param {Hammer} manager
+ * @returns {Input}
+ */
+function createInputInstance(manager) {
+    var Type;
+    var inputClass = manager.options.inputClass;
+
+    if (inputClass) {
+        Type = inputClass;
+    } else if (SUPPORT_POINTER_EVENTS) {
+        Type = PointerEventInput;
+    } else if (SUPPORT_ONLY_TOUCH) {
+        Type = TouchInput;
+    } else if (!SUPPORT_TOUCH) {
+        Type = MouseInput;
+    } else {
+        Type = TouchMouseInput;
+    }
+    return new (Type)(manager, inputHandler);
+}
+
+/**
+ * handle input events
+ * @param {Manager} manager
+ * @param {String} eventType
+ * @param {Object} input
+ */
+function inputHandler(manager, eventType, input) {
+    var pointersLen = input.pointers.length;
+    var changedPointersLen = input.changedPointers.length;
+    var isFirst = (eventType & INPUT_START && (pointersLen - changedPointersLen === 0));
+    var isFinal = (eventType & (INPUT_END | INPUT_CANCEL) && (pointersLen - changedPointersLen === 0));
+
+    input.isFirst = !!isFirst;
+    input.isFinal = !!isFinal;
+
+    if (isFirst) {
+        manager.session = {};
+    }
+
+    // source event is the normalized value of the domEvents
+    // like 'touchstart, mouseup, pointerdown'
+    input.eventType = eventType;
+
+    // compute scale, rotation etc
+    computeInputData(manager, input);
+
+    // emit secret event
+    manager.emit('hammer.input', input);
+
+    manager.recognize(input);
+    manager.session.prevInput = input;
+}
+
+/**
+ * extend the data with some usable properties like scale, rotate, velocity etc
+ * @param {Object} manager
+ * @param {Object} input
+ */
+function computeInputData(manager, input) {
+    var session = manager.session;
+    var pointers = input.pointers;
+    var pointersLength = pointers.length;
+
+    // store the first input to calculate the distance and direction
+    if (!session.firstInput) {
+        session.firstInput = simpleCloneInputData(input);
+    }
+
+    // to compute scale and rotation we need to store the multiple touches
+    if (pointersLength > 1 && !session.firstMultiple) {
+        session.firstMultiple = simpleCloneInputData(input);
+    } else if (pointersLength === 1) {
+        session.firstMultiple = false;
+    }
+
+    var firstInput = session.firstInput;
+    var firstMultiple = session.firstMultiple;
+    var offsetCenter = firstMultiple ? firstMultiple.center : firstInput.center;
+
+    var center = input.center = getCenter(pointers);
+    input.timeStamp = now();
+    input.deltaTime = input.timeStamp - firstInput.timeStamp;
+
+    input.angle = getAngle(offsetCenter, center);
+    input.distance = getDistance(offsetCenter, center);
+
+    computeDeltaXY(session, input);
+    input.offsetDirection = getDirection(input.deltaX, input.deltaY);
+
+    var overallVelocity = getVelocity(input.deltaTime, input.deltaX, input.deltaY);
+    input.overallVelocityX = overallVelocity.x;
+    input.overallVelocityY = overallVelocity.y;
+    input.overallVelocity = (abs(overallVelocity.x) > abs(overallVelocity.y)) ? overallVelocity.x : overallVelocity.y;
+
+    input.scale = firstMultiple ? getScale(firstMultiple.pointers, pointers) : 1;
+    input.rotation = firstMultiple ? getRotation(firstMultiple.pointers, pointers) : 0;
+
+    input.maxPointers = !session.prevInput ? input.pointers.length : ((input.pointers.length >
+        session.prevInput.maxPointers) ? input.pointers.length : session.prevInput.maxPointers);
+
+    computeIntervalInputData(session, input);
+
+    // find the correct target
+    var target = manager.element;
+    if (hasParent(input.srcEvent.target, target)) {
+        target = input.srcEvent.target;
+    }
+    input.target = target;
+}
+
+function computeDeltaXY(session, input) {
+    var center = input.center;
+    var offset = session.offsetDelta || {};
+    var prevDelta = session.prevDelta || {};
+    var prevInput = session.prevInput || {};
+
+    if (input.eventType === INPUT_START || prevInput.eventType === INPUT_END) {
+        prevDelta = session.prevDelta = {
+            x: prevInput.deltaX || 0,
+            y: prevInput.deltaY || 0
+        };
+
+        offset = session.offsetDelta = {
+            x: center.x,
+            y: center.y
+        };
+    }
+
+    input.deltaX = prevDelta.x + (center.x - offset.x);
+    input.deltaY = prevDelta.y + (center.y - offset.y);
+}
+
+/**
+ * velocity is calculated every x ms
+ * @param {Object} session
+ * @param {Object} input
+ */
+function computeIntervalInputData(session, input) {
+    var last = session.lastInterval || input,
+        deltaTime = input.timeStamp - last.timeStamp,
+        velocity, velocityX, velocityY, direction;
+
+    if (input.eventType != INPUT_CANCEL && (deltaTime > COMPUTE_INTERVAL || last.velocity === undefined)) {
+        var deltaX = input.deltaX - last.deltaX;
+        var deltaY = input.deltaY - last.deltaY;
+
+        var v = getVelocity(deltaTime, deltaX, deltaY);
+        velocityX = v.x;
+        velocityY = v.y;
+        velocity = (abs(v.x) > abs(v.y)) ? v.x : v.y;
+        direction = getDirection(deltaX, deltaY);
+
+        session.lastInterval = input;
+    } else {
+        // use latest velocity info if it doesn't overtake a minimum period
+        velocity = last.velocity;
+        velocityX = last.velocityX;
+        velocityY = last.velocityY;
+        direction = last.direction;
+    }
+
+    input.velocity = velocity;
+    input.velocityX = velocityX;
+    input.velocityY = velocityY;
+    input.direction = direction;
+}
+
+/**
+ * create a simple clone from the input used for storage of firstInput and firstMultiple
+ * @param {Object} input
+ * @returns {Object} clonedInputData
+ */
+function simpleCloneInputData(input) {
+    // make a simple copy of the pointers because we will get a reference if we don't
+    // we only need clientXY for the calculations
+    var pointers = [];
+    var i = 0;
+    while (i < input.pointers.length) {
+        pointers[i] = {
+            clientX: round(input.pointers[i].clientX),
+            clientY: round(input.pointers[i].clientY)
+        };
+        i++;
+    }
+
+    return {
+        timeStamp: now(),
+        pointers: pointers,
+        center: getCenter(pointers),
+        deltaX: input.deltaX,
+        deltaY: input.deltaY
+    };
+}
+
+/**
+ * get the center of all the pointers
+ * @param {Array} pointers
+ * @return {Object} center contains `x` and `y` properties
+ */
+function getCenter(pointers) {
+    var pointersLength = pointers.length;
+
+    // no need to loop when only one touch
+    if (pointersLength === 1) {
+        return {
+            x: round(pointers[0].clientX),
+            y: round(pointers[0].clientY)
+        };
+    }
+
+    var x = 0, y = 0, i = 0;
+    while (i < pointersLength) {
+        x += pointers[i].clientX;
+        y += pointers[i].clientY;
+        i++;
+    }
+
+    return {
+        x: round(x / pointersLength),
+        y: round(y / pointersLength)
+    };
+}
+
+/**
+ * calculate the velocity between two points. unit is in px per ms.
+ * @param {Number} deltaTime
+ * @param {Number} x
+ * @param {Number} y
+ * @return {Object} velocity `x` and `y`
+ */
+function getVelocity(deltaTime, x, y) {
+    return {
+        x: x / deltaTime || 0,
+        y: y / deltaTime || 0
+    };
+}
+
+/**
+ * get the direction between two points
+ * @param {Number} x
+ * @param {Number} y
+ * @return {Number} direction
+ */
+function getDirection(x, y) {
+    if (x === y) {
+        return DIRECTION_NONE;
+    }
+
+    if (abs(x) >= abs(y)) {
+        return x < 0 ? DIRECTION_LEFT : DIRECTION_RIGHT;
+    }
+    return y < 0 ? DIRECTION_UP : DIRECTION_DOWN;
+}
+
+/**
+ * calculate the absolute distance between two points
+ * @param {Object} p1 {x, y}
+ * @param {Object} p2 {x, y}
+ * @param {Array} [props] containing x and y keys
+ * @return {Number} distance
+ */
+function getDistance(p1, p2, props) {
+    if (!props) {
+        props = PROPS_XY;
+    }
+    var x = p2[props[0]] - p1[props[0]],
+        y = p2[props[1]] - p1[props[1]];
+
+    return Math.sqrt((x * x) + (y * y));
+}
+
+/**
+ * calculate the angle between two coordinates
+ * @param {Object} p1
+ * @param {Object} p2
+ * @param {Array} [props] containing x and y keys
+ * @return {Number} angle
+ */
+function getAngle(p1, p2, props) {
+    if (!props) {
+        props = PROPS_XY;
+    }
+    var x = p2[props[0]] - p1[props[0]],
+        y = p2[props[1]] - p1[props[1]];
+    return Math.atan2(y, x) * 180 / Math.PI;
+}
+
+/**
+ * calculate the rotation degrees between two pointersets
+ * @param {Array} start array of pointers
+ * @param {Array} end array of pointers
+ * @return {Number} rotation
+ */
+function getRotation(start, end) {
+    return getAngle(end[1], end[0], PROPS_CLIENT_XY) + getAngle(start[1], start[0], PROPS_CLIENT_XY);
+}
+
+/**
+ * calculate the scale factor between two pointersets
+ * no scale is 1, and goes down to 0 when pinched together, and bigger when pinched out
+ * @param {Array} start array of pointers
+ * @param {Array} end array of pointers
+ * @return {Number} scale
+ */
+function getScale(start, end) {
+    return getDistance(end[0], end[1], PROPS_CLIENT_XY) / getDistance(start[0], start[1], PROPS_CLIENT_XY);
+}
+
+var MOUSE_INPUT_MAP = {
+    mousedown: INPUT_START,
+    mousemove: INPUT_MOVE,
+    mouseup: INPUT_END
+};
+
+var MOUSE_ELEMENT_EVENTS = 'mousedown';
+var MOUSE_WINDOW_EVENTS = 'mousemove mouseup';
+
+/**
+ * Mouse events input
+ * @constructor
+ * @extends Input
+ */
+function MouseInput() {
+    this.evEl = MOUSE_ELEMENT_EVENTS;
+    this.evWin = MOUSE_WINDOW_EVENTS;
+
+    this.allow = true; // used by Input.TouchMouse to disable mouse events
+    this.pressed = false; // mousedown state
+
+    Input.apply(this, arguments);
+}
+
+inherit(MouseInput, Input, {
+    /**
+     * handle mouse events
+     * @param {Object} ev
+     */
+    handler: function MEhandler(ev) {
+        var eventType = MOUSE_INPUT_MAP[ev.type];
+
+        // on start we want to have the left mouse button down
+        if (eventType & INPUT_START && ev.button === 0) {
+            this.pressed = true;
+        }
+
+        if (eventType & INPUT_MOVE && ev.which !== 1) {
+            eventType = INPUT_END;
+        }
+
+        // mouse must be down, and mouse events are allowed (see the TouchMouse input)
+        if (!this.pressed || !this.allow) {
+            return;
+        }
+
+        if (eventType & INPUT_END) {
+            this.pressed = false;
+        }
+
+        this.callback(this.manager, eventType, {
+            pointers: [ev],
+            changedPointers: [ev],
+            pointerType: INPUT_TYPE_MOUSE,
+            srcEvent: ev
+        });
+    }
+});
+
+var POINTER_INPUT_MAP = {
+    pointerdown: INPUT_START,
+    pointermove: INPUT_MOVE,
+    pointerup: INPUT_END,
+    pointercancel: INPUT_CANCEL,
+    pointerout: INPUT_CANCEL
+};
+
+// in IE10 the pointer types is defined as an enum
+var IE10_POINTER_TYPE_ENUM = {
+    2: INPUT_TYPE_TOUCH,
+    3: INPUT_TYPE_PEN,
+    4: INPUT_TYPE_MOUSE,
+    5: INPUT_TYPE_KINECT // see https://twitter.com/jacobrossi/status/480596438489890816
+};
+
+var POINTER_ELEMENT_EVENTS = 'pointerdown';
+var POINTER_WINDOW_EVENTS = 'pointermove pointerup pointercancel';
+
+// IE10 has prefixed support, and case-sensitive
+if (window.MSPointerEvent && !window.PointerEvent) {
+    POINTER_ELEMENT_EVENTS = 'MSPointerDown';
+    POINTER_WINDOW_EVENTS = 'MSPointerMove MSPointerUp MSPointerCancel';
+}
+
+/**
+ * Pointer events input
+ * @constructor
+ * @extends Input
+ */
+function PointerEventInput() {
+    this.evEl = POINTER_ELEMENT_EVENTS;
+    this.evWin = POINTER_WINDOW_EVENTS;
+
+    Input.apply(this, arguments);
+
+    this.store = (this.manager.session.pointerEvents = []);
+}
+
+inherit(PointerEventInput, Input, {
+    /**
+     * handle mouse events
+     * @param {Object} ev
+     */
+    handler: function PEhandler(ev) {
+        var store = this.store;
+        var removePointer = false;
+
+        var eventTypeNormalized = ev.type.toLowerCase().replace('ms', '');
+        var eventType = POINTER_INPUT_MAP[eventTypeNormalized];
+        var pointerType = IE10_POINTER_TYPE_ENUM[ev.pointerType] || ev.pointerType;
+
+        var isTouch = (pointerType == INPUT_TYPE_TOUCH);
+
+        // get index of the event in the store
+        var storeIndex = inArray(store, ev.pointerId, 'pointerId');
+
+        // start and mouse must be down
+        if (eventType & INPUT_START && (ev.button === 0 || isTouch)) {
+            if (storeIndex < 0) {
+                store.push(ev);
+                storeIndex = store.length - 1;
+            }
+        } else if (eventType & (INPUT_END | INPUT_CANCEL)) {
+            removePointer = true;
+        }
+
+        // it not found, so the pointer hasn't been down (so it's probably a hover)
+        if (storeIndex < 0) {
+            return;
+        }
+
+        // update the event in the store
+        store[storeIndex] = ev;
+
+        this.callback(this.manager, eventType, {
+            pointers: store,
+            changedPointers: [ev],
+            pointerType: pointerType,
+            srcEvent: ev
+        });
+
+        if (removePointer) {
+            // remove from the store
+            store.splice(storeIndex, 1);
+        }
+    }
+});
+
+var SINGLE_TOUCH_INPUT_MAP = {
+    touchstart: INPUT_START,
+    touchmove: INPUT_MOVE,
+    touchend: INPUT_END,
+    touchcancel: INPUT_CANCEL
+};
+
+var SINGLE_TOUCH_TARGET_EVENTS = 'touchstart';
+var SINGLE_TOUCH_WINDOW_EVENTS = 'touchstart touchmove touchend touchcancel';
+
+/**
+ * Touch events input
+ * @constructor
+ * @extends Input
+ */
+function SingleTouchInput() {
+    this.evTarget = SINGLE_TOUCH_TARGET_EVENTS;
+    this.evWin = SINGLE_TOUCH_WINDOW_EVENTS;
+    this.started = false;
+
+    Input.apply(this, arguments);
+}
+
+inherit(SingleTouchInput, Input, {
+    handler: function TEhandler(ev) {
+        var type = SINGLE_TOUCH_INPUT_MAP[ev.type];
+
+        // should we handle the touch events?
+        if (type === INPUT_START) {
+            this.started = true;
+        }
+
+        if (!this.started) {
+            return;
+        }
+
+        var touches = normalizeSingleTouches.call(this, ev, type);
+
+        // when done, reset the started state
+        if (type & (INPUT_END | INPUT_CANCEL) && touches[0].length - touches[1].length === 0) {
+            this.started = false;
+        }
+
+        this.callback(this.manager, type, {
+            pointers: touches[0],
+            changedPointers: touches[1],
+            pointerType: INPUT_TYPE_TOUCH,
+            srcEvent: ev
+        });
+    }
+});
+
+/**
+ * @this {TouchInput}
+ * @param {Object} ev
+ * @param {Number} type flag
+ * @returns {undefined|Array} [all, changed]
+ */
+function normalizeSingleTouches(ev, type) {
+    var all = toArray(ev.touches);
+    var changed = toArray(ev.changedTouches);
+
+    if (type & (INPUT_END | INPUT_CANCEL)) {
+        all = uniqueArray(all.concat(changed), 'identifier', true);
+    }
+
+    return [all, changed];
+}
+
+var TOUCH_INPUT_MAP = {
+    touchstart: INPUT_START,
+    touchmove: INPUT_MOVE,
+    touchend: INPUT_END,
+    touchcancel: INPUT_CANCEL
+};
+
+var TOUCH_TARGET_EVENTS = 'touchstart touchmove touchend touchcancel';
+
+/**
+ * Multi-user touch events input
+ * @constructor
+ * @extends Input
+ */
+function TouchInput() {
+    this.evTarget = TOUCH_TARGET_EVENTS;
+    this.targetIds = {};
+
+    Input.apply(this, arguments);
+}
+
+inherit(TouchInput, Input, {
+    handler: function MTEhandler(ev) {
+        var type = TOUCH_INPUT_MAP[ev.type];
+        var touches = getTouches.call(this, ev, type);
+        if (!touches) {
+            return;
+        }
+
+        this.callback(this.manager, type, {
+            pointers: touches[0],
+            changedPointers: touches[1],
+            pointerType: INPUT_TYPE_TOUCH,
+            srcEvent: ev
+        });
+    }
+});
+
+/**
+ * @this {TouchInput}
+ * @param {Object} ev
+ * @param {Number} type flag
+ * @returns {undefined|Array} [all, changed]
+ */
+function getTouches(ev, type) {
+    var allTouches = toArray(ev.touches);
+    var targetIds = this.targetIds;
+
+    // when there is only one touch, the process can be simplified
+    if (type & (INPUT_START | INPUT_MOVE) && allTouches.length === 1) {
+        targetIds[allTouches[0].identifier] = true;
+        return [allTouches, allTouches];
+    }
+
+    var i,
+        targetTouches,
+        changedTouches = toArray(ev.changedTouches),
+        changedTargetTouches = [],
+        target = this.target;
+
+    // get target touches from touches
+    targetTouches = allTouches.filter(function(touch) {
+        return hasParent(touch.target, target);
+    });
+
+    // collect touches
+    if (type === INPUT_START) {
+        i = 0;
+        while (i < targetTouches.length) {
+            targetIds[targetTouches[i].identifier] = true;
+            i++;
+        }
+    }
+
+    // filter changed touches to only contain touches that exist in the collected target ids
+    i = 0;
+    while (i < changedTouches.length) {
+        if (targetIds[changedTouches[i].identifier]) {
+            changedTargetTouches.push(changedTouches[i]);
+        }
+
+        // cleanup removed touches
+        if (type & (INPUT_END | INPUT_CANCEL)) {
+            delete targetIds[changedTouches[i].identifier];
+        }
+        i++;
+    }
+
+    if (!changedTargetTouches.length) {
+        return;
+    }
+
+    return [
+        // merge targetTouches with changedTargetTouches so it contains ALL touches, including 'end' and 'cancel'
+        uniqueArray(targetTouches.concat(changedTargetTouches), 'identifier', true),
+        changedTargetTouches
+    ];
+}
+
+/**
+ * Combined touch and mouse input
+ *
+ * Touch has a higher priority then mouse, and while touching no mouse events are allowed.
+ * This because touch devices also emit mouse events while doing a touch.
+ *
+ * @constructor
+ * @extends Input
+ */
+function TouchMouseInput() {
+    Input.apply(this, arguments);
+
+    var handler = bindFn(this.handler, this);
+    this.touch = new TouchInput(this.manager, handler);
+    this.mouse = new MouseInput(this.manager, handler);
+}
+
+inherit(TouchMouseInput, Input, {
+    /**
+     * handle mouse and touch events
+     * @param {Hammer} manager
+     * @param {String} inputEvent
+     * @param {Object} inputData
+     */
+    handler: function TMEhandler(manager, inputEvent, inputData) {
+        var isTouch = (inputData.pointerType == INPUT_TYPE_TOUCH),
+            isMouse = (inputData.pointerType == INPUT_TYPE_MOUSE);
+
+        // when we're in a touch event, so  block all upcoming mouse events
+        // most mobile browser also emit mouseevents, right after touchstart
+        if (isTouch) {
+            this.mouse.allow = false;
+        } else if (isMouse && !this.mouse.allow) {
+            return;
+        }
+
+        // reset the allowMouse when we're done
+        if (inputEvent & (INPUT_END | INPUT_CANCEL)) {
+            this.mouse.allow = true;
+        }
+
+        this.callback(manager, inputEvent, inputData);
+    },
+
+    /**
+     * remove the event listeners
+     */
+    destroy: function destroy() {
+        this.touch.destroy();
+        this.mouse.destroy();
+    }
+});
+
+var PREFIXED_TOUCH_ACTION = prefixed(TEST_ELEMENT.style, 'touchAction');
+var NATIVE_TOUCH_ACTION = PREFIXED_TOUCH_ACTION !== undefined;
+
+// magical touchAction value
+var TOUCH_ACTION_COMPUTE = 'compute';
+var TOUCH_ACTION_AUTO = 'auto';
+var TOUCH_ACTION_MANIPULATION = 'manipulation'; // not implemented
+var TOUCH_ACTION_NONE = 'none';
+var TOUCH_ACTION_PAN_X = 'pan-x';
+var TOUCH_ACTION_PAN_Y = 'pan-y';
+
+/**
+ * Touch Action
+ * sets the touchAction property or uses the js alternative
+ * @param {Manager} manager
+ * @param {String} value
+ * @constructor
+ */
+function TouchAction(manager, value) {
+    this.manager = manager;
+    this.set(value);
+}
+
+TouchAction.prototype = {
+    /**
+     * set the touchAction value on the element or enable the polyfill
+     * @param {String} value
+     */
+    set: function(value) {
+        // find out the touch-action by the event handlers
+        if (value == TOUCH_ACTION_COMPUTE) {
+            value = this.compute();
+        }
+
+        if (NATIVE_TOUCH_ACTION && this.manager.element.style) {
+            this.manager.element.style[PREFIXED_TOUCH_ACTION] = value;
+        }
+        this.actions = value.toLowerCase().trim();
+    },
+
+    /**
+     * just re-set the touchAction value
+     */
+    update: function() {
+        this.set(this.manager.options.touchAction);
+    },
+
+    /**
+     * compute the value for the touchAction property based on the recognizer's settings
+     * @returns {String} value
+     */
+    compute: function() {
+        var actions = [];
+        each(this.manager.recognizers, function(recognizer) {
+            if (boolOrFn(recognizer.options.enable, [recognizer])) {
+                actions = actions.concat(recognizer.getTouchAction());
+            }
+        });
+        return cleanTouchActions(actions.join(' '));
+    },
+
+    /**
+     * this method is called on each input cycle and provides the preventing of the browser behavior
+     * @param {Object} input
+     */
+    preventDefaults: function(input) {
+        // not needed with native support for the touchAction property
+        if (NATIVE_TOUCH_ACTION) {
+            return;
+        }
+
+        var srcEvent = input.srcEvent;
+        var direction = input.offsetDirection;
+
+        // if the touch action did prevented once this session
+        if (this.manager.session.prevented) {
+            srcEvent.preventDefault();
+            return;
+        }
+
+        var actions = this.actions;
+        var hasNone = inStr(actions, TOUCH_ACTION_NONE);
+        var hasPanY = inStr(actions, TOUCH_ACTION_PAN_Y);
+        var hasPanX = inStr(actions, TOUCH_ACTION_PAN_X);
+
+        if (hasNone) {
+            //do not prevent defaults if this is a tap gesture
+
+            var isTapPointer = input.pointers.length === 1;
+            var isTapMovement = input.distance < 2;
+            var isTapTouchTime = input.deltaTime < 250;
+
+            if (isTapPointer && isTapMovement && isTapTouchTime) {
+                return;
+            }
+        }
+
+        if (hasPanX && hasPanY) {
+            // `pan-x pan-y` means browser handles all scrolling/panning, do not prevent
+            return;
+        }
+
+        if (hasNone ||
+            (hasPanY && direction & DIRECTION_HORIZONTAL) ||
+            (hasPanX && direction & DIRECTION_VERTICAL)) {
+            return this.preventSrc(srcEvent);
+        }
+    },
+
+    /**
+     * call preventDefault to prevent the browser's default behavior (scrolling in most cases)
+     * @param {Object} srcEvent
+     */
+    preventSrc: function(srcEvent) {
+        this.manager.session.prevented = true;
+        srcEvent.preventDefault();
+    }
+};
+
+/**
+ * when the touchActions are collected they are not a valid value, so we need to clean things up. *
+ * @param {String} actions
+ * @returns {*}
+ */
+function cleanTouchActions(actions) {
+    // none
+    if (inStr(actions, TOUCH_ACTION_NONE)) {
+        return TOUCH_ACTION_NONE;
+    }
+
+    var hasPanX = inStr(actions, TOUCH_ACTION_PAN_X);
+    var hasPanY = inStr(actions, TOUCH_ACTION_PAN_Y);
+
+    // if both pan-x and pan-y are set (different recognizers
+    // for different directions, e.g. horizontal pan but vertical swipe?)
+    // we need none (as otherwise with pan-x pan-y combined none of these
+    // recognizers will work, since the browser would handle all panning
+    if (hasPanX && hasPanY) {
+        return TOUCH_ACTION_NONE;
+    }
+
+    // pan-x OR pan-y
+    if (hasPanX || hasPanY) {
+        return hasPanX ? TOUCH_ACTION_PAN_X : TOUCH_ACTION_PAN_Y;
+    }
+
+    // manipulation
+    if (inStr(actions, TOUCH_ACTION_MANIPULATION)) {
+        return TOUCH_ACTION_MANIPULATION;
+    }
+
+    return TOUCH_ACTION_AUTO;
+}
+
+/**
+ * Recognizer flow explained; *
+ * All recognizers have the initial state of POSSIBLE when a input session starts.
+ * The definition of a input session is from the first input until the last input, with all it's movement in it. *
+ * Example session for mouse-input: mousedown -> mousemove -> mouseup
+ *
+ * On each recognizing cycle (see Manager.recognize) the .recognize() method is executed
+ * which determines with state it should be.
+ *
+ * If the recognizer has the state FAILED, CANCELLED or RECOGNIZED (equals ENDED), it is reset to
+ * POSSIBLE to give it another change on the next cycle.
+ *
+ *               Possible
+ *                  |
+ *            +-----+---------------+
+ *            |                     |
+ *      +-----+-----+               |
+ *      |           |               |
+ *   Failed      Cancelled          |
+ *                          +-------+------+
+ *                          |              |
+ *                      Recognized       Began
+ *                                         |
+ *                                      Changed
+ *                                         |
+ *                                  Ended/Recognized
+ */
+var STATE_POSSIBLE = 1;
+var STATE_BEGAN = 2;
+var STATE_CHANGED = 4;
+var STATE_ENDED = 8;
+var STATE_RECOGNIZED = STATE_ENDED;
+var STATE_CANCELLED = 16;
+var STATE_FAILED = 32;
+
+/**
+ * Recognizer
+ * Every recognizer needs to extend from this class.
+ * @constructor
+ * @param {Object} options
+ */
+function Recognizer(options) {
+    this.options = assign({}, this.defaults, options || {});
+
+    this.id = uniqueId();
+
+    this.manager = null;
+
+    // default is enable true
+    this.options.enable = ifUndefined(this.options.enable, true);
+
+    this.state = STATE_POSSIBLE;
+
+    this.simultaneous = {};
+    this.requireFail = [];
+}
+
+Recognizer.prototype = {
+    /**
+     * @virtual
+     * @type {Object}
+     */
+    defaults: {},
+
+    /**
+     * set options
+     * @param {Object} options
+     * @return {Recognizer}
+     */
+    set: function(options) {
+        assign(this.options, options);
+
+        // also update the touchAction, in case something changed about the directions/enabled state
+        this.manager && this.manager.touchAction.update();
+        return this;
+    },
+
+    /**
+     * recognize simultaneous with an other recognizer.
+     * @param {Recognizer} otherRecognizer
+     * @returns {Recognizer} this
+     */
+    recognizeWith: function(otherRecognizer) {
+        if (invokeArrayArg(otherRecognizer, 'recognizeWith', this)) {
+            return this;
+        }
+
+        var simultaneous = this.simultaneous;
+        otherRecognizer = getRecognizerByNameIfManager(otherRecognizer, this);
+        if (!simultaneous[otherRecognizer.id]) {
+            simultaneous[otherRecognizer.id] = otherRecognizer;
+            otherRecognizer.recognizeWith(this);
+        }
+        return this;
+    },
+
+    /**
+     * drop the simultaneous link. it doesnt remove the link on the other recognizer.
+     * @param {Recognizer} otherRecognizer
+     * @returns {Recognizer} this
+     */
+    dropRecognizeWith: function(otherRecognizer) {
+        if (invokeArrayArg(otherRecognizer, 'dropRecognizeWith', this)) {
+            return this;
+        }
+
+        otherRecognizer = getRecognizerByNameIfManager(otherRecognizer, this);
+        delete this.simultaneous[otherRecognizer.id];
+        return this;
+    },
+
+    /**
+     * recognizer can only run when an other is failing
+     * @param {Recognizer} otherRecognizer
+     * @returns {Recognizer} this
+     */
+    requireFailure: function(otherRecognizer) {
+        if (invokeArrayArg(otherRecognizer, 'requireFailure', this)) {
+            return this;
+        }
+
+        var requireFail = this.requireFail;
+        otherRecognizer = getRecognizerByNameIfManager(otherRecognizer, this);
+        if (inArray(requireFail, otherRecognizer) === -1) {
+            requireFail.push(otherRecognizer);
+            otherRecognizer.requireFailure(this);
+        }
+        return this;
+    },
+
+    /**
+     * drop the requireFailure link. it does not remove the link on the other recognizer.
+     * @param {Recognizer} otherRecognizer
+     * @returns {Recognizer} this
+     */
+    dropRequireFailure: function(otherRecognizer) {
+        if (invokeArrayArg(otherRecognizer, 'dropRequireFailure', this)) {
+            return this;
+        }
+
+        otherRecognizer = getRecognizerByNameIfManager(otherRecognizer, this);
+        var index = inArray(this.requireFail, otherRecognizer);
+        if (index > -1) {
+            this.requireFail.splice(index, 1);
+        }
+        return this;
+    },
+
+    /**
+     * has require failures boolean
+     * @returns {boolean}
+     */
+    hasRequireFailures: function() {
+        return this.requireFail.length > 0;
+    },
+
+    /**
+     * if the recognizer can recognize simultaneous with an other recognizer
+     * @param {Recognizer} otherRecognizer
+     * @returns {Boolean}
+     */
+    canRecognizeWith: function(otherRecognizer) {
+        return !!this.simultaneous[otherRecognizer.id];
+    },
+
+    /**
+     * You should use `tryEmit` instead of `emit` directly to check
+     * that all the needed recognizers has failed before emitting.
+     * @param {Object} input
+     */
+    emit: function(input) {
+        var self = this;
+        var state = this.state;
+
+        function emit(event) {
+            self.manager.emit(event, input);
+        }
+
+        // 'panstart' and 'panmove'
+        if (state < STATE_ENDED) {
+            emit(self.options.event + stateStr(state));
+        }
+
+        emit(self.options.event); // simple 'eventName' events
+
+        if (input.additionalEvent) { // additional event(panleft, panright, pinchin, pinchout...)
+            emit(input.additionalEvent);
+        }
+
+        // panend and pancancel
+        if (state >= STATE_ENDED) {
+            emit(self.options.event + stateStr(state));
+        }
+    },
+
+    /**
+     * Check that all the require failure recognizers has failed,
+     * if true, it emits a gesture event,
+     * otherwise, setup the state to FAILED.
+     * @param {Object} input
+     */
+    tryEmit: function(input) {
+        if (this.canEmit()) {
+            return this.emit(input);
+        }
+        // it's failing anyway
+        this.state = STATE_FAILED;
+    },
+
+    /**
+     * can we emit?
+     * @returns {boolean}
+     */
+    canEmit: function() {
+        var i = 0;
+        while (i < this.requireFail.length) {
+            if (!(this.requireFail[i].state & (STATE_FAILED | STATE_POSSIBLE))) {
+                return false;
+            }
+            i++;
+        }
+        return true;
+    },
+
+    /**
+     * update the recognizer
+     * @param {Object} inputData
+     */
+    recognize: function(inputData) {
+        // make a new copy of the inputData
+        // so we can change the inputData without messing up the other recognizers
+        var inputDataClone = assign({}, inputData);
+
+        // is is enabled and allow recognizing?
+        if (!boolOrFn(this.options.enable, [this, inputDataClone])) {
+            this.reset();
+            this.state = STATE_FAILED;
+            return;
+        }
+
+        // reset when we've reached the end
+        if (this.state & (STATE_RECOGNIZED | STATE_CANCELLED | STATE_FAILED)) {
+            this.state = STATE_POSSIBLE;
+        }
+
+        this.state = this.process(inputDataClone);
+
+        // the recognizer has recognized a gesture
+        // so trigger an event
+        if (this.state & (STATE_BEGAN | STATE_CHANGED | STATE_ENDED | STATE_CANCELLED)) {
+            this.tryEmit(inputDataClone);
+        }
+    },
+
+    /**
+     * return the state of the recognizer
+     * the actual recognizing happens in this method
+     * @virtual
+     * @param {Object} inputData
+     * @returns {Const} STATE
+     */
+    process: function(inputData) { }, // jshint ignore:line
+
+    /**
+     * return the preferred touch-action
+     * @virtual
+     * @returns {Array}
+     */
+    getTouchAction: function() { },
+
+    /**
+     * called when the gesture isn't allowed to recognize
+     * like when another is being recognized or it is disabled
+     * @virtual
+     */
+    reset: function() { }
+};
+
+/**
+ * get a usable string, used as event postfix
+ * @param {Const} state
+ * @returns {String} state
+ */
+function stateStr(state) {
+    if (state & STATE_CANCELLED) {
+        return 'cancel';
+    } else if (state & STATE_ENDED) {
+        return 'end';
+    } else if (state & STATE_CHANGED) {
+        return 'move';
+    } else if (state & STATE_BEGAN) {
+        return 'start';
+    }
+    return '';
+}
+
+/**
+ * direction cons to string
+ * @param {Const} direction
+ * @returns {String}
+ */
+function directionStr(direction) {
+    if (direction == DIRECTION_DOWN) {
+        return 'down';
+    } else if (direction == DIRECTION_UP) {
+        return 'up';
+    } else if (direction == DIRECTION_LEFT) {
+        return 'left';
+    } else if (direction == DIRECTION_RIGHT) {
+        return 'right';
+    }
+    return '';
+}
+
+/**
+ * get a recognizer by name if it is bound to a manager
+ * @param {Recognizer|String} otherRecognizer
+ * @param {Recognizer} recognizer
+ * @returns {Recognizer}
+ */
+function getRecognizerByNameIfManager(otherRecognizer, recognizer) {
+    var manager = recognizer.manager;
+    if (manager) {
+        return manager.get(otherRecognizer);
+    }
+    return otherRecognizer;
+}
+
+/**
+ * This recognizer is just used as a base for the simple attribute recognizers.
+ * @constructor
+ * @extends Recognizer
+ */
+function AttrRecognizer() {
+    Recognizer.apply(this, arguments);
+}
+
+inherit(AttrRecognizer, Recognizer, {
+    /**
+     * @namespace
+     * @memberof AttrRecognizer
+     */
+    defaults: {
+        /**
+         * @type {Number}
+         * @default 1
+         */
+        pointers: 1
+    },
+
+    /**
+     * Used to check if it the recognizer receives valid input, like input.distance > 10.
+     * @memberof AttrRecognizer
+     * @param {Object} input
+     * @returns {Boolean} recognized
+     */
+    attrTest: function(input) {
+        var optionPointers = this.options.pointers;
+        return optionPointers === 0 || input.pointers.length === optionPointers;
+    },
+
+    /**
+     * Process the input and return the state for the recognizer
+     * @memberof AttrRecognizer
+     * @param {Object} input
+     * @returns {*} State
+     */
+    process: function(input) {
+        var state = this.state;
+        var eventType = input.eventType;
+
+        var isRecognized = state & (STATE_BEGAN | STATE_CHANGED);
+        var isValid = this.attrTest(input);
+
+        // on cancel input and we've recognized before, return STATE_CANCELLED
+        if (isRecognized && (eventType & INPUT_CANCEL || !isValid)) {
+            return state | STATE_CANCELLED;
+        } else if (isRecognized || isValid) {
+            if (eventType & INPUT_END) {
+                return state | STATE_ENDED;
+            } else if (!(state & STATE_BEGAN)) {
+                return STATE_BEGAN;
+            }
+            return state | STATE_CHANGED;
+        }
+        return STATE_FAILED;
+    }
+});
+
+/**
+ * Pan
+ * Recognized when the pointer is down and moved in the allowed direction.
+ * @constructor
+ * @extends AttrRecognizer
+ */
+function PanRecognizer() {
+    AttrRecognizer.apply(this, arguments);
+
+    this.pX = null;
+    this.pY = null;
+}
+
+inherit(PanRecognizer, AttrRecognizer, {
+    /**
+     * @namespace
+     * @memberof PanRecognizer
+     */
+    defaults: {
+        event: 'pan',
+        threshold: 10,
+        pointers: 1,
+        direction: DIRECTION_ALL
+    },
+
+    getTouchAction: function() {
+        var direction = this.options.direction;
+        var actions = [];
+        if (direction & DIRECTION_HORIZONTAL) {
+            actions.push(TOUCH_ACTION_PAN_Y);
+        }
+        if (direction & DIRECTION_VERTICAL) {
+            actions.push(TOUCH_ACTION_PAN_X);
+        }
+        return actions;
+    },
+
+    directionTest: function(input) {
+        var options = this.options;
+        var hasMoved = true;
+        var distance = input.distance;
+        var direction = input.direction;
+        var x = input.deltaX;
+        var y = input.deltaY;
+
+        // lock to axis?
+        if (!(direction & options.direction)) {
+            if (options.direction & DIRECTION_HORIZONTAL) {
+                direction = (x === 0) ? DIRECTION_NONE : (x < 0) ? DIRECTION_LEFT : DIRECTION_RIGHT;
+                hasMoved = x != this.pX;
+                distance = Math.abs(input.deltaX);
+            } else {
+                direction = (y === 0) ? DIRECTION_NONE : (y < 0) ? DIRECTION_UP : DIRECTION_DOWN;
+                hasMoved = y != this.pY;
+                distance = Math.abs(input.deltaY);
+            }
+        }
+        input.direction = direction;
+        return hasMoved && distance > options.threshold && direction & options.direction;
+    },
+
+    attrTest: function(input) {
+        return AttrRecognizer.prototype.attrTest.call(this, input) &&
+            (this.state & STATE_BEGAN || (!(this.state & STATE_BEGAN) && this.directionTest(input)));
+    },
+
+    emit: function(input) {
+
+        this.pX = input.deltaX;
+        this.pY = input.deltaY;
+
+        var direction = directionStr(input.direction);
+
+        if (direction) {
+            input.additionalEvent = this.options.event + direction;
+        }
+        this._super.emit.call(this, input);
+    }
+});
+
+/**
+ * Pinch
+ * Recognized when two or more pointers are moving toward (zoom-in) or away from each other (zoom-out).
+ * @constructor
+ * @extends AttrRecognizer
+ */
+function PinchRecognizer() {
+    AttrRecognizer.apply(this, arguments);
+}
+
+inherit(PinchRecognizer, AttrRecognizer, {
+    /**
+     * @namespace
+     * @memberof PinchRecognizer
+     */
+    defaults: {
+        event: 'pinch',
+        threshold: 0,
+        pointers: 2
+    },
+
+    getTouchAction: function() {
+        return [TOUCH_ACTION_NONE];
+    },
+
+    attrTest: function(input) {
+        return this._super.attrTest.call(this, input) &&
+            (Math.abs(input.scale - 1) > this.options.threshold || this.state & STATE_BEGAN);
+    },
+
+    emit: function(input) {
+        if (input.scale !== 1) {
+            var inOut = input.scale < 1 ? 'in' : 'out';
+            input.additionalEvent = this.options.event + inOut;
+        }
+        this._super.emit.call(this, input);
+    }
+});
+
+/**
+ * Press
+ * Recognized when the pointer is down for x ms without any movement.
+ * @constructor
+ * @extends Recognizer
+ */
+function PressRecognizer() {
+    Recognizer.apply(this, arguments);
+
+    this._timer = null;
+    this._input = null;
+}
+
+inherit(PressRecognizer, Recognizer, {
+    /**
+     * @namespace
+     * @memberof PressRecognizer
+     */
+    defaults: {
+        event: 'press',
+        pointers: 1,
+        time: 251, // minimal time of the pointer to be pressed
+        threshold: 9 // a minimal movement is ok, but keep it low
+    },
+
+    getTouchAction: function() {
+        return [TOUCH_ACTION_AUTO];
+    },
+
+    process: function(input) {
+        var options = this.options;
+        var validPointers = input.pointers.length === options.pointers;
+        var validMovement = input.distance < options.threshold;
+        var validTime = input.deltaTime > options.time;
+
+        this._input = input;
+
+        // we only allow little movement
+        // and we've reached an end event, so a tap is possible
+        if (!validMovement || !validPointers || (input.eventType & (INPUT_END | INPUT_CANCEL) && !validTime)) {
+            this.reset();
+        } else if (input.eventType & INPUT_START) {
+            this.reset();
+            this._timer = setTimeoutContext(function() {
+                this.state = STATE_RECOGNIZED;
+                this.tryEmit();
+            }, options.time, this);
+        } else if (input.eventType & INPUT_END) {
+            return STATE_RECOGNIZED;
+        }
+        return STATE_FAILED;
+    },
+
+    reset: function() {
+        clearTimeout(this._timer);
+    },
+
+    emit: function(input) {
+        if (this.state !== STATE_RECOGNIZED) {
+            return;
+        }
+
+        if (input && (input.eventType & INPUT_END)) {
+            this.manager.emit(this.options.event + 'up', input);
+        } else {
+            this._input.timeStamp = now();
+            this.manager.emit(this.options.event, this._input);
+        }
+    }
+});
+
+/**
+ * Rotate
+ * Recognized when two or more pointer are moving in a circular motion.
+ * @constructor
+ * @extends AttrRecognizer
+ */
+function RotateRecognizer() {
+    AttrRecognizer.apply(this, arguments);
+}
+
+inherit(RotateRecognizer, AttrRecognizer, {
+    /**
+     * @namespace
+     * @memberof RotateRecognizer
+     */
+    defaults: {
+        event: 'rotate',
+        threshold: 0,
+        pointers: 2
+    },
+
+    getTouchAction: function() {
+        return [TOUCH_ACTION_NONE];
+    },
+
+    attrTest: function(input) {
+        return this._super.attrTest.call(this, input) &&
+            (Math.abs(input.rotation) > this.options.threshold || this.state & STATE_BEGAN);
+    }
+});
+
+/**
+ * Swipe
+ * Recognized when the pointer is moving fast (velocity), with enough distance in the allowed direction.
+ * @constructor
+ * @extends AttrRecognizer
+ */
+function SwipeRecognizer() {
+    AttrRecognizer.apply(this, arguments);
+}
+
+inherit(SwipeRecognizer, AttrRecognizer, {
+    /**
+     * @namespace
+     * @memberof SwipeRecognizer
+     */
+    defaults: {
+        event: 'swipe',
+        threshold: 10,
+        velocity: 0.3,
+        direction: DIRECTION_HORIZONTAL | DIRECTION_VERTICAL,
+        pointers: 1
+    },
+
+    getTouchAction: function() {
+        return PanRecognizer.prototype.getTouchAction.call(this);
+    },
+
+    attrTest: function(input) {
+        var direction = this.options.direction;
+        var velocity;
+
+        if (direction & (DIRECTION_HORIZONTAL | DIRECTION_VERTICAL)) {
+            velocity = input.overallVelocity;
+        } else if (direction & DIRECTION_HORIZONTAL) {
+            velocity = input.overallVelocityX;
+        } else if (direction & DIRECTION_VERTICAL) {
+            velocity = input.overallVelocityY;
+        }
+
+        return this._super.attrTest.call(this, input) &&
+            direction & input.offsetDirection &&
+            input.distance > this.options.threshold &&
+            input.maxPointers == this.options.pointers &&
+            abs(velocity) > this.options.velocity && input.eventType & INPUT_END;
+    },
+
+    emit: function(input) {
+        var direction = directionStr(input.offsetDirection);
+        if (direction) {
+            this.manager.emit(this.options.event + direction, input);
+        }
+
+        this.manager.emit(this.options.event, input);
+    }
+});
+
+/**
+ * A tap is ecognized when the pointer is doing a small tap/click. Multiple taps are recognized if they occur
+ * between the given interval and position. The delay option can be used to recognize multi-taps without firing
+ * a single tap.
+ *
+ * The eventData from the emitted event contains the property `tapCount`, which contains the amount of
+ * multi-taps being recognized.
+ * @constructor
+ * @extends Recognizer
+ */
+function TapRecognizer() {
+    Recognizer.apply(this, arguments);
+
+    // previous time and center,
+    // used for tap counting
+    this.pTime = false;
+    this.pCenter = false;
+
+    this._timer = null;
+    this._input = null;
+    this.count = 0;
+}
+
+inherit(TapRecognizer, Recognizer, {
+    /**
+     * @namespace
+     * @memberof PinchRecognizer
+     */
+    defaults: {
+        event: 'tap',
+        pointers: 1,
+        taps: 1,
+        interval: 300, // max time between the multi-tap taps
+        time: 250, // max time of the pointer to be down (like finger on the screen)
+        threshold: 9, // a minimal movement is ok, but keep it low
+        posThreshold: 10 // a multi-tap can be a bit off the initial position
+    },
+
+    getTouchAction: function() {
+        return [TOUCH_ACTION_MANIPULATION];
+    },
+
+    process: function(input) {
+        var options = this.options;
+
+        var validPointers = input.pointers.length === options.pointers;
+        var validMovement = input.distance < options.threshold;
+        var validTouchTime = input.deltaTime < options.time;
+
+        this.reset();
+
+        if ((input.eventType & INPUT_START) && (this.count === 0)) {
+            return this.failTimeout();
+        }
+
+        // we only allow little movement
+        // and we've reached an end event, so a tap is possible
+        if (validMovement && validTouchTime && validPointers) {
+            if (input.eventType != INPUT_END) {
+                return this.failTimeout();
+            }
+
+            var validInterval = this.pTime ? (input.timeStamp - this.pTime < options.interval) : true;
+            var validMultiTap = !this.pCenter || getDistance(this.pCenter, input.center) < options.posThreshold;
+
+            this.pTime = input.timeStamp;
+            this.pCenter = input.center;
+
+            if (!validMultiTap || !validInterval) {
+                this.count = 1;
+            } else {
+                this.count += 1;
+            }
+
+            this._input = input;
+
+            // if tap count matches we have recognized it,
+            // else it has began recognizing...
+            var tapCount = this.count % options.taps;
+            if (tapCount === 0) {
+                // no failing requirements, immediately trigger the tap event
+                // or wait as long as the multitap interval to trigger
+                if (!this.hasRequireFailures()) {
+                    return STATE_RECOGNIZED;
+                } else {
+                    this._timer = setTimeoutContext(function() {
+                        this.state = STATE_RECOGNIZED;
+                        this.tryEmit();
+                    }, options.interval, this);
+                    return STATE_BEGAN;
+                }
+            }
+        }
+        return STATE_FAILED;
+    },
+
+    failTimeout: function() {
+        this._timer = setTimeoutContext(function() {
+            this.state = STATE_FAILED;
+        }, this.options.interval, this);
+        return STATE_FAILED;
+    },
+
+    reset: function() {
+        clearTimeout(this._timer);
+    },
+
+    emit: function() {
+        if (this.state == STATE_RECOGNIZED) {
+            this._input.tapCount = this.count;
+            this.manager.emit(this.options.event, this._input);
+        }
+    }
+});
+
+/**
+ * Simple way to create a manager with a default set of recognizers.
+ * @param {HTMLElement} element
+ * @param {Object} [options]
+ * @constructor
+ */
+function Hammer(element, options) {
+    options = options || {};
+    options.recognizers = ifUndefined(options.recognizers, Hammer.defaults.preset);
+    return new Manager(element, options);
+}
+
+/**
+ * @const {string}
+ */
+Hammer.VERSION = '2.0.6';
+
+/**
+ * default settings
+ * @namespace
+ */
+Hammer.defaults = {
+    /**
+     * set if DOM events are being triggered.
+     * But this is slower and unused by simple implementations, so disabled by default.
+     * @type {Boolean}
+     * @default false
+     */
+    domEvents: false,
+
+    /**
+     * The value for the touchAction property/fallback.
+     * When set to `compute` it will magically set the correct value based on the added recognizers.
+     * @type {String}
+     * @default compute
+     */
+    touchAction: TOUCH_ACTION_COMPUTE,
+
+    /**
+     * @type {Boolean}
+     * @default true
+     */
+    enable: true,
+
+    /**
+     * EXPERIMENTAL FEATURE -- can be removed/changed
+     * Change the parent input target element.
+     * If Null, then it is being set the to main element.
+     * @type {Null|EventTarget}
+     * @default null
+     */
+    inputTarget: null,
+
+    /**
+     * force an input class
+     * @type {Null|Function}
+     * @default null
+     */
+    inputClass: null,
+
+    /**
+     * Default recognizer setup when calling `Hammer()`
+     * When creating a new Manager these will be skipped.
+     * @type {Array}
+     */
+    preset: [
+        // RecognizerClass, options, [recognizeWith, ...], [requireFailure, ...]
+        [RotateRecognizer, {enable: false}],
+        [PinchRecognizer, {enable: false}, ['rotate']],
+        [SwipeRecognizer, {direction: DIRECTION_HORIZONTAL}],
+        [PanRecognizer, {direction: DIRECTION_HORIZONTAL}, ['swipe']],
+        [TapRecognizer],
+        [TapRecognizer, {event: 'doubletap', taps: 2}, ['tap']],
+        [PressRecognizer]
+    ],
+
+    /**
+     * Some CSS properties can be used to improve the working of Hammer.
+     * Add them to this method and they will be set when creating a new Manager.
+     * @namespace
+     */
+    cssProps: {
+        /**
+         * Disables text selection to improve the dragging gesture. Mainly for desktop browsers.
+         * @type {String}
+         * @default 'none'
+         */
+        userSelect: 'none',
+
+        /**
+         * Disable the Windows Phone grippers when pressing an element.
+         * @type {String}
+         * @default 'none'
+         */
+        touchSelect: 'none',
+
+        /**
+         * Disables the default callout shown when you touch and hold a touch target.
+         * On iOS, when you touch and hold a touch target such as a link, Safari displays
+         * a callout containing information about the link. This property allows you to disable that callout.
+         * @type {String}
+         * @default 'none'
+         */
+        touchCallout: 'none',
+
+        /**
+         * Specifies whether zooming is enabled. Used by IE10>
+         * @type {String}
+         * @default 'none'
+         */
+        contentZooming: 'none',
+
+        /**
+         * Specifies that an entire element should be draggable instead of its contents. Mainly for desktop browsers.
+         * @type {String}
+         * @default 'none'
+         */
+        userDrag: 'none',
+
+        /**
+         * Overrides the highlight color shown when the user taps a link or a JavaScript
+         * clickable element in iOS. This property obeys the alpha value, if specified.
+         * @type {String}
+         * @default 'rgba(0,0,0,0)'
+         */
+        tapHighlightColor: 'rgba(0,0,0,0)'
+    }
+};
+
+var STOP = 1;
+var FORCED_STOP = 2;
+
+/**
+ * Manager
+ * @param {HTMLElement} element
+ * @param {Object} [options]
+ * @constructor
+ */
+function Manager(element, options) {
+    this.options = assign({}, Hammer.defaults, options || {});
+
+    this.options.inputTarget = this.options.inputTarget || element;
+
+    this.handlers = {};
+    this.session = {};
+    this.recognizers = [];
+
+    this.element = element;
+    this.input = createInputInstance(this);
+    this.touchAction = new TouchAction(this, this.options.touchAction);
+
+    toggleCssProps(this, true);
+
+    each(this.options.recognizers, function(item) {
+        var recognizer = this.add(new (item[0])(item[1]));
+        item[2] && recognizer.recognizeWith(item[2]);
+        item[3] && recognizer.requireFailure(item[3]);
+    }, this);
+}
+
+Manager.prototype = {
+    /**
+     * set options
+     * @param {Object} options
+     * @returns {Manager}
+     */
+    set: function(options) {
+        assign(this.options, options);
+
+        // Options that need a little more setup
+        if (options.touchAction) {
+            this.touchAction.update();
+        }
+        if (options.inputTarget) {
+            // Clean up existing event listeners and reinitialize
+            this.input.destroy();
+            this.input.target = options.inputTarget;
+            this.input.init();
+        }
+        return this;
+    },
+
+    /**
+     * stop recognizing for this session.
+     * This session will be discarded, when a new [input]start event is fired.
+     * When forced, the recognizer cycle is stopped immediately.
+     * @param {Boolean} [force]
+     */
+    stop: function(force) {
+        this.session.stopped = force ? FORCED_STOP : STOP;
+    },
+
+    /**
+     * run the recognizers!
+     * called by the inputHandler function on every movement of the pointers (touches)
+     * it walks through all the recognizers and tries to detect the gesture that is being made
+     * @param {Object} inputData
+     */
+    recognize: function(inputData) {
+        var session = this.session;
+        if (session.stopped) {
+            return;
+        }
+
+        // run the touch-action polyfill
+        this.touchAction.preventDefaults(inputData);
+
+        var recognizer;
+        var recognizers = this.recognizers;
+
+        // this holds the recognizer that is being recognized.
+        // so the recognizer's state needs to be BEGAN, CHANGED, ENDED or RECOGNIZED
+        // if no recognizer is detecting a thing, it is set to `null`
+        var curRecognizer = session.curRecognizer;
+
+        // reset when the last recognizer is recognized
+        // or when we're in a new session
+        if (!curRecognizer || (curRecognizer && curRecognizer.state & STATE_RECOGNIZED)) {
+            curRecognizer = session.curRecognizer = null;
+        }
+
+        var i = 0;
+        while (i < recognizers.length) {
+            recognizer = recognizers[i];
+
+            // find out if we are allowed try to recognize the input for this one.
+            // 1.   allow if the session is NOT forced stopped (see the .stop() method)
+            // 2.   allow if we still haven't recognized a gesture in this session, or the this recognizer is the one
+            //      that is being recognized.
+            // 3.   allow if the recognizer is allowed to run simultaneous with the current recognized recognizer.
+            //      this can be setup with the `recognizeWith()` method on the recognizer.
+            if (session.stopped !== FORCED_STOP && ( // 1
+                    !curRecognizer || recognizer == curRecognizer || // 2
+                    recognizer.canRecognizeWith(curRecognizer))) { // 3
+                recognizer.recognize(inputData);
+            } else {
+                recognizer.reset();
+            }
+
+            // if the recognizer has been recognizing the input as a valid gesture, we want to store this one as the
+            // current active recognizer. but only if we don't already have an active recognizer
+            if (!curRecognizer && recognizer.state & (STATE_BEGAN | STATE_CHANGED | STATE_ENDED)) {
+                curRecognizer = session.curRecognizer = recognizer;
+            }
+            i++;
+        }
+    },
+
+    /**
+     * get a recognizer by its event name.
+     * @param {Recognizer|String} recognizer
+     * @returns {Recognizer|Null}
+     */
+    get: function(recognizer) {
+        if (recognizer instanceof Recognizer) {
+            return recognizer;
+        }
+
+        var recognizers = this.recognizers;
+        for (var i = 0; i < recognizers.length; i++) {
+            if (recognizers[i].options.event == recognizer) {
+                return recognizers[i];
+            }
+        }
+        return null;
+    },
+
+    /**
+     * add a recognizer to the manager
+     * existing recognizers with the same event name will be removed
+     * @param {Recognizer} recognizer
+     * @returns {Recognizer|Manager}
+     */
+    add: function(recognizer) {
+        if (invokeArrayArg(recognizer, 'add', this)) {
+            return this;
+        }
+
+        // remove existing
+        var existing = this.get(recognizer.options.event);
+        if (existing) {
+            this.remove(existing);
+        }
+
+        this.recognizers.push(recognizer);
+        recognizer.manager = this;
+
+        this.touchAction.update();
+        return recognizer;
+    },
+
+    /**
+     * remove a recognizer by name or instance
+     * @param {Recognizer|String} recognizer
+     * @returns {Manager}
+     */
+    remove: function(recognizer) {
+        if (invokeArrayArg(recognizer, 'remove', this)) {
+            return this;
+        }
+
+        recognizer = this.get(recognizer);
+
+        // let's make sure this recognizer exists
+        if (recognizer) {
+            var recognizers = this.recognizers;
+            var index = inArray(recognizers, recognizer);
+
+            if (index !== -1) {
+                recognizers.splice(index, 1);
+                this.touchAction.update();
+            }
+        }
+
+        return this;
+    },
+
+    /**
+     * bind event
+     * @param {String} events
+     * @param {Function} handler
+     * @returns {EventEmitter} this
+     */
+    on: function(events, handler) {
+        var handlers = this.handlers;
+        each(splitStr(events), function(event) {
+            handlers[event] = handlers[event] || [];
+            handlers[event].push(handler);
+        });
+        return this;
+    },
+
+    /**
+     * unbind event, leave emit blank to remove all handlers
+     * @param {String} events
+     * @param {Function} [handler]
+     * @returns {EventEmitter} this
+     */
+    off: function(events, handler) {
+        var handlers = this.handlers;
+        each(splitStr(events), function(event) {
+            if (!handler) {
+                delete handlers[event];
+            } else {
+                handlers[event] && handlers[event].splice(inArray(handlers[event], handler), 1);
+            }
+        });
+        return this;
+    },
+
+    /**
+     * emit event to the listeners
+     * @param {String} event
+     * @param {Object} data
+     */
+    emit: function(event, data) {
+        // we also want to trigger dom events
+        if (this.options.domEvents) {
+            triggerDomEvent(event, data);
+        }
+
+        // no handlers, so skip it all
+        var handlers = this.handlers[event] && this.handlers[event].slice();
+        if (!handlers || !handlers.length) {
+            return;
+        }
+
+        data.type = event;
+        data.preventDefault = function() {
+            data.srcEvent.preventDefault();
+        };
+
+        var i = 0;
+        while (i < handlers.length) {
+            handlers[i](data);
+            i++;
+        }
+    },
+
+    /**
+     * destroy the manager and unbinds all events
+     * it doesn't unbind dom events, that is the user own responsibility
+     */
+    destroy: function() {
+        this.element && toggleCssProps(this, false);
+
+        this.handlers = {};
+        this.session = {};
+        this.input.destroy();
+        this.element = null;
+    }
+};
+
+/**
+ * add/remove the css properties as defined in manager.options.cssProps
+ * @param {Manager} manager
+ * @param {Boolean} add
+ */
+function toggleCssProps(manager, add) {
+    var element = manager.element;
+    if (!element.style) {
+        return;
+    }
+    each(manager.options.cssProps, function(value, name) {
+        element.style[prefixed(element.style, name)] = add ? value : '';
+    });
+}
+
+/**
+ * trigger dom event
+ * @param {String} event
+ * @param {Object} data
+ */
+function triggerDomEvent(event, data) {
+    var gestureEvent = document.createEvent('Event');
+    gestureEvent.initEvent(event, true, true);
+    gestureEvent.gesture = data;
+    data.target.dispatchEvent(gestureEvent);
+}
+
+assign(Hammer, {
+    INPUT_START: INPUT_START,
+    INPUT_MOVE: INPUT_MOVE,
+    INPUT_END: INPUT_END,
+    INPUT_CANCEL: INPUT_CANCEL,
+
+    STATE_POSSIBLE: STATE_POSSIBLE,
+    STATE_BEGAN: STATE_BEGAN,
+    STATE_CHANGED: STATE_CHANGED,
+    STATE_ENDED: STATE_ENDED,
+    STATE_RECOGNIZED: STATE_RECOGNIZED,
+    STATE_CANCELLED: STATE_CANCELLED,
+    STATE_FAILED: STATE_FAILED,
+
+    DIRECTION_NONE: DIRECTION_NONE,
+    DIRECTION_LEFT: DIRECTION_LEFT,
+    DIRECTION_RIGHT: DIRECTION_RIGHT,
+    DIRECTION_UP: DIRECTION_UP,
+    DIRECTION_DOWN: DIRECTION_DOWN,
+    DIRECTION_HORIZONTAL: DIRECTION_HORIZONTAL,
+    DIRECTION_VERTICAL: DIRECTION_VERTICAL,
+    DIRECTION_ALL: DIRECTION_ALL,
+
+    Manager: Manager,
+    Input: Input,
+    TouchAction: TouchAction,
+
+    TouchInput: TouchInput,
+    MouseInput: MouseInput,
+    PointerEventInput: PointerEventInput,
+    TouchMouseInput: TouchMouseInput,
+    SingleTouchInput: SingleTouchInput,
+
+    Recognizer: Recognizer,
+    AttrRecognizer: AttrRecognizer,
+    Tap: TapRecognizer,
+    Pan: PanRecognizer,
+    Swipe: SwipeRecognizer,
+    Pinch: PinchRecognizer,
+    Rotate: RotateRecognizer,
+    Press: PressRecognizer,
+
+    on: addEventListeners,
+    off: removeEventListeners,
+    each: each,
+    merge: merge,
+    extend: extend,
+    assign: assign,
+    inherit: inherit,
+    bindFn: bindFn,
+    prefixed: prefixed
+});
+
+// this prevents errors when Hammer is loaded in the presence of an AMD
+//  style loader but by script tag, not by the loader.
+var freeGlobal = (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {})); // jshint ignore:line
+freeGlobal.Hammer = Hammer;
+
+if (typeof define === 'function' && define.amd) {
+    define(function() {
+        return Hammer;
+    });
+} else if (typeof module != 'undefined' && module.exports) {
+    module.exports = Hammer;
+} else {
+    window[exportName] = Hammer;
+}
+
+})(window, document, 'Hammer');
 
 /* ========================================================================
  * Bootstrap: alert.js v3.3.5

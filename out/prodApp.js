@@ -46,17 +46,25 @@ var TabHeaderOrientation = {
     horizontal: 'Horizontal',
     vertical: 'Vertical'
 };
-InfinniUI.Metadata.ColorStyle = [
-    "Transparent",
-    "Primary1",
-    "Primary2",
-    "Primary3",
-    "Accent1",
-    "Accent2",
-    "Accent3",
-    "White",
-    "Black"
-];
+InfinniUI.ColorStyle = {
+    transparent: "Transparent",
+
+    primary1: "Primary1",
+    primary2: "Primary2",
+    primary3: "Primary3",
+
+    accent1: "Accent1",
+    accent2: "Accent2",
+    accent3: "Accent3",
+
+    background1: "Background1",
+    background2: "Background2",
+    background3: "Background3",
+    background4: "Background4",
+
+    white: "White",
+    black: "Black"
+};
 //InfinniUI.Metadata.HorizontalTextAlignment = [
 //    "Left",
 //    "Right",
@@ -70,20 +78,20 @@ InfinniUI.Metadata.TextHorizontalAlignment = {
     justify: 'Justify'
 };
 
-InfinniUI.Metadata.TextStyle = [
-    "Display4",
-    "Display3",
-    "Display2",
-    "Display1",
-    "Headline",
-    "Title",
-    "Subhead",
-    "Body2",
-    "Body1",
-    "Caption",
-    "Menu",
-    "Button"
-];
+InfinniUI.TextStyle = {
+    display4: "Display4",
+    display3: "Display3",
+    display2: "Display2",
+    display1: "Display1",
+
+    headline: "Headline",
+    title: "Title",
+    subhead: "Subhead",
+    body: "Body",
+    caption: "Caption",
+    menu: "Menu",
+    button: "Button"
+};
 _.defaults( InfinniUI.config, {
     lang: 'ru-RU',
     maxLengthUrl: 2048,
@@ -91,6 +99,12 @@ _.defaults( InfinniUI.config, {
     serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
     configId: 'PTA',
     configName: 'Хабинет'
+//devblockstart
+    ,editorService: {
+        url: 'http://localhost:5500/api/metadata/saveMetadata'
+    }
+//devblockstop
+
 });
 /**
  * Набор утилит для работы с BlobData объектами
@@ -1525,23 +1539,148 @@ window.InfinniUI.views = new OpenedViewCollection();
 
 window.InfinniUI.DateUtils = (function () {
 
-    var padInt = function (value, size) {
-        var str = '' + value;
-        var pad = '';
-        if (str.length < size) {
-            pad = Array(size - str.length + 1).join('0');
-        }
-        return pad + str;
+    init();
+
+    return {
+        toISO8601: toISO8601,
+        dateToTimestamp: dateToTimestamp,
+        dateToTimestampTime: dateToTimestampTime,
+        changeTimezoneOffset: changeTimezoneOffset,
+        restoreTimezoneOffset: restoreTimezoneOffset,
+        toDate: toDate,
+        createDate: createDate,
+        parseTimeISO8601toDate: parseTimeISO8601toDate,
+        parseISO8601toDate:parseISO8601toDate,
+        checkRangeDate: checkRangeDate,
+        getNearestDate: getNearestDate,
+        cloneDate: cloneDate
     };
+
+    function parseISO8601toDate(value) {
+        if (value === null || typeof value ==='undefined') {
+            return value;
+        }
+        return moment(value).toDate();
+    }
+
+    function cloneDate(date) {
+        if (date instanceof Date) {
+            return new Date(date.getTime());
+        }
+        return date;
+    }
+
+    /**
+     * @description Возвращает ближаешее к исходному значению из диапазона
+     * @param date
+     * @param min
+     * @param max
+     * @returns {Date}
+     */
+    function getNearestDate(date, min, max) {
+        var nearest;
+
+        var mMin = moment(min || null),
+            mMax = moment(max || null),
+            mVal = moment(date);
+
+
+        if (mMin.isValid() && mVal.isBefore(mMin)) {
+            nearest = mMin.toDate();
+        } else if (mMax.isValid() && mVal.isAfter(mMax)) {
+            nearest = mMax.toDate();
+        } else {
+            nearest = date;
+        }
+
+        return nearest;
+    }
+
+    /**
+     * @description Проверяет, что дата находится в заданном диапазоне
+     * @param date
+     * @param minDate
+     * @param maxDate
+     * @param {String} precision
+     * @returns {boolean}
+     */
+    function checkRangeDate(date, minDate, maxDate, precision) {
+        var success = true;
+
+        var mMin = moment(minDate || null),
+            mMax = moment(maxDate || null),
+            mVal = moment(date);
+
+
+        if (mMin.isValid() && mMax.isValid()) {
+            success = mVal.isSameOrBefore(mMax, precision) && mVal.isSameOrAfter(mMin, precision);
+        } else if (mMin.isValid()) {
+            success = mVal.isSameOrAfter(mMin, precision);
+        } else if (mMax.isValid()) {
+            success = mVal.isSameOrBefore(mMax, precision);
+        }
+
+        return success;
+    }
+
+    function parseTimeISO8601toDate(value) {
+        var date;
+        var formats = ['HH:mm', 'HH:mm:ss', 'HH:mm:ss.SSS', 'HHmm', 'HHmmss', 'HHmmss.SSS'];
+        var m = moment(value, formats);
+        if (m.isValid()) {
+            date = new Date(0);
+            date.setHours(m.hours(), m.minute(), m.second(), m.millisecond());
+        }
+        return date;
+    }
+
+    function toDate(value) {
+        var m = moment(value);
+        var date = null;
+
+        if (m.isValid()) {
+            date = m.toDate();
+        }
+
+        return date;
+    }
+
+    function changeTimezoneOffset(date, timezoneOffset) {
+        var newDate = date;
+
+        if (typeof timezoneOffset !== 'undefined' && date instanceof Date) {
+            var currentOffset = date.getTimezoneOffset();
+
+            if (timezoneOffset !== currentOffset) {
+                newDate = new Date(date.getTime() + (currentOffset - timezoneOffset) * 60 * 1000);
+            }
+        }
+
+        return newDate;
+    }
+
+    function restoreTimezoneOffset(date, timezoneOffset) {
+        var newDate = date;
+
+        if (typeof timezoneOffset !== 'undefined' && date instanceof Date) {
+            var currentOffset = date.getTimezoneOffset();
+
+            if (timezoneOffset !== currentOffset) {
+                newDate = new Date(date.getTime() - (currentOffset - timezoneOffset) * 60 * 1000);
+            }
+        }
+
+        return newDate;
+    }
 
     /**
      * @description Возвращает строковое представление даты в формате YYYY-MM-DDTHH:mm:ss.sss+HH:MM
      * @param {Date} date
      * @param {Object} options
-     * @param {boolean} [options.resetTime = false]
-     * @returns {string}
+     * @param {Number} options.timezoneOffset Смещение часового пояса относительно часового пояса UTC в минутах
+     * @returns {string|null}
      */
-    var toISO8601 = function (date, options) {
+    function toISO8601(date, options) {
 
         var config = options || {};
 
@@ -1553,42 +1692,111 @@ window.InfinniUI.DateUtils = (function () {
             return null;
         }
 
-        if (config.resetTime) {
-            date.setHours(0, 0, 0, 0);
-        }
+        var _date = changeTimezoneOffset(date, config.timezoneOffset);
+
         var datePart = [
-            padInt(date.getFullYear(), 4),
-            padInt(date.getMonth() + 1, 2),
-            padInt(date.getDate(), 2)
+            padInt(_date.getFullYear(), 4),
+            padInt(_date.getMonth() + 1, 2),
+            padInt(_date.getDate(), 2)
         ].join('-');
 
         var timePart = [
-            padInt(date.getHours(), 2),
-            padInt(date.getMinutes(), 2),
-            padInt(date.getSeconds(), 2)
+            padInt(_date.getHours(), 2),
+            padInt(_date.getMinutes(), 2),
+            padInt(_date.getSeconds(), 2)
         ].join(':');
-        
-        var sssPart = padInt(date.getMilliseconds(), 3) + '0';// '000' + '0'
 
-        if(!Math.sign) { //fix for devices not support ES6
-            Math.sign = function (x) {
-                return x?x<0?-1:1:0;
-            };
+        var sssPart = padInt(_date.getMilliseconds(), 3) + '0';// '000' + '0'
+
+
+        var timezoneOffset = config.timezoneOffset;
+        if (typeof timezoneOffset === 'undefined' || timezoneOffset === null) {
+            timezoneOffset = date.getTimezoneOffset();
         }
 
-        var tz = Math.abs(date.getTimezoneOffset());
-        var tzOffsetPart = Math.sign(date.getTimezoneOffset()) > 0 ? '-' : '+';
+        var tz = Math.abs(timezoneOffset);
+        var tzOffsetPart = Math.sign(timezoneOffset) > 0 ? '-' : '+';
         var tzPart = [
             padInt(Math.floor(tz / 60), 2),
             padInt(tz % 60, 2)
         ].join(':');
 
         return datePart + 'T' + timePart + '.' + sssPart + tzOffsetPart + tzPart;
-    };
+    }
 
-    return {
-        toISO8601: toISO8601
-    };
+    /**
+     * @description Возвращает заданную дату как количество секунд, прошедших с 01-01-1970T00:00 по UTC
+     * @param {String|Date} date ISO8601
+     */
+    function dateToTimestamp(date) {
+        var _date, datetime = null;
+
+        if (date && date.constructor === String) {
+            _date = new Date(date);
+        } else if (date && date.constructor === Date) {
+            _date = date;
+        }
+
+        if (_date) {
+            _date.setUTCHours(0, 0, 0, 0);
+            datetime = _date.getTime() / 1000;
+        }
+
+        return datetime;
+    }
+
+    function dateToTimestampTime(date) {
+        var time = null, _date, datetime;
+
+        if (date && date.constructor === String) {
+            _date = new Date(date);
+        } else if (date && date.constructor === Date) {
+            _date = date;
+        }
+
+        if (_date) {
+            datetime = new Date(0);
+            datetime.setUTCHours(_date.getUTCHours(), _date.getUTCMinutes(), _date.getUTCSeconds(), _date.getUTCMilliseconds());
+            time = datetime.getTime() / 1000;
+        }
+
+        return time;
+    }
+
+    function createDate(d) {
+        var date;
+
+        if (typeof d === Date) {
+            date = new Date(d.getTime());
+        } else if (typeof d === 'number') {
+            //Числовое значение интерпретируем как секунды (as unix-time)!
+            date = new Date(d * 1000);
+        } else if (typeof d === 'undefined' || d === null) {
+            date = null;
+        } else {
+            date = toDate(d);
+        }
+
+        return date;
+    }
+
+    function padInt(value, size) {
+        var str = '' + value;
+        var pad = '';
+        if (str.length < size) {
+            pad = Array(size - str.length + 1).join('0');
+        }
+        return pad + str;
+    }
+
+    function init() {
+        if (!Math.sign) { //fix for devices not support ES6
+            Math.sign = function (x) {
+                return x ? x < 0 ? -1 : 1 : 0;
+            };
+        }
+    }
+
 })();
 /**
  * Синглтон для работы с путями построенными по dot-notation
@@ -1659,20 +1867,18 @@ window.InfinniUI.ObjectUtils = (function () {
             var nextTerm = propertyPathTerms[i + 1];
             var nextTermCollectionIndex = parseCollectionIndex(nextTerm);
 
-            if (termValue === null || termValue === undefined) {
-                if (nextTermCollectionIndex >= 0) {
-                    termValue = [ ];
-                }
-                else {
-                    termValue = { };
+            if(nextTermCollectionIndex >= 0){
+                if(!$.isArray(termValue)){
+                    termValue = [];
                 }
 
-                if (termCollectionIndex >= 0) {
-                    setCollectionItem(parent, termCollectionIndex, termValue);
+                setCollectionItem(parent, termCollectionIndex, termValue);
+            }else{
+                if(!$.isPlainObject(termValue)){
+                    termValue = {};
                 }
-                else {
-                    setObjectProperty(parent, term, termValue);
-                }
+
+                setObjectProperty(parent, term, termValue);
             }
 
             parent = termValue;
@@ -1845,8 +2051,10 @@ window.InfinniUI.ObjectUtils = (function () {
 
                 if(propertyValue instanceof Date){
                     setPropertyByPath(target, propertyPathTerms, new Date(propertyValue));
-                }else{
-                    setPropertyByPath(target, propertyPathTerms, _.clone(propertyValue));
+                } else if(propertyValue instanceof File){
+                    setPropertyByPath(target, propertyPathTerms, propertyValue);
+                } else{
+                    setPropertyByPath(target, propertyPathTerms, propertyValue);
                 }
             }
         },
@@ -1902,6 +2110,816 @@ window.InfinniUI.format.humanFileSize = function (size) {
     var i = Math.floor( Math.log(size) / Math.log(1024) );
     return ( size / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 };
+var filterItems = (function() {
+
+	return function(items, filter) {
+		if( !filter ){
+			return items;
+		}
+
+		var itemsForFilter = JSON.parse(JSON.stringify(items)),
+				filterMethods = filterItems.filterMethods,
+				filterTree = filterItems.filterTreeBuilder.buildUpFilterTree(filter);
+
+		function stringToNum(value) {
+			if( typeof value === 'string' && !isNaN(value) ) {
+				value = +value;
+			}
+			return value;
+		}
+		function stringToBoolean(value) {
+			if( value === 'true' ) {
+				value = true;
+			} else if( value === 'false' ) {
+				value = false;
+			} else if( value === 'null' ) {
+				value = null;
+			}
+			return value;
+		}
+		function stringToArr(value) {
+			if( typeof value === 'string' && value.search(/\[[\'a-zA-Z0-9,]+\]/) !== -1 ) {
+				value = value.slice(1, -1).split(',');
+				for( var i = 0, ii = value.length; i < ii; i += 1 ) {
+					if( value[i].slice(-1) === "'" ) {
+						value[i] = value[i].slice(1, -1);
+					}
+					value[i] = stringToBoolean( value[i] );
+					value[i] = stringToNum( value[i] );
+				}
+			}
+			return value;
+		}
+		function findContext(currentContext, currentFunc) {
+			if( currentFunc.functionName === 'match' ) {
+				currentContext = currentFunc.children[0].valueName;
+			}
+			return currentContext;
+		}
+		function filterExec(filterTree, items, context) { // filterTree is object, items is array
+			var tmpChild1, tmpChild2 = [];
+			// find context
+			context = findContext( context, filterTree );
+			for( var j = 0, jj = filterTree.children.length; j < jj; j += 1 ) {
+				// if any child is function
+				// call filterExec with children of this child
+				if( filterTree.children[j].type === 'function' ) {
+					tmpChild1 = filterTree.children[j];
+
+					filterTree.children[j].valueName = filterExec(tmpChild1, items, context);
+					filterTree.children[j].newType = 'value';
+				}
+				if( filterTree.children[j].type === 'value' || filterTree.children[j].newType === 'value' ) {
+					if( filterTree.children[j].type === 'value' ) {
+						filterTree.children[j].valueName = stringToNum( filterTree.children[j].valueName ); // check on Number
+						filterTree.children[j].valueName = stringToBoolean( filterTree.children[j].valueName ); // check on Boolean
+						filterTree.children[j].valueName = stringToArr( filterTree.children[j].valueName ); // check on Array
+					}
+					tmpChild2.push( filterTree.children[j].valueName );
+				}
+			}
+			return filterMethods[filterTree.functionName](tmpChild2, items, context); // tmpChild2 is array
+		}
+		return filterExec(filterTree, itemsForFilter);
+	};
+})(filterItems);
+
+
+filterItems.filterTreeBuilder = (function() {
+	var that = {},
+			splitStringToArray = function(filter) { //filter is string
+				var tmpArr,
+						tmpNum,
+						tmpString,
+						tmpString2,
+						tmpRE,
+						reForDates = /date\(\'[0-9a-zA-Z\:\-\+\.\s]+\'\)/g,
+						reForParamAsArray = /\,[a-zA-Z0-9\'\,\_\.]+\)/g,
+						reForArrayFromOneElem = /\[[a-zA-Z0-9\'\_\.]+\]/g,
+						reForElemsOfTree = /[a-zA-Z]+[(]|\[[a-zA-Z0-9\S]+\]|[-\']{0,1}[a-zA-Z0-9_\.]+[\']{0,1}[,)$]/g,
+						reForClosingBrackets = /[)]/g,
+						reForRegExp = /\'([a-zA-Z0-9\S\W\D]+\s*)+\'/g,
+						reForSpaces = /\s+/g,
+						reForFewWordsInQuotes = /\'([a-zA-Z0-9\s]+\s*)+\'/g,
+						arr = [];
+				while( tmpArr = reForDates.exec(filter) ) { // search all dates and convert it to number of s [0.000]
+					tmpNum = Date.parse( tmpArr[0].slice(6, -2) ) / 1000 + '';
+					filter = filter.slice(0, tmpArr.index) + tmpNum + filter.slice(tmpArr.index + tmpArr[0].length);
+					reForDates.lastIndex = tmpArr.index + tmpNum.length;
+				}
+				while( tmpArr = reForRegExp.exec(filter) ) { // search for regexp
+					tmpNum = tmpArr[0];
+					if( tmpNum.search(reForSpaces) !== -1 || tmpNum.search(reForFewWordsInQuotes) !== -1 ) {
+						while( tmpString = reForFewWordsInQuotes.exec(tmpNum) ) {
+							tmpString2 = tmpString[0].replace(reForSpaces, '_');
+							tmpNum = tmpNum.slice(0, tmpString.index) + tmpString2 + tmpNum.slice(tmpString.index + tmpString[0].length);
+						}
+					} else {
+						tmpRE = tmpNum.slice(1, -1);
+						tmpNum = 'tmpRE';
+					}
+					filter = filter.slice(0, tmpArr.index) + tmpNum + filter.slice(tmpArr.index + tmpArr[0].length);
+					reForRegExp.lastIndex = tmpArr.index + tmpNum.length;
+				}
+				filter = filter.replace(/\s+/g, '');
+				while( tmpArr = reForParamAsArray.exec(filter) ) { // search second param
+					tmpNum = '[' + tmpArr[0].slice(1, -1) + '])';
+					filter = filter.slice(0, tmpArr.index + 1) + tmpNum + filter.slice(tmpArr.index + tmpArr[0].length);
+					reForParamAsArray.lastIndex = tmpArr.index + tmpNum.length;
+				}
+				while( tmpArr = reForArrayFromOneElem.exec(filter) ) { // convert array from 1 element to number or string or boolean
+					tmpNum = tmpArr[0].slice(1, -1);
+					filter = filter.slice(0, tmpArr.index) + tmpNum + filter.slice(tmpArr.index + tmpArr[0].length);
+					reForArrayFromOneElem.lastIndex = tmpArr.index + tmpNum.length;
+				}
+				while( tmpArr = reForElemsOfTree.exec(filter) ) { // search all functions and values with their index
+					if( tmpArr[0].length > 1 && (tmpArr[0].slice(-1) === ',' || tmpArr[0].slice(-1) === ')')  ) {
+						tmpArr[0] = tmpArr[0].slice(0, -1);
+					}
+					if( tmpArr[0].length > 1 && tmpArr[0].slice(0, 1) === "'" ) {
+						tmpArr[0] = tmpArr[0].slice(1, -1);
+					}
+					if( tmpArr[0].search(/tmpRE/) !== -1 ) {
+						tmpArr[0] = tmpArr[0].slice(1, -1).split(',');
+						tmpArr[0][0] = tmpRE;
+					}
+					arr.push(tmpArr);
+				}
+				while( tmpArr = reForClosingBrackets.exec(filter) ) { // search all closing brackets with their index
+					arr.push(tmpArr);
+				}
+				arr.sort(function(a, b) { // sort arr by indexes to put all data in right order
+					return a.index - b.index;
+				});
+				return arr;
+			},
+			divideToFunctionsAndValues = function(arrayToDivide) { //arrayToDivide is array
+				var tmpArr = [],
+						values = [],
+						filterArr = [],
+						counter = 0,
+						that,
+						tmpSymbol,
+						thatValue,
+						firstPart;
+				// split all data to different functions
+				for( var i = 0, ii = arrayToDivide.length; i < ii; i += 1 ) {
+					if( typeof arrayToDivide[i][0] === 'string' ) {
+						tmpSymbol = arrayToDivide[i][0].slice(-1);
+					} else {
+						tmpSymbol = ']';
+					}
+					if( tmpSymbol === '(' ) { // define functions from string
+						that = {};
+						that.type = 'function';
+						that.functionName = arrayToDivide[i][0].slice(0, -1);
+						that.index = arrayToDivide[i].index;
+						tmpArr.push( that );
+					} else if( tmpSymbol === ')' ) { // define where end of function
+						filterArr[counter] = [];
+						firstPart = tmpArr.pop();
+						firstPart.range = [];
+						firstPart.range.push( firstPart.index );
+						firstPart.children = [];
+						firstPart.range.push( arrayToDivide[i].index );
+						filterArr[counter] = firstPart;
+						counter += 1;
+					} else { // define params that are values
+						thatValue = {};
+						thatValue.type = 'value';
+						thatValue.valueName = arrayToDivide[i][0];
+						thatValue.index = arrayToDivide[i].index;
+						values.push( thatValue );
+					}
+				}
+				return [filterArr, values];
+			},
+			addValuesAsChildren = function(filterArr, values) { // filterArr, values are arrays
+				//add values to right place as children for functions
+				//define right place by range of index property
+				for( var i = 0, ii = values.length; i < ii; i += 1 ) {
+					for( var j = 0, jj = filterArr.length; j < jj; j += 1 ) {
+						if( values[i] !== null ) {
+							if( values[i].index > filterArr[j].range[0] && values[i].index < filterArr[j].range[1] ) {
+								filterArr[j].children.push( values[i] );
+								values[i] = null;
+							}
+						}
+					}
+				}
+				return filterArr;
+			},
+			filterArrToTree = function(filterArr) { // filterArr is array
+				// build up a filter tree
+				// by putting some functions as children for other
+				for( var i = 0; i < filterArr.length; i += 1 ) {
+					for( var j = 0; j < filterArr.length; j += 1 ) {
+						if( filterArr[j] !== null || filterArr[i] !== null ) {
+							//search for first result[j] where we can put result[i] as his child
+							//if find, put it and remove result[i]
+							if( filterArr[i].range[0] > filterArr[j].range[0] && filterArr[i].range[1] < filterArr[j].range[1] ) {
+								//if result[j] already have any children, check their indexes to define where put new child
+								if( filterArr[j].children[0] !== undefined && filterArr[j].children[0].index > filterArr[i].range[0] ) {
+									filterArr[j].children.unshift( filterArr[i] );
+									filterArr.splice(i, 1);
+									i -= 1;
+									break;
+								} else {
+									filterArr[j].children.push( filterArr[i] );
+									filterArr.splice(i, 1);
+									i -= 1;
+									break;
+								}
+							}
+						}
+					}
+				}
+				return filterArr[0];
+			};
+	that.buildUpFilterTree = function(filter) { // filter is string
+		var tmpArr;
+		tmpArr = splitStringToArray(filter);
+		tmpArr = divideToFunctionsAndValues(tmpArr);
+		tmpArr = addValuesAsChildren(tmpArr[0], tmpArr[1]);
+		return filterArrToTree(tmpArr);
+	};
+	return that;
+})();
+
+//sub method for filterItems with filter methods
+filterItems.filterMethods = (function() {
+	var that = {};
+
+	that.eq = function(value, items, context) { // value is array: value[0] - param, value[1] - value
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( globalUI.getPropertyValue( items[i][context][j], value[0] ) === value[1] ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( globalUI.getPropertyValue( items[i], value[0] ) === value[1] ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.and = function(values, items, context) {
+		return _.intersection.apply(_, values);
+	};
+
+	that.or = function(values, items, context) {
+		return _.union.apply(_, values);
+	};
+
+	that.not = function(values, items, context) { // values[0] is array
+		var tmpResult = items.slice();
+		return _.difference(tmpResult, values[0]);
+	};
+
+	that.notEq = function(value, items, context) {
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( globalUI.getPropertyValue( items[i][context][j], value[0] ) !== value[1] ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( globalUI.getPropertyValue( items[i], value[0] ) !== value[1] ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+	// compare for numbers and dates
+	that.gt = function(value, items, context) { // value is array: value[0] - param, value[1] - value
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( globalUI.getPropertyValue( items[i][context][j], value[0] ) > value[1] ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( globalUI.getPropertyValue( items[i], value[0] ) > value[1] ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+	// compare for numbers and dates
+	that.gte = function(value, items, context) { // value is array: value[0] - param, value[1] - value
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( globalUI.getPropertyValue( items[i][context][j], value[0] ) >= value[1] ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( globalUI.getPropertyValue( items[i], value[0] ) >= value[1] ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+	// compare for numbers and dates
+	that.lt = function(value, items, context) { // value is array: value[0] - param, value[1] - value
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( globalUI.getPropertyValue( items[i][context][j], value[0] ) < value[1] ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( globalUI.getPropertyValue( items[i], value[0] ) < value[1] ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+	// compare for numbers and dates
+	that.lte = function(value, items, context) { // value is array: value[0] - param, value[1] - value
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( globalUI.getPropertyValue( items[i][context][j], value[0] ) <= value[1] ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( globalUI.getPropertyValue( items[i], value[0] ) <= value[1] ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.in = function(values, items, context) { // values[1] is array
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( _.indexOf( values[1], globalUI.getPropertyValue( items[i][context][j], values[0] ) ) !== -1 ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( _.indexOf( values[1], globalUI.getPropertyValue( items[i], values[0] ) ) !== -1 ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.notIn = function(values, items, context) { // values[1] is array
+		var tmpResult = [],
+				tmpResult2,
+				length,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			if( context ) {
+				tmpResult2 = [];
+				if( items[i][context] === undefined ) {
+					length = -1;
+				} else {
+					length = items[i][context].length;
+				}
+				for( var j = 0, jj = length; j < jj; j += 1 ) {
+					if( _.indexOf( values[1], globalUI.getPropertyValue( items[i][context][j], values[0] ) ) === -1 ) {
+						tmpResult2.push( items[i] );
+					}
+				}
+				if( length === tmpResult2.length ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( _.indexOf( values[1], globalUI.getPropertyValue( items[i], values[0] ) ) === -1 ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.exists = function(value, items, context) { // value[1] is string
+		var tmpResult = [],
+				tmpValue,
+				globalUI = InfinniUI.ObjectUtils;
+
+		if( value[1] === undefined ) {
+			value[1] = true;
+		}
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpValue = globalUI.getPropertyValue( items[i], value[0] );
+			if( value[1] === true ) {
+				if( !_.isUndefined(tmpValue) && !_.isNull(tmpValue) ) {
+					tmpResult.push( items[i] );
+				}
+			} else {
+				if( _.isUndefined(tmpValue) || _.isNull(tmpValue) ) {
+					tmpResult.push( items[i] );
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.match = function(values, items, context) {
+		var tmpResult = [],
+				globalUI = InfinniUI.ObjectUtils;
+		for( var i = 0, ii = values[1].length; i < ii; i += 1 ) {
+			if( globalUI.getPropertyValue( values[1][i], values[0] ) !== undefined ) {
+				tmpResult.push( values[1][i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.all = function(values, items, context) { // value[1] is array
+		var tmpResult = [],
+				counter,
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], values[0] );
+			counter = 0;
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( _.indexOf( values[1], tmpArr[j] ) !== -1 ) {
+					counter += 1;
+				}
+			}
+			if( jj === counter ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyIn = function(values, items, context) { // value[1] is array
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], values[0] );
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( _.indexOf( values[1], tmpArr[j] ) !== -1 ) {
+					tmpResult.push( items[i] );
+					break;
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyNotIn = function(values, items, context) { // value[1] is array
+		var tmpResult = [],
+				counter,
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], values[0] );
+			counter = 0;
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( _.indexOf( values[1], tmpArr[j] ) !== -1 ) {
+					counter += 1;
+				}
+			}
+			if( counter === 0 ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyEq = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( _.indexOf(tmpArr, value[1]) !== -1 ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyNotEq = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( tmpArr[j] !== value[1] ) {
+					tmpResult.push( items[i] );
+					break;
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyGt = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( tmpArr[j] > value[1] ) {
+					tmpResult.push( items[i] );
+					break;
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyGte = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( tmpArr[j] >= value[1] ) {
+					tmpResult.push( items[i] );
+					break;
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyLt = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( tmpArr[j] < value[1] ) {
+					tmpResult.push( items[i] );
+					break;
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.anyLte = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			for( var j = 0, jj = tmpArr.length; j < jj; j += 1 ) {
+				if( tmpArr[j] <= value[1] ) {
+					tmpResult.push( items[i] );
+					break;
+				}
+			}
+		}
+		return tmpResult;
+	};
+
+	that.sizeEq = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( tmpArr.length === value[1] ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.sizeNotEq = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( tmpArr.length !== value[1] ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.sizeGt = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( tmpArr.length > value[1] ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.sizeGte = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( tmpArr.length >= value[1] ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.sizeLt = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( tmpArr.length < value[1] ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.sizeLte = function(value, items, context) {
+		var tmpResult = [],
+				tmpArr,
+				globalUI = InfinniUI.ObjectUtils;
+
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpArr = globalUI.getPropertyValue( items[i], value[0] );
+			if( tmpArr.length <= value[1] ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.regexp = function(values, items, context) { // value[1] is array
+		var tmpResult = [],
+				tmpObjValue,
+				globalUI = InfinniUI.ObjectUtils,
+				flags = '',
+				regexp;
+		for( var j = 1, jj = values[1].length; j < jj; j += 1 ) {
+			flags += values[1][j];
+		}
+		regexp = new RegExp(values[1][0], flags);
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpObjValue = globalUI.getPropertyValue( items[i], values[0] );
+			if( tmpObjValue.search(regexp) !== -1 ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+
+	that.text = function(value, items, context) {
+		var tmpResult = [],
+				tmpString,
+				subString = value[0].replace('_', ' ').toLowerCase();
+		for( var i = 0, ii = items.length; i < ii; i += 1 ) {
+			tmpString = JSON.stringify(items[i]).toLowerCase();
+			if( tmpString.indexOf( subString ) !== -1 ) {
+				tmpResult.push( items[i] );
+			}
+		}
+		return tmpResult;
+	};
+	return that;
+})();
+
 /**
  * @description Простая реализация хеша у которого в качестве ключей м.б. объект
  * @constructor
@@ -1911,10 +2929,21 @@ function HashMap() {
     this._values = [];
 }
 
-Object.defineProperties(HashMap.prototype, {
+Object.defineProperties(HashMap.prototype, /** @lends HashMap.prototype **/{
     length: {
         get: function () {
             return this._keys.length;
+        }
+    },
+    keys: {
+        get: function () {
+            return this._keys;
+        }
+    },
+
+    values: {
+        get: function () {
+            return this._values;
         }
     }
 });
@@ -1928,6 +2957,36 @@ HashMap.prototype.add = function (key, value) {
     } else {
         this._values[i] = value;
     }
+};
+
+HashMap.prototype.getKeyByValue = function (value) {
+    var key,
+        i = this._getIndexOfValue(value);
+
+    if (i !== -1) {
+        key = this._keys[i];
+    }
+    return key;
+};
+
+/**
+ *
+ * @param {Function} predicate
+ * @param thisArg
+ * @returns {numeric}
+ */
+HashMap.prototype.findIndex = function (predicate, thisArg) {
+    var key, value, index = -1;
+    for (var i = 0; i < this._keys.length; i = i + 1) {
+        key = this._keys[i];
+        value = this._values[i];
+        if (predicate.call(thisArg, key, value)) {
+            index =  i;
+            break;
+        }
+    }
+
+    return index;
 };
 
 HashMap.prototype.get = function (key) {
@@ -1962,6 +3021,15 @@ HashMap.prototype.clear = function (callback) {
  */
 HashMap.prototype._getIndexOfKey = function (key) {
     return this._keys.indexOf(key);
+};
+
+/**
+ * @param {*} value
+ * @returns {number}
+ * @private
+ */
+HashMap.prototype._getIndexOfValue = function (value) {
+    return this._values.indexOf(value);
 };
 function adaptRowsHeightModel(availableH, rowHeightList){
     var summ = 0,
@@ -2208,7 +3276,7 @@ var layoutManager = {
 
         var manager = this;
         (function h(node, height) {
-            var children = node.$element.children(':not(:hidden):not(.modal-scrollable):not(.modal-backdrop)');
+            var children = node.$element.children(':not(:hidden):not(.modal-scrollable):not(.modal-backdrop):not(.pl-dropdown-container)');
             /**
              * @TODO Возможно правильнее исключать из обсчета все элементы с абсолютным позиционированием
              */
@@ -2326,6 +3394,7 @@ var layoutManager = {
             var $el = $(this.getSelector(), $modal);
 
             $el.parentsUntil('.modal').css('height', 'auto');
+            $container.css('top', (this.windowHeight - $header.outerHeight(true) - $body.outerHeight(true)) / 2);
 
             $modal.children('.modal:not(.messagebox)').height($body.outerHeight(true) + $header.outerHeight(true));
 
@@ -2373,21 +3442,19 @@ var layoutManager = {
         $container.css('margin-top', 0);
 
         var el = $(this.getSelector(), $modal);
-        if (el.length === 0) {
-            //Если диалог не содержит элементы которые должны растягиваться по вертикали на 100%
-            //Выравниваем по вертикали в центр
-            $container.css('top', (this.windowHeight - headerHeight - $body.outerHeight(true)) / 2);
-            return;
+        if (el.length !== 0) {
+            // Если диалог содержит элементы которые должны растягиваться по вертикали на 100%
+            // пересчитываем высоту
+
+            //@TODO Зачем задавалась минимальная высота диалогов?
+            //$body.css('min-height', (this.windowHeight - $header.outerHeight(true) - space * 2) / 2);
+            var containerHeight = this.setOuterHeight($modal, this.windowHeight - space * 2);
+
+            //Высота для содержимого окна диалога
+            var clientHeight = this.setOuterHeight($container, containerHeight) - $header.outerHeight();
+
+            this.resize($body[0], clientHeight);
         }
-
-        $body.css('min-height', (this.windowHeight - $header.outerHeight(true) - space * 2) / 2);
-        var containerHeight = this.setOuterHeight($modal, this.windowHeight - space * 2);
-
-        //Высота для содержимого окна диалога
-        var clientHeight = this.setOuterHeight($container, containerHeight) - $header.outerHeight();
-
-        this.resize($body[0], clientHeight);
-        $container.css('top', (this.windowHeight - headerHeight - clientHeight) / 2);
     },
 
     init: function (container) {
@@ -2398,12 +3465,6 @@ var layoutManager = {
             this.exchange = window.InfinniUI.global.messageBus;
             this.exchange.subscribe('OnChangeLayout', _.debounce(this.onChangeLayout.bind(this), 42));
         }
-
-
-        /*var exchange = messageBus.getExchange('modal-dialog');
-        exchange.subscribe(messageTypes.onLoading, function () {
-            this.resizeDialog();
-        }.bind(this));*/
     },
 
     onChangeLayout: function (container) {
@@ -2568,6 +3629,11 @@ var MessageBox = Backbone.View.extend({
     ),
 
     initialize: function (options) {
+        // чтобы пользователь случайно не обратился к элементу в фокусе,
+        // пока диалоговое окно создается и ещё не перехватило фокус,
+        // необходимо старую фокусировку снять
+        $(document.activeElement).blur();
+
         this.options = options;
 
         this.addButtonClasses();
@@ -2623,6 +3689,8 @@ var MessageBox = Backbone.View.extend({
     },
 
     addColor: function(){
+        this.options.color = '#2ECC71;';
+
         if(this.options.type){
             if(this.options.type == 'error'){
                 this.options.color = '#E74C3C;';
@@ -2630,8 +3698,6 @@ var MessageBox = Backbone.View.extend({
             if(this.options.type == 'warning'){
                 this.options.color = '#F1C40F;';
             }
-        }else{
-            this.options.color = '#2ECC71;';
         }
     },
 
@@ -2706,6 +3772,10 @@ InfinniUI.Metadata.isValidValue = function (value, metadata) {
 
     return result;
 };
+
+InfinniUI.Metadata.isBindingMetadata = function(metadata){
+    return $.isPlainObject(metadata) && 'Source' in metadata;
+};
 Number.isInteger = Number.isInteger || function(value) {
     return typeof value === "number" &&
         isFinite(value) &&
@@ -2750,15 +3820,24 @@ var stringUtils = {
     },
 
     formatProperty: function(property, indexes){
-        if(!indexes || indexes.length == 0){
+        if(!indexes || indexes.length == 0 || property == ''){
             return property;
         }
 
-        var i = 0;
-        return property.replace(/\#/g, function(){
-            i++;
-            return indexes[i-1];
-        });
+        var propertyPaths = property.split('.');
+
+        var j = indexes.length-1;
+
+        for(var i = propertyPaths.length-1; i>=0; i--){
+            if(propertyPaths[i] == '#' && j >= 0){
+                propertyPaths[i] = indexes[j];
+                j--;
+            }else if(propertyPaths[i] == '$' || stringUtils.isNumeric(propertyPaths[i])){
+                j--;
+            }
+        }
+
+        return propertyPaths.join('.');
     },
 
     padLeft: function a (value, len, char) {
@@ -2772,6 +3851,20 @@ var stringUtils = {
             return new Array(len - str.length + 1).join(char) + str;
         }
         return str;
+    },
+
+    isNumeric: function(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    },
+
+    joinDataForQuery: function(data){
+        var result = [];
+
+        for(var k in data){
+            result.push(k + '=' + data[k]);
+        }
+
+        return result.join('&');
     }
 };
 
@@ -2888,7 +3981,7 @@ function guid() {
 
     InfoElement.prototype.copyInfo = function (viewName, name) {
         if (viewName || name) {
-            window.prompt("Copy to clipboard: Ctrl+C", viewName + ':' + name);
+            window.prompt("Copy to clipboard: Ctrl+C", formatInfo(viewName, name));
         }
     };
 
@@ -2902,7 +3995,7 @@ function guid() {
         this.clickManager.append($control[0], this.copyInfo.bind(this, viewName, name));
 
         $control.tooltip({
-                title: viewName + ':' + name,
+                title: formatInfo(viewName, name),
                 placement: "auto"
             })
             .tooltip('show');
@@ -2958,9 +4051,215 @@ function guid() {
     };
 
 
+    /********************/
+
+    function formatInfo(viewName, name) {
+        var info = viewName ? [viewName] : [];
+        info.push(name);
+
+        return info.join(':');
+    };
+
+
 })(window, document, jQuery);
 
 
+var TreeModel = function(context, source, startTree){
+    this.context = context;
+    this.source = source;
+    this.dataTree = startTree || {};
+
+    this.handlersTree = {};
+
+    this.mirroringFrom = null;
+    this.mirroringTo = null;
+};
+
+_.extend(TreeModel.prototype, {
+
+    counter: 1,
+
+    getProperty: function(propertyName){
+        if(this.mirroringFrom){
+            propertyName = propertyName.replace(this.mirroringFrom, this.mirroringTo);
+        }
+        return InfinniUI.ObjectUtils.getPropertyValue(this.dataTree, propertyName)
+    },
+
+    setProperty: function(propertyName, value){
+        var oldValue = this.getProperty(propertyName);
+        if(value == oldValue){
+            return false;
+        }
+
+        InfinniUI.ObjectUtils.setPropertyValue(this.dataTree, propertyName, value);
+
+        this._notifyAboutPropertyChanged(propertyName, oldValue);
+
+        return true;
+    },
+
+    simulateSetProperty: function(propertyName, oldValue){
+        this._notifyAboutPropertyChanged(propertyName, oldValue);
+    },
+
+    onPropertyChanged: function(propertyName, handler, params){
+        var handlersNode;
+        var bindId = this.counter;
+        this.counter ++;
+
+        if(_.isFunction(propertyName)){
+            params = handler;
+            handler = propertyName;
+
+            handlersNode = this._getHandlersSubTree('*', true);
+        }else{
+            handlersNode = this._getHandlersSubTree(propertyName, true);
+        }
+
+        handler._bindId = bindId;
+        if(params && 'owner' in params){
+            handler._owner = params.owner;
+        }
+
+        handlersNode[bindId] = handler;
+    },
+
+    _getHandlersSubTree: function(propertyName, restoreIfNoProperty){
+        if(propertyName == ''){
+            return this.handlersTree;
+        }
+
+        var propertyPaths = propertyName.split('.');
+        var tmpResult = this.handlersTree;
+        for(var i = 0, ii = propertyPaths.length; i<ii; i++){
+            if(tmpResult[propertyPaths[i]]){
+                tmpResult = tmpResult[propertyPaths[i]];
+            }else{
+                if(restoreIfNoProperty){
+                    tmpResult[propertyPaths[i]] = {};
+                    tmpResult = tmpResult[propertyPaths[i]];
+                }else{
+                    return {};
+                }
+            }
+        }
+
+        return tmpResult;
+    },
+
+    _notifyAboutPropertyChanged: function(propertyName, oldValue){
+        var handlers = this._getHandlersSubTree(propertyName);
+
+        var needMirroring = this.mirroringTo != null && this.mirroringFrom != null && propertyName.indexOf(this.mirroringTo) == 0;
+        var mirroringPath = propertyName.replace(this.mirroringTo, this.mirroringFrom);
+
+        this._notifyAboutPropertyChanged_bubblingAction(propertyName, oldValue, handlers);
+
+        this._notifyAboutPropertyChanged_capturingAction(propertyName, oldValue, handlers);
+        if(needMirroring){
+            handlers = this._getHandlersSubTree(mirroringPath);
+            this._notifyAboutPropertyChanged_capturingAction(mirroringPath, oldValue, handlers);
+        }
+    },
+
+    _notifyAboutPropertyChanged_capturingAction: function(propertyName, oldValue, handlersSubTree){
+        var tmpValue;
+        var tmpProperty;
+        var handler;
+
+        for( var k in handlersSubTree ){
+            if($.isFunction(handlersSubTree[k])){
+
+                handler = handlersSubTree[k];
+                if(this._isOwnerAlive(handler)){
+                    this._callHandlerAboutPropertyChanged(handler, propertyName, oldValue);
+                }else{
+                    delete handlersSubTree[k];
+                }
+
+            } else if($.isPlainObject(handlersSubTree[k]) && k != '*'){
+
+                tmpValue = $.isPlainObject(oldValue) ? oldValue[k] : undefined;
+                tmpProperty = propertyName == '' ? k :propertyName + '.' + k;
+                this._notifyAboutPropertyChanged_capturingAction(tmpProperty, tmpValue, handlersSubTree[k]);
+
+            }
+        }
+    },
+
+    _notifyAboutPropertyChanged_bubblingAction: function(propertyName, oldValue, handlersSubTree){
+        var propertyNamePaths = propertyName.split('.');
+        var tmpPropertyName;
+
+        var handlersNode = this.handlersTree;
+        var that = this;
+
+        checkAndCallAnyHandlers(handlersNode);
+
+        if(propertyName != ''){
+            for(var i = 0, ii = propertyNamePaths.length; i < ii; i++){
+
+                tmpPropertyName = propertyNamePaths[i];
+                if(handlersNode[tmpPropertyName]){
+                    handlersNode = handlersNode[tmpPropertyName];
+                    checkAndCallAnyHandlers(handlersNode);
+
+                }else{
+                    break;
+                }
+            }
+        }
+
+
+
+        function checkAndCallAnyHandlers(_handlersNode){
+            var handler;
+
+            if('*', _handlersNode){
+                for( var k in _handlersNode['*'] ){
+                    handler = _handlersNode['*'][k];
+                    if(that._isOwnerAlive(handler)){
+                        that._callHandlerAboutPropertyChanged(handler, propertyName, oldValue);
+                    }else{
+                        delete _handlersNode['*'][k];
+                    }
+                }
+            }
+        }
+    },
+
+    _isOwnerAlive: function(handler){
+        if(handler._owner && 'isRemoved' in handler._owner){
+
+            if(typeof handler._owner.isRemoved == 'function'){
+                return handler._owner.isRemoved();
+            }else{
+                return !handler._owner.isRemoved;
+            }
+
+        }else{
+            return true;
+        }
+    },
+
+    _callHandlerAboutPropertyChanged: function(handler, propertyName, oldValue){
+        var args = {
+            property: propertyName,
+            newValue: this.getProperty(propertyName),
+            oldValue: oldValue,
+            source: this.source
+        };
+
+        handler(this.context, args);
+    },
+
+    setMirroring: function(mirroringFrom, mirroringTo){
+        this.mirroringFrom = mirroringFrom;
+        this.mirroringTo = mirroringTo;
+    }
+
+});
 var urlManager = {
     getParams: function(){
         var getPath = location.search,
@@ -3142,7 +4441,9 @@ window.messageTypes = {
     onToolTipShow: {name: 'onToolTipShow'},
     onToolTipHide: {name: 'onToolTipHide'},
     onDataLoading: {name: 'onDataLoading'},
-    onDataLoaded: {name: 'onDataLoaded'}
+    onDataLoaded: {name: 'onDataLoaded'},
+
+    onViewCreated: {name: 'onViewCreated'}
 
     //onOpenViewInContainer: {name: 'onOpenViewInContainer'}
 
@@ -3488,7 +4789,11 @@ var textEditorMixin = {
     onMouseenterControlHandler: function (event) {
         //TODO: при ховере показывается маска (UI-854: убрал) по просьбе TeamLead'a
         //При ховере Editor нужен, чтобы при клике по полю, курсор выставлялся в указаннкю позицию
-        if(this.model.get('enabled')) {
+        var enabled = this.model.get('enabled'),
+            value = this.model.get('value'),
+            isEmpty = value === '' || value === null || typeof value === 'undefined';
+
+        if(enabled && !isEmpty) {
             this.showEditor(this.model.get('value'), true);
             this.onEditorHideControl();
         }
@@ -3509,7 +4814,7 @@ var textEditorMixin = {
      */
     onEditorDone: function (value) {
         if(typeof value === 'undefined' || value === null || !value.toString().length) {
-            value = undefined;
+            value = null;
         }
         this.model.set('value', value);
     },
@@ -3519,6 +4824,7 @@ var textEditorMixin = {
      */
     onEditorShowControl: function () {
         this.ui.control.show();
+        this.ui.control.scrollTop(0);
 
         if(this.ui.controlWrap){
             this.ui.controlWrap.show();
@@ -3685,6 +4991,10 @@ _.extend(Control.prototype, {
 
     remove: function () {
         this.controlView.remove();
+    },
+
+    setFocus: function () {
+        this.controlView.setFocus();
     }
 });
 
@@ -3815,7 +5125,9 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         var
             $el = this.$el,
             el = this.el,
+            view = this,
             model = this.model;
+
 
         $el
             .on('focusin', onFocusIn)
@@ -3826,13 +5138,18 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         }
 
         function onFocusOut(event) {
-            if ($.contains(el, event.relatedTarget)) {
+            if (view.isControlElement(event.relatedTarget)) {
                 //focus out to element inside control
+                model.set('focused', true);
             } else {
                 //focus out
                 model.set('focused', false);
             }
         }
+    },
+
+    isControlElement: function (el) {
+        return this.el ===  el || $.contains(this.el, el)
     },
 
     initTooltipHandlers: function () {
@@ -3878,6 +5195,8 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
 
         this.updateFocusable();
         this.updateFocused();
+
+        this.updateViewMode();
     },
 
     /**
@@ -3900,7 +5219,7 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         if (focused) {
             var $el = this.getElementForFocus();
             if ($el && $el.length) {
-                $el.focus();
+                //$el.focus();
             }
         }
         this.$el.toggleClass(this.classNameFocused, focused);
@@ -3932,14 +5251,16 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
     },
 
     updateVerticalAlignment: function () {
-        var verticalAlignment = this.model.get('verticalAlignment');
-        var prefix = 'verticalAlignment';
-        var regexp = new RegExp('(^|\\s)' + prefix + '\\S+', 'ig');
+        //var verticalAlignment = this.model.get('verticalAlignment');
+        this.switchClass('verticalAlignment', this.model.get('verticalAlignment'), this.$el, false);
 
-        this.$el.removeClass(function (i, name) {
-                return (name.match(regexp) || []).join(' ');
-            })
-            .addClass(prefix + verticalAlignment);
+        //var prefix = 'verticalAlignment';
+        //var regexp = new RegExp('(^|\\s)' + prefix + '\\S+', 'ig');
+        //
+        //this.$el.removeClass(function (i, name) {
+        //        return (name.match(regexp) || []).join(' ');
+        //    })
+        //    .addClass(prefix + verticalAlignment);
     },
 
     updateTextHorizontalAlignment: function () {
@@ -3947,37 +5268,7 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
     },
 
     updateHorizontalAlignment: function () {
-        var horizontalAlignment = this.model.get('horizontalAlignment');
-        switch (horizontalAlignment) {
-            case 'Left':
-            {
-                this.$el
-                    .removeClass('center-block pull-right')
-                    .addClass('pull-left');
-                break;
-            }
-            case 'Right':
-            {
-                this.$el
-                    .removeClass('pull-left center-block')
-                    .addClass('pull-right');
-                break;
-            }
-            case 'Center':
-            {
-                this.$el
-                    .removeClass('pull-left pull-right')
-                    .addClass('center-block');
-                break;
-            }
-            case 'Stretch':
-            {
-                this.$el
-                    .removeClass('pull-left pull-right center-block')
-                    .addClass('full-width');
-                break;
-            }
-        }
+        this.switchClass('pl-horizontal', this.model.get('horizontalAlignment'));
     },
 
     updateName: function () {
@@ -4072,6 +5363,12 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         this.currentStyle = customStyle;
     },
 
+    updateViewMode: function () {
+        if(this.viewMode == 'FormGroup' ){
+            this.$el.addClass('pl-form-group');
+        }
+    },
+
     updateValidationState: function () {
         var newState = this.model.get('validationState'),
             message = this.model.get('validationMessage');
@@ -4146,9 +5443,14 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         }
     },
 
-    switchClass: function (name, value, $el) {
+    switchClass: function (name, value, $el, separator) {
+        if (typeof separator === 'undefined') {
+            separator = '-';
+        } else if (separator === false) {
+            separator = '';
+        }
 
-        var startWith = name + '-';
+        var startWith = name + separator;
         var regexp = new RegExp('(^|\\s)' + startWith + '\\S+', 'ig');
         var $element = $el || this.$el;
         $element.removeClass(function (i, name) {
@@ -4197,6 +5499,10 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
             background: model.get('background'),
             texture: model.get('texture')
         }
+    },
+
+    setFocus: function () {
+        this.$el.focus();
     }
 
 });
@@ -4416,6 +5722,8 @@ var TextEditor = Backbone.View.extend({
         if (!skipRefocus) {
             this.ui.editor.focus();
         }
+
+        this.ui.editor.scrollTop(0);
         this.checkCurrentPosition();
         this.inFocus = true;
     },
@@ -4675,7 +5983,12 @@ var TextEditor = Backbone.View.extend({
         }
 
         var text = (event.originalEvent || event).clipboardData.getData('text/plain') || prompt('Paste something..');
-        maskEdit.pasteStringToMask(text, this.getCaretPosition());
+        var chars = text.split('');
+
+        for (var i = 0, position = this.getCaretPosition(); i < chars.length; i = i + 1) {
+            position = maskEdit.setCharAt(chars[i], position);
+        }
+        //maskEdit.pasteStringToMask(text, this.getCaretPosition());
 
         event.preventDefault();
         editor.val(maskEdit.getText());
@@ -4975,7 +6288,6 @@ var ContainerView = ControlView.extend(
         }
     }
 );
-
 var editorBaseControlMixin = {
 
     initialize_editorBaseControl: function(){
@@ -5077,6 +6389,10 @@ var editorBaseModelMixin = {
 
     getValue: function () {
         return this.get('value');
+    },
+
+    isSetValue: function (value) {
+        return value !== null && typeof value !== 'undefined' && value !== '';
     },
 
     onValueChanging: function (handler) {
@@ -5223,6 +6539,38 @@ EventManager.prototype.trigger = function (name, message, context) {
     return response;
 };
 
+var highlightMixin = {
+
+    attributeName: '_highlight',
+
+    highlightClassName: 'active',
+
+    control: {
+
+        setHighlight: function (highlight) {
+            this.controlModel.set(highlightMixin.attributeName, highlight);
+        },
+
+        getHighlight: function () {
+            return this.controlModel.get(highlightMixin.attributeName);
+        }
+
+    },
+
+    controlView: {
+
+        initHighlightMixin: function () {
+            this.listenTo(this.model, 'change:' + highlightMixin.attributeName, function () {
+                var model = this.model;
+                this.$el.toggleClass(highlightMixin.highlightClassName, model.get(highlightMixin.attributeName));
+                this.$el.parent().toggleClass(highlightMixin.highlightClassName, model.get(highlightMixin.attributeName));
+            });
+        }
+
+    }
+};
+
+
 function ListEditorBaseControl(viewMode) {
     _.superClass(ListEditorBaseControl, this, viewMode);
     this.initialize_editorBaseControl();
@@ -5244,13 +6592,14 @@ var ListEditorBaseModel = ContainerModel.extend( _.extend({
 
     initialize: function () {
         var that = this;
+        this.hashValueByItem = new HashMap();
         ContainerModel.prototype.initialize.apply(this, arguments);
         this.initialize_editorBaseModel();
 
         this.bindSelectedItemsWithValue();
 
         this.get('items').onChange(function(){
-            that.clearItemsStringifyCache();
+            that.hashValueByItem.clear();
         });
     },
 
@@ -5321,12 +6670,33 @@ var ListEditorBaseModel = ContainerModel.extend( _.extend({
     },
 
     itemInfoByValue: function(value){
-        if(!this.itemsStringifyCache){
-            this.updateItemsStringifyCache();
+        if (this.hashValueByItem.length === 0) {
+            this.updateHashValueByItem();
+        }
+        var info,
+            index,
+            item = this.hashValueByItem.getKeyByValue(value);
+
+        if (typeof item !== 'undefined') {
+            info = {
+                item: item,
+                index: this.hashValueByItem.keys.indexOf(item)
+            }
+        } else {
+            var text = JSON.stringify(value);
+            index = this.hashValueByItem.findIndex(function (item, value) {
+                return JSON.stringify(value) === text;
+            });
+
+            if (index !== -1) {
+                info = {
+                    index: index,
+                    item: this.hashValueByItem.keys[index]
+                }
+            }
         }
 
-        var stringifyValue = JSON.stringify(value);
-        return this.itemsStringifyCache[stringifyValue];
+        return info;
     },
 
     itemByValue: function(value){
@@ -5354,29 +6724,14 @@ var ListEditorBaseModel = ContainerModel.extend( _.extend({
         return this.itemIndexByValue(value);
     },
 
-    updateItemsStringifyCache: function(){
+    updateHashValueByItem: function () {
         var items = this.get('items'),
-            that = this,
-            stringify,
             value;
-        this.itemsStringifyCache = {};
-
-        items.forEach(function(item, index){
-            value = that.valueByItem(item);
-            stringify = JSON.stringify(value);
-            that.itemsStringifyCache[stringify] = {
-                item: item,
-                index: index
-            };
-        });
-    },
-
-    clearItemsStringifyCache: function(){
-        this.itemsStringifyCache = undefined;
-    },
-
-    isStringifyEqualValues: function(v1, v2){
-        return JSON.stringify(v1) == JSON.stringify(v2);
+        this.hashValueByItem.clear();
+        items.forEach(function (item) {
+            value = this.valueByItem(item);
+            this.hashValueByItem.add(item, value);
+        }, this);
     }
 
 }, editorBaseModelMixin));
@@ -5388,6 +6743,7 @@ var ListEditorBaseView = ContainerView.extend( _.extend( {}, editorBaseViewMixin
         editorBaseViewMixin.initHandlersForProperties.call(this);
 
         this.listenTo(this.model, 'change:selectedItem', this.updateSelectedItem);
+        this.listenTo(this.model, 'change:multiSelect', this.updateMultiSelect);
     },
 
     updateProperties: function(){
@@ -5395,6 +6751,11 @@ var ListEditorBaseView = ContainerView.extend( _.extend( {}, editorBaseViewMixin
         editorBaseViewMixin.updateProperties.call(this);
 
         this.updateSelectedItem();
+        this.updateMultiSelect();
+    },
+
+    updateMultiSelect: function () {
+
     }
 
 }));
@@ -5449,7 +6810,8 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
     UI: _.extend({}, editorBaseViewMixin.UI, {
         control: '.pl-control',
         editor: '.pl-control-editor',
-        label: '.pl-control-label'
+        label: '.pl-control-label',
+        textbox: '.pl-text-box-input'
     }),
 
     events: {
@@ -5523,7 +6885,7 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
         options = _.defaults(options, {
             el: this.ui.editor,
             multiline: false,
-            lineCount: 1,
+            lineCount: 2,
             inputType: 'text'
         });
 
@@ -5559,6 +6921,2140 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
 }));
 
 _.extend(TextEditorBaseView.prototype, textEditorMixin); //Работа с масками ввода
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments TextEditorBaseControl
+ */
+function TextBoxControl(parent) {
+    _.superClass(TextBoxControl, this, parent);
+}
+
+_.inherit(TextBoxControl, TextEditorBaseControl);
+
+_.extend(TextBoxControl.prototype, {
+
+    createControlModel: function () {
+        return new TextBoxModel();
+    },
+
+    createControlView: function (model) {
+        return new TextBoxView({model: model});
+    }
+});
+
+
+/**
+ * @class
+ * @augments TextEditorBaseModel
+ */
+var TextBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototype */{
+    defaults: _.extend(
+        {},
+        TextEditorBaseModel.prototype.defaults,
+        {
+            multiline: false
+        }
+    ),
+
+    initialize: function () {
+        TextEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    }
+
+});
+/**
+ * @class
+ * @augments TextEditorBaseView
+ */
+var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
+
+    template: {
+        oneline: InfinniUI.Template["new/controls/textBox/template/textBoxInput.tpl.html"],
+        multiline: InfinniUI.Template["new/controls/textBox/template/textBoxArea.tpl.html"]
+    },
+
+    className: 'pl-textbox form-group',
+
+    UI: _.extend({}, TextEditorBaseView.prototype.UI),
+
+    events: _.extend({}, TextEditorBaseView.prototype.events, {
+        //Отображение поля редактирования для INPUT[TEXT]
+        'focus .pl-text-box-input': 'onFocusControlHandler',
+        'mouseenter .pl-text-box-input': 'onMouseenterControlHandler',
+
+        //Отображение поля редактирования для TEXTAREA
+        'focus .pl-text-area-input': 'onFocusControlHandler',
+        'mouseenter .pl-text-area-input': 'onMouseenterControlHandler'
+    }),
+
+    initHandlersForProperties: function(){
+        TextEditorBaseView.prototype.initHandlersForProperties.call(this);
+
+        this.listenTo(this.model, 'change:multiline', this.updateMultiline);
+        this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
+    },
+
+    updateProperties: function(){
+        TextEditorBaseView.prototype.updateProperties.call(this);
+
+        this.updateLineCount();
+    },
+
+    updateMultiline: function(){
+        this.rerender();
+    },
+
+    updateLineCount: function(){
+        var lineCount = this.model.get('lineCount');
+        this.ui.control.attr('rows', lineCount);
+        this.ui.editor.attr('rows', lineCount);
+    },
+
+    render: function () {
+        var model = this.model;
+        var template = model.get('multiline') ? this.template.multiline : this.template.oneline;
+
+        this.prerenderingActions();
+        this.renderTemplate(template);
+        this.renderTextBoxEditor();
+        this.updateProperties();
+
+        this.trigger('render');
+        this.postrenderingActions();
+        return this;
+    },
+
+    getData: function () {
+        var data = TextEditorBaseView.prototype.getData.call(this);
+        var model = this.model;
+        return _.extend(
+            data,
+            {
+                multiline: model.get('multiline'),
+                lineCount: model.get('lineCount')
+            }
+        );
+    },
+
+    renderTextBoxEditor: function () {
+        var model = this.model;
+        this.renderControlEditor({
+            el: this.ui.editor,
+            multiline: model.get('multiline'),
+            lineCount: model.get('lineCount'),
+            inputType: model.get('inputType')
+        });
+
+        return this;
+    },
+
+    setFocus: function () {
+        this.ui.textbox.focus();
+    }
+
+});
+
+var dateTimePickerModeDate = {
+    getTemplate: function () {
+        return InfinniUI.Template["new/controls/dateTimePicker/template/date.tpl.html"];
+    },
+
+    onClickDropdownHandler: function (event) {
+        var model = this.model;
+        var calendar = new SelectDate({
+            model: model
+        });
+        calendar.render();
+        $('body').append(calendar.$el);
+
+        this.updateDropDownCalendarPosition(this.$el, calendar.$el);
+
+        this.listenTo(calendar, 'date', function (date) {
+            model.set('value', this.convertValue(date));
+        });
+    },
+
+    convertValue: function (value) {
+        return InfinniUI.DateUtils.toISO8601(value, {timezoneOffset: this.model.get('timeZone')});
+    }
+};
+
+var dateTimePickerModeDateTime = {
+    getTemplate: function () {
+        return InfinniUI.Template["new/controls/dateTimePicker/template/dateTime.tpl.html"];
+    },
+
+    onClickDropdownHandler: function (event) {
+        var model = this.model;
+        var calendar = new SelectDateTime({
+            model: model
+        });
+        calendar.render();
+        $('body').append(calendar.$el);
+
+        this.updateDropDownCalendarPosition(this.$el, calendar.$el);
+
+        this.listenTo(calendar, 'date', function (date) {
+            model.set('value', this.convertValue(date));
+        });
+    },
+
+    convertValue: function (value) {
+        return InfinniUI.DateUtils.toISO8601(value, {timezoneOffset: this.model.get('timeZone')});
+    }
+};
+
+var dateTimePickerModeTime = {
+    getTemplate: function () {
+        return InfinniUI.Template["new/controls/dateTimePicker/template/time.tpl.html"];
+    },
+
+    onClickDropdownHandler: function (event) {
+        var model = this.model;
+        var calendar = new SelectTime({
+            model: model
+        });
+        calendar.render();
+        $('body').append(calendar.$el);
+
+        this.updateDropDownCalendarPosition(this.$el, calendar.$el);
+
+        this.listenTo(calendar, 'date', function (date) {
+            model.set('value', this.convertValue(date));
+        });
+    },
+
+    convertValue: function (value) {
+        return InfinniUI.DateUtils.toISO8601(value, {timezoneOffset: this.model.get('timeZone')});
+    }
+};
+
+var SelectComponent = Backbone.View.extend({
+
+    modelClass: Backbone.Model,
+
+    initialize: function (options) {
+        var modelClass = this.modelClass;
+
+        this.model = new modelClass({
+            today: options.today || new Date(),
+            value: options.value,
+            date: options.value || options.today,
+            max: options.max,
+            min: options.min
+        });
+        this.render();
+        return this;
+    },
+
+    show: function () {
+        this.$el.css('display', 'block');
+    },
+
+    hide: function () {
+        this.$el.css('display', 'none');
+    },
+
+    /**
+     * @description Установка текущего положения списка выбора значений
+     * Если устанавливается недействительная дата - используется текущая
+     * @param date
+     */
+    setDate: function (date) {
+        this.model.setDate(date);
+    }
+
+});
+
+
+_.extend(SelectComponent.prototype, bindUIElementsMixin);
+var SelectComponentModel = Backbone.Model.extend({
+
+    defaults: function () {
+        var today = new Date();
+
+        return {
+            today: today,
+            todayMonth: today.getMonth(),
+            todayDay: today.getDate(),
+            todayYear: today.getFullYear(),
+            hour: today.getHours(),
+            minute: today.getMinutes(),
+            second: today.getSeconds(),
+            millisecond: today.getMilliseconds()
+        }
+    },
+
+    initialize: function () {
+        this.updateDateParts();
+        this.on('change:date', this.onChangeDateHandler, this);
+    },
+
+    updateDateParts: function () {
+        var date = this.get('date');
+
+        if (date instanceof Date) {
+            this.set({
+                year: date.getFullYear(),
+                month: date.getMonth(),
+                day: date.getDay(),
+                hour: date.getHours(),
+                minute: date.getMinutes(),
+                second: date.getSeconds(),
+                millisecond: date.getMilliseconds()
+            });
+        } else {
+            this.set({
+                year: null,
+                month: null,
+                day: null,
+                hour: null,
+                minute: null,
+                second: null,
+                millisecond: null
+            });
+        }
+
+    },
+
+    onChangeDateHandler: function (model, value) {
+        if (typeof value !== 'undefined' && value !== null) {
+            model.set({
+                year: moment(value).year(),
+                month: moment(value).month(),
+                day: moment(value).date(),
+                hour: moment(value).hour(),
+                minute: moment(value).minute(),
+                second: moment(value).second(),
+                millisecond: moment(value).millisecond()
+            })
+        } else {
+            model.set({
+                year: null,
+                month: null,
+                day: null,
+                hour: null,
+                minute: null,
+                second: null,
+                millisecond: null
+            });
+        }
+    },
+
+    updateDatePart: function (datePart, model, value) {
+        var
+            d = this.get('date'),
+            date = InfinniUI.DateUtils.createDate(d) ||  this.get('today'),
+            data = this.toJSON();
+
+
+        switch (datePart) {
+            case 'hour':
+            case 'minute':
+            case 'second':
+                date.setHours(data.hour, data.minute, data.second);
+                break;
+            case 'year':
+            case 'month':
+            case 'day':
+                date.setFullYear(data.year, data.month, data.day);
+                break;
+        }
+
+        this.set('date', date);
+    },
+
+    checkRange: function (date, precision) {
+        var min = this.get('min'),
+            max = this.get('max');
+
+        return InfinniUI.DateUtils.checkRangeDate(date, min, max, precision);
+    },
+
+    keepDateInRange: function () {
+        if (this.isValid()) {
+            return;
+        }
+        var date = InfinniUI.DateUtils.getNearestDate(this.get('date'), this.get('min'), this.get('max'));
+        this.set('date', date);
+    },
+
+    /**
+     * @description Установка текущего положения списка выбора значений
+     * Если устанавливается недействительная дата - используется текущая
+     * @param date
+     */
+    setDate: function (date) {
+        if (typeof date === 'undefined' || date === null){
+            var value = this.get('value'),
+                today = this.get('date');
+
+            date = value || today;
+        }
+
+        if (date instanceof Date) {
+            date = new Date(date.getTime());
+        }
+        this.set('date', date);
+    }
+
+
+});
+
+
+var SelectDaysModel = SelectComponentModel.extend({
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:year', this.updateDatePart.bind(this, 'year'));
+        this.on('change:month', this.updateDatePart.bind(this, 'month'));
+        this.on('change:day', this.updateDatePart.bind(this, 'day'));
+    },
+
+    today: function () {
+        this.set({
+            year: this.get('todayYear'),
+            month: this.get('todayMonth')
+        });
+    },
+
+    nextMonth: function () {
+        var
+            month = this.get('month'),
+            year = this.get('year');
+
+        this.set({
+            month: month === 11 ? 0 : month + 1,
+            year: month === 11 ? year + 1 : year
+        });
+
+        this.keepDateInRange();
+    },
+
+    prevMonth: function () {
+        var
+            month = this.get('month'),
+            year = this.get('year');
+
+        this.set({
+            month: month === 0 ? 11 : month - 1,
+            year: month === 0 ? year - 1 : year
+        });
+
+        this.keepDateInRange();
+    }
+
+});
+
+var SelectDays = SelectComponent.extend({
+
+    modelClass: SelectDaysModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/date/days.tpl.html"],
+
+    UI: {
+        headerDays: '.weekdays-head .day',
+        calendarDays: '.day-calendar',
+        year: '.years-year',
+        month: '.years-month'
+    },
+
+    events: {
+        'click .years': 'onYearsClickHandler',
+        'click .btn-month-prev': 'prevMonth',
+        'click .btn-month-next': 'nextMonth',
+        'click .today-date': 'showToday',
+        'click .day-calendar:not(".day-unavailable")': 'useDay',
+        'click .time': 'showTime'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.fillLegend();
+        this.fillCalendar();
+        this.renderMonth();
+        this.renderYear();
+        this.initOnChangeHandlers();
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:month', this.onChangeMonthHandler);
+        this.listenTo(this.model, 'change:year', this.onChangeYearHandler);
+        this.listenTo(this.model, 'change:day', this.onChangeDayHandler);
+    },
+
+    renderMonth: function () {
+        var month = this.model.get('month');
+        var dateTimeFormatInfo = localized.dateTimeFormatInfo;
+        this.ui.month.text(dateTimeFormatInfo.monthNames[month]);
+    },
+
+    renderYear: function () {
+        var year = this.model.get('year');
+        this.ui.year.text(year);
+    },
+
+    onChangeMonthHandler: function (model, value) {
+        this.renderMonth();
+        this.fillCalendar();
+    },
+
+    onChangeYearHandler: function (model, value) {
+        this.renderYear();
+        this.fillCalendar();
+    },
+
+    fillLegend: function () {
+        var dateTimeFormatInfo = localized.dateTimeFormatInfo;
+        var firstDayOfWeek = dateTimeFormatInfo.firstDayOfWeek;
+        var days = dateTimeFormatInfo.abbreviatedDayNames.map(function (day, i) {
+            return i;
+        });
+
+        if (firstDayOfWeek > 0) {
+            days = days.splice(firstDayOfWeek).concat(days);
+        }
+
+        this.ui.headerDays.each(function (i, el) {
+            var $el = $(el);
+            var index = days[i];
+            $el.text(dateTimeFormatInfo.abbreviatedDayNames[index]);
+            markWeekend($el, index);
+        });
+
+        this.ui.calendarDays.each(function (i, el) {
+            var $el = $(el);
+            var index = days[i % 7];
+            markWeekend($el, index);
+        });
+
+        function markWeekend($el, weekday) {
+            $el.toggleClass('day-weekend', weekday === 0 || weekday === 6);
+        }
+    },
+
+    fillCalendar: function () {
+        var model = this.model;
+        var valueDate = model.get('value');
+        var month = model.get('month');
+        var year = model.get('year');
+        var day = model.get('day');
+        var min = model.get('min');
+        var max = model.get('max');
+        var firstDayOfMonth = new Date(year, month);
+        var weekday = firstDayOfMonth.getDay();
+        var dateTimeFormatInfo = localized.dateTimeFormatInfo;
+        var firstDayOfWeek = dateTimeFormatInfo.firstDayOfWeek;
+
+        var weekdays = [0,1,2,3,4,5,6];
+        Array.prototype.push.apply(weekdays, weekdays.splice(0, firstDayOfWeek));
+        var start = new Date(year, month, 1 - weekdays.indexOf(weekday));
+
+        var startYear = start.getFullYear(),
+            startMonth = start.getMonth(),
+            startDate = start.getDate();
+
+        this.ui.calendarDays.each(function (i, el) {
+            var $el = $(el);
+            var d = new Date(startYear, startMonth, startDate + i);
+            $el.text(d.getDate());
+            $el.attr('data-date', d);
+            markActiveMonth($el, d.getMonth() === month);
+            markToday($el, d);
+            markSelected($el, d);
+            markAvailable($el, d);
+        });
+
+        function markActiveMonth($el, active) {
+            $el.toggleClass('day-inactive', !active);
+        }
+
+        function markToday($el, date) {
+            var today = date.getMonth() === model.get('todayMonth')
+                && date.getFullYear() === model.get('todayYear')
+                && date.getDate() === model.get('todayDay');
+
+            $el.toggleClass('day-today', today);
+        }
+
+        function markSelected($el, value) {
+            var selected = false;
+
+            if (valueDate) {
+                selected = moment(valueDate).isSame(value, 'day');
+            }
+
+            $el.toggleClass('day-selected', selected);
+        }
+
+        function markAvailable($el, value) {
+            $el.toggleClass('day-unavailable', !model.checkRange(value, 'day'));
+        }
+
+    },
+
+    onYearsClickHandler: function (event) {
+        var date = this.model.get('date');
+
+        this.trigger('year', date);
+    },
+
+    prevMonth: function () {
+        this.model.prevMonth();
+    },
+
+    nextMonth: function () {
+        this.model.nextMonth();
+    },
+
+    showToday: function () {
+        this.today();
+    },
+
+    today: function () {
+        this.model.today();
+    },
+
+    showTime: function () {
+        this.trigger('time', this.model.get('date'));
+    },
+
+    useDay: function (event) {
+        var $el = $(event.target),
+            date = new Date($el.attr('data-date'));
+
+        this.model.set({
+            year: date.getFullYear(),
+            month: date.getMonth(),
+            day: date.getDate()
+        });
+
+        this.trigger('date', this.model.get('date'));
+    }
+
+});
+
+var SelectHoursModel = SelectComponentModel.extend({
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:hour', this.updateDatePart.bind(this, 'hour'));
+    }
+
+});
+
+var SelectHours = SelectComponent.extend({
+
+    modelClass: SelectHoursModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/time/hours.tpl.html"],
+
+    events: {
+        "click .hour:not('.hour-unavailable')": "useHour"
+    },
+
+    UI: {
+        hour: '.hour'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.fillHoursTable();
+        this.initOnChangeHandlers();
+    },
+
+    fillHoursTable: function () {
+        //@TODO Заполнять в зависимости от формата 12/24
+        var
+            model = this.model;
+        var date = model.get('date') || model.get('today');
+        var now = new Date();
+
+        this.ui.hour.each(function (i, el) {
+            var $el = $(el);
+            var hour = stringUtils.padLeft(i, 2, '0');
+
+            $el.attr('data-hour', i);
+            $el.text(hour);
+            markNow($el, i);
+            markSelected($el, i);
+            markAvailable($el, i);
+        });
+
+        function markSelected($el, value) {
+            $el.toggleClass('hour-selected', date.getHours() === value);
+        }
+
+        function markNow($el, value) {
+            var selected = moment(now).isSame(value, 'hour');
+            $el.toggleClass('hour-today', selected);
+        }
+
+        function markAvailable($el, value) {
+            var date = moment(model.get('date')).hour(value);
+            $el.toggleClass('hour-unavailable', !model.checkRange(date, 'hour'));
+        }
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:date', this.fillHoursTable);
+    },
+
+    useHour: function (event) {
+        var
+            $el = $(event.target),
+            model = this.model,
+            date = model.get('date'),
+            hour = parseInt($el.attr('data-hour'), 10);
+
+        var newDate = InfinniUI.DateUtils.cloneDate(date);
+        newDate.setHours(hour);
+        model.set('date', newDate);
+
+        this.trigger('hour', newDate);
+    }
+
+});
+
+var SelectMinutesModel = SelectComponentModel.extend({
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:minute', this.updateDatePart.bind(this, 'minute'));
+    }
+
+});
+
+var SelectMinutes = SelectComponent.extend({
+
+    modelClass: SelectMinutesModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/time/minutes.tpl.html"],
+
+    events: {
+        "click .minute:not('.minute-unavailable')": "useMinute"
+    },
+
+    UI: {
+        minute: '.minute'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.fillMinutesTable();
+        this.initOnChangeHandlers();
+    },
+
+    fillMinutesTable: function () {
+        var
+            model = this.model,
+            minute = model.get('minute');
+
+        this.ui.minute.each(function (i, el) {
+            var $el = $(el);
+            var minute = $el.attr('data-minute');
+            markSelected($el, parseInt(minute, 10));
+            markAvailable($el, parseInt(minute, 10))
+        });
+
+        function markSelected($el, value) {
+            $el.toggleClass('minute-selected', value === minute);
+        }
+
+        function markAvailable($el, value) {
+            var date = moment(model.get('date')).minute(value);
+            $el.toggleClass('minute-unavailable', !model.checkRange(date, 'minute'));
+        }
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:date', this.fillMinutesTable);
+    },
+
+    useMinute: function (event) {
+        var
+            $el = $(event.target),
+            model = this.model,
+            date = model.get('date'),
+            minute = parseInt($el.attr('data-minute'), 10);
+
+        var newDate = InfinniUI.DateUtils.cloneDate(date);
+        newDate.setMinutes(minute);
+        this.trigger('minute', newDate);
+    }
+
+});
+
+var SelectMonthsModel = SelectComponentModel.extend({
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:month', this.updateDatePart.bind(this, 'month'));
+        this.on('change:year', this.updateDatePart.bind(this, 'year'));
+    },
+
+
+
+    nextYear: function () {
+        var year = this.get('year');
+        this.set('year', year + 1);
+        this.keepDateInRange();
+    },
+
+    prevYear: function () {
+        var year = this.get('year');
+        this.set('year', year - 1);
+        this.keepDateInRange();
+    },
+
+    today: function () {
+        this.set({
+            month: this.get('todayMonth'),
+            year: this.get('todayYear')
+        });
+    }
+});
+
+var SelectMonths = SelectComponent.extend({
+
+    modelClass: SelectMonthsModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/date/months.tpl.html"],
+
+    events: {
+        "click .btn-year-prev": "prevYear",
+        "click .btn-year-next": "nextYear",
+        "click .month:not('.month-unavailable')": "useMonth",
+        "click .year": "selectYear",
+        "click .today-month": "showToday"
+    },
+
+    UI: {
+        month: '.month',
+        year: '.year'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.fillMonthsTable();
+        this.initOnChangeHandlers();
+    },
+
+    fillMonthsTable: function () {
+        this.ui.year.text(this.model.get('year'));
+
+        var
+            model = this.model,
+            dateTimeFormatInfo = localized.dateTimeFormatInfo,
+            todayMonth = model.get('todayMonth'),
+            month = model.get('month');
+
+        this.ui.month.each(function (i, el) {
+            var $el = $(el);
+            $el.text(dateTimeFormatInfo.abbreviatedMonthNames[i]);
+            $el.attr('data-month', i);
+            markTodayMonth($el, i);
+            markSelected($el, i);
+            markAvailable($el, i);
+        });
+
+        function markTodayMonth($el, value) {
+            var date = moment([model.get('year'), value]);
+            var today = model.get('today');
+
+            $el.toggleClass('month-today', moment(date).isSame(today, 'month'));
+        }
+
+        function markSelected($el, value) {
+            var date = moment([model.get('year'), value]);
+            var selected = model.get('value');
+
+            $el.toggleClass('month-selected', moment(date).isSame(selected, 'month'));
+        }
+
+        function markAvailable($el, value) {
+            var date = moment([model.get('year'), value]);
+            $el.toggleClass('month-unavailable', !model.checkRange(date, 'month'));
+        }
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:year', this.fillMonthsTable);
+    },
+
+    prevYear: function () {
+        this.model.prevYear();
+    },
+
+    nextYear: function () {
+        this.model.nextYear();
+    },
+
+    useMonth: function (event) {
+        var
+            $el = $(event.target),
+            model = this.model;
+
+        model.set({
+            year: parseInt(model.get('year'), 10),
+            month: parseInt($el.attr('data-month'), 10)
+        });
+        this.trigger('month', model.get('date'));
+    },
+
+    selectYear: function () {
+        var
+            model = this.model;
+
+        this.trigger('year', model.get('data'));
+    },
+
+    showToday: function () {
+        this.today();
+    },
+
+    today: function () {
+        this.model.today();
+    }
+
+
+
+});
+
+var SelectSecondsModel = SelectComponentModel.extend({
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:second', this.updateDatePart.bind(this, 'second'));
+    }
+
+});
+
+var SelectSeconds = SelectComponent.extend({
+
+    modelClass: SelectSecondsModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/time/seconds.tpl.html"],
+
+    events: {
+        "click .second:not('.second-unavailable')": "useSecond"
+    },
+
+    UI: {
+        second: '.second'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.fillSecondsTable();
+        this.initOnChangeHandlers();
+    },
+
+    fillSecondsTable: function () {
+        var
+            model = this.model,
+            second = model.get('second');
+
+        this.ui.second.each(function (i, el) {
+            var $el = $(el);
+            var second = $el.attr('data-second');
+            markSelected($el, parseInt(second, 10));
+            markAvailable($el, parseInt(second, 10))
+        });
+
+        function markSelected($el, value) {
+            $el.toggleClass('second-selected', value === second);
+        }
+
+        function markAvailable($el, value) {
+            var date = moment(model.get('date')).seconds(value);
+            $el.toggleClass('second-unavailable', !model.checkRange(date));
+        }
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:date', this.fillSecondsTable);
+    },
+
+    useSecond: function (event) {
+        var
+            $el = $(event.target),
+            model = this.model,
+            date = model.get('date'),
+            second = parseInt($el.attr('data-second'), 10);
+
+        var newDate = InfinniUI.DateUtils.cloneDate(date);
+
+        newDate.setSeconds(second);
+        this.trigger('second', newDate);
+    }
+
+});
+
+var SelectTimesModel = SelectComponentModel.extend({
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:hour', this.updateDatePart.bind(this, 'hour'));
+        this.on('change:minute', this.updateDatePart.bind(this, 'minute'));
+        this.on('change:second', this.updateDatePart.bind(this, 'second'));
+        this.on('change:millisecond', this.updateDatePart.bind(this, 'millisecond'));
+    },
+
+    nextHour: function () {
+        var hour = this.get('hour');
+        hour += 1;
+
+        //@TODO Границу использовать в зависимости от 12/24 формата записи даты из настроек локализации
+        if (hour > 23) {
+            return;
+        }
+
+        this.set('hour', hour);
+        this.keepDateInRange();
+    },
+
+    prevHour: function () {
+        var hour = this.get('hour');
+        hour -= 1;
+
+        if (hour < 0) {
+            return;
+        }
+
+        this.set('hour', hour);
+        this.keepDateInRange();
+    },
+
+    nextMinute: function () {
+        var minute = this.get('minute');
+        minute += 1;
+
+        if (minute >= 60) {
+            return;
+        }
+
+        this.set('minute', minute);
+        this.keepDateInRange();
+    },
+
+    prevMinute: function () {
+        var minute = this.get('minute');
+        minute -= 1;
+
+        if (minute < 0) {
+            return;
+        }
+
+        this.set('minute', minute);
+        this.keepDateInRange();
+    },
+
+    nextSecond: function () {
+        var second = this.get('second');
+        second += 1;
+
+        if (second >= 60) {
+            return;
+        }
+
+        this.set('second', second);
+        this.keepDateInRange();
+    },
+
+    prevSecond: function () {
+        var second = this.get('second');
+        second -= 1;
+
+        if (second < 0) {
+            return;
+        }
+
+        this.set('second', second);
+        this.keepDateInRange();
+    },
+
+    validate: function (attr, options) {
+        var value = InfinniUI.DateUtils.cloneDate(attr.date);
+        value.setHours(attr.hour, attr.minute, attr.second, attr.millisecond);
+
+        if (!this.checkRange(value)) {
+            return 'Out of range';
+        }
+    }
+
+});
+
+var SelectTimes = SelectComponent.extend({
+
+    modelClass: SelectTimesModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/time/time.tpl.html"],
+
+    events: {
+        "click .time-spin-down.time-spin-hour": "prevHour",
+        "click .time-spin-up.time-spin-hour": "nextHour",
+
+        "click .time-spin-down.time-spin-minute": "prevMinute",
+        "click .time-spin-up.time-spin-minute": "nextMinute",
+
+        "click .time-spin-down.time-spin-second": "prevSecond",
+        "click .time-spin-up.time-spin-second": "nextSecond",
+
+        "click .time-segment-hour": "selectHour",
+        "click .time-segment-minute": "selectMinute",
+        "click .time-segment-second": "selectSecond",
+        "click .days": "selectDay"
+    },
+
+    UI: {
+        month: '.month',
+        year: '.year',
+        hour: '.time-segment-hour',
+        minute: '.time-segment-minute',
+        second: '.time-segment-second'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.updateHour();
+        this.updateMinute();
+        this.updateSecond();
+        this.initOnChangeHandlers();
+    },
+
+    selectHour: function () {
+        var
+            model = this.model,
+            date = model.get('date'),
+            hour = model.get('hour'),
+            minute = model.get('minute'),
+            second = model.get('second');
+
+        date.setHours(hour, minute, second);
+        this.trigger('hour', date);
+    },
+
+    selectMinute: function () {
+        var
+            model = this.model,
+            date = model.get('date'),
+            hour = model.get('hour'),
+            minute = model.get('minute'),
+            second = model.get('second');
+
+        date.setHours(hour, minute, second);
+        this.trigger('minute', date);
+    },
+
+    selectSecond: function () {
+        var
+            model = this.model,
+            date = model.get('date'),
+            hour = model.get('hour'),
+            minute = model.get('minute'),
+            second = model.get('second');
+
+        date.setHours(hour, minute, second);
+        this.trigger('second', date);
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:hour', this.updateHour);
+        this.listenTo(this.model, 'change:minute', this.updateMinute);
+        this.listenTo(this.model, 'change:second', this.updateSecond);
+        this.listenTo(this.model, 'change:date', this.useTime);
+    },
+
+    updateHour: function () {
+        var hour = this.model.get('hour');
+        this.ui.hour.text(stringUtils.padLeft(hour, 2, '0'));
+    },
+
+    updateMinute: function () {
+        var minute = this.model.get('minute');
+        this.ui.minute.text(stringUtils.padLeft(minute, 2, '0'));
+    },
+
+    updateSecond: function () {
+        var second = this.model.get('second');
+        this.ui.second.text(stringUtils.padLeft(second, 2, '0'));
+    },
+
+    prevHour: function () {
+        this.model.prevHour();
+    },
+
+    nextHour: function () {
+        this.model.nextHour();
+    },
+
+    prevMinute: function () {
+        this.model.prevMinute();
+    },
+
+    nextMinute: function () {
+        this.model.nextMinute();
+    },
+
+    prevSecond: function () {
+        this.model.prevSecond();
+    },
+
+    nextSecond: function () {
+        this.model.nextSecond();
+    },
+
+    useTime: function () {
+        var
+            date = this.model.get('date');
+
+        this.trigger('date', date);
+    },
+
+    selectDay: function () {
+        var
+            date = this.model.get('date');
+
+        this.trigger('day', date);
+
+    }
+
+});
+
+var SelectYearsModel = SelectComponentModel.extend({
+
+    defaults: function () {
+        var defaults = SelectComponentModel.prototype.defaults.call(this);
+
+        return _.defaults({
+            pageSize: 20,
+            page: 0
+        }, defaults);
+    },
+
+    initialize: function () {
+        SelectComponentModel.prototype.initialize.call(this);
+        this.on('change:year', this.updateDatePart.bind(this, 'year'));
+        this.on('change:year', this.onChangeYearHandler);
+    },
+
+    prevPage: function () {
+        var page = this.get('page');
+        this.set('page', page - 1);
+    },
+
+    nextPage: function () {
+        var page = this.get('page');
+        this.set('page', page + 1);
+    },
+
+    resetPage: function () {
+        this.set('page', 0);
+    },
+
+    onChangeYearHandler: function (model, value) {
+        this.keepDateInRange();
+        model.set('page', 0);
+    }
+
+});
+
+var SelectYears = SelectComponent.extend({
+
+    modelClass: SelectYearsModel,
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/date/years.tpl.html"],
+
+    events: {
+        'click .btn-year-prev': "prevPage",
+        'click .btn-year-next': "nextPage",
+        'click .today-year': "showTodayYear",
+        'click .year:not(".year-unavailable")': "useYear"
+    },
+
+    UI: {
+        years: '.year',
+        yearBegin: '.year-begin',
+        yearEnd: '.year-end'
+    },
+
+    initOnChangeHandlers: function () {
+        this.listenTo(this.model, 'change:page', this.fillYearsTable);
+        this.listenTo(this.model, 'change:year', this.fillYearsTable);
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        //this.fillCalendar();
+        this.fillYearsTable();
+        this.initOnChangeHandlers();
+    },
+
+    fillYearsTable: function () {
+        var
+            model = this.model,
+            page = model.get('page'),
+            pageSize = model.get('pageSize'),
+            year = model.get('year'),
+            todayYear = model.get('todayYear'),
+            //startYear = Math.ceil((year || todayYear) - pageSize / 2) + page * pageSize;
+            startYear = Math.ceil(year - pageSize / 2) + page * pageSize;
+
+        this.ui.years.each(function (i, el) {
+            var $el = $(el);
+            var year = startYear + i;
+            $el.text(year);
+            $el.attr('data-year', year);
+            markTodayYear($el, year);
+            markSelected($el, year);
+            markAvailable($el, year);
+        });
+
+        this.ui.yearBegin.text(startYear);
+        this.ui.yearEnd.text(startYear + pageSize - 1);
+
+        function markTodayYear($el, value) {
+            $el.toggleClass('year-today', value === todayYear);
+        }
+
+        function markSelected($el, value) {
+            $el.toggleClass('year-selected', value === year);
+        }
+        function markAvailable($el, value) {
+            var date = moment([value]);
+            $el.toggleClass('year-unavailable', !model.checkRange(date, 'year'));
+        }
+
+    },
+
+    prevPage: function () {
+        this.model.prevPage();
+    },
+
+    nextPage: function () {
+        this.model.nextPage();
+    },
+
+    showTodayYear: function () {
+        this.today();
+    },
+
+    today: function () {
+        this.model.resetPage();
+    },
+
+    useYear: function (event) {
+        var $el = $(event.target),
+            model = this.model;
+
+        model.set({
+            year: parseInt($el.attr('data-year'), 10)
+        });
+
+        this.trigger('year', model.get('date'));
+    }
+
+});
+
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments TextEditorBaseControl
+ */
+function DateTimePickerControl(parent) {
+    _.superClass(DateTimePickerControl, this, parent);
+}
+
+_.inherit(DateTimePickerControl, TextEditorBaseControl);
+
+_.extend(DateTimePickerControl.prototype, {
+
+    createControlModel: function () {
+        return new DateTimePickerModel();
+    },
+
+    createControlView: function (model) {
+        return new DateTimePickerView({model: model});
+    }
+});
+
+
+/**
+ * @class
+ * @augments TextEditorBaseModel
+ */
+var DateTimePickerModel = TextEditorBaseModel.extend(/** @lends DateTimePickerModel.prototype */{
+    defaults: _.extend(
+        {},
+        TextEditorBaseModel.prototype.defaults,
+        {
+            mode: "Date",
+            today: new Date()
+        }
+    ),
+
+    initialize: function () {
+        TextEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    },
+
+    validate: function (attributes, options) {
+        var
+            min = attributes.minValue,
+            max = attributes.maxValue;
+
+        return InfinniUI.DateUtils.checkRangeDate(attributes.value, attributes.minValue, attributes.maxValue);
+    }
+
+
+});
+var dateTimePickerStrategy = (function () {
+
+    return {
+        Date: dateTimePickerModeDate,
+        DateTime: dateTimePickerModeDateTime,
+        Time: dateTimePickerModeTime
+    };
+
+})();
+
+
+/**
+ * @class
+ * @augments TextEditorBaseView
+ */
+var DateTimePickerView = TextEditorBaseView.extend(/** @lends DateTimePickerView.prototype */{
+
+    className: "pl-datepicker form-group",
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/date.tpl.html"],
+
+    UI: _.extend({}, TextEditorBaseView.prototype.UI, {
+        dropdownButton: '.pl-datepicker-calendar',
+        controlWrap: '.control-wrap',
+        editorWrap: '.editor-wrap'
+    }),
+
+    events: _.extend({}, TextEditorBaseView.prototype.events, {
+        'focus .pl-datepicker-input': 'onFocusControlHandler',
+        'mouseenter .pl-datepicker-input': 'onMouseenterControlHandler',
+        'click .pl-datepicker-calendar': 'onClickDropdownHandler'
+    }),
+
+    initialize: function () {
+        TextEditorBaseView.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        this.updateMode();
+        this.listenTo(this.model, 'change:mode', this.updateMode);
+    },
+
+    initHandlersForProperties: function(){
+        TextEditorBaseView.prototype.initHandlersForProperties.call(this);
+
+        this.listenTo(this.model, 'change:minValue', this.updateMinValue);
+        this.listenTo(this.model, 'change:maxValue', this.updateMaxValue);
+    },
+
+    updateProperties: function(){
+        TextEditorBaseView.prototype.updateProperties.call(this);
+    },
+
+    updateMode: function(){
+        var mode = this.model.get('mode');
+        _.extend(this, dateTimePickerStrategy[mode]);
+
+        this.rerender();
+    },
+
+    updateMinValue: function(){
+        var mode = this.model.get('mode');
+        _.extend(this, dateTimePickerStrategy[mode]);
+
+        this.rerender();
+    },
+
+    updateMaxValue: function(){
+        var mode = this.model.get('mode');
+        _.extend(this, dateTimePickerStrategy[mode]);
+
+        this.rerender();
+    },
+
+    updateEnabled: function(){
+        TextEditorBaseView.prototype.updateEnabled.call(this);
+
+        var isEnabled = this.model.get('enabled');
+        this.ui.dropdownButton.prop('disabled', !isEnabled);
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.renderTemplate(this.getTemplate());
+        this.updateProperties();
+        this.renderDateTimePickerEditor();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+        return this;
+    },
+
+    getData: function () {
+        var
+            model = this.model;
+
+        return _.extend({},
+            TextEditorBaseView.prototype.getData.call(this), {
+                minValue: model.get('minValue'),
+                maxValue: model.get('maxValue'),
+                mode: model.get('mode')
+            });
+    },
+
+    renderDateTimePickerEditor: function () {
+        var model = this.model;
+        this.renderControlEditor({
+            el: this.ui.editor,
+            multiline: false,
+            convert: this.convertValue
+        });
+
+        return this;
+    },
+
+    /**
+     * Используется миксином textEditorMixin
+     * @param value
+     * @returns {boolean}
+     */
+    onEditorValidate: function (value) {
+        var model = this.model;
+        
+        return InfinniUI.DateUtils.checkRangeDate(value, model.get('minValue'), model.get('maxValue'));
+    },
+
+
+    getTemplate: function () {
+        throw new Error('Не перекрыт getTemplate');
+    },
+
+    onClickDropdownHandler: function (event) {},
+
+    updateDropDownCalendarPosition: function ($dateTimePicker, $calendar) {
+
+        var rect = $dateTimePicker[0].getBoundingClientRect();
+
+        var style = {
+            position: "absolute",
+            top: window.pageYOffset + rect.bottom,
+            left: window.pageXOffset + rect.right - $calendar.width()
+        };
+
+        $calendar.css(style);
+    }
+
+});
+
+var SelectDate = Backbone.View.extend({
+
+    className: 'pl-datepicker-dropdown pl-dropdown-container',
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/select.date.tpl.html"],
+
+    UI: {
+        days: '.days',
+        months: '.months',
+        years: '.years'
+    },
+
+    events: {
+        'click .backdrop': 'onClickBackdropHandler',
+        'click .datepicker-clear': 'onClickClearValueHandler',
+        'click .today-date': 'onClickTodayHandler'
+    },
+
+    render: function () {
+        var template = this.template();
+        this.$el.html(template);
+        this.bindUIElements();
+        this.renderComponents();
+    },
+
+    renderComponents: function () {
+        var model = this.model;
+        var value = InfinniUI.DateUtils.createDate(model.get('value'));
+        var today = InfinniUI.DateUtils.createDate(model.get('today'));
+        var timeZone = model.get('timeZone');
+        var m = moment(value);
+
+        if (m.isValid()) {
+            value = m.toDate();
+        } else {
+            value = null;
+        }
+
+        value = InfinniUI.DateUtils.changeTimezoneOffset(value, timeZone);
+
+        var options = {
+            value: value,
+            today: today || new Date(),
+            //date: value,
+            max: model.get('maxValue'),
+            min: model.get('minValue')
+        };
+
+        options.el = this.ui.months;
+        var months = new SelectMonths(options);
+
+        options.el = this.ui.years;
+        var years = new SelectYears(options);
+
+        options.el = this.ui.days;
+        var days = new SelectDays(options);
+
+        this.months = months;
+        this.years = years;
+        this.days = days;
+
+        this.workflow(days, months, years, value)(value);
+    },
+
+    onClickBackdropHandler: function (event) {
+        this.remove();
+    },
+
+    onClickClearValueHandler: function () {
+        this.clearValue();
+    },
+
+    clearValue: function () {
+        this.useValue(null);
+    },
+
+    useValue: function (date) {
+        var model = this.model;
+        var timeZone = model.get('timeZone');
+
+        var min = model.get('minValue'),
+            max = model.get('maxValue');
+
+        if (!InfinniUI.DateUtils.checkRangeDate(date, min, max)) {
+            date = InfinniUI.DateUtils.getNearestDate(date, min, max);
+        }
+
+        this.trigger('date', InfinniUI.DateUtils.restoreTimezoneOffset(date, timeZone));
+        this.remove();
+    },
+
+    workflow: function (days, months, years) {
+
+        this
+            .listenTo(days, 'date', this.useValue)
+            .listenTo(days, 'year', function (date) {
+                showYears(date);//Needed select year from list
+            })
+            .listenTo(years, 'year', function (date) {
+                showMonths(date);//Needed select month for year
+            })
+            .listenTo(months, 'year', function (date) {
+                showYears(date);//Needed select year from list
+            })
+            .listenTo(months, 'month', function (date) {
+                showDays(date);//Needed select day from calendar
+            });
+
+        return showDays;
+
+        function showDays(date) {
+            days.setDate(date);
+
+            years.hide();
+            months.hide();
+            days.show();
+        }
+
+        function showMonths(date) {
+            months.setDate(date);
+
+            days.hide();
+            years.hide();
+            months.show();
+        }
+
+        function showYears(date) {
+            years.setDate(date);
+
+            days.hide();
+            months.hide();
+            years.show();
+        }
+
+    },
+
+    onClickTodayHandler: function () {
+        this.useValue(new Date());
+    }
+
+});
+
+_.extend(SelectDate.prototype, bindUIElementsMixin);
+
+var SelectDateTime = SelectDate.extend({
+
+    className: 'pl-datepicker-dropdown pl-dropdown-container',
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/select.dateTime.tpl.html"],
+
+    UI: {
+        days: '.days',
+        months: '.months',
+        years: '.years',
+        times: '.times',
+        hours: '.hours',
+        minutes: '.minutes'
+    },
+
+    onClickToggleDateHandler: function () {
+        this.trigger('days');
+    },
+
+    onClickToggleTimeHandler: function () {
+        this.trigger('time');
+    },
+
+
+    renderComponents: function () {
+        var model = this.model;
+        var value = InfinniUI.DateUtils.createDate(model.get('value'));
+        var today = InfinniUI.DateUtils.createDate(model.get('today'));
+        var timeZone = model.get('timeZone');
+        var m = moment(value);
+
+        if (m.isValid()) {
+            value = m.toDate();
+        } else {
+            value = null;
+        }
+
+        value = InfinniUI.DateUtils.changeTimezoneOffset(value, timeZone);
+
+        var options = {
+            value: value,
+            today: today || new Date(),
+            //date: value,
+            max: model.get('maxValue'),
+            min: model.get('minValue')
+        };
+
+        options.el = this.ui.months;
+        var months = new SelectMonths(options);
+
+        options.el = this.ui.years;
+        var years = new SelectYears(options);
+
+        options.el = this.ui.days;
+        var days = new SelectDays(options);
+
+        options.el = this.ui.times;
+        var time = new SelectTimes(options);
+        //time.setDate(undefined);
+
+        options.el = this.ui.hours;
+        var hours = new SelectHours(options);
+
+        options.el = this.ui.minutes;
+        var minutes = new SelectMinutes(options);
+
+
+        this.workflow(days, months, years, time, hours, minutes)(value);
+    },
+
+    useTime: function (date) {
+        var model = this.model;
+        var timeZone = model.get('timeZone');
+
+        var min = model.get('minValue'),
+            max = model.get('maxValue');
+
+        if (!InfinniUI.DateUtils.checkRangeDate(date, min, max)) {
+            date = InfinniUI.DateUtils.getNearestDate(date, min, max);
+        }
+
+        this.trigger('date', InfinniUI.DateUtils.restoreTimezoneOffset(date, timeZone));
+
+        return date;
+    },
+
+    workflow: function (days, months, years, time, hours, minutes) {
+        var useTime = this.useTime.bind(this);
+        var components = Array.prototype.slice.call(arguments);
+
+        this
+            .listenTo(days, 'date', this.useValue)
+            .listenTo(days, 'year', function (date) {
+                showYears(date);//Needed select year from list
+            })
+            .listenTo(days, 'time', function (date) {
+                showTime(date);
+            })
+            .listenTo(years, 'year', function (date) {
+                showMonths(date);//Needed select month for year
+            })
+            .listenTo(months, 'year', function (date) {
+                showYears(date);//Needed select year from list
+            })
+            .listenTo(months, 'month', function (date) {
+                showDays(date);//Needed select day from calendar
+            });
+
+        this.listenTo(time, 'hour', function (date) {
+                showHours(date);
+            })
+            .listenTo(time, 'minute', function (date) {
+                showMinutes(date);
+            })
+            .listenTo(time, 'day', function (date) {
+                showDays(date);
+            })
+            .listenTo(time, 'date', function (date) {
+                useTime(date);
+            })
+            .listenTo(hours, 'hour', function (date) {
+                var newDate = useTime(date);
+                showTime(newDate);
+            })
+            .listenTo(minutes, 'minute', function (date) {
+                var newDate = useTime(date);
+                showTime(newDate);
+            });
+
+        //Переключатель режима Date/Time
+        this
+            .on('days', function (date) {
+                showDays(date);
+            })
+            .on('time', function (date) {
+                showTime(date);
+            });
+
+        return showDays;
+
+        function switchComponent(component) {
+            components.forEach(function (c) {
+                if (c !== component) {
+                    c.hide();
+                }
+            });
+            component.show();
+        }
+
+        function showDays(date) {
+            days.setDate(date);
+            switchComponent(days);
+        }
+
+        function showMonths(date) {
+            months.setDate(date);
+            switchComponent(months);
+        }
+
+        function showYears(date) {
+            years.setDate(date);
+            switchComponent(years);
+        }
+
+        function showHours(date) {
+            hours.setDate(date);
+            switchComponent(hours);
+        }
+
+        function showMinutes(date) {
+            minutes.setDate(date);
+            switchComponent(minutes);
+        }
+
+        function showTime(date) {
+            time.setDate(date);
+            switchComponent(time);
+        }
+
+    }
+
+});
+var SelectTime = SelectDate.extend({
+
+    className: 'pl-timepicker-dropdown pl-dropdown-container',
+
+    template: InfinniUI.Template["new/controls/dateTimePicker/template/select.time.tpl.html"],
+
+    UI: {
+        times: '.times',
+        hours: '.hours',
+        minutes: '.minutes',
+        seconds: '.seconds'
+    },
+
+    renderComponents: function () {
+        var model = this.model;
+        var value = InfinniUI.DateUtils.createDate(model.get('value'));
+        var today = InfinniUI.DateUtils.createDate(model.get('today'));
+        var timeZone = model.get('timeZone');
+        var m = moment(value);
+
+        if (m.isValid()) {
+            value = m.toDate();
+        } else {
+            value = null;
+        }
+
+        value = InfinniUI.DateUtils.changeTimezoneOffset(value, timeZone);
+        //if (value === null || typeof value === 'undefined') {
+        //    value = today;
+        //}
+
+        var options = {
+            value: value,
+            today: today,
+            //date: date,
+            max: model.get('maxValue'),
+            min: model.get('minValue')
+        };
+
+        options.el = this.ui.times;
+        var time = new SelectTimes(options);
+
+        options.el = this.ui.hours;
+        var hours = new SelectHours(options);
+
+        options.el = this.ui.minutes;
+        var minutes = new SelectMinutes(options);
+
+        options.el = this.ui.seconds;
+        var seconds = new SelectSeconds(options);
+
+        this.workflow(time, hours, minutes, seconds)(value);
+    },
+
+    useTime: function (date) {
+        var model = this.model;
+        var timeZone = model.get('timeZone');
+
+        var min = model.get('minValue'),
+            max = model.get('maxValue');
+
+        if (!InfinniUI.DateUtils.checkRangeDate(date, min, max)) {
+            date = InfinniUI.DateUtils.getNearestDate(date, min, max);
+        }
+
+        this.trigger('date', InfinniUI.DateUtils.restoreTimezoneOffset(date, timeZone));
+        return date;
+    },
+
+    workflow: function (time, hours, minutes, seconds) {
+        var useTime = this.useTime.bind(this);
+        var components = Array.prototype.slice.call(arguments);
+
+        this.listenTo(time, 'hour', function (date) {
+            showHours(date);
+        })
+            .listenTo(time, 'minute', function (date) {
+                showMinutes(date);
+            })
+            .listenTo(time, 'second', function (date) {
+                showSeconds(date);
+            })
+            .listenTo(time, 'date', function (date) {
+                useTime(date);
+            })
+            .listenTo(hours, 'hour', function (date) {
+                var value = useTime(date);
+                showTime(value);
+            })
+            .listenTo(minutes, 'minute', function (date) {
+                var value = useTime(date);
+                showTime(value);
+            })
+            .listenTo(seconds, 'second', function (date) {
+                var value = useTime(date);
+                showTime(value);
+            });
+
+        return showTime;
+
+        function switchComponent(component) {
+            components.forEach(function (c) {
+                if (c !== component) {
+                    c.hide();
+                }
+            });
+            component.show();
+        }
+
+        function showHours(date) {
+            hours.setDate(date);
+            switchComponent(hours);
+        }
+
+        function showMinutes(date) {
+            minutes.setDate(date);
+            switchComponent(minutes);
+        }
+
+        function showSeconds(date) {
+            seconds.setDate(date);
+            switchComponent(seconds);
+        }
+
+        function showTime(date) {
+            time.setDate(date);
+            switchComponent(time);
+        }
+
+    }
+
+});
+function DatePickerControl(parent) {
+    _.superClass(DatePickerControl, this, parent);
+}
+
+_.inherit(DatePickerControl, DateTimePickerControl);
+
+_.extend(DatePickerControl.prototype, {
+
+    createControlModel: function () {
+        return new DatePickerModel();
+    },
+
+    createControlView: function (model) {
+        return new DatePickerView({model: model});
+    }
+});
+
+
+var DatePickerModel = DateTimePickerModel.extend({
+
+    initialize: function () {
+        DateTimePickerModel.prototype.initialize.apply(this, arguments);
+
+
+    }
+
+});
+var DatePickerView = DateTimePickerView .extend({
+    
+});
+console.assert(dateTimePickerModeDate, "dateTimePickerModeDate is undefined");
+
+var dateTimePickerModeDatePicker = _.extend({}, dateTimePickerModeDate, {
+
+    onEditorDone: function (value) {
+        if(typeof value === 'undefined' || value === null || !value.toString().length) {
+            value = null;
+        } else {
+            //Дата в формате ISO 8601
+            value = InfinniUI.DateUtils.dateToTimestamp(value);
+        }
+
+        this.model.set('value', value);
+    },
+
+    convertValue: function (value) {
+        var _value = null;
+        if (value && value.constructor === Date) {
+            _value = InfinniUI.DateUtils.dateToTimestamp(value);
+        }
+
+        return _value;
+    }
+});
+
+dateTimePickerStrategy['DatePicker'] = dateTimePickerModeDatePicker;
+
+console.assert(dateTimePickerModeTime, "dateTimePickerModeTime is undefined");
+
+var dateTimePickerModeTimePicker = _.extend({}, dateTimePickerModeTime, {
+
+    onEditorDone: function (value) {
+        if(typeof value === 'undefined' || value === null || !value.toString().length) {
+            value = null;
+        } else {
+            //Дата в формате ISO 8601
+            value = InfinniUI.DateUtils.dateToTimestampTime(value);
+        }
+
+        this.model.set('value', value);
+    },
+
+    onEditorValidate: function (value) {
+        var model = this.model;
+
+        var minValue = InfinniUI.DateUtils.restoreTimezoneOffset(model.get('minValue'), model.get('timeZone'));
+        var maxValue = InfinniUI.DateUtils.restoreTimezoneOffset(model.get('maxValue'), model.get('timeZone'));
+
+        console.info(value, minValue, maxValue);
+        return InfinniUI.DateUtils.checkRangeDate(value, minValue, maxValue);
+    },
+
+    convertValue: function (value) {
+        var _value = null;
+        if (value && value.constructor === Date) {
+            _value = InfinniUI.DateUtils.dateToTimestampTime(value);
+        }
+
+        return _value;
+    }
+});
+
+dateTimePickerStrategy['TimePicker'] = dateTimePickerModeTimePicker;
+function TimePickerControl(parent) {
+    _.superClass(TimePickerControl, this, parent);
+}
+
+_.inherit(TimePickerControl, DateTimePickerControl);
+
+_.extend(TimePickerControl.prototype, {
+
+    createControlModel: function () {
+        return new TimePickerModel();
+    },
+
+    createControlView: function (model) {
+        return new TimePickerView({model: model});
+    }
+});
+
+
+var TimePickerModel = DateTimePickerModel.extend({
+
+    initialize: function () {
+        DateTimePickerModel.prototype.initialize.apply(this, arguments);
+        var date = new Date();
+        date.setFullYear(1970, 0, 1);
+        this.set('today', date);
+    }
+
+});
+var TimePickerView = DateTimePickerView .extend({
+
+    className: "pl-datepicker pl-timepicker form-group"
+
+});
 /**
  *
  * @param parent
@@ -5959,23 +9455,25 @@ function ButtonControl(viewMode) {
 
 _.inherit(ButtonControl, Control);
 
-_.extend(ButtonControl.prototype, {
+_.extend(
+    ButtonControl.prototype,
+    highlightMixin.control, {
 
-    createControlModel: function () {
-        return new ButtonModel();
-    },
+        createControlModel: function () {
+            return new ButtonModel();
+        },
 
-    createControlView: function (model, viewMode) {
-        if(!viewMode || ! viewMode in window.InfinniUI.Button){
-            viewMode = 'common';
+        createControlView: function (model, viewMode) {
+            if (!viewMode || !viewMode in window.InfinniUI.Button) {
+                viewMode = 'common';
+            }
+
+            var ViewClass = window.InfinniUI.Button.viewModes[viewMode];
+
+            return new ViewClass({model: model});
         }
 
-        var ViewClass = window.InfinniUI.Button.viewModes[viewMode];
-
-        return new ViewClass({model: model});
-    }
-
-}, buttonControlMixin);
+    }, buttonControlMixin);
 
 
 /**
@@ -5986,7 +9484,8 @@ var ButtonModel = ControlModel.extend({
 
     defaults: _.defaults({
         content: null,
-        contentTemplate: null
+        contentTemplate: null,
+        horizontalAlignment: 'Left'
 
     }, ControlModel.prototype.defaults),
 
@@ -6011,6 +9510,11 @@ var CommonButtonView = ControlView.extend({
 
     events: {
         'click button': 'onClickHandler'
+    },
+
+    initialize: function () {
+        ControlView.prototype.initialize.apply(this, arguments);
+        this.initHighlightMixin();
     },
 
     updateProperties: function(){
@@ -6080,9 +9584,17 @@ var CommonButtonView = ControlView.extend({
 
     getButtonElement: function(){
         return this.ui.button;
+    },
+
+    setFocus: function () {
+        this.ui.button.focus();
     }
 
+
+
 });
+
+_.extend(CommonButtonView.prototype, highlightMixin.controlView);
 
 
 InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Button.viewModes.common', CommonButtonView);
@@ -6200,6 +9712,146 @@ var MenuItemButtonView = LinkButtonView.extend({
 });
 
 InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Button.viewModes.menuItem', MenuItemButtonView);
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments TextBoxControl
+ */
+function ButtonEditControl(parent) {
+    _.superClass(ButtonEditControl, this, parent);
+}
+
+_.inherit(ButtonEditControl, TextBoxControl);
+
+_.extend(ButtonEditControl.prototype, {
+
+    createControlModel: function () {
+        return new ButtonEditModel();
+    },
+
+    createControlView: function (model) {
+        return new ButtonEditView({model: model});
+    },
+
+    onButtonClick: function (handler) {
+        this.controlView.on('buttonClick', handler);
+    }
+});
+
+
+var ButtonEditModel = TextBoxModel.extend({
+
+    defaults: _.defaults({
+        showClear: true,
+        readOnly: true
+    }, TextBoxModel.prototype.defaults),
+
+    initialize: function () {
+        TextBoxModel.prototype.initialize.apply(this, arguments);
+    },
+
+    clearValue: function () {
+        var enabled = this.get('enabled');
+
+        if (enabled) {
+            this.set('value', null);
+        }
+    }
+
+});
+var ButtonEditView = TextBoxView.extend(/** @lends ButtonEditView.prototype */{
+
+    template: {
+        oneline: InfinniUI.Template["new/controls/buttonEdit/template/textBoxInput.tpl.html"],
+        multiline: InfinniUI.Template["new/controls/buttonEdit/template/textBoxArea.tpl.html"]
+    },
+
+    className: 'pl-button-edit form-group',
+
+    UI: _.extend({}, TextBoxView.prototype.UI, {
+        iconAction: '.pl-button-edit-button__icon_action',
+        buttonClear: '.pl-button-edit-button_clear',
+        buttons: '.pl-button-edit-button'
+    }),
+
+    events: _.extend({}, TextBoxView.prototype.events, {
+        'click .pl-button-edit-button_action': 'onClickButtonHandler',
+        'click .pl-button-edit-button_clear': 'onClickClearHandler'
+    }),
+
+    initHandlersForProperties: function () {
+        TextBoxView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:icon', this.updateIcon);
+        this.listenTo(this.model, 'change:showClear', this.updateShowClear);
+        this.listenTo(this.model, 'change:readOnly', this.updateReadOnly);
+    },
+
+    updateProperties: function () {
+        TextBoxView.prototype.updateProperties.call(this);
+        this.updateIcon();
+        this.updateShowClear();
+        this.updateReadOnly();
+    },
+
+    updateIcon: function () {
+        var icon = this.model.get('icon');
+        this.switchClass('fa', icon, this.ui.iconAction);
+    },
+
+    updateShowClear: function () {
+        var showClear = this.model.get('showClear');
+        var value = this.model.get('value');
+
+        this.ui.buttonClear.toggleClass('hidden',  !showClear || _.isEmpty(value));
+    },
+
+    updateReadOnly: function () {
+        var readOnly = this.model.get('readOnly');
+
+        this.ui.control.prop('readonly', readOnly);
+    },
+
+    updateEnabled: function () {
+        var enabled = this.model.get('enabled');
+        TextBoxView.prototype.updateEnabled.call(this);
+
+        //@TODO Update button states
+        this.ui.buttons.toggleClass('pl-button-edit-button_disabled', !enabled);
+    },
+
+    updateValue: function () {
+        TextBoxView.prototype.updateValue.call(this);
+        this.updateShowClear();
+    },
+
+    onClickButtonHandler: function (event) {
+        var enabled = this.model.get('enabled');
+
+        if (enabled) {
+            this.trigger('buttonClick', event);
+        }
+    },
+
+    onClickClearHandler: function (event) {
+        this.model.clearValue();
+    },
+
+    onFocusControlHandler: function (event) {
+        if (this.model.get('readOnly')) {
+            return;
+        }
+        TextBoxView.prototype.onFocusControlHandler.call(this, event);
+    },
+
+    onMouseenterControlHandler: function (event) {
+        if (this.model.get('readOnly')) {
+            return;
+        }
+        TextBoxView.prototype.onMouseenterControlHandler.call(this, event);
+    }
+
+});
 function CheckBoxControl(parent) {
     _.superClass(CheckBoxControl, this, parent);
     this.initialize_editorBaseControl();
@@ -6241,7 +9893,7 @@ var CheckBoxView = ControlView.extend(/** @lends CheckBoxView.prototype */ _.ext
     template: InfinniUI.Template["new/controls/checkBox/template/checkBox.tpl.html"],
 
     UI: _.extend({}, editorBaseViewMixin.UI, {
-        text: 'span',
+        text: '.checkbox-label',
         input: 'input'
     }),
 
@@ -6303,6 +9955,10 @@ var CheckBoxView = ControlView.extend(/** @lends CheckBoxView.prototype */ _.ext
     updateValue: function () {
         var value = this.model.get('value');
         this.ui.input.prop('checked', !!value);
+    },
+
+    setFocus: function () {
+        this.ui.input.focus();
     }
 }));
 
@@ -6340,6 +9996,101 @@ var ComboBoxModel = ListEditorBaseModel.extend({
 
     initialize: function () {
         ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        this.on('change:value', this.syncSelectedItem);
+    },
+
+    setSelectedItemToValue: function () {
+        var autocomplete = this.get('autocomplete');
+        var multiSelect = this.get('multiSelect');
+
+        if (autocomplete || multiSelect) {
+            return;
+        }
+
+        var selectedItem = this.getSelectedItem();
+        var value = this.valueByItem(selectedItem);
+        this.set('value', value);
+
+    },
+
+    syncSelectedItem: function (model, value) {
+        //var value = this.getValue();
+        var selectedItem = this.itemByValue(value);
+        this.setSelectedItem(selectedItem);
+    },
+
+    getSelectedItem: function () {
+        var selectedItem = this.get('selectedItem');
+
+        return selectedItem;
+    },
+
+    setSelectedItem: function (item) {
+        this.set('selectedItem', item);
+    },
+
+    selectNextItem: function () {
+        var items = this.get('items');
+        var selectedItem = this.getSelectedItem();
+
+        if (items.length > 0) {
+            var itemIndex = 0;
+            if (selectedItem) {
+                itemIndex = items.indexOf(selectedItem);
+                if (itemIndex === -1) {
+                    itemIndex = 0;
+                } else {
+                    itemIndex = Math.min(items.length - 1, itemIndex + 1);
+                }
+            }
+            selectedItem = items.getByIndex(itemIndex);
+        } else {
+            selectedItem = null;
+        }
+        this.setSelectedItem(selectedItem);
+        this.setSelectedItemToValue();
+    },
+
+    selectPrevItem: function () {
+        var items = this.get('items');
+        var selectedItem = this.getSelectedItem();
+
+        if (items.length > 0) {
+            var itemIndex = 0;
+            if (selectedItem) {
+                itemIndex = items.indexOf(selectedItem);
+                if (itemIndex === -1) {
+                    itemIndex = 0;
+                } else {
+                    itemIndex = Math.max(0, itemIndex - 1);
+                }
+            }
+            selectedItem = items.getByIndex(itemIndex);
+        }
+        this.setSelectedItem(selectedItem);
+        this.setSelectedItemToValue();
+    },
+
+    selectFirstItem: function () {
+        var items = this.get('items');
+        var selectedItem = null;
+
+        if (items.length > 0) {
+            selectedItem = items.getByIndex(0);
+        }
+        this.setSelectedItem(selectedItem);
+        this.setSelectedItemToValue();
+    },
+
+    selectLastItem: function () {
+        var items = this.get('items');
+        var selectedItem = null;
+
+        if (items.length > 0) {
+            selectedItem = items.getByIndex(items.length - 1);
+        }
+        this.setSelectedItem(selectedItem);
+        this.setSelectedItemToValue();
     },
 
     toggleItem: function (item, toggle) {
@@ -6357,24 +10108,57 @@ var ComboBoxView = ListEditorBaseView.extend({
     events: {
         'click .pl-combobox__grip': 'onClickGripHandler',
         'click .pl-combobox__value': 'onClickValueHandler',
-        'click .pl-combobox__clear': 'onClickClearHandler'
+        'click .pl-combobox__clear': 'onClickClearHandler',
+        'click .pl-control': 'onClickValueHandler',
+        'keydown .pl-control': 'onKeyDownControlHandler'
     },
 
     UI: _.defaults({
+        control: '.pl-control',
         label: '.pl-control-label',
         value: '.pl-combobox__value',
         clear: '.pl-combobox__clear'
     }, ListEditorBaseView.prototype.UI),
 
+    isControlElement: function (el) {
+        var res = ListEditorBaseView.prototype.isControlElement.call(this, el);
+
+        if (res) {
+            return res;
+        }
+
+        if (!this.dropDownView) {
+            return false;
+        }
+
+        return $.contains(this.dropDownView.el, el);
+    },
+
+    updateFocusable: function () {
+        var focusable = this.model.get('focusable');
+        var enabled = this.model.get('enabled');
+
+        if (focusable && enabled) {
+            this.ui.control.attr('tabindex', 0);
+        } else {
+            this.ui.control.removeAttr('tabindex');
+        }
+    },
+
     initialize: function (options) {
         ListEditorBaseView.prototype.initialize.call(this, options);
         var model = this.model,
             view = this;
+
+        //this.on('beforeClick', this.activateControl);
+
         this.on('render', function () {
             view.renderValue();
+
             model.on('change:dropdown', function (model, dropdown) {
                 if (dropdown) {
-                    model.set('search', '');//Сброс фильтра
+                    model.set('autocompleteValue', '');//Сброс фильтра
+                    model.set('focused', true);
                     if (view.dropDownView) {
                         view.dropDownView.remove();
                     }
@@ -6386,26 +10170,17 @@ var ComboBoxView = ListEditorBaseView.extend({
                     this.listenTo(dropdownView, 'search', _.debounce(view.onSearchValueHandler.bind(view), 300));
 
                     var $dropdown = dropdownView.render();
-
-                    var rect = view.$el[0].getBoundingClientRect();
-                    //@TODO Вынести общие стили в css
-                    var style = {
-                        position: "absolute",
-                        top: window.pageYOffset + rect.bottom/* + parseInt(view.$el.css('margin-bottom'))*/,
-                        left: window.pageXOffset + rect.left,
-                        width: rect.width
-                    };
-                    //@TODO Добавить алгоритм определения куда расхлапывать список вверх/вниз
-                    //Для расхлопывания вверх:
-                    //bottom: pageYOffset - rect.height
-                    //Для расхлопывания вниз:
-                    //top: window.pageYOffset + rect.bottom
-
-                    $dropdown.css(style);
                     $('body').append($dropdown);
-                    if (!model.get('multiSelect')) {
+                    setTimeout(dropdownView.updatePosition(view.el));
+
+                    if (model.get('autocomplete')) {
                         dropdownView.setSearchFocus();
+                    } else {
+                        view.ui.control.focus();
                     }
+                    setTimeout(dropdownView.ensureVisibleSelectedItem.bind(dropdownView), 0);
+                } else {
+                    view.ui.control.focus();
                 }
             });
             model.onValueChanged(this.onChangeValueHandler.bind(this));
@@ -6416,6 +10191,7 @@ var ComboBoxView = ListEditorBaseView.extend({
     initHandlersForProperties: function(){
         ListEditorBaseView.prototype.initHandlersForProperties.call(this);
         this.listenTo(this.model, 'change:showClear', this.updateShowClear);
+        this.listenTo(this.model, 'change:labelText', this.updateLabelText);
     },
 
     render: function () {
@@ -6440,8 +10216,36 @@ var ComboBoxView = ListEditorBaseView.extend({
         return this.template;
     },
 
+    onKeyDownControlHandler: function (event) {
+        var enabled = this.model.get('enabled');
+
+        if (!enabled) {
+            event.preventDefault();
+            return;
+        }
+
+        if (event.ctrlKey || event.altKey) {
+            return;
+        }
+
+        if (this.isDropdown()) {
+            return this.dropDownView.onKeyDownHandler.call(this.dropDownView, event);
+        }
+        switch (event.which) {
+            case 40:    //Down Arrow
+            case 13:    //Ennter
+                event.preventDefault();
+                this.toggleDropdown();
+                break;
+        }
+    },
+
     onClickClearHandler: function () {
-        this.model.set('value', null);
+        var enabled = this.model.get('enabled');
+        if (enabled) {
+            this.model.set('value', null);
+            this.ui.control.focus();
+        }
     },
 
     onClickGripHandler: function () {
@@ -6465,18 +10269,25 @@ var ComboBoxView = ListEditorBaseView.extend({
     updateLabelText: function () {
         var labelText = this.model.get('labelText');
         if (labelText && labelText !== '') {
-            this.ui.label.text(labelText);
             this.ui.label.toggleClass('hidden', false);
         } else {
             this.ui.label.toggleClass('hidden', true);
         }
 
+        this.ui.label.text(labelText);
     },
 
     updateEnabled: function () {
         ListEditorBaseView.prototype.updateEnabled.call(this);
 
         var enabled = this.model.get('enabled');
+
+        if (!enabled) {
+            //Prevent got focus
+            this.ui.control.removeAttr('tabindex');
+        } else {
+            this.updateFocusable();
+        }
 
     },
 
@@ -6496,6 +10307,11 @@ var ComboBoxView = ListEditorBaseView.extend({
 
     updateSelectedItem: function () {
 
+    },
+
+    isDropdown: function () {
+        var model = this.model;
+        return !!model.get('dropdown');
     },
 
     toggleDropdown: function (toggle) {
@@ -6554,7 +10370,7 @@ var ComboBoxView = ListEditorBaseView.extend({
      */
     onSearchValueHandler: function (text) {
         this.toggleDropdown(true);
-        this.model.set('search', text);
+        this.model.set('autocompleteValue', text);
     },
 
     onClickValueHandler: function (event) {
@@ -6571,9 +10387,8 @@ var ComboBoxDropdownView = Backbone.View.extend({
     className: "pl-dropdown-container",
     events: {
         'click .backdrop': 'onClickBackdropHandler',
-        //'keypress .pl-combobox-search-text': 'onKeyPressHandler',
-        //'keydown .pl-combobox-search-text': 'onKeyDownHandler',
-        'keyup .pl-combobox-filter-text': 'onKeyUpHandler'
+        'keyup .pl-combobox-filter-text': 'onKeyUpHandler',
+        'keydown .pl-combobox-filter-text': 'onFilterKeyDownHandler'
     },
 
     UI: {
@@ -6594,9 +10409,11 @@ var ComboBoxDropdownView = Backbone.View.extend({
         }
 
         this.listenTo(this.model, 'change:dropdown', this.onChangeDropdownHandler);
-        this.listenTo(this.model, 'change:search', this.onChangeSearchHandler);
+        this.listenTo(this.model, 'change:autocompleteValue', this.onChangeSearchHandler);
         this.listenTo(this.model, 'change:autocomplete', this.updateAutocomplete);
+        this.listenTo(this.model, 'change:selectedItem', this.onChangeSelectedItem);
         this.listenTo(this.strategy, 'click', this.onClickItemHandler);
+        this.listenTo(this.strategy, 'mouseenter', this.onMouseEnterItemHandler);
         this.model.onValueChanged(this.onChangeValueHandler.bind(this));
 
         var items = this.model.get('items');
@@ -6630,7 +10447,8 @@ var ComboBoxDropdownView = Backbone.View.extend({
         var noItems = (items && items.length == 0);
         this.ui.noItems.toggleClass('hidden', !noItems);
 
-        this.markCheckedItems();
+        this.markSelectedItems();
+        this.markCheckedItems()
     },
 
     setItemsContent: function (content) {
@@ -6655,6 +10473,63 @@ var ComboBoxDropdownView = Backbone.View.extend({
         this.markCheckedItems();
     },
 
+    markSelectedItems: function () {
+        var model = this.model;
+        if (!Array.isArray(this.$items)) {
+            return;
+        }
+
+        var $container = this.ui.items;
+        var $items = this.$items;
+        var selectedItem = model.getSelectedItem();
+
+        $items.forEach(function ($item) {
+            var selected = selectedItem === $item.data('pl-data-item');
+            $item.toggleClass('pl-combobox-selected', selected);
+        });
+
+        this.ensureVisibleSelectedItem();
+
+    },
+
+    ensureVisibleSelectedItem: function () {
+        var model = this.model;
+        if (!Array.isArray(this.$items)) {
+            return;
+        }
+
+        var $container = this.ui.items;
+        var $items = this.$items;
+        var selectedItem = model.getSelectedItem();
+
+        $items.some(function ($item) {
+            var selected = selectedItem === $item.data('pl-data-item');
+            if (selected) {
+                ensureItem($container, $item);
+            }
+            return selected;
+        });
+
+        function ensureItem($container, $item) {
+            var newScrollTop;
+
+            var scrollTop = $container.scrollTop();
+            var itemTop = $item.position().top;
+            var itemHeight = $item.outerHeight();
+            var viewHeight = $container.innerHeight();
+            if (itemTop + itemHeight > viewHeight) {
+                newScrollTop = scrollTop + itemTop + itemHeight - viewHeight;
+            } else if (itemTop < 0) {
+                newScrollTop = scrollTop + itemTop;
+            }
+
+            if (typeof newScrollTop !== 'undefined') {
+                $container.scrollTop(newScrollTop);
+            }
+        }
+    },
+
+
     markCheckedItems: function () {
         var model = this.model;
         var value = model.getValue();
@@ -6677,7 +10552,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
 
         $items.forEach(function ($item) {
             var selected = items.indexOf($item.data('pl-data-item')) !== -1;
-            $item.toggleClass('pl-combobox-selected', selected);
+            $item.toggleClass('pl-combobox-checked', selected);
         });
     },
 
@@ -6690,6 +10565,10 @@ var ComboBoxDropdownView = Backbone.View.extend({
     updateAutocomplete: function () {
         var autocomplete = this.model.get('autocomplete');
         this.ui.filter.toggleClass('hidden', !autocomplete);
+    },
+
+    onMouseEnterItemHandler: function (item) {
+        this.model.setSelectedItem(item);
     },
 
     onClickItemHandler: function (item) {
@@ -6705,8 +10584,96 @@ var ComboBoxDropdownView = Backbone.View.extend({
         this.trigger('search', text);
     },
 
+    onKeyDownHandler: function (event) {
+        var model = this.model;
+        event.preventDefault();
+        this.onFilterKeyDownHandler(event);
+    },
+
+    onFilterKeyDownHandler: function (event) {
+        var model = this.model;
+        switch (event.which) {
+            case 36://Home;
+                model.selectFirstItem();
+                break;
+            case 35: //End
+                model.selectLastItem();
+                break;
+            case 38: //Up
+                model.selectPrevItem();
+                break;
+            case 40: //Down
+                model.selectNextItem();
+                break;
+            case 13:
+                this.onClickItemHandler(model.getSelectedItem());
+                break;
+            case 9:
+                this.close();
+                break;
+            case 27://Escape
+                this.close();
+                event.stopPropagation();
+                break;
+        }
+    },
+
     onChangeSearchHandler: function (model, value) {
         this.ui.search.text(value);
+    },
+
+    onChangeSelectedItem: function (model, value) {
+        this.markSelectedItems();
+    },
+
+    updatePosition: function (parentDOMElement) {
+        var direction = this.getDropdownDirection(parentDOMElement);
+        this.setPositionFor(parentDOMElement, direction );
+    },
+
+    setPositionFor: function (parentDOMElement, direction) {
+        clearInterval(this._intervalId);
+
+        this.applyStyle(parentDOMElement, direction);
+        this._intervalId = setInterval(this.applyStyle.bind(this, parentDOMElement, direction), 100);
+    },
+
+    remove: function () {
+        clearInterval(this._intervalId);
+        return Backbone.View.prototype.remove.apply(this, arguments);
+    },
+
+    getDropdownDirection: function (parentDOMElement) {
+
+        var windowHeight = $(window).height();
+        var rect = parentDOMElement.getBoundingClientRect();
+        var height = this.$el.height();
+
+        var direction = 'bottom';
+        if (rect.bottom + height + 30 > windowHeight && rect.bottom > windowHeight / 2) {
+            direction = 'top';
+        }
+
+        return direction;
+    },
+
+    applyStyle: function (parentDOMElement, direction) {
+        var rect = parentDOMElement.getBoundingClientRect();
+
+        //@TODO Вынести общие стили в css
+        var style = {
+            position: "absolute",
+            left: window.pageXOffset + rect.left,
+            width: Math.round(rect.width) - 1
+        };
+
+        if (direction === 'bottom') {
+            style.top = window.pageYOffset + rect.bottom;
+        } else {
+            style.top = rect.top - this.$el.height();
+        }
+
+        this.$el.css(style);
     }
 
 });
@@ -6801,13 +10768,12 @@ ComboBoxBaseViewStrategy.prototype._renderItems = function (items) {
         }
 
         this.addOnClickEventListener($item, item);
+        this.addOnHoverEventListener($item, item);
         return $item;
     }, this);
 
     return $items;
 };
-
-ComboBoxBaseViewStrategy.prototype.toggle
 
 /**
  *
@@ -6818,6 +10784,16 @@ ComboBoxBaseViewStrategy.prototype.addOnClickEventListener = function ($el) {
     var params = Array.prototype.slice.call(arguments, 1);
     var handler = this.trigger.bind(this, 'click');
     el.addEventListener('click', function () {
+        handler.apply(this, params);
+    });
+};
+
+
+ComboBoxBaseViewStrategy.prototype.addOnHoverEventListener = function ($el) {
+    var el = $el[0];
+    var params = Array.prototype.slice.call(arguments, 1);
+    var handler = this.trigger.bind(this, 'mouseenter');
+    $el.on('mouseenter', function () {
         handler.apply(this, params);
     });
 };
@@ -7107,6 +11083,10 @@ _.extend(DataGridControl.prototype, {
 
     createControlView: function (model) {
         return new DataGridView({model: model});
+    },
+
+    onCheckAllChanged: function (handler) {
+        this.controlModel.onCheckAllChanged(handler);
     }
 });
 
@@ -7117,12 +11097,24 @@ _.extend(DataGridControl.prototype, {
  */
 var DataGridModel = ListEditorBaseModel.extend({
     defaults: _.defaults({
-        showSelectors: true
+        showSelectors: true,
+        checkAllVisible: false,
+        checkAll: false
     }, ListEditorBaseModel.prototype.defaults),
 
     initialize: function () {
         ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
         this.initColumns();
+    },
+
+    toggleCheckAll: function () {
+        this.set('checkAll', !this.get('checkAll'));
+    },
+
+    onCheckAllChanged: function (handler) {
+        this.on('change:checkAll', function (model, checkAll) {
+            handler.call(null, {value: checkAll});
+        });
     },
 
     /**
@@ -7164,7 +11156,7 @@ var DataGridRowModel = ControlModel.extend({
 });
 var DataGridRowView = ControlView.extend({
 
-    className: 'pl-datagrid-row',
+    className: 'pl-datagrid-row pl-datagrid-row_data',
 
     classNameSelected: 'info',
 
@@ -7174,18 +11166,21 @@ var DataGridRowView = ControlView.extend({
 
     template: {
         singleSelect: InfinniUI.Template["new/controls/dataGrid/dataGridRow/template/singleSelect.tpl.html"],
-        multiSelect: InfinniUI.Template["new/controls/dataGrid/dataGridRow/template/multiSelect.tpl.html"]
+        multiSelect: InfinniUI.Template["new/controls/dataGrid/dataGridRow/template/multiSelect.tpl.html"],
+        dataCell: InfinniUI.Template["new/controls/dataGrid/dataGridRow/template/dataCell.tpl.html"]
     },
 
     UI: {
-        toggleCell: '.pl-toggle-cell',
-        toggle: '.toggle'
+        toggleCell: '.pl-datagrid-row__cell_toggle',
+        toggle: '.pl-datagrid-toggle',
+        toggleControl: '.pl-datagrid-toggle input'
     },
 
     initialize: function () {
         ControlView.prototype.initialize.call(this);
+        this.childElements = [];
         this.on('render', function () {
-            this.ui.toggle.on('click', this.onToggleHandler.bind(this));
+            this.ui.toggleCell.on('click', this.onToggleHandler.bind(this));
         }, this);
     },
 
@@ -7202,10 +11197,14 @@ var DataGridRowView = ControlView.extend({
         this.updateShowSelectors();
     },
 
+    updateVerticalAlignment: function () {
+        //Use Vertical alignment for DataGrid
+    },
+
     render: function () {
         this.prerenderingActions();
         var $el = this.$el;
-
+        var row = this;
 
         var templateName = this.model.get('multiSelect') ? 'multiSelect' : 'singleSelect';
         var template = this.template[templateName];
@@ -7213,11 +11212,14 @@ var DataGridRowView = ControlView.extend({
         this.bindUIElements();
 
         var templates = this.model.get('cellTemplates');
+        var templateDataCell = this.template.dataCell;
         if (Array.isArray(templates)) {
-            templates.forEach(function (template) {
-                var $cell = $('<td></td>');
-                $cell.append(template().render());
+            templates.forEach(function (template, index) {
+                var $cell = $(templateDataCell());
+                var cellElement = template();
+                $cell.append(cellElement.render());
                 $el.append($cell);
+                row.addChildElement(cellElement);
             });
         }
         this.updateProperties();
@@ -7235,7 +11237,7 @@ var DataGridRowView = ControlView.extend({
 
     updateToggle: function () {
         var toggle = this.model.get('toggle');
-        this.ui.toggle.prop('checked', !!toggle);
+        this.ui.toggleControl.prop('checked', !!toggle);
     },
 
     updateSelected: function () {
@@ -7245,7 +11247,25 @@ var DataGridRowView = ControlView.extend({
 
     onToggleHandler: function (event) {
         this.trigger('toggle');
+    },
+
+    addChildElement: function (element) {
+        this.childElements.push(element);
+    },
+
+    removeChildElements: function () {
+        this.childElements.forEach(function (element) {
+            element.remove();
+        });
+
+        this.childElements.length = 0;
+    },
+
+    remove: function () {
+        this.removeChildElements();
+        ControlView.prototype.remove.call(this);
     }
+
 
 });
 
@@ -7256,35 +11276,85 @@ var DataGridRowView = ControlView.extend({
  */
 var DataGridView = ListEditorBaseView.extend({
 
-    template: InfinniUI.Template["new/controls/dataGrid/template/dataGrid.tpl.html"],
+    template: {
+        "grid": InfinniUI.Template["new/controls/dataGrid/template/dataGrid.tpl.html"],
+        "gridStretched": InfinniUI.Template["new/controls/dataGrid/template/dataGridStretched.tpl.html"],
+        "headerCell": InfinniUI.Template["new/controls/dataGrid/template/headerCell.tpl.html"],
+        "sizeCell": InfinniUI.Template["new/controls/dataGrid/template/sizeCell.tpl.html"]
+    },
 
     className: 'pl-datagrid',
 
-    events: {},
+    events: _.extend({},
+        ListEditorBaseView.prototype.events,
+        {
+            "click .pl-datagrid-toggle_all": "onClickCheckAllHandler"
+        }
+    ),
 
     UI: _.defaults({
-        header: 'tr',
+        body: ".pl-datagrid__body",
+        head: ".pl-datagrid__head",
+        headContainer: ".pl-datagrid-container_head",
+
+        header: '.pl-datagrid-row_header',
+        firstRows: '.pl-datagrid-row_first',
         toggleCell: ".pl-toggle-cell",
+        checkAll: ".pl-datagrid-toggle__button",
         items: 'tbody'
     }, ListEditorBaseView.prototype.UI),
 
     initialize: function (options) {
         ListEditorBaseView.prototype.initialize.call(this, options);
-        this.childElements = new HashMap();
+        this.rowElements = new HashMap();
+    },
+
+    initHandlersForProperties: function(){
+        ListEditorBaseView.prototype.initHandlersForProperties.call(this);
+
+        this.listenTo(this.model, 'change:showSelectors', this.updateShowSelectors);
+        this.listenTo(this.model, 'change:checkAllVisible', this.updateCheckAllVisible);
+        this.listenTo(this.model, 'change:checkAll', this.updateCheckAll);
     },
 
     updateProperties: function () {
         ListEditorBaseView.prototype.updateProperties.call(this);
         this.updateShowSelectors();
+        this.updateCheckAllVisible();
+        this.updateCheckAll();
     },
 
     updateShowSelectors: function () {
         var showSelectors = this.model.get('showSelectors');
-        this.ui.toggleCell.toggleClass('hidden', !showSelectors);
+        this.$el.toggleClass('pl-datagrid_selectors_show', showSelectors);
+        this.$el.toggleClass('pl-datagrid_selectors_hide', !showSelectors);
     },
 
     updateGrouping: function () {
 
+    },
+
+    updateVerticalAlignment: function () {
+        ListEditorBaseView.prototype.updateVerticalAlignment.call(this);
+        this.switchClass('verticalAlignment', this.model.get('verticalAlignment'), this.ui.body, false);
+    },
+
+    updateCheckAll: function () {
+        var checkAll = this.model.get('checkAll');
+        this.ui.checkAll.prop('checked', checkAll);
+    },
+
+    updateCheckAllVisible: function () {
+        var checkAllVisible = this.model.get('checkAllVisible');
+        this.ui.checkAll.toggleClass('hidden', !checkAllVisible);
+    },
+
+    updateMultiSelect: function () {
+        ListEditorBaseView.prototype.updateMultiSelect.call(this);
+
+        var multiSelect = this.model.get('multiSelect');
+        this.$el.toggleClass('pl-datagrid_select_multi', multiSelect === true);
+        this.$el.toggleClass('pl-datagrid_select_single', multiSelect !== true);
     },
 
     updateValue: function () {
@@ -7307,7 +11377,7 @@ var DataGridView = ListEditorBaseView.extend({
                 });
         }
 
-        this.childElements.forEach(function (rowElement, item) {
+        this.rowElements.forEach(function (rowElement, item) {
             var index = items.indexOf(item);
             var toggle = indices.indexOf(index) !== -1;
             rowElement.toggle(toggle);
@@ -7320,16 +11390,17 @@ var DataGridView = ListEditorBaseView.extend({
             model = this.model,
             selectedItem = model.get('selectedItem');
 
-        this.childElements.forEach(function (rowElement, item) {
+        this.rowElements.forEach(function (rowElement, item) {
             rowElement.setSelected(item === selectedItem);
         });
-
     },
 
     render: function () {
         this.prerenderingActions();
 
-        this.$el.html(this.template());
+        var verticalAlignment = this.model.get('verticalAlignment');
+        var template = (verticalAlignment === 'Stretch') ? this.template.gridStretched : this.template.grid;
+        this.$el.html(template());
 
         this.bindUIElements();
 
@@ -7339,17 +11410,63 @@ var DataGridView = ListEditorBaseView.extend({
 
         this.trigger('render');
 
+        this.applyColumnWidth();
+        this.syncBodyAndHead();
         this.postrenderingActions();
         return this;
+    },
 
+    applyColumnWidth: function () {
+        var columns = this.model.get('columns');
 
+        this.ui.firstRows.children().each(function (i, el) {
+            var columnIndex = i % (columns.length + 1);
+
+            if (columnIndex === 0) {
+                //skip columns with checkbox/radiobutton
+                return;
+            }
+
+            var column = columns.getByIndex(columnIndex - 1);
+            var width = column && column.getWidth();
+
+            if (width) {
+                $(el).css('width', width);
+            }
+        });
+
+    },
+
+    syncBodyAndHead: function () {
+        var $body = this.ui.body;
+        var $head = this.ui.head;
+
+        setTimeout(function () {
+            //Need update after element added to DOM
+            var scrollWidth = $body[0].offsetWidth - $body[0].clientWidth;
+            $head.css('padding-right', scrollWidth + "px");
+        }, 0);
+
+        this.ui.body
+            .off('scroll')
+            .on('scroll', this.onScrollBodyHandler.bind(this));
+
+    },
+
+    onScrollBodyHandler: function () {
+        this.ui.headContainer.scrollLeft(this.ui.body.scrollLeft());
     },
 
     renderHeaders: function () {
         var columns = this.model.get('columns');
+        var templateHeaderCell = this.template.headerCell;
+        var sizeCells = [];
+        var templateSizeCells = this.template.sizeCell;
 
         var $headers = columns.toArray().map(function (column) {
-            var $th = $('<th></th>');
+
+            sizeCells.push(templateSizeCells());
+            var $th = $(templateHeaderCell());
 
             var headerTemplate = column.getHeaderTemplate();
             var header = column.getHeader();
@@ -7367,16 +11484,18 @@ var DataGridView = ListEditorBaseView.extend({
         });
 
         this.ui.header.append($headers);
+        this.ui.firstRows.append(sizeCells);
     },
 
     renderItems: function () {
         var
             model = this.model,
+            valueSelector = model.get('valueSelector'),
             itemTemplate = model.get('itemTemplate'),
             items = model.get('items'),
             $items = this.ui.items;
 
-        this.removeChildElements();
+        this.removeRowElements();
         items.forEach(function (item, index) {
             var element = itemTemplate(undefined, {index: index, item: item});
 
@@ -7384,22 +11503,26 @@ var DataGridView = ListEditorBaseView.extend({
                 model.set('selectedItem', item);
             });
             element.onToggle(function() {
-                model.toggleValue(item);
+                model.toggleValue(valueSelector(undefined, {value:item}));
             });
-            this.addChildElement(item, element);
+            this.addRowElement(item, element);
             $items.append(element.render());
         }, this);
 
     },
 
-    addChildElement: function(item, element){
-        this.childElements.add(item, element);
+    addRowElement: function(item, element){
+        this.addChildElement(element);
+        this.rowElements.add(item, element);
     },
 
-    removeChildElements: function () {
-        this.childElements.clear(function (element) {
-            element.remove();
-        });
+    removeRowElements: function () {
+        this.removeChildElements();
+        this.rowElements.clear();
+    },
+
+    onClickCheckAllHandler: function () {
+        this.model.toggleCheckAll();
     }
 
 
@@ -7829,1800 +11952,6 @@ var DataNavigationPageSizes = Backbone.View.extend({
 
 });
 
-var DatePickerComponent = Backbone.View.extend({
-
-    modelClass: Backbone.Model,
-
-    initialize: function (options) {
-        var modelClass = this.modelClass;
-
-        this.model = new modelClass({
-            today: new Date(),
-            value: options.value,
-            date: options.date,
-            max: options.max,
-            min: options.min
-        });
-        this.render();
-        return this;
-    },
-
-    show: function () {
-        this.$el.css('display', 'block');
-    },
-
-    hide: function () {
-        this.$el.css('display', 'none');
-    },
-
-    /**
-     * @description Установка текущего положения списка выбора значений
-     * Если устанавливается недействительная дата - используется текущая
-     * @param date
-     */
-    setDate: function (date) {
-        if (typeof date == 'undefined' || date === null){
-            var value = this.model.get('value'),
-                today = this.model.get('today');
-
-            date = value || today;
-        } else {
-            date = new Date(date);
-        }
-        this.model.set('date', date);
-    }
-
-});
-
-
-_.extend(DatePickerComponent.prototype, bindUIElementsMixin);
-var DatePickerComponentModel = Backbone.Model.extend({
-
-    initialize: function () {
-        this.on('change:date', this.onChangeDateHandler, this);
-    },
-
-    onChangeDateHandler: function (model, value) {
-        if (typeof value !== 'undefined' && value !== null) {
-            model.set({
-                year: moment(value).year(),
-                month: moment(value).month(),
-                day: moment(value).date(),
-                hour: moment(value).hour(),
-                minute: moment(value).minute(),
-                second: moment(value).second(),
-                millisecond: moment(value).millisecond()
-            })
-        } else {
-            model.set({
-                year: null,
-                month: null,
-                day: null,
-                hour: null,
-                minute: null,
-                second: null,
-                millisecond: null
-            });
-        }
-    },
-
-    updateDatePart: function (datePart, model, value) {
-        var
-            d = this.get('date'),
-            date = new Date(d),
-            data = this.toJSON();
-
-        switch (datePart) {
-            case 'hour':
-            case 'minute':
-            case 'second':
-                date.setHours(data.hour, data.minute, data.second);
-                break;
-            case 'year':
-            case 'month':
-            case 'day':
-                date.setFullYear(data.year, data.month, data.day);
-                break;
-        }
-        this.set('date', date);
-    },
-
-    checkRange: function (value) {
-        return true;
-    }
-
-
-});
-
-
-var DatePickerDaysModel = DatePickerComponentModel.extend({
-    defaults: function () {
-        var today = moment();
-
-        return {
-            today: today.toDate(),
-            todayMonth: today.month(),
-            todayDay: today.date(),
-            todayYear: today.year()
-        }
-    },
-
-    initialize: function () {
-        DatePickerComponentModel.prototype.initialize.call(this);
-        this.on('change:year', this.updateDatePart.bind(this, 'year'));
-        this.on('change:month', this.updateDatePart.bind(this, 'month'));
-        this.on('change:day', this.updateDatePart.bind(this, 'day'));
-    },
-
-    today: function () {
-        this.set({
-            year: this.get('todayYear'),
-            month: this.get('todayMonth')
-        });
-    },
-
-    nextMonth: function () {
-        var
-            month = this.get('month'),
-            year = this.get('year');
-
-        this.set({
-            month: month === 11 ? 0 : month + 1,
-            year: month === 11 ? year + 1 : year
-        });
-    },
-
-    prevMonth: function () {
-        var
-            month = this.get('month'),
-            year = this.get('year');
-
-        this.set({
-            month: month === 0 ? 11 : month - 1,
-            year: month === 0 ? year - 1 : year
-        });
-    },
-
-    checkRange: function (value) {
-        var min = this.get('min'),
-            max = this.get('max'),
-            success = true;
-
-        var mMin = moment(min),
-            mMax = moment(max),
-            mVal = moment(value);
-
-        if (!isEmpty(min) && !isEmpty(max)) {
-            success = mVal.isBetween(min, max, 'day') || mVal.isSame(mMin, 'day') || mVal.isSame(mMax, 'day');
-        } else if (!isEmpty(min) && isEmpty(max)) {
-            success = mMin.isBefore(value, 'day') || mMin.isSame(value, 'day');
-        } else if (isEmpty(min) && !isEmpty(max)) {
-            success = mMax.isAfter(value, 'day') || mMax.isSame(value, 'day');
-        }
-
-        return success;
-
-        function isEmpty(value) {
-            return typeof value === 'undefined' || _.isEmpty(value);
-        }
-
-    }
-
-});
-
-var DatePickerDays = DatePickerComponent.extend({
-
-    modelClass: DatePickerDaysModel,
-
-    template: InfinniUI.Template["new/controls/datePicker/template/date/days.tpl.html"],
-
-    UI: {
-        headerDays: '.weekdays-head .day',
-        calendarDays: '.day-calendar',
-        year: '.years-year',
-        month: '.years-month'
-    },
-
-    events: {
-        'click .years': 'onYearsClickHandler',
-        'click .btn-month-prev': 'prevMonth',
-        'click .btn-month-next': 'nextMonth',
-        'click .today-date': 'showToday',
-        'click .day-calendar:not(".day-unavailable")': 'useDay',
-        'click .time': 'showTime'
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        this.fillLegend();
-        this.fillCalendar();
-        this.initOnChangeHandlers();
-    },
-
-    initOnChangeHandlers: function () {
-        this.listenTo(this.model, 'change:month', this.onChangeMonthHandler);
-        this.listenTo(this.model, 'change:year', this.onChangeYearHandler);
-    },
-
-    onChangeMonthHandler: function (model, value) {
-        var dateTimeFormatInfo = localized.dateTimeFormatInfo;
-        this.ui.month.text(dateTimeFormatInfo.monthNames[value]);
-        this.fillCalendar();
-    },
-
-    onChangeYearHandler: function (model, value) {
-        this.ui.year.text(value);
-        this.fillCalendar();
-    },
-
-    fillLegend: function () {
-        var date = new Date();
-
-        var dateTimeFormatInfo = localized.dateTimeFormatInfo;
-        var firstDayOfWeek = dateTimeFormatInfo.firstDayOfWeek;
-        var days = dateTimeFormatInfo.abbreviatedDayNames.map(function (day, i) {
-            return i;
-        });
-
-        if (firstDayOfWeek > 0) {
-            days = days.splice(firstDayOfWeek).concat(days);
-        }
-
-        this.ui.headerDays.each(function (i, el) {
-            var $el = $(el);
-            var index = days[i];
-            $el.text(dateTimeFormatInfo.abbreviatedDayNames[index]);
-            markWeekend($el, index);
-        });
-
-        this.ui.calendarDays.each(function (i, el) {
-            var $el = $(el);
-            var index = days[i % 7];
-            markWeekend($el, index);
-        });
-
-        function markWeekend($el, weekday) {
-            $el.toggleClass('day-weekend', weekday === 0 || weekday === 6);
-        }
-    },
-
-    fillCalendar: function () {
-        var model = this.model;
-        var valueDate = model.get('value');
-        var month = model.get('month');
-        var year = model.get('year');
-        var day = model.get('day');
-        var min = model.get('min');
-        var max = model.get('max');
-        var firstDayOfMonth = new Date(year, month, 1);
-        var weekday = firstDayOfMonth.getDay();
-        var dateTimeFormatInfo = localized.dateTimeFormatInfo;
-        var firstDayOfWeek = dateTimeFormatInfo.firstDayOfWeek;
-
-        var startDate = new Date(year, month, 1 - weekday + firstDayOfWeek);
-
-        this.ui.calendarDays.each(function (i, el) {
-            var $el = $(el);
-            var d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
-            $el.text(d.getDate());
-            $el.attr('data-date', moment(d).format('YYYY-MM-DD'));
-            markActiveMonth($el, d.getMonth() === month);
-            markToday($el, d);
-            markSelected($el, d);
-            markAvailable($el, d);
-        });
-
-        function markActiveMonth($el, active) {
-            $el.toggleClass('day-inactive', !active);
-        }
-
-        function markToday($el, date) {
-            var today = date.getMonth() === model.get('todayMonth')
-                && date.getFullYear() === model.get('todayYear')
-                && date.getDate() === model.get('todayDay');
-
-            $el.toggleClass('day-today', today);
-        }
-
-        function markSelected($el, value) {
-            var selected = false;
-
-            if (valueDate) {
-                selected = moment(valueDate).isSame(value, 'day');
-            }
-
-            $el.toggleClass('day-selected', selected);
-        }
-
-        function markAvailable($el, value) {
-            $el.toggleClass('day-unavailable', !model.checkRange(value));
-        }
-
-    },
-
-    onYearsClickHandler: function (event) {
-        var date = this.model.get('date');
-
-        this.trigger('year', date);
-    },
-
-    prevMonth: function () {
-        this.model.prevMonth();
-    },
-
-    nextMonth: function () {
-        this.model.nextMonth();
-    },
-
-    showToday: function () {
-        this.today();
-    },
-
-    today: function () {
-        this.model.today();
-    },
-
-    showTime: function () {
-        this.trigger('time', this.model.get('value'));
-    },
-
-    useDay: function (event) {
-        var $el = $(event.target),
-            value = $el.attr('data-date'),
-            m = moment(value, 'YYYY-MM-DD');
-
-        this.model.set({
-            year: m.year(),
-            month: m.month(),
-            day: m.date()
-        });
-
-
-        this.trigger('date', this.model.get('date'));
-    }
-
-});
-
-var DatePickerHoursModel = DatePickerComponentModel.extend({
-
-    initialize: function () {
-        DatePickerComponentModel.prototype.initialize.call(this);
-        this.on('change:hour', this.updateDatePart.bind(this, 'hour'));
-    },
-
-    checkRange: function (value) {
-        var min = this.get('min'),
-            max = this.get('max'),
-            success = true;
-
-        var mMin = moment(min),
-            mMax = moment(max),
-            mVal = moment(value);
-
-        [mMin, mMax].forEach(function (val) {
-            val.set({
-                year: mVal.year(),
-                month: mVal.month(),
-                date: mVal.date()
-            });
-        });
-
-
-        if (!isEmpty(min) && !isEmpty(max)) {
-            success = mVal.isBetween(mMin, mMax, 'minute') || mVal.isSame(mMin, 'minute') || mVal.isSame(mMax, 'minute');
-        } else if (!isEmpty(min) && isEmpty(max)) {
-            success = mMin.isBefore(value, 'minute') || mMin.isSame(value, 'minute');
-        } else if (isEmpty(min) && !isEmpty(max)) {
-            success = mMax.isAfter(value, 'minute') || mMax.isSame(value, 'minute');
-        }
-
-        return success;
-
-        function isEmpty(value) {
-            return typeof value === 'undefined' || _.isEmpty(value);
-        }
-    }
-
-});
-
-var DatePickerHours = DatePickerComponent.extend({
-
-    modelClass: DatePickerHoursModel,
-
-    template: InfinniUI.Template["new/controls/datePicker/template/time/hours.tpl.html"],
-
-    events: {
-        "click .hour:not('.hour-unavailable')": "useHour"
-    },
-
-    UI: {
-        hour: '.hour'
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        this.fillHoursTable();
-        this.initOnChangeHandlers();
-    },
-
-    fillHoursTable: function () {
-        //@TODO Заполнять в зависимости от формата 12/24
-        var
-            model = this.model,
-            valueDate = model.get('value');
-        var now = new Date();
-
-        this.ui.hour.each(function (i, el) {
-            var $el = $(el);
-            var hour = stringUtils.padLeft(i, 2, '0');
-
-            $el.attr('data-hour', i);
-            $el.text(hour);
-            markNow($el, i);
-            markSelected($el, i);
-            markAvailable($el, i);
-        });
-
-        function markSelected($el, value) {
-            $el.toggleClass('hour-selected', now.getHours() === value);
-        }
-
-        function markNow($el, value) {
-            var selected = moment(now).isSame(value, 'hour');
-            $el.toggleClass('hour-today', selected);
-        }
-
-        function markAvailable($el, value) {
-            var date = moment(model.get('date')).hour(value);
-            $el.toggleClass('hour-unavailable', !model.checkRange(date));
-        }
-    },
-
-    initOnChangeHandlers: function () {
-        this.listenTo(this.model, 'change:date', this.fillHoursTable);
-    },
-
-    useHour: function (event) {
-        var
-            $el = $(event.target),
-            model = this.model,
-            date = model.get('date'),
-            hour = parseInt($el.attr('data-hour'), 10);
-
-        date.setHours(hour);
-        this.trigger('hour', date);
-    }
-
-});
-
-var DatePickerMinutesModel = DatePickerComponentModel.extend({
-
-    initialize: function () {
-        DatePickerComponentModel.prototype.initialize.call(this);
-        this.on('change:minute', this.updateDatePart.bind(this, 'minute'));
-    },
-
-    checkRange: function (value) {
-        var min = this.get('min'),
-            max = this.get('max'),
-            success = true;
-
-        var mMin = moment(min),
-            mMax = moment(max),
-            mVal = moment(value);
-
-        [mMin, mMax].forEach(function (val) {
-            val.set({
-                year: mVal.year(),
-                month: mVal.month(),
-                date: mVal.date()
-            });
-        });
-
-
-        if (!isEmpty(min) && !isEmpty(max)) {
-            success = mVal.isBetween(min, max, 'minute') || mVal.isSame(mMin, 'minute') || mVal.isSame(mMax, 'minute');
-        } else if (!isEmpty(min) && isEmpty(max)) {
-            success = mMin.isBefore(value, 'minute') || mMin.isSame(value, 'minute');
-        } else if (isEmpty(min) && !isEmpty(max)) {
-            success = mMax.isAfter(value, 'minute') || mMax.isSame(value, 'minute');
-        }
-
-        return success;
-
-        function isEmpty(value) {
-            return typeof value === 'undefined' || _.isEmpty(value);
-        }
-    }
-
-});
-
-var DatePickerMinutes = DatePickerComponent.extend({
-
-    modelClass: DatePickerMinutesModel,
-
-    template: InfinniUI.Template["new/controls/datePicker/template/time/minutes.tpl.html"],
-
-    events: {
-        "click .minute:not('.minute-unavailable')": "useMinute"
-    },
-
-    UI: {
-        minute: '.minute'
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        this.fillMinutesTable();
-        this.initOnChangeHandlers();
-    },
-
-    fillMinutesTable: function () {
-        var
-            model = this.model,
-            minute = model.get('minute');
-
-        this.ui.minute.each(function (i, el) {
-            var $el = $(el);
-            var minute = $el.attr('data-minute');
-            markSelected($el, parseInt(minute, 10));
-            markAvailable($el, parseInt(minute, 10))
-        });
-
-        function markSelected($el, value) {
-            $el.toggleClass('minute-selected', value === minute);
-        }
-
-        function markAvailable($el, value) {
-            var date = moment(model.get('date')).minute(value);
-            $el.toggleClass('minute-unavailable', !model.checkRange(date));
-        }
-    },
-
-    initOnChangeHandlers: function () {
-        this.listenTo(this.model, 'change:date', this.fillMinutesTable);
-    },
-
-    useMinute: function (event) {
-        var
-            $el = $(event.target),
-            model = this.model,
-            date = model.get('date'),
-            minute = parseInt($el.attr('data-minute'), 10);
-
-        date.setMinutes(minute);
-        this.trigger('minute', date);
-    }
-
-});
-
-var DatePickerMonthsModel = DatePickerComponentModel.extend({
-
-    defaults: {
-        today: moment().toDate(),
-        todayMonth: moment().month(),
-        todayYear: moment().year()
-    },
-
-    initialize: function () {
-        DatePickerComponentModel.prototype.initialize.call(this);
-        this.on('change:month', this.updateDatePart.bind(this, 'month'));
-        this.on('change:year', this.updateDatePart.bind(this, 'year'));
-    },
-
-
-
-    nextYear: function () {
-        var year = this.get('year');
-        this.set('year', year + 1);
-    },
-
-    prevYear: function () {
-        var year = this.get('year');
-        this.set('year', year - 1);
-    },
-
-    today: function () {
-        this.set({
-            month: this.get('todayMonth'),
-            year: this.get('todayYear')
-        });
-    },
-
-    checkRange: function (value) {
-        var min = this.get('min'),
-            max = this.get('max'),
-            success = true;
-
-        var mMin = moment(min),
-            mMax = moment(max),
-            mVal = moment(value);
-
-        if (!isEmpty(min) && !isEmpty(max)) {
-            success = mVal.isBetween(min, max, 'month') || mVal.isSame(mMin, 'month') || mVal.isSame(mMax, 'month');
-        } else if (!isEmpty(min) && isEmpty(max)) {
-            success = mMin.isBefore(value, 'month') || mMin.isSame(value, 'month');
-        } else if (isEmpty(min) && !isEmpty(max)) {
-            success = mMax.isAfter(value, 'month') || mMax.isSame(value, 'month');
-        }
-
-        return success;
-
-        function isEmpty(value) {
-            return typeof value === 'undefined' || _.isEmpty(value);
-        }
-
-    }
-
-
-
-});
-
-var DatePickerMonths = DatePickerComponent.extend({
-
-    modelClass: DatePickerMonthsModel,
-
-    template: InfinniUI.Template["new/controls/datePicker/template/date/months.tpl.html"],
-
-    events: {
-        "click .btn-year-prev": "prevYear",
-        "click .btn-year-next": "nextYear",
-        "click .month:not('.month-unavailable')": "useMonth",
-        "click .year": "selectYear",
-        "click .today-month": "showToday"
-    },
-
-    UI: {
-        month: '.month',
-        year: '.year'
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        this.fillMonthsTable();
-        this.initOnChangeHandlers();
-    },
-
-    fillMonthsTable: function () {
-        this.ui.year.text(this.model.get('year'));
-
-        var
-            model = this.model,
-            dateTimeFormatInfo = localized.dateTimeFormatInfo,
-            todayMonth = model.get('todayMonth'),
-            month = model.get('month');
-
-        this.ui.month.each(function (i, el) {
-            var $el = $(el);
-            $el.text(dateTimeFormatInfo.abbreviatedMonthNames[i]);
-            $el.attr('data-month', i);
-            markTodayMonth($el, i);
-            markSelected($el, i);
-            markAvailable($el, i);
-        });
-
-        function markTodayMonth($el, value) {
-            var date = moment([model.get('year'), value]);
-            var today = model.get('today');
-
-            $el.toggleClass('month-today', moment(date).isSame(today, 'month'));
-        }
-
-        function markSelected($el, value) {
-            var date = moment([model.get('year'), value]);
-            var selected = model.get('value');
-
-            $el.toggleClass('month-selected', moment(date).isSame(selected, 'month'));
-        }
-
-        function markAvailable($el, value) {
-            var date = moment([model.get('year'), value]);
-            $el.toggleClass('month-unavailable', !model.checkRange(date));
-        }
-    },
-
-    initOnChangeHandlers: function () {
-        this.listenTo(this.model, 'change:year', this.fillMonthsTable);
-    },
-
-    prevYear: function () {
-        this.model.prevYear();
-    },
-
-    nextYear: function () {
-        this.model.nextYear();
-    },
-
-    useMonth: function (event) {
-        var
-            $el = $(event.target),
-            model = this.model;
-
-        model.set({
-            year: parseInt(model.get('year'), 10),
-            month: parseInt($el.attr('data-month'), 10)
-        });
-        this.trigger('month', model.get('date'));
-    },
-
-    selectYear: function () {
-        var
-            model = this.model;
-
-        this.trigger('year', model.get('data'));
-    },
-
-    showToday: function () {
-        this.today();
-    },
-
-    today: function () {
-        this.model.today();
-    }
-
-
-
-});
-
-var DatePickerTimeModel = DatePickerComponentModel.extend({
-
-    defaults: {
-        today: moment().toDate(),
-        hour: moment().hour(),
-        minute: moment().minute(),
-        second: moment().second(),
-        millisecond: moment().millisecond()
-    },
-
-    initialize: function () {
-        DatePickerComponentModel.prototype.initialize.call(this);
-        this.on('change:hour', this.updateDatePart.bind(this, 'hour'));
-        this.on('change:minute', this.updateDatePart.bind(this, 'minute'));
-        this.on('change:second', this.updateDatePart.bind(this, 'second'));
-        this.on('change:millisecond', this.updateDatePart.bind(this, 'millisecond'));
-    },
-
-    nextHour: function () {
-        var hour = this.get('hour');
-        hour += 1;
-
-        var value = moment().set({
-            hour: hour,
-            minute: this.get('minute'),
-            second: this.get('second'),
-            millisecond: this.get('millisecond')
-        });
-
-
-        //@TODO Границу использовать в зависимости от 12/24 формата записи даты из настроек локализации
-        if (hour < 24) {
-            this.set('hour', hour, {validate: true});
-        }
-
-    },
-
-    prevHour: function () {
-        var hour = this.get('hour');
-        hour -= 1;
-
-        if (hour >= 0) {
-            this.set('hour', hour, {validate: true});
-        }
-    },
-
-    nextMinute: function () {
-        var minute = this.get('minute');
-        minute += 1;
-
-        if (minute < 60) {
-            this.set('minute', minute, {validate: true});
-        }
-
-    },
-
-    prevMinute: function () {
-        var minute = this.get('minute');
-        minute -= 1;
-
-        if (minute >= 0) {
-            this.set('minute', minute, {validate: true});
-        }
-    },
-
-    validate: function (attr, options) {
-        var value = moment().set({
-            hour: attr.hour,
-            minute: attr.minute,
-            second: attr.second,
-            millisecond: attr.millisecond
-        });
-
-        if (!this.checkRange(value)) {
-            return 'Out of range';
-        }
-    },
-
-    checkRange: function (value) {
-        var min = this.get('min'),
-            max = this.get('max'),
-            success = true;
-
-        var mMin = moment(min),
-            mMax = moment(max),
-            mVal = moment(value);
-
-        [mMin, mMax].forEach(function (val) {
-            val.set({
-                year: mVal.year(),
-                month: mVal.month(),
-                date: mVal.date()
-            });
-        });
-
-
-        if (!isEmpty(min) && !isEmpty(max)) {
-            success = mVal.isBetween(min, max, 'minute') || mVal.isSame(mMin, 'minute') || mVal.isSame(mMax, 'minute');
-        } else if (!isEmpty(min) && isEmpty(max)) {
-            success = mMin.isBefore(value, 'minute') || mMin.isSame(value, 'minute');
-        } else if (isEmpty(min) && !isEmpty(max)) {
-            success = mMax.isAfter(value, 'minute') || mMax.isSame(value, 'minute');
-        }
-
-        return success;
-
-        function isEmpty(value) {
-            return typeof value === 'undefined' || _.isEmpty(value);
-        }
-
-    }
-
-
-});
-
-var DatePickerTime = DatePickerComponent.extend({
-
-    modelClass: DatePickerTimeModel,
-
-    template: InfinniUI.Template["new/controls/datePicker/template/time/time.tpl.html"],
-
-    events: {
-        "click .time-spin-down.time-spin-hour": "prevHour",
-        "click .time-spin-up.time-spin-hour": "nextHour",
-        "click .time-spin-down.time-spin-minute": "prevMinute",
-        "click .time-spin-up.time-spin-minute": "nextMinute",
-        "click .time-segment-hour": "selectHour",
-        "click .time-segment-minute": "selectMinute",
-        "click .days": "selectDay"
-    },
-
-    UI: {
-        month: '.month',
-        year: '.year',
-        hour: '.time-segment-hour',
-        minute: '.time-segment-minute'
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        this.updateHour();
-        this.updateMinute();
-        this.initOnChangeHandlers();
-    },
-
-    selectHour: function () {
-        var
-            model = this.model,
-            date = model.get('date'),
-            hour = model.get('hour'),
-            minute = model.get('minute'),
-            second = model.get('second');
-
-        date.setHours(hour, minute, second);
-        this.trigger('hour', date);
-    },
-
-    selectMinute: function () {
-        var
-            model = this.model,
-            date = model.get('date'),
-            hour = model.get('hour'),
-            minute = model.get('minute'),
-            second = model.get('second');
-
-        date.setHours(hour, minute, second);
-        this.trigger('minute', date);
-    },
-
-    initOnChangeHandlers: function () {
-        this.listenTo(this.model, 'change:hour', this.updateHour);
-        this.listenTo(this.model, 'change:minute', this.updateMinute);
-        this.listenTo(this.model, 'change:date', this.useTime);
-    },
-
-    updateHour: function () {
-        var hour = this.model.get('hour');
-        this.ui.hour.text(stringUtils.padLeft(hour, 2, '0'));
-    },
-
-    updateMinute: function () {
-        var minute = this.model.get('minute');
-        this.ui.minute.text(stringUtils.padLeft(minute, 2, '0'));
-    },
-
-    prevHour: function () {
-        this.model.prevHour();
-    },
-
-    nextHour: function () {
-        this.model.nextHour();
-    },
-
-    prevMinute: function () {
-        this.model.prevMinute();
-    },
-
-    nextMinute: function () {
-        this.model.nextMinute();
-    },
-
-    useTime: function () {
-        var
-            date = this.model.get('date');
-
-        this.trigger('date', date);
-    },
-
-    selectDay: function () {
-        var
-            date = this.model.get('date');
-
-        this.trigger('day', date);
-
-    }
-
-});
-
-var DatePickerYearsModel = DatePickerComponentModel.extend({
-
-    defaults: {
-        pageSize: 20,
-        page: 0,
-        todayYear: moment().year()
-    },
-
-    initialize: function () {
-        DatePickerComponentModel.prototype.initialize.call(this);
-        this.on('change:year', this.updateDatePart.bind(this, 'year'));
-        this.on('change:year', this.onChangeYearHandler);
-    },
-
-    prevPage: function () {
-        var page = this.get('page');
-        this.set('page', page - 1);
-    },
-
-    nextPage: function () {
-        var page = this.get('page');
-        this.set('page', page + 1);
-    },
-
-    resetPage: function () {
-        this.set('page', 0);
-    },
-
-    onChangeYearHandler: function (model, value) {
-        model.set('page', 0);
-    },
-
-    checkRange: function (value) {
-        var min = this.get('min'),
-            max = this.get('max'),
-            success = true;
-
-        var mMin = moment(min),
-            mMax = moment(max),
-            mVal = moment(value);
-
-        if (!isEmpty(min) && !isEmpty(max)) {
-            success = mVal.isBetween(min, max, 'year') || mVal.isSame(mMin, 'year') || mVal.isSame(mMax, 'year');
-        } else if (!isEmpty(min) && isEmpty(max)) {
-            success = mMin.isBefore(value, 'year') || mMin.isSame(value, 'year');
-        } else if (isEmpty(min) && !isEmpty(max)) {
-            success = mMax.isAfter(value, 'year') || mMax.isSame(value, 'year');
-        }
-
-        return success;
-
-        function isEmpty(value) {
-            return typeof value === 'undefined' || _.isEmpty(value);
-        }
-
-    }
-});
-
-var DatePickerYears = DatePickerComponent.extend({
-
-    modelClass: DatePickerYearsModel,
-
-    template: InfinniUI.Template["new/controls/datePicker/template/date/years.tpl.html"],
-
-    events: {
-        'click .btn-year-prev': "prevPage",
-        'click .btn-year-next': "nextPage",
-        'click .today-year': "showTodayYear",
-        'click .year:not(".year-unavailable")': "useYear"
-    },
-
-    UI: {
-        years: '.year',
-        yearBegin: '.year-begin',
-        yearEnd: '.year-end'
-    },
-
-    initOnChangeHandlers: function () {
-        this.listenTo(this.model, 'change:page', this.fillYearsTable);
-        this.listenTo(this.model, 'change:year', this.fillYearsTable);
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        //this.fillCalendar();
-        this.fillYearsTable();
-        this.initOnChangeHandlers();
-    },
-
-    fillYearsTable: function () {
-        var
-            model = this.model,
-            page = model.get('page'),
-            pageSize = model.get('pageSize'),
-            year = model.get('year'),
-            todayYear = model.get('todayYear'),
-            //startYear = Math.ceil((year || todayYear) - pageSize / 2) + page * pageSize;
-            startYear = Math.ceil(year - pageSize / 2) + page * pageSize;
-
-        this.ui.years.each(function (i, el) {
-            var $el = $(el);
-            var year = startYear + i;
-            $el.text(year);
-            $el.attr('data-year', year);
-            markTodayYear($el, year);
-            markSelected($el, year);
-            markAvailable($el, year);
-        });
-
-        this.ui.yearBegin.text(startYear);
-        this.ui.yearEnd.text(startYear + pageSize - 1);
-
-        function markTodayYear($el, value) {
-            $el.toggleClass('year-today', value === todayYear);
-        }
-
-        function markSelected($el, value) {
-            $el.toggleClass('year-selected', value === year);
-        }
-        function markAvailable($el, value) {
-            var date = moment([value]);
-            $el.toggleClass('year-unavailable', !model.checkRange(date));
-        }
-
-    },
-
-    prevPage: function () {
-        this.model.prevPage();
-    },
-
-    nextPage: function () {
-        this.model.nextPage();
-    },
-
-    showTodayYear: function () {
-        this.today();
-    },
-
-    today: function () {
-        this.model.resetPage();
-    },
-
-    useYear: function (event) {
-        var $el = $(event.target),
-            model = this.model;
-
-        model.set({
-            year: parseInt($el.attr('data-year'), 10)
-        });
-
-        this.trigger('year', model.get('date'));
-    }
-
-});
-
-/**
- *
- * @param parent
- * @constructor
- * @augments TextEditorBaseControl
- */
-function DatePickerControl(parent) {
-    _.superClass(DatePickerControl, this, parent);
-}
-
-_.inherit(DatePickerControl, TextEditorBaseControl);
-
-_.extend(DatePickerControl.prototype, {
-
-    createControlModel: function () {
-        return new DatePickerModel();
-    },
-
-    createControlView: function (model) {
-        return new DatePickerView({model: model});
-    }
-});
-
-
-var DatePickerDropdown = Backbone.View.extend({
-
-    className: 'pl-datepicker-dropdown pl-dropdown-container',
-
-    template: InfinniUI.Template["new/controls/datePicker/template/datePicker.dropdown.tpl.html"],
-
-    UI: {
-        days: '.days',
-        months: '.months',
-        years: '.years'
-    },
-
-    events: {
-        'click .backdrop': 'onClickBackdropHandler',
-        'click .datepicker-clear': 'onClickClearValueHandler',
-        'click .today-date': 'onClickTodayHandler'
-    },
-
-    render: function () {
-        var template = this.template();
-        this.$el.html(template);
-        this.bindUIElements();
-        this.renderComponents();
-    },
-
-    renderComponents: function () {
-        var model = this.model;
-        var value = model.get('value');
-        var m = moment(value);
-
-        if (m.isValid()) {
-            value = m.toDate();
-        } else {
-            value = null;
-        }
-
-        var options = {
-            value: value,
-            //date: value,
-            max: model.get('maxValue'),
-            min: model.get('minValue')
-        };
-
-        options.el = this.ui.months;
-        var months = new DatePickerMonths(options);
-
-        options.el = this.ui.years;
-        var years = new DatePickerYears(options);
-
-        options.el = this.ui.days;
-        var days = new DatePickerDays(options);
-
-        this.months = months;
-        this.years = years;
-        this.days = days;
-
-        this.workflow(days, months, years, value)(value);
-    },
-
-    onClickBackdropHandler: function (event) {
-        this.remove();
-    },
-
-    onClickClearValueHandler: function () {
-        this.clearValue();
-    },
-
-    clearValue: function () {
-        this.useValue(null);
-    },
-
-    useValue: function (date) {
-        this.trigger('date', date);
-        this.remove();
-    },
-
-    workflow: function (days, months, years) {
-
-        this
-            .listenTo(days, 'date', this.useValue)
-            .listenTo(days, 'year', function (date) {
-                showYears(date);//Needed select year from list
-            })
-            .listenTo(years, 'year', function (date) {
-                showMonths(date);//Needed select month for year
-            })
-            .listenTo(months, 'year', function (date) {
-                showYears(date);//Needed select year from list
-            })
-            .listenTo(months, 'month', function (date) {
-                showDays(date);//Needed select day from calendar
-            });
-
-        return showDays;
-
-        function showDays(date) {
-            days.setDate(date);
-
-            years.hide();
-            months.hide();
-            days.show();
-        }
-
-        function showMonths(date) {
-            months.setDate(date);
-
-            days.hide();
-            years.hide();
-            months.show();
-        }
-
-        function showYears(date) {
-            years.setDate(date);
-
-            days.hide();
-            months.hide();
-            years.show();
-        }
-
-    },
-
-    onClickTodayHandler: function () {
-        var days = this.days,
-            months = this.months,
-            years = this.years,
-            today = moment().toDate();
-
-        //days.setDate(today);
-        //months.setDate(today);
-        //years.setDate(today);
-
-        days.today();
-        months.today();
-        years.today();
-    }
-
-});
-
-_.extend(DatePickerDropdown.prototype, bindUIElementsMixin);
-/**
- * @class
- * @augments TextEditorBaseModel
- */
-var DatePickerModel = TextEditorBaseModel.extend(/** @lends DatePickerModel.prototype */{
-    defaults: _.extend(
-        {},
-        TextEditorBaseModel.prototype.defaults,
-        {
-            mode: "Date"
-        }
-    ),
-
-    initialize: function () {
-        TextEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    },
-
-    validate: function (attributes, options) {
-        var
-            min = attributes.minValue,
-            max = attributes.maxValue;
-
-        //@TODO Check as DateTime
-        if (isSet(min) && isSet(max)) {
-            if (attributes.value < min || attributes.value > max) {
-                return 'Invalid value';
-            }
-        } else if (isSet(min) && attributes.value < min) {
-            return 'Invalid value';
-        } else if (isSet(max) && attributes.value > max) {
-            return 'invalid value';
-        }
-
-        function isSet(value) {
-            return value !== null && typeof value !== 'undefined';
-        }
-    }
-
-
-});
-var datePickerStrategy = {
-    Date: {
-        getTemplate: function () {
-            return InfinniUI.Template["new/controls/datePicker/template/datePicker.tpl.html"];
-        },
-
-        onClickDropdownHandler: function (event) {
-            var calendar = new DatePickerDropdown({
-                model: this.model
-            });
-
-            calendar.render();
-            $('body').append(calendar.$el);
-
-            calendar.$el.css({
-                top: event.clientY,
-                left: event.clientX
-            });
-
-            this.listenTo(calendar, 'date', function (date) {
-                this.model.set('value', this.convertValue(date));
-            });
-        },
-
-        convertValue: function (value) {
-            return InfinniUI.DateUtils.toISO8601(value, {resetTime: true});
-        }
-    },
-
-    DateTime: {
-        getTemplate: function () {
-            return InfinniUI.Template["new/controls/datePicker/template/dateTimePicker.tpl.html"];
-        },
-
-        onClickDropdownHandler: function (event) {
-            var calendar = new DateTimePickerDropdown({
-                model: this.model
-            });
-            calendar.render();
-            $('body').append(calendar.$el);
-
-            calendar.$el.css({
-                top: event.clientY,
-                left: event.clientX
-            });
-
-            this.listenTo(calendar, 'date', function (date) {
-                this.model.set('value', InfinniUI.DateUtils.toISO8601(date));
-            });
-        },
-
-        convertValue: function (value) {
-            return InfinniUI.DateUtils.toISO8601(value);
-        }
-
-    },
-
-    Time: {
-        getTemplate: function () {
-            return InfinniUI.Template["new/controls/datePicker/template/timePicker.tpl.html"];
-        },
-
-        onClickDropdownHandler: function (event) {
-            var calendar = new TimePickerDropdown({
-                model: this.model
-            });
-            calendar.render();
-            $('body').append(calendar.$el);
-
-            calendar.$el.css({
-                top: event.clientY,
-                left: event.clientX
-            });
-
-            this.listenTo(calendar, 'date', function (date) {
-                this.model.set('value', InfinniUI.DateUtils.toISO8601(date));
-            });
-        },
-
-        convertValue: function (value) {
-            return InfinniUI.DateUtils.toISO8601(value);
-        }
-
-    }
-
-};
-
-/**
- * @class
- * @augments TextEditorBaseView
- */
-var DatePickerView = TextEditorBaseView.extend(/** @lends DatePickerView.prototype */{
-
-    className: "pl-datepicker form-group",
-
-    template: InfinniUI.Template["new/controls/datePicker/template/datePicker.tpl.html"],
-
-    UI: _.extend({}, TextEditorBaseView.prototype.UI, {
-        dropdownButton: '.pl-datepicker-calendar',
-        controlWrap: '.control-wrap',
-        editorWrap: '.editor-wrap'
-    }),
-
-    events: _.extend({}, TextEditorBaseView.prototype.events, {
-        'focus .pl-datepicker-input': 'onFocusControlHandler',
-        'mouseenter .pl-datepicker-input': 'onMouseenterControlHandler',
-        'click .pl-datepicker-calendar': 'onClickDropdownHandler'
-    }),
-
-    initialize: function () {
-        TextEditorBaseView.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        this.updateMode();
-        this.listenTo(this.model, 'change:mode', this.updateMode);
-    },
-
-    initHandlersForProperties: function(){
-        TextEditorBaseView.prototype.initHandlersForProperties.call(this);
-
-        this.listenTo(this.model, 'change:minValue', this.updateMinValue);
-        this.listenTo(this.model, 'change:maxValue', this.updateMaxValue);
-    },
-
-    updateProperties: function(){
-        TextEditorBaseView.prototype.updateProperties.call(this);
-    },
-
-    updateMode: function(){
-        var mode = this.model.get('mode');
-        _.extend(this, datePickerStrategy[mode]);
-
-        this.rerender();
-    },
-
-    updateMinValue: function(){
-        var mode = this.model.get('mode');
-        _.extend(this, datePickerStrategy[mode]);
-
-        this.rerender();
-    },
-
-    updateMaxValue: function(){
-        var mode = this.model.get('mode');
-        _.extend(this, datePickerStrategy[mode]);
-
-        this.rerender();
-    },
-
-    updateEnabled: function(){
-        TextEditorBaseView.prototype.updateEnabled.call(this);
-
-        var isEnabled = this.model.get('enabled');
-        this.ui.dropdownButton.prop('disabled', !isEnabled);
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.renderTemplate(this.getTemplate());
-        this.updateProperties();
-        this.renderDatePickerEditor();
-
-        this.trigger('render');
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    getData: function () {
-        var
-            model = this.model;
-
-        return _.extend({},
-            TextEditorBaseView.prototype.getData.call(this), {
-                minValue: model.get('minValue'),
-                maxValue: model.get('maxValue'),
-                mode: model.get('mode')
-            });
-    },
-
-    renderDatePickerEditor: function () {
-        var model = this.model;
-        this.renderControlEditor({
-            el: this.ui.editor,
-            multiline: false,
-            convert: this.convertValue
-        });
-
-        return this;
-    },
-
-    /**
-     * Используется миксином textEditorMixin
-     * @param value
-     * @returns {boolean}
-     */
-    onEditorValidate: function (value) {
-        return true;
-    },
-
-
-    getTemplate: function () {
-        throw new Error('Не перекрыт getTemplate');
-    },
-
-    onClickDropdownHandler: function (event) {}
-
-});
-
-var DateTimePickerDropdown = DatePickerDropdown.extend({
-
-    className: 'pl-datepicker-dropdown pl-dropdown-container',
-
-    template: InfinniUI.Template["new/controls/datePicker/template/dateTimePicker.dropdown.tpl.html"],
-
-    UI: {
-        days: '.days',
-        months: '.months',
-        years: '.years',
-        times: '.times',
-        hours: '.hours',
-        minutes: '.minutes'
-    },
-
-    onClickToggleDateHandler: function () {
-        this.trigger('days');
-    },
-
-    onClickToggleTimeHandler: function () {
-        this.trigger('time');
-    },
-
-
-    renderComponents: function () {
-        var model = this.model;
-        var value = model.get('value');
-        var m = moment(value);
-
-        if (m.isValid()) {
-            value = m.toDate();
-        } else {
-            value = null;
-        }
-
-        var options = {
-            value: value,
-            //date: value,
-            max: model.get('maxValue'),
-            min: model.get('minValue')
-        };
-
-        options.el = this.ui.months;
-        var months = new DatePickerMonths(options);
-
-        options.el = this.ui.years;
-        var years = new DatePickerYears(options);
-
-        options.el = this.ui.days;
-        var days = new DatePickerDays(options);
-
-        options.el = this.ui.times;
-        var time = new DatePickerTime(options);
-        //time.setDate(undefined);
-
-        options.el = this.ui.hours;
-        var hours = new DatePickerHours(options);
-
-        options.el = this.ui.minutes;
-        var minutes = new DatePickerMinutes(options);
-
-
-        this.workflow(days, months, years, time, hours, minutes)(value);
-    },
-
-    useTime: function (date) {
-        this.trigger('date', date);
-    },
-
-    workflow: function (days, months, years, time, hours, minutes) {
-        var useTime = this.useTime.bind(this);
-        var components = Array.prototype.slice.call(arguments);
-
-        this
-            .listenTo(days, 'date', this.useValue)
-            .listenTo(days, 'year', function (date) {
-                showYears(date);//Needed select year from list
-            })
-            .listenTo(days, 'time', function (date) {
-                showTime(date);
-            })
-            .listenTo(years, 'year', function (date) {
-                showMonths(date);//Needed select month for year
-            })
-            .listenTo(months, 'year', function (date) {
-                showYears(date);//Needed select year from list
-            })
-            .listenTo(months, 'month', function (date) {
-                showDays(date);//Needed select day from calendar
-            });
-
-        this.listenTo(time, 'hour', function (date) {
-                showHours(date);
-            })
-            .listenTo(time, 'minute', function (date) {
-                showMinutes(date);
-            })
-            .listenTo(time, 'day', function (date) {
-                showDays(date);
-            })
-            .listenTo(time, 'date', function (date) {
-                useTime(date);
-            })
-            .listenTo(hours, 'hour', function (date) {
-                useTime(date);
-                showTime(date);
-            })
-            .listenTo(minutes, 'minute', function (date) {
-                useTime(date);
-                showTime(date);
-            });
-
-        //Переключатель режима Date/Time
-        this
-            .on('days', function (date) {
-                showDays(date);
-            })
-            .on('time', function (date) {
-                showTime(date);
-            });
-
-        return showDays;
-
-        function switchComponent(component) {
-            components.forEach(function (c) {
-                if (c !== component) {
-                    c.hide();
-                }
-            });
-            component.show();
-        }
-
-        function showDays(date) {
-            days.setDate(date);
-            switchComponent(days);
-        }
-
-        function showMonths(date) {
-            months.setDate(date);
-            switchComponent(months);
-        }
-
-        function showYears(date) {
-            years.setDate(date);
-            switchComponent(years);
-        }
-
-        function showHours(date) {
-            hours.setDate(date);
-            switchComponent(hours);
-        }
-
-        function showMinutes(date) {
-            minutes.setDate(date);
-            switchComponent(minutes);
-        }
-
-        function showTime(date) {
-            time.setDate(date);
-            switchComponent(time);
-        }
-
-    }
-
-});
-var TimePickerDropdown = DatePickerDropdown.extend({
-
-    className: 'pl-timepicker-dropdown pl-dropdown-container',
-
-    template: InfinniUI.Template["new/controls/datePicker/template/timePicker.dropdown.tpl.html"],
-
-    UI: {
-        times: '.times',
-        hours: '.hours',
-        minutes: '.minutes'
-    },
-
-    renderComponents: function () {
-        var model = this.model;
-        var value = model.get('value');
-        var m = moment(value);
-
-        if (m.isValid()) {
-            value = m.toDate();
-        } else {
-            value = null;
-        }
-
-        var options = {
-            value: value,
-            //date: value,
-            max: model.get('maxValue'),
-            min: model.get('minValue')
-        };
-
-        options.el = this.ui.times;
-        var time = new DatePickerTime(options);
-
-        options.el = this.ui.hours;
-        var hours = new DatePickerHours(options);
-
-        options.el = this.ui.minutes;
-        var minutes = new DatePickerMinutes(options);
-
-
-        this.workflow(time, hours, minutes)(value);
-    },
-
-    useTime: function (date) {
-        this.trigger('date', date);
-    },
-
-    workflow: function (time, hours, minutes) {
-        var useTime = this.useTime.bind(this);
-        var components = Array.prototype.slice.call(arguments);
-
-        this.listenTo(time, 'hour', function (date) {
-            showHours(date);
-        })
-            .listenTo(time, 'minute', function (date) {
-                showMinutes(date);
-            })
-            .listenTo(time, 'date', function (date) {
-                useTime(date);
-            })
-            .listenTo(hours, 'hour', function (date) {
-                useTime(date);
-                showTime(date);
-            })
-            .listenTo(minutes, 'minute', function (date) {
-                useTime(date);
-                showTime(date);
-            });
-
-        return showTime;
-
-        function switchComponent(component) {
-            components.forEach(function (c) {
-                if (c !== component) {
-                    c.hide();
-                }
-            });
-            component.show();
-        }
-
-        function showHours(date) {
-            hours.setDate(date);
-            switchComponent(hours);
-        }
-
-        function showMinutes(date) {
-            minutes.setDate(date);
-            switchComponent(minutes);
-        }
-
-        function showTime(date) {
-            time.setDate(date);
-            switchComponent(time);
-        }
-
-    }
-
-});
 /**
  *
  * @param parent
@@ -9669,6 +11998,11 @@ var FileBoxModel = ControlModel.extend( _.extend({
 
         this.set('acceptTypes', new Collection());
         this.on('change:file', this.onChangeFileHandler);
+        this.on('change:value', function (model, value) {
+            if (value instanceof File) {
+                model.set('fileName', value.name);
+            }
+        });
 
         this.on("invalid", function(model, error) {
             this.set('errorText', error);
@@ -9686,9 +12020,23 @@ var FileBoxModel = ControlModel.extend( _.extend({
                 }
             }
 
-            if (acceptTypes.length && !acceptTypes.contains(file.type)) {
-                return 'Загрузка данного типа файла не разрешена';
+            if (acceptTypes.length) {
+                var acceptType = acceptTypes.contains(file.type);
+                var fileName = file.name.toLowerCase();
+                if (!acceptType) {
+                    var len = fileName.length;
+                    var acceptType = acceptTypes.some(function(name) {
+                        return fileName.lastIndexOf(name.toLowerCase()) === len - name.length;
+                    });
+                }
+
+                if (!acceptType) {
+                    return 'Загрузка данного типа файла не разрешена';
+                }
+
             }
+
+
         }
     },
 
@@ -9710,7 +12058,8 @@ var FileBoxModel = ControlModel.extend( _.extend({
             model.set('fileName', null);
             model.set('fileSize', null);
         }
-        model.set('value', null);
+        model.set('value', file);
+        //model.set('value', null);
     }
 
     //stopLoadingFile: function () {
@@ -9743,58 +12092,90 @@ var FileBoxModel = ControlModel.extend( _.extend({
  */
 var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.extend({}, editorBaseViewMixin, {
 
-    template: InfinniUI.Template["new/controls/fileBox/template/fileBox.tpl.html"],
+    template: InfinniUI.Template["new/controls/fileBox/template/template.tpl.html"],
 
     className: 'pl-file-box',
 
     UI: _.extend({}, editorBaseViewMixin.UI, {
-        input: 'input',
-        link: '.pl-filebox-link',
-        download: '.pl-filebox-download',
-        fileSize: '.pl-filebox-size',
-        file: '.pl-filebox-file',
-        remove: '.pl-filebox-remove',
-        empty: '.pl-filebox-empty',
-        info: '.pl-filebox-info',
-        gripButton: '.pl-filebox-grip'
+        label: '.pl-control-label',
+        btnRemove: '.pl-filebox-btn-remove',
+        btnPick: '.pl-filebox-btn-pick',
+        fileEmpty: '.pl-filebox-file-empty',
+        fileUpload: '.pl-filebox-file-upload',
+        fileDownload: '.pl-filebox-file-download',
+        fileDownloadUrl: '.pl-filebox-file-download-url',
+        edit: '.pl-filebox-edit',
+        readonly: '.pl-filebox-readonly',
+
+
+        input: 'input'
     }),
 
     events: {
         'change input': 'onChangeFileHandler',
-        'click .pl-filebox-remove': 'onClickRemoveImageHandler'
+        'click .pl-filebox-btn-remove': 'onClickRemoveImageHandler'
     },
 
     initHandlersForProperties: function(){
         ControlView.prototype.initHandlersForProperties.call(this);
-
+        this.listenTo(this.model, 'change:labelText', this.updateLabelText);
+        this.listenTo(this.model, 'change:readOnly', this.updateReadOnly);
         this.listenTo(this.model, 'change:fileName', this.updateFileName);
         this.listenTo(this.model, 'change:fileSize', this.updateFileSize);
         this.listenTo(this.model, 'change:fileTime', this.updateFileTime);
         this.listenTo(this.model, 'change:fileType', this.updateFileType);
-        this.listenTo(this.model, 'change:value', this.updateUrl);
+        this.listenTo(this.model, 'change:value', this.updateValue);
 
         this.listenTo(this.model, 'change:hintText', this.updateHintText);
         this.listenTo(this.model, 'change:errorText', this.updateErrorText);
         this.listenTo(this.model, 'change:warningText', this.updateWarningText);
+
+        var acceptTypes = this.model.get('acceptTypes');
+        acceptTypes.onChange(this.updateAcceptTypes.bind(this));
     },
 
     updateProperties: function(){
         ControlView.prototype.updateProperties.call(this);
 
+        this.updateReadOnly();
+        this.updateLabelText();
         this.updateFileName();
         this.updateFileSize();
         this.updateFileType();
         this.updateFileTime();
-        this.updateUrl();
+        this.updateAcceptTypes();
+        this.updateValue();
 
         this.updateHintText();
         this.updateErrorText();
         this.updateWarningText();
     },
 
+    updateLabelText: function () {
+        var labelText = this.model.get('labelText');
+        this.ui.label.text(labelText);
+    },
+
+    updateReadOnly: function () {
+        var model = this.model;
+        var readOnly = model.get('readOnly');
+        this.ui.edit.toggleClass('hidden', readOnly === true);
+        this.ui.readonly.toggleClass('hidden', readOnly !== true);
+    },
+
+    updateAcceptTypes: function () {
+        var acceptTypes = this.model.get('acceptTypes');
+        if (acceptTypes.length === 0) {
+            this.ui.input.removeAttr('accept');
+        } else {
+            var accept = acceptTypes.toArray().join(',');
+            this.ui.input.attr('accept', accept);
+        }
+    },
+
     updateText: function () {
         var text = this.model.get('text');
-        this.ui.gripButton.text(text);
+        this.ui.btnPick.attr('title', text);
     },
 
     updateHintText: function(){
@@ -9843,38 +12224,47 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
         ControlView.prototype.updateEnabled.call(this);
 
         var isEnabled = this.model.get('enabled');
-        var fileName = this.model.get('fileName');
-        this.updateRemoveButtonState();
-        this.ui.file.toggleClass('hidden', !isEnabled);
+
+        this.ui.input.prop('disabled', !isEnabled);
+        this.ui.btnRemove.prop('disabled', !isEnabled);
+        this.ui.btnPick.toggleClass('disabled', !isEnabled);
+
     },
 
     updateFileName: function () {
         var fileName = this.model.get('fileName');
-        var enabled = this.model.get('enabled');
-
-        this.ui.download.text(fileName);
-
-        this.ui.empty.toggleClass('hidden', !!fileName);
-        this.ui.info.toggleClass('hidden', !fileName);
-
-        this.updateRemoveButtonState();
+        this.ui.fileUpload.text(fileName);
+        this.ui.fileDownloadUrl.text(fileName);
     },
 
     updateFileSize: function () {
-        var fileSize = this.model.get('fileSize');
-
-        var text = '';
-        if (typeof fileSize !== 'undefined' && fileSize !== null) {
-            text = InfinniUI.format.humanFileSize(fileSize);
-        }
-        this.ui.fileSize.text(text);
+        //var fileSize = this.model.get('fileSize');
+        //
+        //var text = '';
+        //if (typeof fileSize !== 'undefined' && fileSize !== null) {
+        //    text = InfinniUI.format.humanFileSize(fileSize);
+        //}
+        //this.ui.fileSize.text(text);
     },
 
-    updateRemoveButtonState: function () {
-        var enabled = this.model.get('enabled');
-        var fileName = this.model.get('fileName');
-        this.ui.remove.toggleClass('hidden', !enabled ||!fileName);
-        this.ui.remove.prop('disabled', !enabled || !fileName);
+    updateFileInfo: function() {
+        return;
+        var model = this.model;
+        var
+            value = model.get('value'),
+            fileName = model.get('fileName');
+
+        if (!value || value.length === 0) {
+            this.ui.info.toggleClass('hidden', true);
+            this.ui.empty.toggleClass('hidden', false);
+        } else {
+            if (!fileName || fileName.length === 0) {
+                fileName = 'Скачать файл';
+            }
+            this.ui.download.text(fileName);
+            this.ui.info.toggleClass('hidden', false);
+            this.ui.empty.toggleClass('hidden', true);
+        }
     },
 
     updateFileTime: function () {
@@ -9889,14 +12279,41 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
         //@TODO Update file's mime type on view
     },
 
-    updateUrl: function () {
-        var url = this.model.get('value');
-        if (!url) {
-            this.ui.download.removeAttr('href');
+    updateValue: function () {
+        var model = this.model;
+        var value = model.get('value');
+
+        var fileEmpty = false,
+            fileUpload = false,
+            fileDownload = false;
+
+        if (value === null || typeof value === 'undefined') {
+            //No file
+            fileEmpty = value === null || typeof value === 'undefined';
+            this.updateUrl(null);
+        } else if (value && typeof value === 'object') {
+            //File instance
+            fileUpload = value && typeof value === 'object';
+            this.updateUrl(null);
         } else {
-            this.ui.download.attr('href', url);
+            //Url
+            fileDownload = true;
+            this.updateUrl(value);
         }
 
+        this.ui.fileEmpty.toggleClass('hidden', !fileEmpty);
+        this.ui.fileUpload.toggleClass('hidden', !fileUpload);
+        this.ui.fileDownload.toggleClass('hidden', !fileDownload);
+
+        this.ui.btnRemove.toggleClass('hidden', fileEmpty);
+        this.ui.btnPick.toggleClass('hidden', !fileEmpty);
+    },
+
+    updateUrl: function (url) {
+        this.ui.fileDownloadUrl.attr('href', url);
+        var none = url === null || typeof url === 'undefined';
+        this.$el.toggleClass('pl-empty', none);
+        this.updateFileInfo();
     },
 
     onClickRemoveImageHandler: function () {
@@ -10168,43 +12585,43 @@ var ImageBoxModel = ControlModel.extend( _.extend({
     },
 
     onChangeFileHandler: function (model, file) {
-        this.stopLoadingFile();
-        if (file) {
-            var fileLoader = this.loadPreview(file);
-
-            this.fileLoader = fileLoader;
-
-            fileLoader.then(function (file, content) {
-                model.set('value', content);
-            }, function (err) {
-                console.log(err);
-            });
-        } else {
-            model.set('value', null);
-        }
+        //this.stopLoadingFile();
+        //if (file) {
+        //    var fileLoader = this.loadPreview(file);
+        //
+        //    this.fileLoader = fileLoader;
+        //
+        //    fileLoader.then(function (file, content) {
+        //        model.set('value', content);
+        //    }, function (err) {
+        //        console.log(err);
+        //    });
+        //} else {
+        //    model.set('value', null);
+        //}
     },
 
-    stopLoadingFile: function () {
-        var fileLoader = this.fileLoader;
-        if (fileLoader && fileLoader.state() === 'pending') {
-            fileLoader.reject();
-        }
-    },
-
-    loadPreview: function (file) {
-        var defer = $.Deferred();
-        var reader = new FileReader();
-        reader.onload = (function (file) {
-            return function (event) {
-                defer.resolve(file, event.target.result);
-            };
-        }(file));
-        reader.onerror  = function (event) {
-            defer.reject(event);
-        };
-        reader.readAsDataURL(file);
-        return defer.promise();
-    }
+    //stopLoadingFile: function () {
+    //    var fileLoader = this.fileLoader;
+    //    if (fileLoader && fileLoader.state() === 'pending') {
+    //        fileLoader.reject();
+    //    }
+    //},
+    //
+    //loadPreview: function (file) {
+    //    var defer = $.Deferred();
+    //    var reader = new FileReader();
+    //    reader.onload = (function (file) {
+    //        return function (event) {
+    //            defer.resolve(file, event.target.result);
+    //        };
+    //    }(file));
+    //    reader.onerror  = function (event) {
+    //        defer.reject(event);
+    //    };
+    //    reader.readAsDataURL(file);
+    //    return defer.promise();
+    //}
 
 }, editorBaseModelMixin));
 /**
@@ -10235,7 +12652,7 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
     initHandlersForProperties: function(){
         ControlView.prototype.initHandlersForProperties.call(this);
 
-        this.listenTo(this.model, 'change:value', this.updateUrl);
+        this.listenTo(this.model, 'change:value', this.updateValue);
         this.listenTo(this.model, 'change:hintText', this.updateHintText);
         this.listenTo(this.model, 'change:errorText', this.updateErrorText);
         this.listenTo(this.model, 'change:warningText', this.updateWarningText);
@@ -10244,7 +12661,7 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
     updateProperties: function(){
         ControlView.prototype.updateProperties.call(this);
 
-        this.updateUrl();
+        this.updateValue();
         this.updateHintText();
         this.updateErrorText();
         this.updateWarningText();
@@ -10261,12 +12678,53 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
         this.ui.input.prop('disabled', !isEnabled);
     },
 
-    updateUrl: function () {
-        var url = this.model.get('value');
+    updateValue: function () {
+        var model = this.model;
+        var value = model.get('value');
 
+        if (value && typeof value === 'object') {
+            //Native FileAPI File instance, start loading preview
+            this.stopLoadingFile();
+            var fileLoader = this.loadPreview(value);
+
+            this.fileLoader = fileLoader;
+
+            fileLoader.then(function (file, content) {
+                this.updateUrl(content);
+            }.bind(this), function (err) {
+                console.log(err);
+            });
+        } else {
+            this.updateUrl(value);
+        }
+    },
+
+    updateUrl: function (url) {
         this.ui.img.attr('src', url);
         var none = url === null || typeof url === 'undefined';
         this.$el.toggleClass('pl-empty', none);
+    },
+
+    stopLoadingFile: function () {
+        var fileLoader = this.fileLoader;
+        if (fileLoader && fileLoader.state() === 'pending') {
+            fileLoader.reject();
+        }
+    },
+
+    loadPreview: function (file) {
+        var defer = $.Deferred();
+        var reader = new FileReader();
+        reader.onload = (function (file) {
+            return function (event) {
+                defer.resolve(file, event.target.result);
+            };
+        }(file));
+        reader.onerror  = function (event) {
+            defer.reject(event);
+        };
+        reader.readAsDataURL(file);
+        return defer.promise();
     },
 
     onClickRemoveImageHandler: function () {
@@ -10337,11 +12795,14 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
     },
 
     updateValue: function(){
+        var escapeHtml = this.model.get('escapeHtml');
+        var setContent = escapeHtml ? 'text' : 'html';
         var textForLabel = this.getLabelText();
         var $label = this.getLabelElement();
-        $label
-            .text(textForLabel)
-            .attr('title', textForLabel);
+
+        $label[setContent](textForLabel);
+        var title = String(textForLabel);
+        $label.attr('title', title.replace(/<\/?[^>]+>/g, '')); //strip html tags
     },
 
     updateDisplayFormat: function(){
@@ -10378,8 +12839,6 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
     },
 
     render: function () {
-        var model = this.model;
-
         this.prerenderingActions();
         this.renderTemplate(this.template);
 
@@ -10449,7 +12908,8 @@ var LabelModel = ControlModel.extend(_.extend({
         horizontalTextAlignment: 'Left',
         verticalAlignment: 'Top',
         textWrapping: true,
-        textTrimming: true
+        textTrimming: true,
+        escapeHtml: true
     }, ControlModel.prototype.defaults),
 
     initialize: function(){
@@ -10561,8 +13021,6 @@ var BaseListBoxView = ListEditorBaseView.extend({
         this.bindUIElements();
 
         this.strategy.appendItemsContent(preparedItems);
-
-        this.bindUIElements();
 
         this.updateProperties();
 
@@ -10742,6 +13200,14 @@ var CheckingListBoxView = BaseListBoxView.extend({
         this.initDomHandlers();
     },
 
+    updateEnabled: function () {
+        ListEditorBaseView.prototype.updateEnabled.call(this);
+
+        var enabled = this.model.get('enabled');
+
+        this.ui.checkingInputs.attr('disabled', !enabled);
+    },
+
     initDomHandlers: function(){
         var $listBox = this.$el,
             that = this;
@@ -10750,6 +13216,10 @@ var CheckingListBoxView = BaseListBoxView.extend({
             e = $.event.fix(e);
             var $el = $(e.target),
                 $currentListItem, item;
+
+            if (!that.model.get('enabled')) {
+                return;
+            }
 
             while($el.get(0) != $listBox.get(0)){
                 if($el.hasClass('pl-listbox-i')){
@@ -10972,37 +13442,77 @@ var NumericBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototy
     ),
 
     transformValue: function (value) {
+        var result = value;
+
         if (typeof value !== 'undefined' && value !== null) {
-            var value = +value;
-            if (isNaN(value) || !isFinite(value)) {
-                value = null;
+            var result = +value;
+            if (isNaN(result) || !isFinite(result)) {
+                result = null;
             }
         }
-        return value;
+        return result;
+    },
+
+    incValue: function () {
+        var delta = this.get('increment');
+        this.addToValue(delta);
+    },
+
+    decValue: function () {
+        var delta = this.get('increment');
+        this.addToValue(-delta);
+    },
+
+    addToValue: function (delta) {
+
+        var value = this.get('value');
+        var startValue = this.get('startValue');
+        var minValue = this.get('minValue');
+        var maxValue = this.get('maxValue');
+
+        var newValue = _.isNumber(value) ? value : +value;
+
+        if (this.isSetValue(value) && _.isNumber(value)) {
+            newValue += delta;
+        } else {
+            newValue = (_.isNumber(startValue)) ? startValue : 0;
+        }
+
+        if (_.isNumber(minValue) && newValue < minValue) {
+            newValue = minValue;
+        } else if (_.isNumber(maxValue) && newValue > maxValue) {
+            newValue = maxValue;
+        }
+
+        this.set('value', newValue);
     },
 
     initialize: function () {
         TextEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
     },
 
-    validate: function (attributes, options) {
+    validateValue: function (value, callback) {
+
         var
-            min = attributes.minValue,
-            max = attributes.maxValue;
+            isValid = true,
+            min = this.get('minValue'),
+            max = this.get('maxValue');
 
-        if (isSet(min) && isSet(max)) {
-            if (attributes.value < min || attributes.value > max) {
-                return 'Invalid value';
+        if (!this.isSetValue(value)) {
+            return true;
+        }
+
+        if (_.isNumber(min) && _.isNumber(max)) {
+            if (value < min || value > max) {
+                isValid = false
             }
-        } else if (isSet(min) && attributes.value < min) {
-                return 'Invalid value';
-        } else if (isSet(max) && attributes.value > max) {
-            return 'invalid value';
+        } else if (_.isNumber(min) && value < min) {
+            isValid = false;
+        } else if (_.isNumber(max) && value > max) {
+            isValid = false;
         }
 
-        function isSet(value) {
-            return value !== null && typeof value !== 'undefined';
-        }
+        return isValid;
     }
 
 
@@ -11073,39 +13583,27 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
     },
 
     onClickMinControlHandler: function () {
-        var increment = this.model.get('increment');
-        this.addToValue(increment * -1);
+        this.model.decValue();
     },
 
     onClickMaxControlHandler: function () {
-        var increment = this.model.get('increment');
-        this.addToValue(increment);
+        this.model.incValue();
     },
 
     onMousedownMinControlHandler: function (event) {
-        var el = event.target,
-            increment = this.model.get('increment');
-
-        this.repeatAddToValue(el, increment * -1);
+        this.repeatUpdateValue(this.model.decValue.bind(this.model));
     },
 
     onMousedownMaxControlHandler: function (event) {
-        var el = event.target,
-            increment = this.model.get('increment');
-
-        this.repeatAddToValue(el, increment);
+        this.repeatUpdateValue(this.model.incValue.bind(this.model));
     },
 
-    repeatAddToValue: function (el, delta) {
-        var
-            numericBox = this,
-            intervalId;
+    repeatUpdateValue: function (cb) {
+        var intervalId;
 
         window.document.addEventListener('mouseup', stopRepeat);
 
-        intervalId = setInterval(function () {
-            numericBox.addToValue(delta);
-        }, 200);
+        intervalId = setInterval(cb, 200);
 
         function stopRepeat() {
             if (intervalId) {
@@ -11114,19 +13612,7 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
             }
             window.document.removeEventListener('mouseup', stopRepeat);
         }
-    },
 
-    addToValue: function (delta) {
-        var value = this.model.get('value');
-
-        value = (value === null || typeof value === 'undefined') ? 0 : parseInt(value, 10);
-
-        if (!isFinite(value)) {
-            return;
-        }
-
-        value = value + delta;
-        this.model.set('value', value, {validate: true});
     },
 
     /**
@@ -11135,7 +13621,7 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
      * @returns {boolean}
      */
     onEditorValidate: function (value) {
-        return true;
+        return this.model.validateValue(value);
     }
 
 });
@@ -11263,7 +13749,7 @@ var PanelView = ContainerView.extend(/** @lends PanelView.prototype */ {
     },
 
     events: {
-        'click .pl-panel-header': 'onClickHeaderHandler'
+        'click >.pl-panel-header': 'onClickHeaderHandler'
     },
 
     initialize: function (options) {
@@ -11283,10 +13769,10 @@ var PanelView = ContainerView.extend(/** @lends PanelView.prototype */ {
 
         this.renderItemsContents();
 
-        this.postrenderingActions();
-
         this.trigger('render');
         this.updateProperties();
+
+        this.postrenderingActions();
         return this;
     },
 
@@ -11396,6 +13882,9 @@ _.extend(PasswordBoxControl.prototype, /** @lends PasswordBoxControl.prototype *
 var PasswordBoxModel = ControlModel.extend(_.extend({
 
     defaults: _.defaults(
+        {
+            autocomplete: true
+        },
         editorBaseModelMixin.defaults_editorBaseModel,
         ControlModel.prototype.defaults
     ),
@@ -11415,7 +13904,10 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
 
     className: 'pl-password-box form-group',
 
-    template: InfinniUI.Template["new/controls/passwordBox/template/passwordBox.tpl.html"],
+    template: {
+        "autocomplete": InfinniUI.Template["new/controls/passwordBox/template/passwordBox.on.tpl.html"],
+        "noautocomplete": InfinniUI.Template["new/controls/passwordBox/template/passwordBox.off.tpl.html"]
+    },
 
     UI: _.extend({}, editorBaseViewMixin.UI, {
         label: '.pl-control-label',
@@ -11437,6 +13929,8 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
         this.listenTo(this.model, 'change:labelText', this.updateLabelText);
         this.listenTo(this.model, 'change:labelFloating', this.updateLabelFloating);
         this.listenTo(this.model, 'change:passwordChar', this.updatePasswordChar);
+        this.listenTo(this.model, 'change:autocomplete', this.updateAutocomplete);
+
     },
 
     updateProperties: function(){
@@ -11449,6 +13943,10 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
     updateLabelText: function () {
         var labelText = this.model.get('labelText');
         this.ui.label.text(labelText);
+    },
+
+    updateAutocomplete: function () {
+        this.rerender();
     },
 
     updatePasswordChar: function () {
@@ -11481,13 +13979,19 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
         var model = this.model;
 
         this.prerenderingActions();
-        this.renderTemplate(this.template);
+        this.renderTemplate(this.getTemplate());
 
         this.updateProperties();
 
         this.trigger('render');
         this.postrenderingActions();
         return this;
+    },
+
+    getTemplate: function () {
+        var model = this.model;
+
+        return model.get('autocomplete') ? this.template.autocomplete : this.template.noautocomplete;
     },
 
     onBlurHandler: function () {
@@ -11908,6 +14412,14 @@ var ScrollPanelView = ContainerView.extend(/** @lends ScrollPanelView.prototype 
 
         this.trigger('render');
         this.updateProperties();
+
+        (function ($el) {
+            //Firefox сохраняет позицию прокрутки. Принудительно крутим в начало.
+            setTimeout(function () {
+                $el.scrollTop(0);
+            }, 0);
+        })(this.$el);
+
         return this;
     },
 
@@ -12044,22 +14556,6 @@ var StackPanelView = ContainerView.extend(
             return this;
         },
 
-        //renderItemsContents: function(){
-        //    var $items = this.$el.find('.pl-stack-panel-i'),
-        //        items = this.model.get('items'),
-        //        itemTemplate = this.model.get('itemTemplate'),
-        //        that = this,
-        //        element, item;
-        //
-        //    $items.each(function(i, el){
-        //        item = items.getByIndex(i);
-        //        element = itemTemplate(undefined, {item: item, index: i});
-        //        that.addChildElement(element);
-        //        $(el)
-        //            .append(element.render());
-        //    });
-        //},
-
         initOrientation: function () {
             this.listenTo(this.model, 'change:orientation', this.updateOrientation);
             this.updateOrientation();
@@ -12068,6 +14564,7 @@ var StackPanelView = ContainerView.extend(
         updateOrientation: function () {
             var orientation = this.model.get('orientation');
             this.$el.toggleClass('horizontal-orientation', orientation == 'Horizontal');
+            this.$el.toggleClass('pl-stack-panel_horizontal', orientation == 'Horizontal');
         },
 
         getItems: function(){
@@ -12090,15 +14587,16 @@ var StackPanelView = ContainerView.extend(
 
 function StackPanelViewGroupStrategy(stackPanel) {
     this.stackPanel = stackPanel;
-};
+}
 
 _.extend(StackPanelViewGroupStrategy.prototype, {
+
+    groupTemplate: InfinniUI.Template["new/controls/stackPanel/baseView/template/stackPanelGroup.tpl.html"],
 
     prepareItemsForRendering: function(){
         var items = this.stackPanel.getItems(),
             inputName = 'listbox-' + guid(),
             result = {
-                isMultiselect: this.stackPanel.isMultiselect(),
                 inputName: inputName,
                 groups: []
             },
@@ -12116,9 +14614,15 @@ _.extend(StackPanelViewGroupStrategy.prototype, {
         });
 
         for(var k in groups){
+            if (!groups.hasOwnProperty(k)) {
+                continue;
+            }
             result.groups.push({
-                items: groups[k]
-            })
+                items: groups[k],
+                indices: groups[k].map(function (item) {
+                    return items.indexOf(item);
+                })
+            });
         }
 
         return result;
@@ -12128,33 +14632,51 @@ _.extend(StackPanelViewGroupStrategy.prototype, {
         return this.stackPanel.template.grouped;
     },
 
-    appendItemsContent: function(preparedItems){
-        var $stackPanel = this.stackPanel.$el,
-            $stackPanelItems = $stackPanel.find('.pl-stack-panel-i'),
-            itemTemplate = this.stackPanel.getItemTemplate(),
-            groupTitleTemplate = this.stackPanel.getGroupItemTemplate(),
-            index = 0,
-            groups = preparedItems.groups,
+    /**
+     *
+     * @param {Object} preparedItems
+     * @param {Array} preparedItems.groups
+     */
+    appendItemsContent: function (preparedItems) {
+        var
             stackPanel = this.stackPanel,
-            itemEl, titleEl;
+            $stackPanel = stackPanel.$el,
+            groupTemplate = this.groupTemplate,
+            groupHeaderTemplate = this.stackPanel.getGroupItemTemplate(),
+            itemTemplate = this.stackPanel.getItemTemplate(),
+            $groups,
+            groups = preparedItems.groups;
 
-        $stackPanel.find('.pl-stack-panel-group-title').each(function(i, el){
-            titleEl = groupTitleTemplate(undefined, {index: index, item: groups[i]});
-            stackPanel.addChildElement(titleEl);
-            $(el).append(titleEl.render());
+        $groups = groups.map(function (group, groupIndex) {
 
-            _.forEach( groups[i].items, function(item){
-                itemEl = itemTemplate(undefined, {index: i, item: item});
-                stackPanel.addChildElement(itemEl);
-                $stackPanelItems.eq(index).append(itemEl.render());
+            var $items,
+                items = group.items || [],
+                indices = group.indices || [],
+                $group = $(groupTemplate({items: items})),
+                groupHeader = groupHeaderTemplate(null, {
+                    index: indices[0],  //Индекс любого элемента в этой группе
+                    item: group
+                });
 
-                $stackPanelItems.eq(index).parent()
-                    .data('pl-data-item', item);
+            stackPanel.addChildElement(groupHeader);
 
-                index++;
+            $items = items.map(function (item, itemIndex) {
+                var element = itemTemplate(null, {index: indices[itemIndex], item: item});
+                stackPanel.addChildElement(element);
+                return element.render();
             });
 
+            $('.pl-stack-panel-group__header', $group).append(groupHeader.render());
+
+            $('.pl-stack-panel-list__item', $group).each(function (i, el) {
+                $(el).append($items[i]);
+            });
+
+            return $group;
+
         });
+
+        $stackPanel.append($groups);
     }
 });
 function StackPanelViewPlainStrategy(stackPanel) {
@@ -12199,8 +14721,8 @@ _.extend(StackPanelViewPlainStrategy.prototype, {
  * @constructor
  * @augments ContainerControl
  */
-function StackPanelControl(parent) {
-    _.superClass(StackPanelControl, this, parent);
+function StackPanelControl(viewMode) {
+    _.superClass(StackPanelControl, this, viewMode);
 }
 
 _.inherit(StackPanelControl, ContainerControl);
@@ -12212,8 +14734,12 @@ _.extend(StackPanelControl.prototype,
             return new StackPanelModel();
         },
 
-        createControlView: function (model) {
-            return new StackPanelView({model: model});
+        createControlView: function (model, viewMode) {
+            var view = new StackPanelView({model: model});
+
+            view.viewMode = viewMode;
+
+            return view;
         }
     }
 );
@@ -12790,135 +15316,6 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
     }
 
 });
-/**
- *
- * @param parent
- * @constructor
- * @augments TextEditorBaseControl
- */
-function TextBoxControl(parent) {
-    _.superClass(TextBoxControl, this, parent);
-}
-
-_.inherit(TextBoxControl, TextEditorBaseControl);
-
-_.extend(TextBoxControl.prototype, {
-
-    createControlModel: function () {
-        return new TextBoxModel();
-    },
-
-    createControlView: function (model) {
-        return new TextBoxView({model: model});
-    }
-});
-
-
-/**
- * @class
- * @augments TextEditorBaseModel
- */
-var TextBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototype */{
-    defaults: _.extend(
-        {},
-        TextEditorBaseModel.prototype.defaults,
-        {
-            multiline: false
-        }
-    ),
-
-    initialize: function () {
-        TextEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    }
-
-});
-/**
- * @class
- * @augments TextEditorBaseView
- */
-var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
-
-    template: {
-        oneline: InfinniUI.Template["new/controls/textBox/template/textBoxInput.tpl.html"],
-        multiline: InfinniUI.Template["new/controls/textBox/template/textBoxArea.tpl.html"]
-    },
-
-    className: 'pl-textbox form-group',
-
-    UI: _.extend({}, TextEditorBaseView.prototype.UI),
-
-    events: _.extend({}, TextEditorBaseView.prototype.events, {
-        //Отображение поля редактирования для INPUT[TEXT]
-        'focus .pl-text-box-input': 'onFocusControlHandler',
-        'mouseenter .pl-text-box-input': 'onMouseenterControlHandler',
-
-        //Отображение поля редактирования для TEXTAREA
-        'focus .pl-text-area-input': 'onFocusControlHandler',
-        'mouseenter .pl-text-area-input': 'onMouseenterControlHandler'
-    }),
-
-    initHandlersForProperties: function(){
-        TextEditorBaseView.prototype.initHandlersForProperties.call(this);
-
-        this.listenTo(this.model, 'change:multiline', this.updateMultiline);
-        this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
-    },
-
-    updateProperties: function(){
-        TextEditorBaseView.prototype.updateProperties.call(this);
-
-        this.updateLineCount();
-    },
-
-    updateMultiline: function(){
-        this.rerender();
-    },
-
-    updateLineCount: function(){
-        var lineCount = this.model.get('lineCount');
-        this.ui.control.attr('rows', lineCount);
-    },
-
-    render: function () {
-        var model = this.model;
-        var template = model.get('multiline') ? this.template.multiline : this.template.oneline;
-
-        this.prerenderingActions();
-        this.renderTemplate(template);
-        this.renderTextBoxEditor();
-        this.updateProperties();
-
-        this.trigger('render');
-        this.postrenderingActions();
-        return this;
-    },
-
-    getData: function () {
-        var data = TextEditorBaseView.prototype.getData.call(this);
-        var model = this.model;
-        return _.extend(
-            data,
-            {
-                multiline: model.get('multiline'),
-                lineCount: model.get('lineCount')
-            }
-        );
-    },
-
-    renderTextBoxEditor: function () {
-        var model = this.model;
-        this.renderControlEditor({
-            el: this.ui.editor,
-            multiline: model.get('multiline'),
-            lineCount: model.get('lineCount'),
-            inputType: model.get('inputType')
-        });
-
-        return this;
-    }
-
-});
-
 function ToggleButtonControl(parent) {
     _.superClass(ToggleButtonControl, this, parent);
     this.initialize_editorBaseControl();
@@ -12969,7 +15366,7 @@ var ToggleButtonView = ControlView.extend(/** @lends ToggleButtonView.prototype 
     }),
 
     events: {
-        'click': 'onClickHandler'
+        'click .togglebutton-box': 'onClickHandler'
     },
 
     initHandlersForProperties: function(){
@@ -13132,6 +15529,318 @@ var ToolBarView = ContainerView.extend({
     updateGrouping: function(){}
 });
 
+var TreeViewNodeBase = Backbone.View.extend({
+
+    className: 'pl-treeview-node',
+
+    classNameCheckerChecked: 'pl-treeview-item__checker_checked',
+    classNameContentSelected: 'pl-treeview-item__content_selected',
+    classNameItemsExpanded: 'pl-treeview-node__items_expanded',
+    classNameItemsCollapsed: 'pl-treeview-node__items_collapsed',
+    classNameButtonCollapse: 'pl-treeview-node__button_collapse',
+    classNameButtonExpand: 'pl-treeview-node__button_expand',
+
+    UI: {
+        checker: '.pl-treeview-item__checker',
+        content: '.pl-treeview-item__content',
+        items: '.pl-treeview-node__items',
+        button: '.pl-treeview-node__button'
+    },
+
+    initialize: function () {
+        var model = new Backbone.Model({collapsed: true});
+        this.model = model;
+        this.listenTo(model, 'change:selected', this.updateSelected);
+        this.listenTo(model, 'change:checked', this.updateChecked);
+        this.listenTo(model, 'change:collapsed', this.updateCollapsed);
+    },
+
+    updateChecked: function () {
+        var checked = this.model.get('checked');
+        this.ui.checker.toggleClass(this.classNameCheckerChecked, checked === true);
+    },
+
+    updateSelected: function () {
+        var selected = this.model.get('selected');
+        this.ui.content.toggleClass(this.classNameContentSelected, selected === true);
+    },
+
+    updateCollapsed: function () {
+        var collapsed = !!this.model.get('collapsed');
+        this.ui.items.toggleClass(this.classNameItemsExpanded, !collapsed);
+        this.ui.items.toggleClass(this.classNameItemsCollapsed, collapsed);
+        this.ui.button.toggleClass(this.classNameButtonCollapse, !collapsed);
+        this.ui.button.toggleClass(this.classNameButtonExpand, collapsed);
+    },
+
+    updateState: function () {
+        this.updateCollapsed();
+        this.updateSelected();
+        this.updateChecked();
+    },
+
+    render: function () {
+        this.$el.html(this.template);
+        this.bindUIElements();
+        this.updateState();
+        this.initDomEventsHandlers();
+        return this;
+    },
+
+    initDomEventsHandlers: function () {
+        this.ui.button.on('click', this.onClickEventHandler.bind(this));
+        this.ui.content[0].addEventListener('click', this.onClickItemHandler.bind(this), true);
+        this.ui.checker[0].addEventListener('click', this.onClickCheckHandler.bind(this), true);
+    },
+
+    onClickItemHandler: function (event) {
+        this.trigger('select');
+    },
+
+    onClickCheckHandler: function (event) {
+        this.trigger('check');
+    },
+
+    toggle: function () {
+        var model = this.model;
+        var collapsed = model.get('collapsed');
+
+        this.model.set('collapsed', !collapsed);
+    },
+
+    setItemContent: function ($itemContent) {
+        this.ui.content.empty();
+        this.ui.content.append($itemContent);
+    },
+
+    setItemsContent: function ($itemsContent) {
+        this.ui.items.empty();
+        this.ui.items.append($itemsContent);
+    },
+
+    onClickEventHandler: function (event) {
+        this.toggle();
+    },
+
+    setSelected: function (selected) {
+        this.model.set('selected', selected);
+    },
+
+    setChecked: function (checked) {
+        this.model.set('checked', checked);
+    }
+});
+
+_.extend(TreeViewNodeBase.prototype, bindUIElementsMixin);
+var TreeViewNodeCheckbox = TreeViewNodeBase.extend({
+
+    template: InfinniUI.Template["new/controls/treeView/template/node-checkbox.tpl.html"]
+
+});
+var TreeViewNodeRadio = TreeViewNodeBase.extend({
+
+    template: InfinniUI.Template["new/controls/treeView/template/node-radio.tpl.html"]
+
+});
+
+function TreeViewControl() {
+    _.superClass(TreeViewControl, this);
+}
+
+_.inherit(TreeViewControl, ListEditorBaseControl);
+
+_.extend(TreeViewControl.prototype, {
+
+    createControlModel: function () {
+        return new TreeViewModel();
+    },
+
+    createControlView: function (model) {
+        return new TreeViewView({model: model});
+    }
+});
+
+
+var TreeViewModel = ListEditorBaseModel.extend({
+
+    initialize: function () {
+        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    },
+
+    toggleItem: function (item, toggle) {
+        var value = this.valueByItem(item);
+        this.toggleValue(value, toggle);
+        this.trigger('toggle');
+    }
+});
+var TreeViewView = ListEditorBaseView.extend({
+
+    className: 'pl-treeview',
+    classNameMultiSelect: 'pl-treeview_multi-select',
+    classNameSingleSelect: 'pl-treeview_single-select',
+
+    template: InfinniUI.Template["new/controls/treeView/template/treeview.tpl.html"],
+
+    events: {},
+
+    UI: _.defaults({}, ListEditorBaseView.prototype.UI),
+
+    initialize: function (options) {
+        ListEditorBaseView.prototype.initialize.call(this, options);
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.renderTemplate(this.getTemplate());
+
+        this.renderItems();
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+        return this;
+    },
+
+    renderItems: function (parentId) {
+        var
+            view = this,
+            $nodes,
+            model = this.model,
+            collection = model.get('items'),
+            parentSelector = model.get('parentSelector'),
+            keySelector = model.get('keySelector'),
+            nodeConstructor = this.getNodeConstructor(),
+            itemTemplate = model.get('itemTemplate');
+
+        $nodes = renderNodes();
+        this.$el.append($nodes);
+
+        function renderNodes (parentId) {
+            return collection.toArray()
+                .filter(function (item) {
+                    var parent = parentSelector(null, {value: item});
+                    return isEmpty(parentId) ? isEmpty(parent) : parent === parentId;
+                })
+                .map(function (item) {
+                    var node = new nodeConstructor().render();
+                    var $node = node.$el;
+                    var $item = itemTemplate(null, {
+                        value: item,
+                        index: collection.indexOf(item)
+                    }).render();
+
+                    node.listenTo(model, 'change:selectedItem', function (model, selectedItem) {
+                        node.setSelected(selectedItem === item);
+                    });
+
+                    node.listenTo(model, 'change:value', function (model, value) {
+                        var multiSelect = model.get('multiSelect');
+
+                        var checked;
+                        if (!multiSelect) {
+                            checked = isValueForItem(value);
+                        } else if (Array.isArray(value)) {
+                            checked = value.some(isValueForItem)
+                        } else {
+                            checked = false;
+                        }
+                        node.setChecked(checked);
+                    });
+
+                    view.listenTo(node, 'select', view.onSelectNodeHandler.bind(view, item, node));
+                    view.listenTo(node, 'check', view.onCheckNodeHandler.bind(view, item, node));
+
+                    node.setItemContent($item);
+                    var $subitems = renderNodes(keySelector(null, {value: item}));
+                    node.setItemsContent($subitems);
+
+                    return $node;
+
+                    function isValueForItem(value) {
+                        return model.itemByValue(value) === item;
+                    }
+                });
+        }
+
+        function isEmpty(value) {
+            return value === null || typeof value === 'undefined';
+        }
+    },
+
+    getNodeConstructor: function () {
+        var multiSelect = this.model.get('multiSelect');
+
+        return (multiSelect === true) ? TreeViewNodeCheckbox : TreeViewNodeRadio;
+    },
+
+    onSelectNodeHandler: function(item , index) {
+        var model = this.model;
+
+        var multiSelect = model.get('multiSelect');
+
+        model.set('selectedItem', item);
+        if (!multiSelect) {
+            //Клик по элементу одновременно переключает значение и делает элемент выделенным
+            var value = model.valueByItem(item);
+            model.toggleValue(value);
+        }
+    },
+
+    onCheckNodeHandler: function (item, index) {
+        var model = this.model;
+
+        var multiSelect = model.get('multiSelect');
+
+        var value = model.valueByItem(item);
+        model.toggleValue(value);
+
+        if (!multiSelect) {
+            //Клик по элементу одновременно переключает значение и делает элемент выделенным
+            model.set('selectedItem', item);
+        }
+    },
+
+    getTemplate: function () {
+        return this.template;
+    },
+
+    updateProperties: function () {
+        ListEditorBaseView.prototype.updateProperties.call(this);
+        this.updateMultiSelect();
+    },
+
+    updateMultiSelect: function () {
+        var multiSelect = this.model.get('multiSelect');
+        this.$el.toggleClass(this.classNameMultiSelect, !!multiSelect);
+        this.$el.toggleClass(this.classNameSingleSelect, !multiSelect);
+    },
+
+    updateEnabled: function () {
+        ListEditorBaseView.prototype.updateEnabled.call(this);
+
+        var enabled = this.model.get('enabled');
+
+    },
+
+    updateValue: function () {
+
+    },
+
+    updateSelectedItem: function () {
+
+    },
+
+    updateGrouping: function () {
+    },
+
+    rerender: function () {
+
+    }
+
+
+});
 /**
  *
  * @param parent
@@ -13169,7 +15878,7 @@ var ViewModel = ContainerModel.extend({
     defaults: _.defaults({
         dialogResult: DialogResult.none,
         isApplication: false,
-        closeButton: true
+        closeButtonVisibility: true
     }, ContainerModel.prototype.defaults),
 
     initialize: function () {
@@ -13418,8 +16127,6 @@ var Element = function (parent, viewMode) {
     };
 
     this.childElements = [];
-
-    this.eventStore = new EventStore();
 };
 
 Object.defineProperties(Element.prototype, {
@@ -13490,7 +16197,7 @@ _.extend(Element.prototype, {
 
     getView: function () {
         if (!this.parentView) {
-            if (this.parent instanceof View) {
+            if (this.parent && this.parent.isView) {
                 this.parentView = this.parent;
 
             } else {
@@ -13554,6 +16261,7 @@ _.extend(Element.prototype, {
                 var parentView = this.getView(),
                     context = parentView ? parentView.getContext() : undefined,
                     args = {
+                        property: propertyName,
                         oldValue: model.previous(propertyName),
                         newValue: value
                     };
@@ -13738,7 +16446,6 @@ _.extend(Element.prototype, {
     setFocused: function (value) {
         return this.control.set('focused', !!value);
     },
-
     onLostFocus: function (handler) {
         this.control.on('OnLostFocus', handler);
     },
@@ -13967,10 +16674,11 @@ _.extend(Element.prototype, {
 
     createControlEventHandler: function(element, handler, additionParams) {
         var context;
+        var parentView = element.getView();
         additionParams = additionParams || {};
 
-        if (element.parentView) {
-            context = element.parentView.context;
+        if (parentView) {
+            context = parentView.context;
         }
 
         return function (message) {
@@ -14014,6 +16722,10 @@ _.extend(Element.prototype, {
 
     _upperFirstSymbol: function (s) {
         return s[0].toUpperCase() + s.substr(1);
+    },
+
+    setFocus: function () {
+        this.control.setFocus();
     }
 });
 /**
@@ -14039,6 +16751,16 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
         if (args.parent && args.parent.addChild) {
             args.parent.addChild(element);
         }
+
+//devblockstart
+        element.onMouseDown( function(eventData) {
+            if( eventData.ctrlKey ){
+                args.metadata.isSelectedElement = true;
+                args.parentView.showSelectedElementMetadata();
+                eventData.nativeEventData.stopPropagation();
+            }
+        });
+//devblockstop
 
         return element;
     },
@@ -14129,7 +16851,7 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
         var metadata = params.metadata;
         var propertyMetadata = metadata[propertyName];
         var element = params.element;
-        var lowerCasePropertyName = propertyName.toLowerCase();
+        var lowerCasePropertyName = this.lowerFirstSymbol(propertyName);
         var converter;
 
         if (!propertyMetadata || typeof propertyMetadata != 'object') {
@@ -14149,7 +16871,7 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
             var oldConverter;
 
             if (isBooleanBinding) {
-                dataBinding.setMode(BindingModes.toElement);
+                dataBinding.setMode(InfinniUI.BindingModes.toElement);
 
                 converter = dataBinding.getConverter();
                 if (!converter) {
@@ -14190,23 +16912,36 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
         if (metadata.ToolTip) {
             var argumentForBuilder = {
                 parent: element,
-                parentView: params.parentView
+                parentView: params.parentView,
+                basePathOfProperty: params.basePathOfProperty
             };
-            tooltip = builder.build(metadata.ToolTip, argumentForBuilder);
+
+            if (typeof metadata.ToolTip === 'string') {
+                tooltip = builder.buildType("Label", {
+                    "Text": metadata.ToolTip
+                }, argumentForBuilder);
+            } else {
+                tooltip = builder.build(metadata.ToolTip, argumentForBuilder);
+            }
+
             element.setToolTip(tooltip);
             exchange.send(messageTypes.onToolTip.name, { source: element, content: tooltip.render() });
         }
 
-        element.onShowToolTip(function () {
+        element.onShowToolTip && element.onShowToolTip(function () {
             if (tooltip) {
                 exchange.send(messageTypes.onToolTipShow.name, { source: element, content: tooltip.render() });
             }
         });
 
-        element.onHideToolTip(function () {
+        element.onHideToolTip && element.onHideToolTip(function () {
             exchange.send(messageTypes.onToolTipHide.name, { source: element });
         });
 
+    },
+
+    lowerFirstSymbol: function(s){
+        return s[0].toLowerCase() + s.substr(1);
     }
 
 });
@@ -14245,6 +16980,2119 @@ var ajaxRequestMixin = (function (bus) {
     }
 
 })(window.InfinniUI.global.messageBus);
+/**
+ *
+ * @mixin dataSourceFileProviderMixin
+ */
+var dataSourceFileProviderMixin = {
+
+    setFileProvider: function (fileProvider) {
+        this.set('fileProvider', fileProvider);
+    },
+
+    getFileProvider: function () {
+        return this.get('fileProvider');
+    },
+
+    setFile: function (file, propertyName) {
+        var queue = this.get('queueFiles');
+        var item;
+        if (!queue) {
+            queue = [];
+            this.set('queueFiles', queue);
+        }
+        //Отмечаем элемент данных как измененный при установке файла на загрузку
+        this._includeItemToModifiedSet(this.getSelectedItem());
+
+        var items = queue.filter(function (item) {
+            return item.name === propertyName;
+        });
+
+        if (items.length) {
+            var item = items[0];
+            item.file = file;
+        } else {
+            queue.push({
+                name: propertyName,
+                file: file
+            });
+        }
+        this.setProperty(propertyName, file);
+    },
+
+    extractFiles: function (item, callback) {
+
+        var files = Object.create(null);
+        var itemWithoutFiles = extractFile(item, []);
+
+
+        if (typeof callback === 'function') {
+            callback.call(null, files, itemWithoutFiles);
+        }
+
+        function extractFile (item, path) {
+            var value, result = Array.isArray(item) ? [] : {}, currentPath;
+            for (var i in item) {
+                if (!item.hasOwnProperty(i)) {
+                    continue;
+                }
+
+                currentPath = path.slice();
+                currentPath.push(i);
+                value = item[i];
+                if (value !== null && typeof (value) === 'object') {
+                    if (value.constructor === Date) {
+                        result[i] = value
+                    } else if (value.constructor === Object || value.constructor === Array)  {
+                        //Plain object
+                        result[i] = extractFile(value, currentPath);
+                    } else {
+                        //Object instance
+                        files[currentPath.join('.')] = value;
+                        continue;
+                    }
+                } else {
+                    result[i] = value;
+                }
+
+            }
+
+            return result;
+        }
+    },
+
+    uploadFiles: function (instanceId, files) {
+        var promises = [];
+        var promise;
+        var fileProvider = this.getFileProvider();
+        var ds = this;
+
+        for (var path in files) {
+            promise = fileProvider.uploadFile(path, instanceId, files[path])
+                .then(function () {
+                    //@TODO Как обрабатывать ошибки загрузки файлов?
+                    ds.trigger('onFileUploaded', ds.getContext(), {value: files[path]});
+                    return true;
+                });
+
+            promises.push(promise);
+        }
+
+        return $.when.apply($, promises);
+    }
+};
+var dataSourceLookupMixin = {
+
+    lookupIdPropertyValue: function (sourceProperty) {
+        var items = this.getItems();
+        var value, item;
+
+        if (Array.isArray(items)) {
+            var
+                name = [sourceProperty.split('.')[0], this.getIdProperty()].join('.');
+
+            value = this.getProperty(name);
+        }
+
+        return value;
+    },
+
+    lookupPropertyValue: function (name, cb, sourceProperty) {
+        var items = this.getItems();
+        var value, item;
+
+        if (Array.isArray(items) && typeof cb === 'function') {
+            var path = sourceProperty.split('.');
+
+            var propertyValue = this.getProperty(sourceProperty);
+
+            for (var i = 0; i < items.length; i = i + 1) {
+                item = items[i];
+                if (cb.call(null, propertyValue) === true) {
+                    value = InfinniUI.ObjectUtils.getPropertyValue(item, name);
+                    break;
+                }
+            }
+        }
+
+        return value;
+    }
+
+};
+/**
+ *
+ * @mixin
+ */
+var DataSourceValidationNotifierMixin = {
+    /**
+     * @param dataSource
+     */
+    initNotifyValidation: function (dataSource) {
+        dataSource.onErrorValidator(this.notifyOnValidationError.bind(this));
+        dataSource.onWarningValidator(this.notifyOnValidationError.bind(this));
+    },
+
+    /**
+     * @param context
+     * @param args
+     */
+    notifyOnValidationError: function (context, args) {
+        this.notifyOnValidationResult(args.value, 'error');
+    },
+
+    /**
+     * @param context
+     * @param args
+     */
+    notifyOnValidationWarning: function (context, args) {
+        this.notifyOnValidationResult(args.value, 'warning');
+    },
+
+    /**
+     * @param {Object} result
+     * @param {boolean} result.isValid
+     * @param {Array.<Object>} result.items
+     * @param {string} validationType Тип сообщения "error" или "warning"
+     */
+    notifyOnValidationResult: function (result, validationType) {
+        if (typeof result === 'undefined' || result === null || result['IsValid'] || !Array.isArray(result['Items'])) {
+            return;
+        }
+
+        result['Items'].forEach(function (item) {
+            var exchange = window.InfinniUI.global.messageBus;
+            exchange.send(messageTypes.onNotifyUser, {item: item, messageText: item.Message, messageType: "error"});
+        });
+    }
+};
+/**
+ * @constructor
+ * @augments Backbone.Model
+ * @mixes dataSourceFileProviderMixin, dataSourceFindItemMixin
+ */
+var BaseDataSource = Backbone.Model.extend({
+    defaults: {
+        name: null,
+        idProperty: '_id',
+        identifyingMode: 'byId', // byId, byLink. detect automatically
+
+        view: null,
+
+        isDataReady: false,
+
+        dataProvider: null,
+
+        /*
+         * TreeModel for handling
+         * model.items
+         * model.selectedItem
+         * */
+        model: null,
+
+        modifiedItems: {},
+        itemsById: {},
+
+        fillCreatedItem: true,
+
+        suspendingList: null, // []
+
+        waitingOnUpdateItemsHandlers: null, //[]
+
+        errorValidator: null,
+        warningValidator: null,
+        showingWarnings: false,
+
+        isRequestInProcess: false,
+
+        isLazy: true,
+
+        newItemsHandler: null,
+
+        isNumRegEx: /^\d/
+
+    },
+
+    initialize: function () {
+        var view = this.get('view');
+        var modelStartTree = {
+            items: null,
+            selectedItem: null
+        };
+
+        this.initDataProvider();
+        if (!view) {
+            throw 'BaseDataSource.initialize: При создании объекта не была задана view.'
+        }
+        this.set('suspendingList', []);
+        this.set('waitingOnUpdateItemsHandlers', []);
+        this.set('model', new TreeModel(view.getContext(), this, modelStartTree));
+    },
+
+    initDataProvider: function () {
+        throw 'BaseDataSource.initDataProvider В потомке BaseDataSource не задан провайдер данных.'
+    },
+
+    onPropertyChanged: function (property, handler, owner) {
+
+        if (typeof property == 'function') {
+            owner = handler;
+            handler = property;
+            property = '*';
+        }
+
+        if(property.charAt(0) == '.'){
+            property = property.substr(1);
+        }else{
+            if(property == ''){
+                property = 'items';
+            }else{
+                property = 'items.' + property;
+            }
+
+        }
+
+        this.get('model').onPropertyChanged(property, function(context, args){
+            var property = args.property;
+
+            if(property.substr(0,6) == 'items.'){
+                property = property.substr(6);
+            }else if(property == 'items'){
+                property = '';
+            } else{
+                property = '.' + property;
+            }
+
+            args.property = property;
+
+            handler(context, args);
+        }, owner);
+    },
+
+    onSelectedItemChanged: function (handler, owner) {
+        var that = this;
+
+        this.get('model').onPropertyChanged('selectedItem', function(context, args){
+            var argument = that._getArgumentTemplate();
+            argument.value = args.newValue;
+
+            handler(context, argument);
+        }, owner);
+    },
+
+    onErrorValidator: function (handler) {
+        this.on('onErrorValidator', handler);
+    },
+
+    onWarningValidator: function (handler) {
+        this.on('onWarningValidator', handler);
+    },
+
+    onItemSaved: function (handler) {
+        this.on('onItemSaved', handler);
+    },
+
+    onItemCreated: function (handler) {
+        this.on('onItemCreated', handler);
+    },
+
+    onItemsUpdated: function (handler) {
+        this.on('onItemsUpdated', handler);
+    },
+
+    onItemDeleted: function (handler) {
+        this.on('onItemDeleted', handler);
+    },
+
+    getName: function () {
+        return this.get('name');
+    },
+
+    setName: function (name) {
+        this.set('name', name);
+        this.name = name;
+    },
+
+    getView: function () {
+        return this.get('view');
+    },
+
+    getProperty: function (property) {
+        var firstChar = property.charAt(0);
+        var indexOfSelectedItem;
+
+        if( this.get('isNumRegEx').test(firstChar) ){
+            property = 'items.' + property;
+
+        }else if(firstChar == ''){
+            property = 'items';
+
+        }else if(firstChar == '$'){
+            indexOfSelectedItem = this._indexOfSelectedItem();
+            if(indexOfSelectedItem == -1){
+                return undefined;
+            }
+            property = 'items.' + indexOfSelectedItem + property.substr(1);
+
+        }else if(firstChar == '.'){
+            property = property.substr(1);
+        }else{
+            indexOfSelectedItem = this._indexOfSelectedItem();
+            if(indexOfSelectedItem == -1){
+                return undefined;
+            }
+            property = 'items.' + indexOfSelectedItem + '.' + property;
+        }
+
+        return this.get('model').getProperty(property);
+    },
+
+    setProperty: function (property, value) {
+        var propertyPaths = property.split('.');
+        var firstChar;
+        var indexOfSelectedItem;
+        var index;
+        var resultOfSet;
+
+        if(propertyPaths[0] == '$'){
+            indexOfSelectedItem = this._indexOfSelectedItem();
+            if(indexOfSelectedItem == -1){
+                return;
+            }
+
+            property = indexOfSelectedItem + property.substr(1);
+            propertyPaths[0] = indexOfSelectedItem.toString();
+        }
+
+        firstChar = property.charAt(0);
+
+        if(propertyPaths.length == 1){
+
+            if(propertyPaths[0] == ''){
+                this._setItems(value);
+
+            }else if( this.get('isNumRegEx').test(propertyPaths[0]) ){
+                this._changeItem(propertyPaths[0], value);
+
+            }else{
+                indexOfSelectedItem = this._indexOfSelectedItem();
+                if(indexOfSelectedItem == -1){
+                    return;
+                }
+                property = 'items.' + indexOfSelectedItem + '.' + property;
+                resultOfSet = this.get('model').setProperty(property, value);
+
+                if(resultOfSet){
+                    this._includeItemToModifiedSetByIndex(indexOfSelectedItem);
+                }
+            }
+
+        }else{
+            if(firstChar == '.'){
+                property = property.substr(1);
+                this.get('model').setProperty(property, value);
+
+            }else if(this.get('isNumRegEx').test(firstChar)){
+                property = 'items.' + property;
+                resultOfSet = this.get('model').setProperty(property, value);
+
+                if(resultOfSet){
+                    this._includeItemToModifiedSetByIndex( parseInt(propertyPaths[0]));
+                }
+            }else{
+                indexOfSelectedItem = this._indexOfSelectedItem();
+                if(indexOfSelectedItem == -1){
+                    return;
+                }
+                property = 'items.' + indexOfSelectedItem + '.' + property;
+                resultOfSet = this.get('model').setProperty(property, value);
+
+                if(resultOfSet){
+                    this._includeItemToModifiedSetByIndex(indexOfSelectedItem);
+                }
+            }
+        }
+    },
+
+    _setItems: function (items) {
+        this._detectIdentifyingMode(items);
+
+        var indexOfItemsById;
+
+        this.set('isDataReady', true);
+        this.get('model').setProperty('items', items);
+        this._clearModifiedSet();
+        if (items && items.length > 0) {
+            indexOfItemsById = this._indexItemsById(items);
+            this.set('itemsById', indexOfItemsById);
+
+            if( !this._restoreSelectedItem() ){
+                this.setSelectedItem(items[0]);
+            }
+
+        } else {
+            this.setSelectedItem(null);
+        }
+    },
+
+    _restoreSelectedItem: function(){
+        // override by strategy
+        var logger = window.InfinniUI.global.logger;
+        logger.warn({
+            message: 'BaseDataSource._restoreSelectedItem: not overrided by strategy',
+            source: this
+        });
+    },
+
+    _addItems: function (newItems) {
+        var indexedItemsById = this.get('itemsById'),
+            items = this.getItems(),
+            newIndexedItemsById;
+
+        this.set('isDataReady', true);
+        items = _.union(items, newItems);
+        this.set('items', items);
+        if (newItems && newItems.length > 0) {
+            newIndexedItemsById = this._indexItemsById(newItems);
+            _.extend(indexedItemsById, newIndexedItemsById);
+            this.set('itemsById', indexedItemsById);
+        }
+
+        this._notifyAboutItemsUpdatedAsPropertyChanged(items);
+        //this.trigger('settingNewItemsComplete');
+    },
+
+    getSelectedItem: function () {
+        return this.get('model').getProperty('selectedItem');
+    },
+
+    setSelectedItem: function (item, success, error) {
+        // override by strategy
+        var logger = window.InfinniUI.global.logger;
+        logger.warn({
+            message: 'BaseDataSource.setSelectedItem: not overrided by strategy',
+            source: this
+        });
+    },
+
+    _notifyAboutSelectedItem: function (item, successHandler) {
+        var context = this.getContext(),
+            argument = this._getArgumentTemplate();
+
+        argument.value = item;
+
+        if (successHandler) {
+            successHandler(context, argument);
+        }
+    },
+
+    _tuneMirroringOfModel: function(index){
+        if(index != -1){
+            this.get('model').setMirroring('items.$', 'items.'+index);
+        }else{
+            this.get('model').setMirroring(null, null);
+        }
+    },
+
+    getIdProperty: function () {
+        return this.get('idProperty');
+    },
+
+    setIdProperty: function (value) {
+        this.set('idProperty', value);
+    },
+
+    getFillCreatedItem: function () {
+        return this.get('fillCreatedItem');
+    },
+
+    setFillCreatedItem: function (fillCreatedItem) {
+        this.set('fillCreatedItem', fillCreatedItem);
+    },
+
+    suspendUpdate: function (name) {
+        var reason = name || 'default';
+
+        var suspended = this.get('suspendingList');
+        if (suspended.indexOf(reason) === -1) {
+            suspended = suspended.slice(0);
+            suspended.push(reason);
+            this.set('suspendingList', suspended);
+        }
+    },
+
+    resumeUpdate: function (name) {
+        var reason = name || 'default';
+
+        var suspended = this.get('suspendingList');
+        var index = suspended.indexOf(reason);
+
+        if (index !== -1) {
+            suspended = suspended.slice(0);
+            suspended.splice(index, 1);
+            this.set('suspendingList', suspended);
+
+            // если источник полностью разморожен, а до этого вызывались updateItems, не выполненные из-за заморозки, нужно вызвать updateItems
+            if(!this.isUpdateSuspended() && this.get('waitingOnUpdateItemsHandlers').length > 0){
+                this.updateItems();
+            }
+        }
+    },
+
+    isUpdateSuspended: function () {
+        var suspended = this.get('suspendingList');
+        return suspended.length > 0;
+    },
+
+    isModifiedItems: function () {
+        return this.isModified();
+    },
+
+    isModified: function (item) {
+        if (arguments.length == 0) {
+            return _.size(this.get('modifiedItems')) > 0;
+        }
+
+        if (item === null || item === undefined) {
+            return false;
+        }
+        else {
+            var itemId = this.idOfItem(item);
+            return itemId in this.get('modifiedItems');
+        }
+    },
+
+    _includeItemToModifiedSetByIndex: function (index) {
+        var item;
+
+        item = this.getItems()[index];
+        this._includeItemToModifiedSet(item);
+    },
+
+    _includeItemToModifiedSet: function (item) {
+        // override by strategy
+        var logger = window.InfinniUI.global.logger;
+        logger.warn({
+            message: 'BaseDataSource._includeItemToModifiedSet: not overrided by strategy',
+            source: this
+        });
+    },
+
+    _excludeItemFromModifiedSet: function (item) {
+        // override by strategy
+        var logger = window.InfinniUI.global.logger;
+        logger.warn({
+            message: 'BaseDataSource._excludeItemFromModifiedSet: not overrided by strategy',
+            source: this
+        });
+    },
+
+    _clearModifiedSet: function () {
+        this.set('modifiedItems', {});
+    },
+
+    /**
+     * @description Проверяет формат имя свойства атрибута
+     * @param propertyName
+     * @private
+     */
+    _checkPropertyName: function (propertyName) {
+        var result = true;
+        try {
+            if (propertyName && propertyName.length > 0) {
+                result = propertyName.match(/^[\$#@\d]+/);
+            }
+            if (!result) {
+                throw new Error('Wrong property name "' + propertyName + '"');
+            }
+        } catch (e) {
+            console.debug(e);
+        }
+    },
+
+    _changeItem: function(index, value){
+        var item = this.get('model').getProperty('items.'+index);
+        var oldValue = {};
+
+        if(value == item){
+            return;
+        }
+
+        this._excludeItemFromModifiedSet(item);
+
+        this._replaceAllProperties(oldValue, item);
+        this._replaceAllProperties(item, value);
+
+        this.get('model').simulateSetProperty('items.'+index, oldValue);
+
+        this._includeItemToModifiedSet(item);
+    },
+
+    tryInitData: function(){
+        if (!this.get('isDataReady') && !this.get('isRequestInProcess')){
+            this.updateItems();
+        }
+    },
+
+    saveItem: function (item, success, error) {
+        var dataProvider = this.get('dataProvider'),
+            ds = this,
+            logger = window.InfinniUI.global.logger,
+            that = this,
+            validateResult;
+
+        if (!this.isModified(item)) {
+            this._notifyAboutItemSaved({item: item, result: null}, 'notModified', success);
+            return;
+        }
+
+        validateResult = this.validateOnErrors(item);
+        if (!validateResult.IsValid) {
+            this._notifyAboutFailValidationBySaving(item, validateResult, error);
+            return;
+        }
+
+        dataProvider.saveItem(item, function(data){
+            if( !('IsValid' in data) || data.IsValid === true ){
+                that._excludeItemFromModifiedSet(item);
+                that._notifyAboutItemSaved({item: item, result: data.data}, 'modified', success);
+            }else{
+                that._notifyAboutFailValidationBySaving(item, data, error);
+            }
+        });
+    },
+
+    _notifyAboutItemSaved: function (data, result, successHandler) {
+        var context = this.getContext(),
+            argument = this._getArgumentTemplate();
+
+        argument.value = data;
+        argument.result = result;
+
+        if (successHandler) {
+            successHandler(context, argument);
+        }
+        this.trigger('onItemSaved', context, argument);
+    },
+
+    _notifyAboutFailValidationBySaving: function (item, validationResult, errorHandler) {
+        this._notifyAboutValidation(validationResult, errorHandler, 'error');
+    },
+
+    deleteItem: function (item, success, error) {
+        var dataProvider = this.get('dataProvider'),
+            that = this,
+            itemId = this.idOfItem(item),
+            isItemInSet = this.get('itemsById')[itemId] !== undefined;
+
+        if ( item == null || ( itemId !== undefined && !isItemInSet ) ) {
+            this._notifyAboutMissingDeletedItem(item, error);
+            return;
+        }
+
+        this.beforeDeleteItem(item);
+        dataProvider.deleteItem(item, function (data) {
+            if (!('IsValid' in data) || data['IsValid'] === true) {
+                that._handleDeletedItem(item, success);
+            } else {
+                that._notifyAboutFailValidationByDeleting(item, data, error);
+            }
+        });
+    },
+
+    beforeDeleteItem: function(item){},
+
+    _handleDeletedItem: function (item, successHandler) {
+        var items = this.getItems(),
+            idProperty = this.get('idProperty'),
+            itemId = this.idOfItem(item),
+            selectedItem = this.getSelectedItem();
+
+        for (var i = 0, ii = items.length, needExit = false; i < ii && !needExit; i++) {
+            if (items[i][idProperty] == itemId) {
+                items.splice(i, 1);
+                needExit = true;
+            }
+        }
+        delete this.get('itemsById')[itemId];
+        this._excludeItemFromModifiedSet(item);
+
+        if (selectedItem && selectedItem[idProperty] == itemId) {
+            this.setSelectedItem(null);
+        }
+
+        this._notifyAboutItemDeleted(item, successHandler);
+    },
+
+    _notifyAboutItemDeleted: function (item, successHandler) {
+        var context = this.getContext(),
+            argument = this._getArgumentTemplate();
+
+        argument.value = item;
+
+        if (successHandler) {
+            successHandler(context, argument);
+        }
+        this.trigger('onItemDeleted', context, argument);
+    },
+
+    _notifyAboutMissingDeletedItem: function (item, errorHandler) {
+        var context = this.getContext(),
+            argument = this._getArgumentTemplate();
+
+        argument.value = item;
+        argument.error = {
+            message: 'Нельзя удалить элемент, которого нет текущем наборе источника данных'
+        };
+
+        if (errorHandler) {
+            errorHandler(context, argument);
+        }
+    },
+
+    _notifyAboutFailValidationByDeleting: function (item, errorData, errorHandler) {
+        var context = this.getContext(),
+            argument = this._getArgumentTemplate();
+
+        argument.value = item;
+        argument.error = errorData;
+
+        this._notifyAboutValidation(errorData, errorHandler);
+    },
+
+    isDataReady: function () {
+        return this.get('isDataReady');
+    },
+
+    getItems: function () {
+        var logger = window.InfinniUI.global.logger;
+
+        if (!this.isDataReady()) {
+            logger.warn({
+                message: 'BaseDataSource: Попытка получить данные источника данных (' + this.get('name') + '), до того как он был проинициализирован данными',
+                source: this
+            });
+        }
+
+        return this.get('model').getProperty('items');
+    },
+
+    updateItems: function (onSuccess, onError) {
+        if (!this.isUpdateSuspended()) {
+            var dataProvider = this.get('dataProvider'),
+                that = this;
+
+            this.set('isRequestInProcess', true);
+            dataProvider.getItems(function (data) {
+
+                that.set('isRequestInProcess', false);
+                that._handleUpdatedItemsData(data.data, onSuccess, onError);
+
+            }, onError);
+        }else{
+            var handlers = this.get('waitingOnUpdateItemsHandlers');
+            handlers.push({
+                onSuccess: onSuccess,
+                onError: onError
+            });
+        }
+
+    },
+
+    _handleUpdatedItemsData: function (itemsData, successHandler, errorHandler) {
+        if(this.get('newItemsHandler')){
+            itemsData = this.get('newItemsHandler')(itemsData);
+        }
+
+        this.setProperty('', itemsData);
+        this._notifyAboutItemsUpdated(itemsData, successHandler, errorHandler);
+    },
+
+    _notifyAboutItemsUpdated: function (itemsData, successHandler, errorHandler) {
+        var context = this.getContext();
+        var argument = {
+            value: itemsData
+        };
+
+        // вызываем обработчики которые были переданы на отложенных updateItems (из за замороженного источника)
+        var handlers = this.get('waitingOnUpdateItemsHandlers');
+        for(var i = 0, ii = handlers.length; i < ii; i++){
+            if(handlers[i].onSuccess){
+                handlers[i].onSuccess(context, argument);
+            }
+        }
+
+        this.set('waitingOnUpdateItemsHandlers', []);
+
+        if (successHandler) {
+            successHandler(context, argument);
+        }
+
+        this.trigger('onItemsUpdated', context, argument);
+    },
+
+    _notifyAboutItemsUpdatedAsPropertyChanged: function (itemsData) {
+        var context = this.getContext(),
+            argument = this._getArgumentTemplate();
+
+        argument.property = '';
+        argument.newValue = itemsData;
+        argument.oldValue = null;
+
+        this.trigger('onPropertyChanged', context, argument);
+        this.trigger('onPropertyChanged:', context, argument);
+    },
+
+    _handleAddedItems: function (itemsData, successHandler) {
+        this._addItems(itemsData);
+        this._notifyAboutItemsAdded(itemsData, successHandler);
+
+    },
+
+    _notifyAboutItemsAdded: function (itemsData, successHandler) {
+        var context = this.getContext(),
+            argument = {
+                value: itemsData
+            };
+
+        if (successHandler) {
+            successHandler(context, argument);
+        }
+        this.trigger('onItemsAdded', context, argument);
+    },
+
+    createItem: function (success, error) {
+        var dataProvider = this.get('dataProvider'),
+            idProperty = this.get('idProperty'),
+            that = this,
+            localItem;
+
+        if (this.get('fillCreatedItem')) {
+            dataProvider.createItem(
+                function (item) {
+                    that._handleDataForCreatingItem(item, success);
+                },
+                idProperty
+            );
+        } else {
+            localItem = dataProvider.createLocalItem(idProperty);
+            this._handleDataForCreatingItem(localItem, success);
+        }
+    },
+
+    _handleDataForCreatingItem: function (itemData, successHandler) {
+        var items = this.getItems();
+
+        if(items) {
+            items = items.slice();
+            items.push(itemData);
+        }else{
+            items = [itemData];
+        }
+
+        this.setProperty('', items);
+        this.setSelectedItem(itemData);
+        this._notifyAboutItemCreated(itemData, successHandler);
+    },
+
+    _notifyAboutItemCreated: function (createdItem, successHandler) {
+        var context = this.getContext(),
+            argument = {
+                value: createdItem
+            };
+
+        if (successHandler) {
+            successHandler(context, argument);
+        }
+        this.trigger('onItemCreated', context, argument);
+    },
+
+    getFilter: function () {
+    },
+
+    setFilter: function (value, onSuccess, onError) {
+    },
+
+    _setCriteriaList: function(criteriaList, onSuccess, onError){
+        this.set('criteriaList', criteriaList);
+        this.updateItems(onSuccess, onError);
+    },
+
+    setIdFilter: function (itemId) {
+        var dataProvider = this.get('dataProvider'),
+            idFilter = dataProvider.createIdFilter(itemId);
+
+        this.setFilter(idFilter);
+    },
+
+    setNewItemsHandler: function(handler){
+        this.set('newItemsHandler', handler);
+    },
+
+    getErrorValidator: function () {
+        return this.get('errorValidator');
+    },
+
+    setErrorValidator: function (validatingFunction) {
+        this.set('errorValidator', validatingFunction);
+    },
+
+    getWarningValidator: function () {
+        return this.get('warningValidator');
+    },
+
+    setWarningValidator: function (validatingFunction) {
+        this.set('warningValidator', validatingFunction);
+    },
+
+    validateOnErrors: function (item, callback) {
+        return this._validatingActions(item, callback, 'error');
+    },
+
+    validateOnWarnings: function (item, callback) {
+        return this._validatingActions(item, callback, 'warning');
+    },
+
+    _validatingActions: function (item, callback, validationType) {
+        var validatingFunction = validationType == 'error' ? this.get('errorValidator') : this.get('warningValidator'),
+            result = {
+                IsValid: true,
+                Items: []
+            },
+            isCheckingOneItem = !!item,
+            context = this.getContext(),
+            items, subResult, itemIndex;
+
+        if (validatingFunction) {
+            if (isCheckingOneItem) {
+
+                result = validatingFunction(context, item);
+
+            } else {
+
+                items = this.getItems();
+                for (var i = 0, ii = items.length; i < ii; i++) {
+
+                    subResult = validatingFunction(context, items[i]);
+                    if (!subResult.IsValid) {
+                        this._addIndexToPropertiesOfValidationMessage(subResult.Items, i);
+                        result.IsValid = false;
+                        result.Items = _.union(result.Items, subResult.Items);
+                    }
+
+                }
+
+            }
+        }
+
+        this._notifyAboutValidation(result, callback, validationType);
+
+        return result;
+    },
+
+    _addIndexToPropertiesOfValidationMessage: function (validationMessages, index) {
+        for (var i = 0, ii = validationMessages.length; i < ii; i++) {
+            validationMessages[i].property = index + '.' + validationMessages[i].property;
+        }
+    },
+
+    _notifyAboutValidation: function (validationResult, validationHandler, validationType) {
+        var context = this.getContext(),
+            argument = {
+                value: validationResult
+            };
+
+        if (validationHandler) {
+            validationHandler(context, argument);
+        }
+
+        var eventType = (validationType == 'warning') ? 'onWarningValidator' : 'onErrorValidator';
+        this.trigger(eventType, context, argument);
+    },
+
+    getContext: function () {
+        return this.getView().getContext();
+    },
+
+    _indexItemsById: function (items) {
+        var idProperty = this.get('idProperty'),
+            result = {},
+            idValue;
+        for (var i = 0, ii = items.length; i < ii; i++) {
+            idValue = items[i][idProperty];
+            result[idValue] = items[i];
+        }
+
+        return result;
+    },
+
+    _indexOfItem: function(item){
+        var items = this.getItems();
+        if(!items){
+            return -1;
+        }
+        return items.indexOf(item);
+    },
+
+    _indexOfSelectedItem: function(){
+        var selectedItem = this.getSelectedItem();
+
+        return this._indexOfItem(selectedItem);
+    },
+
+    idOfItem: function (item) {
+        var idProperty = this.get('idProperty');
+        if (!item) {
+            return undefined;
+        }
+        return item[idProperty];
+    },
+
+    getCurrentRequestPromise: function(){
+        var promise = $.Deferred();
+        var logger = window.InfinniUI.global.logger;
+
+        if(this.get('isRequestInProcess')){
+            this.once('onItemsUpdated', function(){
+                if(this.isDataReady()){
+                    promise.resolve();
+                }else{
+                    logger.warn({
+                        message: 'BaseDataSource: strange, expected other dataReady status',
+                        source: this
+                    });
+                }
+            });
+        }else{
+            promise.resolve();
+        }
+
+        return promise;
+    },
+
+    //setBindingBuilder: function(bindingBuilder){
+    //    this.set('bindingBuilder', bindingBuilder);
+    //},
+
+    setIsLazy: function(isLazy){
+        this.set('isLazy', isLazy);
+    },
+
+    isLazy: function(){
+        return this.get('isLazy');
+    },
+
+    _replaceAllProperties: function (currentObject, newPropertiesSet) {
+        for (var property in currentObject) {
+            delete(currentObject[property]);
+        }
+
+        for (var property in newPropertiesSet) {
+            currentObject[property] = newPropertiesSet[property];
+        }
+    },
+
+    _copyObject: function (currentObject) {
+        return JSON.parse(JSON.stringify(currentObject));
+    },
+
+    _getArgumentTemplate: function () {
+        return {
+            source: this
+        };
+    },
+
+    _detectIdentifyingMode: function(items){
+        if( $.isArray(items) && items.length > 0){
+            if( !$.isPlainObject(items[0]) || this.getIdProperty() in items[0] ){
+                this.set('identifyingMode', 'byId');
+                _.extend( this, BaseDataSource.identifyingStrategy.byId);
+            }else{
+                this.set('identifyingMode', 'byLink');
+                _.extend( this, BaseDataSource.identifyingStrategy.byLink);
+            }
+        }else{
+            this.set('identifyingMode', 'byId');
+            _.extend( this, BaseDataSource.identifyingStrategy.byId);
+        }
+    },
+
+    _getIdentifyingMode: function(){
+        return this.get('identifyingMode');
+    }
+
+});
+
+
+BaseDataSource.identifyingStrategy = {
+
+    byId: {
+        _restoreSelectedItem: function(){
+
+            var selectedItem = this.getSelectedItem(),
+                selectedItemId = this.idOfItem(selectedItem);
+
+            if( selectedItemId != null ){
+                var items = this.get('itemsById');
+                var newSelectedItem = items[selectedItemId];
+
+                if( newSelectedItem != null ){
+                    this.setSelectedItem(newSelectedItem);
+                    return true;
+                }
+            }
+
+            return false;
+        },
+
+        setSelectedItem: function (item, success, error) {
+            var currentSelectedItem = this.getSelectedItem(),
+                items = this.get('itemsById'),
+                itemId = this.idOfItem(item),
+                index;
+
+
+            if (typeof item == 'undefined') {
+                item = null;
+            }
+
+            if (item == currentSelectedItem) {
+                return;
+            }
+
+            if (item !== null) {
+                if (!items[itemId]) {
+                    if (!error) {
+                        throw 'BaseDataSource.setSelectedItem() Попытка выбрать элемент в источнике, которого нет среди элементов этого источника.';
+                    } else {
+                        error(this.getContext(), {error: 'BaseDataSource.setSelectedItem() Попытка выбрать элемент в источнике, которого нет среди элементов этого источника.'});
+                        return;
+                    }
+                }
+            }
+
+            this.get('model').setProperty('selectedItem', item);
+
+            index = this._indexOfItem(items[itemId]);
+            this._tuneMirroringOfModel(index);
+
+            this._notifyAboutSelectedItem(item, success);
+        },
+
+        _includeItemToModifiedSet: function (item) {
+            var itemId = this.idOfItem(item);
+            this.get('modifiedItems')[itemId] = item;
+        },
+
+        _excludeItemFromModifiedSet: function (item) {
+            var itemId = this.idOfItem(item);
+            delete this.get('modifiedItems')[itemId];
+        },
+    },
+
+    byLink: {
+        _restoreSelectedItem: function(){
+
+            var selectedItem = this.getSelectedItem();
+            var items = this.getItems();
+
+            if( items.indexOf(selectedItem) == -1 ){
+                return false;
+            }else{
+                return true;
+            }
+        },
+
+        setSelectedItem: function (item, success, error) {
+            var currentSelectedItem = this.getSelectedItem(),
+                items = this.getItems(),
+                index = this._indexOfItem(item);
+
+
+            if (typeof item == 'undefined') {
+                item = null;
+            }
+
+            if (item == currentSelectedItem) {
+                return;
+            }
+
+            if (item !== null) {
+                if (index == -1) {
+                    if (!error) {
+                        throw 'BaseDataSource.setSelectedItem() Попытка выбрать элемент в источнике, которого нет среди элементов этого источника.';
+                    } else {
+                        error(this.getContext(), {error: 'BaseDataSource.setSelectedItem() Попытка выбрать элемент в источнике, которого нет среди элементов этого источника.'});
+                        return;
+                    }
+                }
+            }
+
+            this.get('model').setProperty('selectedItem', item);
+
+            this._tuneMirroringOfModel(index);
+
+            this._notifyAboutSelectedItem(item, success);
+        },
+
+        _includeItemToModifiedSet: function (item) {
+            this.get('modifiedItems')['-'] = item;
+        },
+
+        _excludeItemFromModifiedSet: function (item) {
+            delete this.get('modifiedItems')['-'];
+        },
+    }
+};
+var RestDataSource = BaseDataSource.extend({
+
+    defaults: _.defaults({
+        updatingItemsConverter: null
+
+    }, BaseDataSource.prototype.defaults),
+
+    initialize: function(){
+        BaseDataSource.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+
+        var model = this.get('model');
+        model.urlParams = {
+            get: {
+                method: 'get',
+                origin: null,
+                path: '',
+                data: {},
+                params: {}
+            },
+
+            set: {
+                method: 'post',
+                origin: null,
+                path: '',
+                data: {},
+                params: {}
+            },
+
+            delete: {
+                method: 'delete',
+                origin: null,
+                path: '',
+                data: {},
+                params: {}
+            }
+        };
+
+        this.initUrlParamsHandlers();
+    },
+
+    initDataProvider: function(){
+        var dataProvider = window.providerRegister.build('RestDataSource');
+        this.set('dataProvider', dataProvider);
+    },
+
+    initUrlParamsHandlers: function(){
+        var that = this;
+
+        this.get('model').onPropertyChanged('urlParams.get.*', function(context, args){
+            var dataProvider = that.get('dataProvider');
+            var urlParams = that.getGettingUrlParams();
+            var templated;
+
+            dataProvider.setOrigin('get', urlParams.origin);
+            templated = that._templateParamsInStr(urlParams.path, urlParams.params);
+            dataProvider.setPath('get', templated);
+            templated = that._templateParamsInObject(urlParams.data, urlParams.params);
+            dataProvider.setData('get', templated);
+
+
+            if( that.get('isDataReady') || that.get('isRequestInProcess') || that.get('waitingOnUpdateItemsHandlers').length > 0 ){ // ds was resolved or waiting resolving
+                that.updateItems();
+            }
+        });
+
+        this.get('model').onPropertyChanged('urlParams.set.*', function(context, args){
+            var dataProvider = that.get('dataProvider');
+            var urlParams = that.getSettingUrlParams();
+            var templated;
+
+            dataProvider.setOrigin('set', urlParams.origin);
+            templated = that._templateParamsInStr(urlParams.path, urlParams.params);
+            dataProvider.setPath('set', templated);
+            templated = that._templateParamsInObject(urlParams.data, urlParams.params);
+            dataProvider.setData('set', templated);
+        });
+
+        this.get('model').onPropertyChanged('urlParams.delete.*', function(context, args){
+            var dataProvider = that.get('dataProvider');
+            var urlParams = that.getDeletingUrlParams();
+            var templated;
+
+            dataProvider.setOrigin('delete', urlParams.origin);
+            templated = that._templateParamsInStr(urlParams.path, urlParams.params);
+            dataProvider.setPath('delete', templated);
+            templated = that._templateParamsInObject(urlParams.data, urlParams.params);
+            dataProvider.setData('delete', templated);
+        });
+    },
+
+    updateItems: function(){
+
+        if(this._checkGettingUrlParamsReady()){
+            BaseDataSource.prototype.updateItems.apply(this, Array.prototype.slice.call(arguments));
+            this.resumeUpdate('urlGettingParamsNotReady');
+
+        }else{
+            this.suspendUpdate('urlGettingParamsNotReady');
+            BaseDataSource.prototype.updateItems.apply(this, Array.prototype.slice.call(arguments));
+        }
+
+    },
+
+    getGettingUrlParams: function(propertyName){
+        if(arguments.length == 0){
+            propertyName = 'urlParams.get';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'urlParams.get';
+            }else{
+                propertyName = 'urlParams.get.' + propertyName;
+            }
+        }
+        return this.get('model').getProperty(propertyName);
+    },
+
+    setGettingUrlParams: function(propertyName, value){
+        if(arguments.length == 1){
+            value = propertyName;
+            propertyName = 'urlParams.get';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'urlParams.get';
+            }else{
+                propertyName = 'urlParams.get.' + propertyName;
+            }
+        }
+
+        this.get('model').setProperty(propertyName, value);
+    },
+
+    getSettingUrlParams: function(propertyName){
+        if(arguments.length == 0){
+            propertyName = 'urlParams.set';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'urlParams.set';
+            }else{
+                propertyName = 'urlParams.set.' + propertyName;
+            }
+        }
+        return this.get('model').getProperty(propertyName);
+    },
+
+    setSettingUrlParams: function(propertyName, value){
+        if(arguments.length == 1){
+            value = propertyName;
+            propertyName = 'urlParams.set';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'urlParams.set';
+            }else{
+                propertyName = 'urlParams.set.' + propertyName;
+            }
+        }
+
+        this.get('model').setProperty(propertyName, value);
+    },
+
+    getDeletingUrlParams: function(propertyName){
+        if(arguments.length == 0){
+            propertyName = 'urlParams.delete';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'urlParams.delete';
+            }else{
+                propertyName = 'urlParams.delete.' + propertyName;
+            }
+        }
+        return this.get('model').getProperty(propertyName);
+    },
+
+    setDeletingUrlParams: function(propertyName, value){
+        if(arguments.length == 1){
+            value = propertyName;
+            propertyName = 'urlParams.delete';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'urlParams.delete';
+            }else{
+                propertyName = 'urlParams.delete.' + propertyName;
+            }
+        }
+
+        this.get('model').setProperty(propertyName, value);
+    },
+
+    _checkGettingUrlParamsReady: function(){
+        var allParams = [];
+        var strWithParams;
+        var params;
+        var data;
+        var definedParams;
+        var param;
+
+        if(!this._checkUrlParamsReady(this.getGettingUrlParams())){
+            return false;
+        }
+
+        strWithParams = this.getGettingUrlParams('path');
+        params = this._findSubstitutionParams(strWithParams);
+        allParams = allParams.concat(params);
+
+        data = this.getGettingUrlParams('data');
+        strWithParams = JSON.stringify(data);
+        params = this._findSubstitutionParams(strWithParams);
+        allParams = allParams.concat(params);
+
+        definedParams = this.getGettingUrlParams('params');
+        for(var i = 0, ii = allParams.length; i<ii; i++){
+            param = allParams[i];
+            if(definedParams[param] === undefined){
+                return false;
+            }
+        }
+
+        return true;
+    },
+
+    _checkUrlParamsReady: function(params){
+        return params && typeof params.origin == 'string'// && params.origin.lentgh > 0
+                && typeof params.path == 'string'
+                && typeof params.data == 'object'
+                && typeof params.params == 'object';
+    },
+
+    _findSubstitutionParams: function(str){
+        if(!str){
+            return [];
+        }
+
+        var result = [];
+        str.replace(/<%([\s\S]+?)%>/g, function(p1, p2){
+            result.push(p2);
+            return p1;
+        });
+
+        return result;
+    },
+
+    _templateParamsInStr: function(str, params){
+        if(!str || !params){
+            return str;
+        }
+
+        return str.replace(/<%([\s\S]+?)%>/g, function(p1, p2){
+            return params[p2];
+        });
+    },
+
+    _templateParamsInObject: function(obj, params){
+        if(!obj || !params){
+            return obj;
+        }
+
+        var str = JSON.stringify(obj);
+        var tmpTemplated = this._templateParamsInStr(str, params);
+        return JSON.parse(tmpTemplated);
+    },
+
+    getUpdatingItemsConverter: function(){
+        return this.get('updatingItemsConverter');
+    },
+
+    setUpdatingItemsConverter: function(converter){
+        this.set('updatingItemsConverter', converter);
+    },
+
+    _handleUpdatedItemsData: function (itemsData, successHandler, errorHandler) {
+        var converter = this.getUpdatingItemsConverter();
+        var items;
+
+        if(converter){
+            items = converter(itemsData);
+        }else{
+            items = itemsData;
+        }
+
+        BaseDataSource.prototype._handleUpdatedItemsData.call(this, items, successHandler, errorHandler);
+    }
+
+});
+var DocumentDataSource = RestDataSource.extend({
+    defaults: _.defaults({
+        documentId: null
+
+    }, RestDataSource.prototype.defaults),
+
+    initialize: function () {
+        RestDataSource.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+
+        var model = this.get('model');
+        model.setProperty('pageNumber', 0);
+        model.setProperty('pageSize', 15);
+        model.setProperty('filterParams', {});
+        this.setUpdatingItemsConverter(function(data){
+            model.setProperty('totalCount', data['Result']['Count']);
+            return data['Result']['Items'];
+        });
+
+        this.initHandlers();
+    },
+
+    initHandlers: function(){
+        var model = this.get('model');
+        var that = this;
+        var updateGettingUrlParams = _.bind(this.updateGettingUrlParams, this);
+
+        model.onPropertyChanged('documentId', function(){
+            that.updateGettingUrlParams();
+            that.updateSettingUrlParams();
+            that.updateDeletingUrlParams();
+        });
+        model.onPropertyChanged('filter', updateGettingUrlParams);
+        model.onPropertyChanged('filterParams.*', updateGettingUrlParams);
+        model.onPropertyChanged('pageNumber', updateGettingUrlParams);
+        model.onPropertyChanged('pageSize', updateGettingUrlParams);
+        model.onPropertyChanged('search', updateGettingUrlParams);
+        model.onPropertyChanged('select', updateGettingUrlParams);
+        model.onPropertyChanged('order', updateGettingUrlParams);
+        model.onPropertyChanged('needTotalCount', updateGettingUrlParams);
+
+        this.updateGettingUrlParams();
+        this.updateSettingUrlParams();
+        this.updateDeletingUrlParams();
+    },
+
+    updateGettingUrlParams: function(){
+        var model = this.get('model'),
+            params = {
+                type: 'get',
+                origin: InfinniUI.config.serverUrl,
+                path: '/documents/' + this.get('model').getProperty('documentId'),
+                data: {},
+                params: {}
+            },
+            filter = model.getProperty('filter'),
+            filterParams = model.getProperty('filterParams'),
+            pageNumber = model.getProperty('pageNumber'),
+            pageSize = model.getProperty('pageSize'),
+            searchStr = model.getProperty('search'),
+            select = model.getProperty('select'),
+            order = model.getProperty('order'),
+            needTotalCount = model.getProperty('needTotalCount');
+
+        if(filter){
+            params.data.filter = filter;
+            if(filterParams){
+                _.extend(params.params, filterParams);
+            }
+        }
+
+        if(pageSize){
+            pageNumber = pageNumber || 0;
+            params.data.skip = pageNumber*pageSize;
+            params.data.take = pageSize;
+        }
+
+        if(searchStr){
+            params.data.search = searchStr;
+        }
+
+        if(select){
+            params.data.select = select;
+        }
+
+        if(order){
+            params.data.order = order;
+        }
+
+        if(needTotalCount){
+            params.data.count = needTotalCount;
+        }
+
+        this.setGettingUrlParams(params);
+    },
+
+    updateSettingUrlParams: function(){
+        var model = this.get('model'),
+            params = {
+                type: 'post',
+                origin: InfinniUI.config.serverUrl,
+                path: '/documents/' + this.get('model').getProperty('documentId'),
+                data: {},
+                params: {}
+            };
+
+        this.setSettingUrlParams(params);
+    },
+
+    updateDeletingUrlParams: function(){
+        var model = this.get('model'),
+            params = {
+                type: 'delete',
+                origin: InfinniUI.config.serverUrl,
+                path: '/documents/' + this.get('model').getProperty('documentId') + '/<%id%>',
+                data: {},
+                params: {}
+            };
+
+        this.setDeletingUrlParams(params);
+    },
+
+    initDataProvider: function(){
+        var dataProvider = window.providerRegister.build('DocumentDataSource');
+
+        this.set('dataProvider', dataProvider);
+    },
+
+    setFileProvider: function (fileProvider) {
+        this.set('fileProvider', fileProvider);
+    },
+
+    getFileProvider: function () {
+        return this.get('fileProvider');
+    },
+
+    getDocumentId: function(){
+        return this.get('model').getProperty('documentId');
+    },
+
+    setDocumentId: function(documentId){
+        this.get('model').setProperty('documentId', documentId);
+    },
+
+    getFilter: function(){
+        return this.get('model').getProperty('filter');
+    },
+
+    setFilter: function(filter){
+        this.get('model').setProperty('filter', filter);
+    },
+
+    getFilterParams: function(propertyName){
+        if(arguments.length == 0){
+            propertyName = 'filterParams';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'filterParams';
+            }else{
+                propertyName = 'filterParams.' + propertyName;
+            }
+        }
+
+        return this.get('model').getProperty(propertyName);
+    },
+
+    setFilterParams: function(propertyName, value){
+        if(arguments.length == 1){
+            value = propertyName;
+            propertyName = 'filterParams';
+
+        }else{
+            if(propertyName == ''){
+                propertyName = 'filterParams';
+            }else{
+                propertyName = 'filterParams.' + propertyName;
+            }
+        }
+
+        this.get('model').setProperty(propertyName, value);
+    },
+
+    setIdFilter: function (itemId) {
+        this.setFilter('eq(' + this.getIdProperty() + ','+ this.quoteValue(itemId) + ')');
+    },
+
+    getPageNumber: function(){
+        return this.get('model').getProperty('pageNumber');
+    },
+
+    setPageNumber: function(pageNumber){
+        this.get('model').setProperty('pageNumber', pageNumber);
+    },
+
+    getPageSize: function(){
+        return this.get('model').getProperty('pageSize');
+    },
+
+    setPageSize: function(pageSize){
+        this.get('model').setProperty('pageSize', pageSize);
+    },
+
+    getSearch: function(){
+        return this.get('model').getProperty('search');
+    },
+
+    setSearch: function(searchStr){
+        this.get('model').setProperty('search', searchStr);
+    },
+
+    getSelect: function(){
+        return this.get('model').getProperty('select');
+    },
+
+    setSelect: function(selectStr){
+        this.get('model').setProperty('select', selectStr);
+    },
+
+    getOrder: function(){
+        return this.get('model').getProperty('order');
+    },
+
+    setOrder: function(orderConditionStr){
+        this.get('model').setProperty('order', orderConditionStr);
+    },
+
+    getTotalCount: function(){
+        return this.get('model').getProperty('totalCount');
+    },
+
+    getNeedTotalCount: function(){
+        return this.get('model').getProperty('needTotalCount');
+    },
+
+    setNeedTotalCount: function(needTotalCount){
+        this.get('model').setProperty('needTotalCount', needTotalCount);
+    },
+
+    beforeDeleteItem: function(item){
+        var itemId = this.idOfItem(item);
+        if(itemId !== undefined){
+            this.setDeletingUrlParams('params.id', itemId);
+        }
+    },
+
+    quoteValue: function (value) {
+        var VALUE_QUOTE_CHAR = '\'';
+
+        if (_.isString(value)) {
+            return VALUE_QUOTE_CHAR + value + VALUE_QUOTE_CHAR;
+        } else {
+            return value
+        }
+    }
+
+});
+
+/**
+ * @constructor
+ * @mixes DataSourceValidationNotifierMixin
+ */
+var BaseDataSourceBuilder = function() {
+}
+
+_.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.prototype */ {
+    build: function (context, args) {
+        var dataSource = this.createDataSource(args.parentView);
+        dataSource.suspendUpdate('tuningInSourceBuilder');
+
+        this.applyMetadata(args.builder, args.parentView, args.metadata, dataSource);
+        //this.initFileProvider(dataSource, args.metadata);
+
+        this.applySuspended(dataSource, args.suspended);
+
+        dataSource.resumeUpdate('tuningInSourceBuilder');
+
+        return dataSource;
+    },
+
+    applySuspended: function (dataSource, suspended) {
+        if (!suspended) {
+            return;
+        }
+
+        for (var name in suspended) {
+            if (!suspended.hasOwnProperty(name) || dataSource.getName() !== name) {
+                continue;
+            }
+
+            dataSource.suspendUpdate(suspended[name]);
+        }
+
+    },
+
+    applyMetadata: function (builder, parentView, metadata, dataSource) {
+        var idProperty = metadata.IdProperty;
+        if (idProperty) {
+            dataSource.setIdProperty(idProperty);
+        }
+
+        dataSource.setName(metadata.Name);
+        dataSource.setFillCreatedItem(metadata.FillCreatedItem);
+        //dataSource.setPageSize(metadata.PageSize || 15);
+        //dataSource.setPageNumber(metadata.PageNumber || 0);
+        //
+        //if('Sorting' in metadata){
+        //    dataSource.setSorting(metadata['Sorting']);
+        //}
+        //
+        //var queryMetadata;
+        //if('Query' in metadata){
+        //    dataSource.setFilter(metadata['Query']);
+        //}
+
+        if('IsLazy' in metadata){
+            dataSource.setIsLazy(metadata['IsLazy']);
+        }
+
+        this.initValidation(parentView, dataSource, metadata);
+        this.initNotifyValidation(dataSource);
+        this.initScriptsHandlers(parentView, metadata, dataSource);
+    },
+
+    createDataSource: function (parent) {
+        throw 'BaseDataSourceBuilder.createDataSource В потомке BaseDataSourceBuilder не переопределен метод createDataSource.';
+    },
+
+    /**
+     * @protected
+     * @description Инициализация обработчиков для валидации данных
+     * @param parentView
+     * @param dataSource
+     * @param metadata
+     */
+    initValidation: function (parentView, dataSource, metadata) {
+        if (metadata.ValidationErrors) {
+            dataSource.setErrorValidator(function (context, args) {
+                return new ScriptExecutor(parentView).executeScript(metadata.ValidationErrors.Name || metadata.ValidationErrors, args);
+            });
+        }
+
+        if (metadata.ValidationWarnings) {
+            dataSource.setWarningValidator(function (context, args) {
+                return new ScriptExecutor(parentView).executeScript(metadata.ValidationWarnings.Name || metadata.ValidationWarnings, args);
+            });
+        }
+    },
+
+    initScriptsHandlers: function (parentView, metadata, dataSource) {
+        //Скриптовые обработчики на события
+        if (parentView && metadata.OnSelectedItemChanged) {
+            dataSource.onSelectedItemChanged(function () {
+                new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemChanged.Name || metadata.OnSelectedItemChanged);
+            });
+        }
+
+        if (parentView && metadata.OnItemsUpdated) {
+            dataSource.onItemsUpdated(function () {
+                new ScriptExecutor(parentView).executeScript(metadata.OnItemsUpdated.Name || metadata.OnItemsUpdated);
+            });
+        }
+
+        //if (parentView && metadata.OnSelectedItemModified) {
+        //    dataSource.onSelectedItemModified(function () {
+        //        new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemModified.Name || metadata.OnSelectedItemModified);
+        //    });
+        //}
+
+        if (parentView && metadata.OnPropertyChanged) {
+            dataSource.onPropertyChanged(function (context, args) {
+                new ScriptExecutor(parentView).executeScript(metadata.OnPropertyChanged.Name || metadata.OnPropertyChanged, args);
+            });
+        }
+
+        if (parentView && metadata.OnItemDeleted) {
+            dataSource.onItemDeleted(function () {
+                new ScriptExecutor(parentView).executeScript(metadata.OnItemDeleted.Name || metadata.OnItemDeleted);
+            });
+        }
+    },
+
+    buildBindingBuilder: function(params){
+
+        return function(bindingMetadata){
+            return params.builder.buildBinding(bindingMetadata, {
+                parentView: params.parentView,
+                basePathOfProperty: params.basePathOfProperty
+            });
+        };
+    },
+
+    initFileProvider: function (dataSource, metadata) {
+
+    }
+});
+
+
+_.extend(BaseDataSourceBuilder.prototype, DataSourceValidationNotifierMixin);
+var RestDataSourceBuilder = function() {
+    _.superClass(RestDataSourceBuilder, this);
+}
+
+_.inherit(RestDataSourceBuilder, BaseDataSourceBuilder);
+
+_.extend(RestDataSourceBuilder.prototype, {
+    createDataSource: function(parent){
+        return new RestDataSource({
+            view: parent
+        });
+    },
+
+    applyMetadata: function(builder, parent, metadata, dataSource){
+        BaseDataSourceBuilder.prototype.applyMetadata.call(this, builder, parent, metadata, dataSource);
+
+        var tmpParams;
+
+        if('GettingParams' in metadata){
+            tmpParams = this.extractUrlParams(metadata['GettingParams'], '.urlParams.get.params');
+            dataSource.setGettingUrlParams(tmpParams);
+            this.bindParams(metadata['GettingParams'], dataSource, parent, '.urlParams.get.params', builder);
+        }
+
+        if('SettingParams' in metadata){
+            tmpParams = this.extractUrlParams(metadata['SettingParams'], '.urlParams.set.params');
+            dataSource.setSettingUrlParams(tmpParams);
+            this.bindParams(metadata['SettingParams'], dataSource, parent, '.urlParams.set.params', builder);
+        }
+
+        if('DeletingParams' in metadata){
+            tmpParams = this.extractUrlParams(metadata['DeletingParams'], '.urlParams.delet.params');
+            dataSource.setDeletingUrlParams(tmpParams);
+            this.bindParams(metadata['DeletingParams'], dataSource, parent, '.urlParams.delet.params', builder);
+        }
+
+        if('UpdatingItemsConverter' in metadata){
+            dataSource.setUpdatingItemsConverter(function (items) {
+                return new ScriptExecutor(parent).executeScript(metadata['UpdatingItemsConverter'].Name || metadata['UpdatingItemsConverter'], { value: items });
+            });
+        }
+
+    },
+
+    extractUrlParams: function(urlParamsMetadata, pathForBinding){
+        var result = {};
+
+        if('Origin' in urlParamsMetadata){
+            result.origin = urlParamsMetadata['Origin'];
+        }else{
+            result.origin = InfinniUI.config.serverUrl;
+        }
+
+        if('Path' in urlParamsMetadata){
+            result.path = urlParamsMetadata['Path'];
+        }
+
+        if('Data' in urlParamsMetadata){
+            result.data = urlParamsMetadata['Data'];
+        }
+
+        if('Method' in urlParamsMetadata){
+            result.method = urlParamsMetadata['Method'];
+        }
+
+        result.params = {};
+
+        return result;
+    },
+
+    bindParams: function(methodMetadata, dataSource, parentView, pathForBinding, builder){
+        if('Params' in methodMetadata){
+            var params = methodMetadata['Params'];
+            for(var k in params){
+                this.initBindingToProperty(params[k], dataSource, parentView, pathForBinding + '.' + k, builder);
+            }
+        }
+    },
+
+    initBindingToProperty: function (valueMetadata, dataSource, parentView, pathForBinding, builder) {
+        if (typeof valueMetadata != 'object') {
+            if (valueMetadata !== undefined) {
+                dataSource.setProperty(pathForBinding, valueMetadata);
+            }
+
+        } else {
+            var args = {
+                parent: parentView,
+                parentView: parentView
+            };
+
+            var dataBinding = builder.buildBinding(valueMetadata, args);
+
+            dataBinding.setMode(InfinniUI.BindingModes.toElement);
+
+            dataBinding.bindElement(dataSource, pathForBinding);
+        }
+    }
+});
+var DocumentDataSourceBuilder = function() {
+    _.superClass(DocumentDataSourceBuilder, this);
+}
+
+_.inherit(DocumentDataSourceBuilder, BaseDataSourceBuilder);
+
+_.extend(DocumentDataSourceBuilder.prototype, {
+    applyMetadata: function(builder, parent, metadata, dataSource){
+        BaseDataSourceBuilder.prototype.applyMetadata.call(this, builder, parent, metadata, dataSource);
+
+        dataSource.setDocumentId(metadata['DocumentId']);
+
+        if('PageNumber' in metadata){ dataSource.setPageNumber(metadata['PageNumber']); }
+        if('PageSize' in metadata){ dataSource.setPageSize(metadata['PageSize']); }
+
+        if('Filter' in metadata){ dataSource.setFilter(metadata['Filter']); }
+        if('FilterParams' in metadata){
+            var params = metadata['FilterParams'];
+            for(var k in params){
+                this.initBindingToProperty(params[k], dataSource, parent, '.filterParams.' + k, builder);
+            }
+        }
+
+        if('Search' in metadata){ dataSource.setSearch(metadata['Search']); }
+        if('Select' in metadata){ dataSource.setSelect(metadata['Select']); }
+        if('Order' in metadata){ dataSource.setOrder(metadata['Order']); }
+        if('NeedTotalCount' in metadata){ dataSource.setNeedTotalCount(metadata['NeedTotalCount']); }
+
+        this.initFileProvider(metadata, dataSource);
+    },
+
+    initFileProvider: function (metadata, dataSource) {
+
+        var host = InfinniUI.config.serverUrl,
+            configId = metadata.ConfigId,
+            documentId = metadata.DocumentId;
+
+        var fileUrlConstructor = new DocumentUploadQueryConstructor(host, {
+            configId: configId,
+            documentId: documentId
+        });
+
+        var fileProvider = new DocumentFileProvider(fileUrlConstructor);
+
+        dataSource.setFileProvider(fileProvider);
+    },
+
+    createDataSource: function(parent){
+        return new DocumentDataSource({
+            view: parent
+        });
+    },
+
+    initBindingToProperty: RestDataSourceBuilder.prototype.initBindingToProperty
+
+    //initFileProvider: function (dataSource) {
+    //    var fileProvider = window.providerRegister.build('DocumentFileProvider', {
+    //        documentId: dataSource.getDocumentId(),
+    //        configId: dataSource.getConfigId()
+    //    });
+    //
+    //    dataSource.setFileProvider(fileProvider);
+    //}
+});
+
 var buttonBuilderMixin = {
     applyButtonMetadata: function(params){
         var element = params.element;
@@ -14380,6 +19228,7 @@ var displayFormatBuilderMixin = {
      * @returns {Function}
      */
     buildDisplayFormat: function (displayFormat, params) {
+        var formatOptions = params.formatOptions;
         var builder = params.builder;
         var formatter, format = defaultFormat;
         if (typeof displayFormat === 'string') {
@@ -14388,6 +19237,17 @@ var displayFormatBuilderMixin = {
                 args = args || {};
                 return formatter.format(args.value);
             }
+        } else if (displayFormat && typeof displayFormat === 'object') {
+            formatter = builder.build(displayFormat);
+
+            format = function (context, args){
+                args = args || {};
+                return formatter.format(args.value);
+            }
+        }
+
+        if (formatter) {
+            formatter.setOptions(formatOptions);
         }
 
         return format;
@@ -14399,6 +19259,14 @@ var displayFormatBuilderMixin = {
     }
 };
 
+var labelTextElementMixin = {
+    getLabelText: function () {
+        return this.control.get('labelText');
+    },
+    setLabelText: function (value) {
+        this.control.set('labelText', value);
+    }
+};
 var viewBuilderHeaderTemplateMixin = {
 
     /**
@@ -14517,9 +19385,6 @@ _.extend(ContainerBuilder.prototype, {
         ElementBuilder.prototype.applyMetadata.call(this, params);
 
         itemsBinding = this.initItems(params);
-        if (itemsBinding) {
-            this.tuneItemsBinding(itemsBinding);
-        }
         this.initGroup(params, itemsBinding);
 
         return {
@@ -14552,7 +19417,7 @@ _.extend(ContainerBuilder.prototype, {
             basePathOfProperty: params.basePathOfProperty
         });
 
-        binding.setMode(BindingModes.toElement);
+        binding.setMode(InfinniUI.BindingModes.toElement);
 
         //if ('ItemComparator' in metadata) {
         this.bindElementItemsWithSorting(binding, params);
@@ -14670,7 +19535,7 @@ _.extend(ContainerBuilder.prototype, {
             var label = new Label(this);
             var sourceProperty;
             var source = itemsBinding.getSource();
-            var binding = new DataBinding(this);
+            var binding = new DataBinding();
 
             sourceProperty = index.toString();
             if (itemsBinding.getSourceProperty() != '') {
@@ -14696,7 +19561,7 @@ _.extend(ContainerBuilder.prototype, {
 
             var sourceProperty = itemsBinding.getSourceProperty();
             var source = itemsBinding.getSource();
-            var binding = new DataBinding(this);
+            var binding = new DataBinding();
 
             sourceProperty = index.toString();
             if (itemsBinding.getSourceProperty() != '') {
@@ -14722,7 +19587,8 @@ _.extend(ContainerBuilder.prototype, {
 
             var sourceProperty = itemsBinding.getSourceProperty();
             var source = itemsBinding.getSource();
-            var binding = new DataBinding(this);
+            var binding = new DataBinding();
+            binding.setMode(InfinniUI.BindingModes.toElement);
 
             sourceProperty = index.toString();
             if (itemsBinding.getSourceProperty() != '') {
@@ -14815,7 +19681,7 @@ _.extend(ContainerBuilder.prototype, {
 
         if(metadata.ItemComparator){
             itemComparator = function (item1, item2) {
-                return scriptExecutor.executeScript(metadata.ItemComparator.Name, {item1: item1, item2: item2});
+                return scriptExecutor.executeScript(metadata.ItemComparator.Name || metadata.ItemComparator, {item1: item1, item2: item2});
             };
         }
 
@@ -14902,23 +19768,23 @@ var editorBaseBuilderMixin = {
         }
 
         if (metadata.Value !== undefined) {
-            var buildParams = {
-                parentView: params.parentView,
-                basePathOfProperty: params.basePathOfProperty
-            };
+            if(InfinniUI.Metadata.isBindingMetadata(metadata.Value)){
+                var buildParams = {
+                    parentView: params.parentView,
+                    basePathOfProperty: params.basePathOfProperty
+                };
 
-            var dataBinding = params.builder.buildBinding(metadata.Value, buildParams);
-            if (bindingOptions.converter) {
-                dataBinding.setConverter(bindingOptions.converter);
+                var dataBinding = params.builder.buildBinding(metadata.Value, buildParams);
+                if (bindingOptions.converter) {
+                    dataBinding.setConverter(bindingOptions.converter);
+                }
+                dataBinding.bindElement(params.element, bindingOptions.valueProperty);
+
+                this.initValidationResultText(element, dataBinding);
+
+            }else{
+                params.element.setValue(metadata.Value);
             }
-            dataBinding.bindElement(params.element, bindingOptions.valueProperty);
-
-            var source = dataBinding.getSource();
-            if (typeof source.tryInitData == 'function') {
-                source.tryInitData();
-            }
-
-            this.initValidationResultText(element, dataBinding);
         }
 
         return {
@@ -15086,11 +19952,12 @@ _.extend(ListEditorBase.prototype, {
 
     onSelectedItemChanged: function (handler) {
         this.control.onSelectedItemChanged(this.createControlEventHandler(this, handler));
-    },
-
-    getValueComparator: function () {
-        return this.control.get('valueComparator');
     }
+
+    // UNUSED ?
+    //getValueComparator: function () {
+    //    return this.control.get('valueComparator');
+    //}
 
 }, editorBaseMixin);
 
@@ -15189,78 +20056,14 @@ _.extend(ListEditorBaseBuilder.prototype, {
         element.setValueSelector(valueSelector);
     }
 }, editorBaseBuilderMixin);
-/*
-    initValue: function(params){
-        var metadata = params.metadata;
-        var element = params.element;
 
-        if (typeof metadata.MultiSelect !== 'undefined' && metadata.MultiSelect !== null) {
-            element.setMultiSelect(metadata.MultiSelect);
-        }
-
-        this.initValueSelector(params);
-    }
-});
-
-
-ListEditorBaseBuilder.prototype.initGroupItemTemplate = function (params) {
-};
-
-ListEditorBaseBuilder.prototype.initGroupItemTemplate = function (params) {
-};
-
-
-ListEditorBaseBuilder.prototype.getGroupItemTemplateBuilder = function () {
-    throw new Error('Не перекрыт метод getGroupItemTemplateBuilder')
-};
-
-ListEditorBaseBuilder.prototype.initItemsBinding = function (params) {
-    var element = params.element;
-    var metadata = params.metadata.Items;
-    var itemsCollection = element.getItems();
-    if(!metadata) {
-        return;
-    }
-
-    var binding = params.builder.build(params.parent, metadata, params.collectionProperty);
-
-    if (typeof binding !== 'undefined' && binding !== null) {
-        binding.onPropertyValueChanged(function (context, argument) {
-            var newItems = argument.value;
-
-            if (!Array.isArray(newItems)) {
-                itemsCollection.clear();
-                return;
-            }
-
-            //Удалить элементы, которых нет в новых данных
-            itemsCollection
-                .filter(function (item) {
-                    return newItems.indexOf(item) === -1;
-                })
-                .forEach(function(item) {
-                    itemsCollection.remove(item);
-                });
-
-            //Добавить новые элементы,которые появились в данных
-            newItems.filter(function (item) {
-                    return !itemsCollection.contains(item)
-                })
-                .forEach(function(item){
-                    itemsCollection.add(item);
-                });
-
-        });
-    }
-    return binding;
-};
-*/
 /**
  *
  * @param parent
  * @constructor
  * @augments Element
  * @mixes editorBaseMixin
+ * @mixes labelTextElementMixin
  */
 function TextEditorBase(parent) {
     _.superClass(TextEditorBase, this, parent);
@@ -15270,14 +20073,6 @@ function TextEditorBase(parent) {
 _.inherit(TextEditorBase, Element);
 
 _.extend(TextEditorBase.prototype, {
-
-    setLabelText: function (value) {
-        this.control.set('labelText', value);
-    },
-
-    getLabelText: function () {
-        return this.control.get('labelText');
-    },
 
     setDisplayFormat: function (value) {
         this.control.set('displayFormat', value);
@@ -15293,8 +20088,35 @@ _.extend(TextEditorBase.prototype, {
 
     getEditMask: function () {
         return this.control.get('editMask');
+    },
+
+    /**
+     * @description Возвращает значение, которое введено в поле редактирования в данный момент
+     * @returns {*}
+     */
+    getRawValue: function () {
+        var value = this.getValue(),
+            editMask = this.getEditMask();
+
+        if (editMask) {
+            var val = editMask.getValue();
+            var txt = editMask.getText();
+
+            if (isNotEmpty(val)) {
+                value = val;
+            } else if (isNotEmpty(txt)) {
+                value = txt;
+            }
+        }
+
+        return value;
+
+        function isNotEmpty(val) {
+            return val !== null && typeof val !== 'undefined';
+        }
     }
-}, editorBaseMixin);
+
+}, editorBaseMixin, labelTextElementMixin);
 
 /**
  *
@@ -15320,7 +20142,7 @@ _.extend(TextEditorBaseBuilder.prototype, {
         var metadata = params.metadata;
         var element = params.element;
 
-        element.setLabelText(metadata.LabelText);
+        this.initBindingToProperty(params, 'LabelText');
 
         this
             .initDisplayFormat(params)
@@ -15345,7 +20167,10 @@ _.extend(TextEditorBaseBuilder.prototype, {
             editMask;
 
         if (metadata.EditMask) {
-            editMask = builder.build(metadata.EditMask, {parentView: params.parentView});
+            editMask = builder.build(metadata.EditMask, {
+                parentView: params.parentView,
+                formatOptions: params.formatOptions
+            });
         }
         params.element.setEditMask(editMask);
         return this;
@@ -15381,6 +20206,293 @@ _.extend(ListBoxBuilder.prototype, /** @lends ListBoxBuilder.prototype */{
     }
 
 });
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments TextEditorBase
+ */
+function TextBox(parent) {
+    _.superClass(TextBox, this, parent);
+}
+
+_.inherit(TextBox, TextEditorBase);
+
+TextBox.prototype.createControl = function (parent) {
+    return new TextBoxControl(parent);
+};
+
+TextBox.prototype.getMultiline = function () {
+    return this.control.get('multiline');
+};
+
+TextBox.prototype.setMultiline = function (value) {
+    this.control.set('multiline', value);
+};
+
+TextBox.prototype.getLineCount = function () {
+    return this.control.get('lineCount');
+};
+
+TextBox.prototype.setLineCount = function (value) {
+    this.control.set('lineCount', value);
+};
+
+
+
+/**
+ *
+ * @constructor
+ * @augments TextEditorBaseBuilder
+ */
+function TextBoxBuilder() {
+    _.superClass(TextBoxBuilder, this);
+}
+
+_.inherit(TextBoxBuilder, TextEditorBaseBuilder);
+
+TextBoxBuilder.prototype.createElement = function (params) {
+    return new TextBox(params.parent);
+};
+
+TextBoxBuilder.prototype.applyMetadata = function (params) {
+    TextEditorBaseBuilder.prototype.applyMetadata.call(this, params);
+
+    var element = params.element;
+    var metadata = params.metadata;
+    var lineCount = metadata.LineCount;
+    element.setMultiline(metadata.Multiline);
+    if (metadata.Multiline && lineCount === null || typeof lineCount === 'undefined') {
+        lineCount = 2;
+    }
+    element.setLineCount(lineCount);
+};
+
+
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments TextEditorBase
+ */
+function DateTimePicker(parent) {
+    _.superClass(DateTimePicker, this, parent);
+}
+
+_.inherit(DateTimePicker, TextEditorBase);
+
+DateTimePicker.prototype.createControl = function (parent) {
+    return new DateTimePickerControl(parent);
+};
+
+DateTimePicker.prototype.getMinValue = function () {
+    return this.control.get('minValue');
+};
+
+DateTimePicker.prototype.setMinValue = function (value) {
+    this.control.set('minValue', value);
+};
+
+DateTimePicker.prototype.getMaxValue = function () {
+    return this.control.get('maxValue');
+};
+
+DateTimePicker.prototype.setMaxValue = function (value) {
+    this.control.set('maxValue', value);
+};
+
+DateTimePicker.prototype.getMode = function () {
+    return this.control.get('mode');
+};
+
+DateTimePicker.prototype.setMode = function (value) {
+    this.control.set('mode', value);
+};
+
+DateTimePicker.prototype.getTimeZone = function () {
+    return this.control.get('timeZone');
+};
+
+DateTimePicker.prototype.setTimeZone = function (value) {
+    this.control.set('timeZone', value);
+};
+
+DateTimePicker.prototype.setDateFormat = function (value) {
+    this.control.set('format', value);
+};
+
+
+
+/**
+ *
+ * @constructor
+ * @augments TextEditorBaseBuilder
+ */
+function DateTimePickerBuilder() {
+    _.superClass(DateTimePickerBuilder, this);
+}
+
+_.inherit(DateTimePickerBuilder, TextEditorBaseBuilder);
+
+DateTimePickerBuilder.prototype.createElement = function (params) {
+    return new DateTimePicker(params.parent);
+};
+
+DateTimePickerBuilder.prototype.applyMetadata = function (params) {
+    var element = params.element;
+    var metadata = params.metadata;
+    this.applyDefaultMetadata(params);
+    TextEditorBaseBuilder.prototype.applyMetadata.call(this, params);
+
+    element.setTimeZone(metadata.TimeZone);
+    element.setMode(metadata.Mode);
+
+    this.applyMinValue(element, metadata.MinValue);
+    this.applyMaxValue(element, metadata.MaxValue);
+
+    //var format = params.builder.buildType(params.parent, 'DateFormat', {}, null);
+    //element.setDateFormat(format);
+};
+
+DateTimePickerBuilder.prototype.applyMinValue = function (element, minValue) {
+    element.setMinValue(InfinniUI.DateUtils.parseISO8601toDate(minValue));
+};
+
+DateTimePickerBuilder.prototype.applyMaxValue = function (element, maxValue) {
+    element.setMaxValue(InfinniUI.DateUtils.parseISO8601toDate(maxValue));
+};
+
+DateTimePickerBuilder.prototype.applyDefaultMetadata = function (params) {
+    var metadata = params.metadata;
+
+    var defaultFormat = {
+            Date: '{:d}',
+            DateTime: '{:g}',
+            Time: '{:t}'
+        },
+        defaultEditMask = {
+            Date: {DateTimeEditMask: {Mask: 'd'}},
+            DateTime: {DateTimeEditMask: {Mask: 'g'}},
+            Time: {DateTimeEditMask: {Mask: 't'}}
+        };
+
+    _.defaults(metadata, {Mode: 'Date'});
+    _.defaults(metadata, {DisplayFormat: defaultFormat[metadata.Mode], EditMask: defaultEditMask[metadata.Mode]});
+};
+
+DateTimePickerBuilder.prototype.initDisplayFormat = function (params) {
+    return TextEditorBaseBuilder.prototype.initDisplayFormat.call(this, this.applyTimeZone(params));
+};
+
+DateTimePickerBuilder.prototype.initEditMask = function (params) {
+    return TextEditorBaseBuilder.prototype.initEditMask.call(this, this.applyTimeZone(params));
+};
+
+DateTimePickerBuilder.prototype.applyTimeZone = function (params) {
+    var metadata = params.metadata;
+    var _params = {};
+    var formatOptions = {};
+
+    if (typeof metadata.TimeZone !== 'undefined' && metadata.TimeZone !== null ) {
+        formatOptions.TimeZone = metadata.TimeZone;
+    }
+
+    _.defaults(_params, params, {formatOptions: formatOptions});
+    return _params;
+};
+function DatePicker(parent) {
+    _.superClass(DatePicker, this, parent);
+
+    this.setMode('DatePicker');
+    this.setTimeZone();
+}
+
+_.inherit(DatePicker, DateTimePicker);
+
+DatePicker.prototype.setTimeZone = function () {
+    DateTimePicker.prototype.setTimeZone.call(this, 0);
+};
+
+DatePicker.prototype.createControl = function (parent) {
+    return new DatePickerControl(parent);
+};
+function DatePickerBuilder() {
+    _.superClass(DatePickerBuilder, this);
+}
+
+_.inherit(DatePickerBuilder, DateTimePickerBuilder);
+
+DatePickerBuilder.prototype.applyDefaultMetadata = function (params) {
+
+    DateTimePickerBuilder.call(this, params);
+
+    var metadata = params.metadata;
+    metadata.Mode = 'DatePicker';
+    metadata.TimeZone = 0;
+
+    _.defaults(metadata, {
+        DisplayFormat: '{:d}',
+        EditMask: {DateTimeEditMask: {Mask: 'd'}}
+    });
+
+};
+function TimePicker(parent) {
+    _.superClass(TimePicker, this, parent);
+
+    this.setMode('TimePicker');
+    this.setTimeZone();
+}
+
+_.inherit(TimePicker, DateTimePicker);
+
+
+TimePicker.prototype.createControl = function (parent) {
+    return new TimePickerControl(parent);
+};
+
+TimePicker.prototype.setTimeZone = function () {
+    DateTimePicker.prototype.setTimeZone.call(this, 0);
+};
+function TimePickerBuilder() {
+    _.superClass(TimePickerBuilder, this);
+}
+
+_.inherit(TimePickerBuilder, DateTimePickerBuilder);
+
+TimePickerBuilder.prototype.createElement = function (params) {
+    return new TimePicker(params.parent);
+};
+
+TimePickerBuilder.prototype.applyDefaultMetadata = function (params) {
+
+    DateTimePickerBuilder.call(this, params);
+
+    var metadata = params.metadata;
+    metadata.Mode = 'TimePicker';
+    metadata.TimeZone = 0;
+
+    _.defaults(metadata, {
+        DisplayFormat: '{:T}',
+        EditMask: {DateTimeEditMask: {Mask: 'T'}}
+    });
+
+};
+
+TimePickerBuilder.prototype.applyMinValue = function (element, minValue) {
+    var date = InfinniUI.DateUtils.parseTimeISO8601toDate(minValue, 0);
+
+    if (typeof date !== 'undefined') {
+        element.setMinValue(date);
+    }
+};
+
+TimePickerBuilder.prototype.applyMaxValue = function (element, maxValue) {
+    var date = InfinniUI.DateUtils.parseTimeISO8601toDate(maxValue, 0);
+
+    if (typeof date !== 'undefined') {
+        element.setMaxValue(date);
+    }
+};
 /**
  * @param parent
  * @constructor
@@ -15506,6 +20618,164 @@ _.extend(ButtonBuilder.prototype, {
  *
  * @param parent
  * @constructor
+ * @augments TextBox
+ */
+function ButtonEdit(parent) {
+    _.superClass(ButtonEdit, this, parent);
+}
+
+_.inherit(ButtonEdit, TextBox);
+
+ButtonEdit.prototype.createControl = function (parent) {
+    return new ButtonEditControl(parent);
+};
+
+/**
+ * @public
+ * @param {String} icon
+ */
+ButtonEdit.prototype.setIcon = function (icon) {
+    if (icon && icon.toLowerCase) {
+        icon = icon.toLowerCase();
+    }
+    this.control.set('icon', icon);
+};
+
+/**
+ * @public
+ * @returns {String}
+ */
+ButtonEdit.prototype.getIcon = function () {
+    return this.control.get('icon');
+};
+
+/**
+ * @public
+ * @param {boolean} readOnly
+ */
+ButtonEdit.prototype.setReadOnly = function (readOnly) {
+    if (typeof  readOnly !== 'undefined' && readOnly !== null) {
+        this.control.set('readOnly', !!readOnly);
+    }
+};
+
+/**
+ * @public
+ * @returns {boolean}
+ */
+ButtonEdit.prototype.getReadOnly = function () {
+    return this.control.get('readOnly');
+};
+
+/**
+ * @public
+ * @param {boolean} showClear
+ */
+ButtonEdit.prototype.setShowClear = function (showClear) {
+    if (typeof showClear !== 'undefined' && showClear !== null) {
+        this.control.set('showClear', !!showClear);
+    }
+};
+
+/**
+ * @public
+ * @returns {boolean}
+ */
+ButtonEdit.prototype.getShowClear = function () {
+    return this.control.get('showClear');
+};
+
+
+ButtonEdit.prototype.onButtonClick = function (handler) {
+    var element = this;
+    var callback = function (nativeEventData) {
+        var eventData = element._getHandlingMouseEventData(nativeEventData);
+        handler(eventData);
+    };
+    return this.control.onButtonClick(callback);
+};
+/**
+ *
+ * @constructor
+ * @augments TextBoxBuilder
+ */
+function ButtonEditBuilder() {
+    _.superClass(ButtonEditBuilder, this);
+}
+
+_.inherit(ButtonEditBuilder, TextBoxBuilder);
+
+ButtonEditBuilder.prototype.createElement = function (params) {
+    return new ButtonEdit(params.parent);
+};
+
+ButtonEditBuilder.prototype.applyMetadata = function (params) {
+    TextBoxBuilder.prototype.applyMetadata.call(this, params);
+
+    /** @type {ButtonEdit} **/
+    var element = params.element;
+    var metadata = params.metadata;
+
+    this.initBindingToProperty(params, 'Icon');
+    this.initBindingToProperty(params, 'ReadOnly', true);
+    this.initBindingToProperty(params, 'ShowClear', true);
+
+    this.buildOnButtonClick(params);
+    this.buildButtonAction(params);
+};
+
+
+/**
+ * @protected
+ * @param params
+ */
+ButtonEditBuilder.prototype.buildButtonAction = function (params) {
+    /** @type {ButtonEdit} **/
+    var element = params.element;
+    var metadata = params.metadata;
+    var builder = params.builder;
+
+    if (!metadata.Action) {
+        return;
+    }
+
+    var args = {
+        parentView: params.parentView,
+        parent: element,
+        basePathOfProperty: params.basePathOfProperty
+    };
+    var action = builder.build(metadata.Action, args);
+    element.onButtonClick(function(){
+        action.execute();
+    });
+};
+
+/**
+ * @protected
+ * @param params
+ */
+ButtonEditBuilder.prototype.buildOnButtonClick = function (params) {
+    /** @type {ButtonEdit} **/
+    var element = params.element;
+    var metadata = params.metadata;
+
+    var onButtonClick = metadata.OnButtonClick;
+    if (!onButtonClick) {
+        return;
+    }
+
+    element.onButtonClick(function (args) {
+        new ScriptExecutor(element.getScriptsStorage()).executeScript(onButtonClick.Name || onButtonClick, args);
+    });
+
+};
+
+
+
+/**
+ *
+ * @param parent
+ * @constructor
  * @augment Element
  */
 function CheckBox(parent) {
@@ -15555,6 +20825,7 @@ _.extend(CheckBoxBuilder.prototype, {
  * @augments ListEditorBase
  * @param parent
  * @constructor
+ * @mixes labelTextElementMixin
  */
 function ComboBox(parent) {
     _.superClass(ComboBox, this, parent);
@@ -15562,16 +20833,10 @@ function ComboBox(parent) {
 
 _.inherit(ComboBox, ListEditorBase);
 
+_.extend(ComboBox.prototype, labelTextElementMixin);
+
 ComboBox.prototype.createControl = function () {
     return new ComboBoxControl();
-};
-
-ComboBox.prototype.getLabelText = function () {
-    return this.control.get('labelText');
-};
-
-ComboBox.prototype.setLabelText = function (value) {
-    this.control.set('labelText', value);
 };
 
 ComboBox.prototype.setValueTemplate = function (value) {
@@ -15580,14 +20845,6 @@ ComboBox.prototype.setValueTemplate = function (value) {
 
 ComboBox.prototype.getValueTemplate = function () {
     return this.control.get('valueTemplate');
-};
-
-ComboBox.prototype.setValueFormat = function (value) {
-    this.control.set('valueFormat', value);
-};
-
-ComboBox.prototype.getValueFormat = function () {
-    return this.control.get('valueFormat');
 };
 
 ComboBox.prototype.getAutocomplete = function () {
@@ -15610,6 +20867,14 @@ ComboBox.prototype.getShowClear = function () {
     return this.control.get('showClear');
 };
 
+ComboBox.prototype.getAutocompleteValue = function () {
+    return this.control.get('autocompleteValue');
+};
+
+ComboBox.prototype.setAutocompleteValue = function (value) {
+    this.control.set('autocompleteValue', value);
+};
+
 
 /**
  * @augments ListEditorBaseBuilder
@@ -15629,28 +20894,23 @@ _.extend(ComboBoxBuilder.prototype, /** @lends ComboBoxBuilder.prototype */{
 
     applyMetadata: function (params) {
         var element = params.element;
+        var that = this;
 
         var data = ListEditorBaseBuilder.prototype.applyMetadata.call(this, params);
         this.initValueTemplate(data.valueBinding, params);
-        element.setLabelText(params.metadata.LabelText);
+        this.initBindingToProperty(params, 'LabelText');
         element.setAutocomplete(params.metadata.Autocomplete);
         element.setShowClear(params.metadata.ShowClear);
 
-        (function (binding) {
-            var source = binding.getSource();
-            var fullSearchFilter = {
-                CriteriaType: criteriaType.FullTextSearch,
-                Property: "",
-                Value: null
-            };
-            element.onPropertyChanged('search', function (context, args) {
-                fullSearchFilter.Value = args.newValue;
-                if (source.setFilter) {
-                    source.setFilter([fullSearchFilter]);
-                }
-            });
+        if(params.metadata.Autocomplete){
+            var name = element.getName();
 
-        })(data.itemsBinding);
+            if(!name){
+                name = that.generateName();
+                element.setName(name);
+            }
+        }
+
     },
 
     initValueTemplate: function (binding, params) {
@@ -15710,33 +20970,9 @@ _.extend(ComboBoxBuilder.prototype, /** @lends ComboBoxBuilder.prototype */{
             var label = new Label(this);
             label.setHorizontalAlignment('Left');
             label.setDisplayFormat(format);
-            //var labelBinding = new DataBinding(this);
-            //labelBinding.setMode(BindingModes.toElement);
-            //
-            //var source = binding.getSource();
-            //var property = binding.getSourceProperty();
-            //
-            //if (params.element.getMultiSelect()) {
-            //    if (property && property !== '') {
-            //        property = [property, index].join('.');
-            //    } else {
-            //        property = String(index);
-            //    }
-            //}
-            //
-            //labelBinding.bindSource(source, property);
-            //labelBinding.bindElement(label, 'value');
             label.setValue(value);
             return label;
         };
-        //return function(context, args){
-        //    var index = args.index;
-        //    var label = new Label(this);
-        //
-        //    label.setDisplayFormat(format);
-        //    label.setValue(format.call(null, args));
-        //    return label;
-        //};
     },
 
     buildValueTemplateByDefault: function (binding, params) {
@@ -15747,31 +20983,14 @@ _.extend(ComboBoxBuilder.prototype, /** @lends ComboBoxBuilder.prototype */{
 
             var label = new Label(this);
             label.setHorizontalAlignment('Left');
-
-            //if (binding) {
-                //var labelBinding = new DataBinding(this);
-                //labelBinding.setMode(BindingModes.toElement);
-                //
-                //var source = binding.getSource();
-                //var property = binding.getSourceProperty();
-                //
-                //if (params.element.getMultiSelect()) {
-                //    if (property && property !== '') {
-                //        property = [property, index].join('.');
-                //    } else {
-                //        property = String(index);
-                //    }
-                //}
-                //
-                //labelBinding.bindSource(source, property);
-                //labelBinding.bindElement(label, 'value');
-
-            //} else {
-                label.setValue(value);
-            //}
+            label.setValue(value);
 
             return label;
         };
+    },
+
+    generateName: function(){
+        return 'combobox-' + guid();
     }
 });
 function DataGrid(parent) {
@@ -15802,6 +21021,40 @@ DataGrid.prototype.createRow = function () {
     return new DataGridRow(this);
 };
 
+/**
+ * @description Устанавливает значение, определяющее виден ли элемент "Выбрать все" в шапке таблицы.
+ * @param {boolean} value
+ */
+DataGrid.prototype.setCheckAllVisible = function (value) {
+    if (_.isBoolean(value)) {
+        this.control.set('checkAllVisible', value);
+    }
+};
+
+/**
+ * @description Возвращает значение, определяющее виден ли элемент "Выбрать все" в шапке таблицы.
+ * @returns {boolean}
+ */
+DataGrid.prototype.getCheckAllVisible = function () {
+    return this.control.get('checkAllVisible');
+};
+
+/**
+ * @description Возвращает состояние элемента "Выбрать все" из шапки таблицы
+ * @returns {boolean}
+ */
+DataGrid.prototype.getCheckAll = function () {
+    return this.control.get('checkAll');
+};
+
+/**
+ * @description Устанавливает обработчик события о том, что изменилось состояние элемента "Выбрать все" в шапке таблицы
+ * @param {function} handler
+ */
+DataGrid.prototype.onCheckAllChanged = function (handler) {
+    this.control.onCheckAllChanged(this.createControlEventHandler(this, handler));
+};
+
 DataGrid.prototype.createControl = function () {
     return new DataGridControl();
 };
@@ -15821,7 +21074,17 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
     applyMetadata: function (params) {
         ListEditorBaseBuilder.prototype.applyMetadata.call(this, params);
 
-        params.element.setShowSelectors(params.metadata.ShowSelectors);
+        var metadata = params.metadata;
+        /** @type DataGrid **/
+        var element = params.element;
+        element.setShowSelectors(metadata.ShowSelectors);
+        element.setCheckAllVisible(metadata.CheckAllVisible);
+
+        if(metadata.OnCheckAllChanged){
+            element.onCheckAllChanged(function(context, args) {
+                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnCheckAllChanged.Name || metadata.OnCheckAllChanged, args);
+            });
+        }
         this.applyColumnsMetadata(params);
     },
 
@@ -15846,10 +21109,15 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
 
     buildItemProperty: function (itemsBinding, itemPropertyMetadata, params) {
         var dataGrid = params.element;
+        var builder = this;
 
         return function (context, args) {
-            var index = args.index;
             var row = dataGrid.createRow();
+            row.setGrid(dataGrid);
+
+            ['RowStyle', 'RowBackground', 'RowForeground', 'RowTextStyle']
+                .forEach(initBindingToRowProperty.bind(null, row, args.index));
+
             var columns = dataGrid.getColumns();
 
             var cellItemTemplates = columns.toArray().map(function (column, index) {
@@ -15862,6 +21130,20 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
             row.setShowSelectors(dataGrid.getShowSelectors());
             return row;
         };
+
+        function initBindingToRowProperty(row, index, propertyName) {
+            var basePathOfProperty = params.basePathOfProperty || new BasePathOfProperty('');
+            var argumentForBuilder = {
+                element: row,
+                parent: dataGrid,
+                builder: params.builder,
+                metadata: params.metadata,
+                parentView: params.parentView
+            };
+            argumentForBuilder.basePathOfProperty = basePathOfProperty.buildChild('', index);
+
+            builder.initBindingToProperty(argumentForBuilder, propertyName);
+        }
     }
 
 });
@@ -15899,6 +21181,14 @@ DataGridColumn.prototype.setHeaderTemplate = function (value) {
 
 DataGridColumn.prototype.getHeaderTemplate = function () {
     return this.getProperty('cellHeaderTemplate');
+};
+
+DataGridColumn.prototype.setWidth = function (value) {
+    this.setProperty('width', value);
+};
+
+DataGridColumn.prototype.getWidth = function (value) {
+    return this.getProperty('width');
 };
 
 
@@ -15955,12 +21245,24 @@ _.extend(DataGridColumnBuilder.prototype, displayFormatBuilderMixin);
 DataGridColumnBuilder.prototype.build = function (element, metadata, params) {
     var column = new DataGridColumn();
 
+
     this
         .buildHeader(column, metadata, params)
         .buildHeaderTemplate(column, metadata, params)
-        .buildCellTemplate(column, metadata, params);
+        .buildCellTemplate(column, metadata, params)
+        .buildWidth(column, metadata);
 
     return column;
+};
+
+DataGridColumnBuilder.prototype.buildWidth = function (column, metadata) {
+    var width = metadata.Width;
+
+    if (width !== null && typeof width !== 'undefined') {
+        column.setWidth(width);
+    }
+
+    return this;
 };
 
 /**
@@ -16046,7 +21348,7 @@ DataGridColumnBuilder.prototype.buildCellTemplateByFormat = function (params, ce
 
             var sourceProperty = itemsBinding.getSourceProperty();
             var source = itemsBinding.getSource();
-            var binding = new DataBinding(this);
+            var binding = new DataBinding();
 
             sourceProperty = index.toString();
             if (itemsBinding.getSourceProperty() != '') {
@@ -16095,7 +21397,7 @@ DataGridColumnBuilder.prototype.buildCellTemplateByDefault = function (params, c
 
             var sourceProperty;
             var source = itemsBinding.getSource();
-            var binding = new DataBinding(this);
+            var binding = new DataBinding();
 
             sourceProperty = index.toString();
             if (itemsBinding.getSourceProperty() != '') {
@@ -16207,6 +21509,12 @@ DataGridColumnBuilder.prototype.buildHeaderTemplateByDefault = function (params)
 function DataGridRow() {
     _.superClass(DataGridRow, this);
 
+    this._transformRowProperties({
+        rowBackground: 'background',
+        rowForeground: 'foreground',
+        rowTextStyle: 'textStyle',
+        rowStyle: 'style'
+    });
 }
 
 _.inherit(DataGridRow, Element);
@@ -16240,6 +21548,64 @@ _.extend(DataGridRow.prototype, {
 
     onToggle: function (handler) {
         this.control.onToggle(handler);
+    },
+
+    /** RowBackground **/
+    setRowBackground: function (value) {
+        this.control.set('rowBackground', value);
+    },
+
+    getRowBackground: function () {
+        return this.control.get('rowBackground');
+    },
+
+    /** RowForeground **/
+    setRowForeground: function (value) {
+        this.control.set('rowForeground', value);
+    },
+
+    getRowForeground: function () {
+        return this.control.get('rowForeground');
+    },
+
+    /** RowTextStyle */
+    setRowTextStyle: function (value) {
+        this.control.set('rowTextStyle', value);
+    },
+
+    getRowTextStyle: function () {
+        return this.control.get('rowTextStyle');
+    },
+
+    /** RowStyle */
+    setRowStyle: function (value) {
+        this.control.set('rowStyle', value);
+    },
+
+    getRowStyle: function () {
+        return this.control.get('rowStyle');
+    },
+
+    setGrid: function (grid) {
+        this.control.set('grid', grid);
+    },
+
+    _transformRowProperties: function (properties) {
+
+        for(var name in properties) {
+            if (!properties.hasOwnProperty(name)) {
+                continue;
+            }
+
+            this.setProperty(properties[name], this.getProperty(name));
+
+            this.onPropertyChanged(name, (function (row, prop) {
+                return function (context, args) {
+                    row.setProperty(prop, args.newValue);
+                }
+            })(this, properties[name]));
+        }
+
     }
 
 });
@@ -16338,14 +21704,10 @@ _.extend(DataNavigationBuilder.prototype, {
     findDataSource: function (params) {
         var
             name = params.metadata.DataSource,
-            parent = params.parent,
-            view,
+            view = params.parentView,
             context,
             dataSource;
-
-        if (parent) {
-            view = parent.getView()
-        }
+        
         if (name && view) {
             context = view.getContext();
             dataSource = context.dataSources[name];
@@ -16358,102 +21720,9 @@ _.extend(DataNavigationBuilder.prototype, {
 /**
  *
  * @param parent
- * @constructor
- * @augments TextEditorBase
- */
-function DatePicker(parent) {
-    _.superClass(DatePicker, this, parent);
-}
-
-_.inherit(DatePicker, TextEditorBase);
-
-DatePicker.prototype.createControl = function (parent) {
-    return new DatePickerControl(parent);
-};
-
-DatePicker.prototype.getMinValue = function () {
-    return this.control.get('minValue');
-};
-
-DatePicker.prototype.setMinValue = function (value) {
-    this.control.set('minValue', value);
-};
-
-DatePicker.prototype.getMaxValue = function () {
-    return this.control.get('maxValue');
-};
-
-DatePicker.prototype.setMaxValue = function (value) {
-    this.control.set('maxValue', value);
-};
-
-DatePicker.prototype.getMode = function () {
-    return this.control.get('mode');
-};
-
-DatePicker.prototype.setMode = function (value) {
-    this.control.set('mode', value);
-};
-
-DatePicker.prototype.setDateFormat = function (value) {
-    this.control.set('format', value);
-};
-
-
-
-/**
- *
- * @constructor
- * @augments TextEditorBaseBuilder
- */
-function DatePickerBuilder() {
-    _.superClass(DatePickerBuilder, this);
-}
-
-_.inherit(DatePickerBuilder, TextEditorBaseBuilder);
-
-DatePickerBuilder.prototype.createElement = function (params) {
-    return new DatePicker(params.parent);
-};
-
-DatePickerBuilder.prototype.applyMetadata = function (params) {
-    var element = params.element;
-    var metadata = params.metadata;
-    this.applyDefaultMetadata(params);
-    TextEditorBaseBuilder.prototype.applyMetadata.call(this, params);
-
-    element.setMinValue(metadata.MinValue);
-    element.setMaxValue(metadata.MaxValue);
-    element.setMode(metadata.Mode);
-
-
-    //var format = params.builder.buildType(params.parent, 'DateFormat', {}, null);
-    //element.setDateFormat(format);
-};
-
-DatePickerBuilder.prototype.applyDefaultMetadata = function (params) {
-    var metadata = params.metadata;
-
-    var defaultFormat = {
-            Date: '{:d}',
-            DateTime: '{:g}',
-            Time: '{:t}'
-        },
-        defaultEditMask = {
-            Date: {DateTimeEditMask: {Mask: 'd'}},
-            DateTime: {DateTimeEditMask: {Mask: 'g'}},
-            Time: {DateTimeEditMask: {Mask: 't'}}
-        };
-
-    _.defaults(metadata, {Mode: 'Date'});
-    _.defaults(metadata, {DisplayFormat: defaultFormat[metadata.Mode], EditMask: defaultEditMask[metadata.Mode]});
-};
-
-/**
- *
- * @param parent
  * @augments Element
  * @mixes editorBaseMixin
+ * @mixes labelTextElementMixin
  * @constructor
  */
 function FileBox(parent) {
@@ -16515,6 +21784,10 @@ _.extend(FileBox.prototype, {
     },
 
     // НЕдокументированные методы
+    setFile: function (value) {
+        this.control.set('file', value);
+    },
+
     setFileName: function (value) {
         this.control.set('fileName', value);
         return this;
@@ -16544,7 +21817,10 @@ _.extend(FileBox.prototype, {
     //    return this.control.get('url');
     //}
 
-}, editorBaseMixin);
+},
+    editorBaseMixin,
+    labelTextElementMixin
+);
 /**
  *
  * @constructor
@@ -16578,6 +21854,8 @@ _.extend(FileBoxBuilder.prototype, {
             element.setMaxSize(metadata.MaxSize);
         }
 
+        this.initBindingToProperty(params, 'LabelText');
+
         // Привязка данных односторонняя т.к.:
         // 1. по значению из источника данных - сформировать URL изображения.
         // 2. при выборе в элементе файла на загрузку - добавить выбранный файл в очередь на загрузку
@@ -16591,41 +21869,46 @@ _.extend(FileBoxBuilder.prototype, {
                 var fileProvider = ds.getFileProvider();
                 var url = null;
                 var info = {};
-                //Формируем URL изображения
-                if (value && value.Info && value.Info.ContentId && fileProvider) {
-                    info = value.Info;
-                    var instanceId = ds.lookupIdPropertyValue(sourceProperty);
-                    if (typeof instanceId !== 'undefined') {
-                        url = fileProvider.getFileUrl(binding.getSourceProperty(), instanceId, value.Info.ContentId);
+                //Формируем ссылку для получения файла
+                if (value) {
+                    if (value.Info && value.Info.ContentId && fileProvider) {
+                        url = fileProvider.getFileUrl(null, null, value.Info.ContentId);
+                        element.setFileName(value.Info.Name)
+                            .setFileSize(value.Info.Size)
+                            .setFileTime(value.Info.Time)
+                            .setFileType(value.Info.Type);
+
+                    } else if (typeof value === 'string') {
+                        //@TODO Добавить проверку на валидность URI
+                        url = value;
+                    } else {
+                        //Native File instance from FileAPI
+                        url = value;
                     }
                 }
-
-                element.setFileName(info.Name)
-                    .setFileSize(info.Size)
-                    .setFileTime(info.Time)
-                    .setFileType(info.Type);
 
                 return url;
             }
         };
 
         var data = this.applyMetadata_editorBaseBuilder(params, {
-            //valueProperty: 'url',
             converter: converter
         });
 
         var binding = data.valueBinding;
 
         if (binding) {
-            binding.setMode(BindingModes.toElement);
+            binding.setMode(InfinniUI.BindingModes.toElement);
+            var ds = binding.getSource();
 
             params.element.onPropertyChanged('file', function (context, args) {
-                var ds = binding.getSource();
-                var property = args.property,
-                    file = args.newValue;
+                var file = args.newValue;
 
-                //Файл в очередь на загрузк
-                ds.setFile(file, binding.getSourceProperty());
+                if (file === null) {
+                    ds.setProperty(binding.getSourceProperty(), null)
+                } else  if (file instanceof File) {
+                    ds.setProperty(binding.getSourceProperty(), args.newValue)
+                }
             })
         }
 
@@ -16856,34 +22139,38 @@ _.extend(ImageBoxBuilder.prototype, {
                 var url = null;
                 //Формируем URL изображения
 
-                if (value && value.Info && value.Info.ContentId && fileProvider) {
-                    var instanceId = ds.lookupIdPropertyValue(sourceProperty);
-                    if (typeof instanceId !== 'undefined') {
-                        url = fileProvider.getFileUrl(binding.getSourceProperty(), instanceId, value.Info.ContentId);
+                if (value) {
+                    if (value.Info && value.Info.ContentId && fileProvider) {
+                        url = fileProvider.getFileUrl(null, null, value.Info.ContentId);
+                    } else if (typeof value === 'string') {
+                        //@TODO Добавить проверку на валидность URI
+                        url = value;
+                    } else {
+                        //Native File instance from FileAPI
+                        url = value;
                     }
                 }
                 return url;
             }
+
         };
 
         var data = this.applyMetadata_editorBaseBuilder(params, {
-            //valueProperty: 'url',
             converter: converter
         });
 
         var binding = data.valueBinding;
         if (binding) {
-            binding.setMode(BindingModes.toElement);
+            binding.setMode(InfinniUI.BindingModes.toElement);
 
             var ds = binding.getSource();
-            var fileProvider = ds.getFileProvider();
 
             params.element.onPropertyChanged('file', function (context, args) {
-                var property = args.property,
-                    file = args.newValue;
+                var file = args.newValue;
 
-                //Файл в очередь на загрузк
-                ds.setFile(file, binding.getSourceProperty());
+                if (file instanceof File) {
+                    ds.setProperty(binding.getSourceProperty(), args.newValue)
+                }
             });
 
             ds.onItemsUpdated(function (context, args) {
@@ -16904,16 +22191,6 @@ _.extend(ImageBoxBuilder.prototype, {
                     element.setValue(url);
                 }
             });
-
-            //params.element.onPropertyChanged('value', function (context, args) {
-            //    var url = null;
-            //    var value = args.newValue;
-            //    //Формируем URL изображения
-            //    if (value && value.ContentId && fileProvider) {
-            //        url = fileProvider.getFileUrl(binding.getSourceProperty(), value.ContentId);
-            //    }
-            //    params.element.setProperty('url', url);
-            //});
         }
 
     }
@@ -16971,9 +22248,28 @@ _.extend(Label.prototype, {
         
         getDisplayValue: function () {
             return this.control.getDisplayValue();
-        }
+        },
 
-    },
+        /**
+         * @description Возвращает режим отображения HTML разметки
+         * @returns {Boolean}
+         */
+        getEscapeHtml: function () {
+            return this.control.get('escapeHtml');
+        },
+
+        /**
+         * @description Устанавливает режим отображения HTML разметки
+         * @param {Boolean} value
+         */
+        setEscapeHtml: function (value) {
+            if (_.isBoolean(value)) {
+                this.control.set('escapeHtml', value);
+            }
+        }
+    }
+
+    ,
     editorBaseMixin
     //formatPropertyMixin,
     //elementHorizontalTextAlignmentMixin,
@@ -16997,6 +22293,7 @@ function LabelBuilder() {
 _.inherit(LabelBuilder, ElementBuilder);
 _.extend(LabelBuilder.prototype, {
     applyMetadata: function(params){
+        /** @type Label **/
         var element = params.element;
         ElementBuilder.prototype.applyMetadata.call(this, params);
         this.applyMetadata_editorBaseBuilder(params);
@@ -17004,6 +22301,7 @@ _.extend(LabelBuilder.prototype, {
         element.setLineCount(params.metadata.LineCount);
         element.setTextWrapping(params.metadata.TextWrapping);
         element.setTextTrimming(params.metadata.TextTrimming);
+        element.setEscapeHtml(params.metadata.EscapeHtml);
         
         this.initDisplayFormat(params);
         this.initScriptsHandlers(params);
@@ -17066,8 +22364,28 @@ _.inherit(MenuBar, Container);
 
 _.extend(MenuBar.prototype, {
     createControl: function (viewMode) {
+        window.ololo = this;
         return new MenuBarControl(viewMode);
+    },
+
+    /**
+     * @description Устанавливает/снимает выделение элемента меню с заданным именем
+     * @param {String|*} name Имя выделяемого элемента меню
+     */
+    highlightItem: function (name) {
+        (function highlight(element) {
+            var childElements = element.getChildElements();
+            childElements.forEach(function (childElement) {
+                var highlight = _.isString(name) && childElement.getName() === name;
+                var control = childElement.control;
+
+                if (control) {
+                    control.setHighlight(highlight);
+                }
+            });
+        })(this);
     }
+
 });
 /**
  * @constructor
@@ -17129,6 +22447,24 @@ NumericBox.prototype.setIncrement = function (value) {
 };
 
 /**
+ * @public
+ * @description Устанваливает начальное значение
+ * @param {Number} value
+ */
+NumericBox.prototype.setStartValue = function (value) {
+    this.control.set('startValue', value);
+};
+
+/**
+ * @public
+ * @description Возвращает начальное значение
+ * @returns {Number}
+ */
+NumericBox.prototype.getStartValue = function () {
+    return this.control.get('startValue');
+};
+
+/**
  *
  * @constructor
  * @augments TextEditorBaseBuilder
@@ -17146,12 +22482,14 @@ NumericBoxBuilder.prototype.createElement = function (params) {
 NumericBoxBuilder.prototype.applyMetadata = function (params) {
     TextEditorBaseBuilder.prototype.applyMetadata.call(this, params);
 
+    /** @type NumericBox **/
     var element = params.element;
     var metadata = params.metadata;
 
     element.setMinValue(metadata.MinValue);
     element.setMaxValue(metadata.MaxValue);
     element.setIncrement(metadata.Increment);
+    element.setStartValue(metadata.StartValue);
 };
 
 
@@ -17339,25 +22677,25 @@ _.extend(PanelBuilder.prototype, /** @lends PanelBuilder.prototype*/ {
         if (metadata.OnExpanding) {
             element.onExpanding(function (context, args) {
                 return createScriptExecutor()
-                    .executeScript(metadata.OnExpanding.Name, args);
+                    .executeScript(metadata.OnExpanding.Name || metadata.OnExpanding, args);
             });
         }
         if (metadata.OnExpanded) {
             element.onExpanded(function (context, args) {
                 return createScriptExecutor()
-                    .executeScript(metadata.OnExpanded.Name, args);
+                    .executeScript(metadata.OnExpanded.Name || metadata.OnExpanded, args);
             });
         }
         if (metadata.OnCollapsing) {
             element.onCollapsing(function (context, args) {
                 return createScriptExecutor()
-                    .executeScript(metadata.OnCollapsing.Name, args);
+                    .executeScript(metadata.OnCollapsing.Name || metadata.OnCollapsing, args);
             });
         }
         if (metadata.OnCollapsed) {
             element.onCollapsed(function (context, args) {
                 return createScriptExecutor()
-                    .executeScript(metadata.OnCollapsed.Name, args);
+                    .executeScript(metadata.OnCollapsed.Name || metadata.OnCollapsed, args);
             });
         }
 
@@ -17425,6 +22763,7 @@ _.extend(PanelBuilder.prototype, /** @lends PanelBuilder.prototype*/ {
  * @constructor
  * @augments Element
  * @mixes editorBaseMixin
+ * @mixes labelTextElementMixin
  */
 function PasswordBox(parent) {
     _.superClass(PasswordBox, this, parent);
@@ -17435,14 +22774,6 @@ _.inherit(PasswordBox, Element);
 
 _.extend(PasswordBox.prototype, /* @lends PasswordBox.prototype */ {
 
-        getLabelText: function () {
-            return this.control.get('labelText');
-        },
-
-        setLabelText: function (value) {
-            this.control.set('labelText', value);
-        },
-
         getPasswordChar: function () {
             return this.control.get('passwordChar');
         },
@@ -17451,12 +22782,24 @@ _.extend(PasswordBox.prototype, /* @lends PasswordBox.prototype */ {
             this.control.set('passwordChar', value);
         },
 
+        setAutocomplete: function (value) {
+            if (typeof value === 'undefined' || value === null) {
+                return;
+            }
+            this.control.set('autocomplete', !!value);
+        },
+
+        getAutocomplete: function () {
+            return this.control.get('autocomplete');
+        },
+
         createControl: function () {
             return new PasswordBoxControl();
         }
 
     },
-    editorBaseMixin
+    editorBaseMixin,
+    labelTextElementMixin
 );
 
 /**
@@ -17480,8 +22823,9 @@ _.extend(PasswordBoxBuilder.prototype, /** @lends PasswordBoxBuilder.prototype *
             var metadata = params.metadata,
                 element = params.element;
 
-            element.setLabelText(metadata.LabelText);
+            this.initBindingToProperty(params, 'LabelText');
             element.setPasswordChar(metadata.PasswordChar);
+            element.setAutocomplete(metadata.Autocomplete);
         },
 
         createElement: function (params) {
@@ -17675,8 +23019,8 @@ _.extend(ScrollPanelBuilder.prototype, /** @lends ScrollPanelBuilder.prototype*/
  * @constructor
  * @augments Container
  */
-function StackPanel(parent) {
-    _.superClass(StackPanel, this, parent);
+function StackPanel(parent, viewMode) {
+    _.superClass(StackPanel, this, parent, viewMode);
 }
 
 _.inherit(StackPanel, Container);
@@ -17691,8 +23035,8 @@ StackPanel.prototype.setOrientation = function (value) {
     }
 };
 
-StackPanel.prototype.createControl = function () {
-    return new StackPanelControl();
+StackPanel.prototype.createControl = function (viewMode) {
+    return new StackPanelControl(viewMode);
 };
 /**
  * @constructor
@@ -17708,7 +23052,7 @@ _.extend(StackPanelBuilder.prototype,
     /** @lends StackPanelBuilder.prototype*/
     {
         createElement: function (params) {
-            return new StackPanel(params.parent);
+            return new StackPanel(params.parent, params.metadata['ViewMode']);
         },
 
         /**
@@ -17721,8 +23065,10 @@ _.extend(StackPanelBuilder.prototype,
                 metadata = params.metadata,
                 element = params.element;
 
-            ContainerBuilder.prototype.applyMetadata.call(this, params);
+            var result = ContainerBuilder.prototype.applyMetadata.call(this, params);
             element.setOrientation(metadata.Orientation);
+
+            return result;
         }
 
     });
@@ -18061,7 +23407,7 @@ _.extend(TabPanelBuilder.prototype, /** @lends TabPanelBuilder.prototype*/ {
         if (metadata.OnSelectedItemChanged) {
             element.onSelectedItemChanged(function (context, args) {
                 return new ScriptExecutor(params.parentView)
-                    .executeScript(metadata.OnSelectedItemChanged.Name, args);
+                    .executeScript(metadata.OnSelectedItemChanged.Name || metadata.OnSelectedItemChanged, args);
             });
         }
     }
@@ -18227,66 +23573,6 @@ _.extend(TablePanelBuilder.prototype,
  *
  * @param parent
  * @constructor
- * @augments TextEditorBase
- */
-function TextBox(parent) {
-    _.superClass(TextBox, this, parent);
-}
-
-_.inherit(TextBox, TextEditorBase);
-
-TextBox.prototype.createControl = function (parent) {
-    return new TextBoxControl(parent);
-};
-
-TextBox.prototype.getMultiline = function () {
-    return this.control.get('multiline');
-};
-
-TextBox.prototype.setMultiline = function (value) {
-    this.control.set('multiline', value);
-};
-
-TextBox.prototype.getLineCount = function () {
-    return this.control.get('lineCount');
-};
-
-TextBox.prototype.setLineCount = function (value) {
-    this.control.set('lineCount', value);
-};
-
-
-
-/**
- *
- * @constructor
- * @augments TextEditorBaseBuilder
- */
-function TextBoxBuilder() {
-    _.superClass(TextBoxBuilder, this);
-}
-
-_.inherit(TextBoxBuilder, TextEditorBaseBuilder);
-
-TextBoxBuilder.prototype.createElement = function (params) {
-    return new TextBox(params.parent);
-};
-
-TextBoxBuilder.prototype.applyMetadata = function (params) {
-    TextEditorBaseBuilder.prototype.applyMetadata.call(this, params);
-
-    var element = params.element;
-    var metadata = params.metadata;
-
-    element.setMultiline(metadata.Multiline);
-    element.setLineCount(metadata.LineCount);
-};
-
-
-/**
- *
- * @param parent
- * @constructor
  * @augment Element
  */
 function ToggleButton(parent) {
@@ -18393,6 +23679,114 @@ _.extend(ToolBarBuilder.prototype, /** @lends ToolBarBuilder.prototype */{
 /**
  * @param parent
  * @constructor
+ */
+function TreeView(parent) {
+    _.superClass(TreeView, this, parent);
+}
+
+_.inherit(TreeView, ListEditorBase);
+
+TreeView.prototype.createControl = function () {
+    return new TreeViewControl();
+};
+
+/**
+ *
+ * @returns Function}
+ */
+TreeView.prototype.getKeySelector = function () {
+    return this.control.get('keySelector');
+};
+
+/**
+ *
+ * @param {Function} value
+ */
+TreeView.prototype.setKeySelector = function (value) {
+    this.control.set('keySelector', value);
+};
+
+/**
+ *
+ * @returns {Function}
+ */
+TreeView.prototype.getParentSelector = function () {
+    return this.control.get('parentSelector');
+};
+
+/**
+ *
+ * @param {Function} value
+ */
+TreeView.prototype.setParentSelector = function (value) {
+    this.control.set('parentSelector', value);
+};
+function TreeViewBuilder() {
+    _.superClass(TreeViewBuilder, this);
+}
+
+_.inherit(TreeViewBuilder, ListEditorBaseBuilder);
+
+_.extend(TreeViewBuilder.prototype, /** @lends TreeViewBuilder.prototype */{
+
+    createElement: function (params) {
+        return new TreeView(params.parent);
+    },
+
+    applyMetadata: function (params) {
+        var data = ListEditorBaseBuilder.prototype.applyMetadata.call(this, params);
+
+        this._initKeySelector(params);
+        this._initParentSelector(params);
+    },
+
+    _initKeySelector: function (params) {
+        var element = params.element;
+        var metadata = params.metadata;
+        var keySelector;
+
+        if (metadata.KeySelector) {
+            keySelector = function (context, args) {
+                var scriptExecutor = new ScriptExecutor(element.getScriptsStorage());
+                return scriptExecutor.executeScript(metadata.KeySelector.Name || metadata.KeySelector, args)
+            }
+        } else if (metadata.KeyProperty) {
+            keySelector = function (context, args) {
+                return InfinniUI.ObjectUtils.getPropertyValue(args.value, metadata.KeyProperty);
+            }
+        } else {
+            keySelector = function (context, args) {
+                return args.value;
+            }
+        }
+        element.setKeySelector(keySelector);
+    },
+
+    _initParentSelector: function (params) {
+        var element = params.element;
+        var metadata = params.metadata;
+        var parentSelector;
+
+        if (metadata.ParentSelector) {
+            parentSelector = function (context, args) {
+                var scriptExecutor = new ScriptExecutor(element.getScriptsStorage());
+                return scriptExecutor.executeScript(metadata.ParentSelector.Name || metadata.ParentSelector, args)
+            }
+        } else if (metadata.ParentProperty) {
+            parentSelector = function (context, args) {
+                return InfinniUI.ObjectUtils.getPropertyValue(args.value, metadata.ParentProperty);
+            }
+        } else {
+            parentSelector = function (context, args) {
+                return args.value;
+            }
+        }
+        element.setParentSelector(parentSelector);
+    }
+});
+/**
+ * @param parent
+ * @constructor
  * @augments Container
  */
 function View(parent) {
@@ -18410,7 +23804,8 @@ function View(parent) {
 
     this.handlers = {
         onBeforeLoaded: $.Deferred(),
-        onLoaded: $.Deferred()
+        onLoaded: $.Deferred(),
+        onSelectedElementChange: null
     };
 
     this._initContext();
@@ -18440,6 +23835,8 @@ _.inherit(View, Container);
 
 _.extend(View.prototype,
     {
+
+        isView: true,
 
         _initDataSourceHandlers: function(){
             var that = this;
@@ -18682,9 +24079,9 @@ _.extend(View.prototype,
          * @description Устанавливает флаг видитмости кнопки закрытия
          * @param {boolean} value
          */
-        setCloseButton: function (value) {
+        setCloseButtonVisibility: function (value) {
             if (typeof value === 'boolean') {
-                this.control.set('closeButton', value);
+                this.control.set('closeButtonVisibility', value);
             }
         },
 
@@ -18692,8 +24089,8 @@ _.extend(View.prototype,
          * @description Возвращает флаг видимости кнопки закрытия
          * @returns {boolean}
          */
-        getCloseButton: function () {
-            return this.control.get('closeButton');
+        getCloseButtonVisibility: function () {
+            return this.control.get('closeButtonVisibility');
         },
 
         noDataSourceOnView: function(){
@@ -18719,7 +24116,35 @@ _.extend(View.prototype,
             }
 
             return this.membersDeferreds[memberName];
+        },
+
+        /**
+         *
+         * @param {string} value
+         */
+        setFocusOnControl: function (value) {
+            this.control.set('focusOnControl', value);
+        },
+
+        /**
+         *
+         * @returns {string}
+         */
+        getFocusOnControl: function () {
+            return this.control.get('focusOnControl');
         }
+
+//devblockstart
+        ,showSelectedElementMetadata: function(){
+            if(this.handlers.onSelectedElementChange){
+                this.handlers.onSelectedElementChange();
+            }
+        }
+
+        ,onSelectedElementChange: function(handler) {
+            this.handlers.onSelectedElementChange = handler;
+        }
+//devblockstop
     }
 );
 /**
@@ -18737,6 +24162,35 @@ _.extend(ViewBuilder.prototype, {
         return new View(params.parent);
     },
 
+//devblockstart
+    _getSelectedElementPath: function(metadata) {
+        var result;
+
+        if( _.isArray(metadata) ){
+            for (var i = 0, ii =  metadata.length; i<ii; i++){
+                result = this._getSelectedElementPath(metadata[i]);
+                if(result !== false){
+                    return '['+ i + ']' + result;
+                }
+            }
+        } else if( _.isObject(metadata) ){
+            if('isSelectedElement' in metadata) {
+                delete metadata.isSelectedElement;
+                return '';
+            } else {
+                for (var key in metadata){
+                    result = this._getSelectedElementPath(metadata[key]);
+                    if(result !== false){
+                        return '.' + key + result;
+                    }
+                }
+            }
+        }
+
+        return false;
+    },
+//devblockstop
+
     applyMetadata: function (params) {
 
         var parentView = params.parentView;
@@ -18745,10 +24199,19 @@ _.extend(ViewBuilder.prototype, {
         params = _.extend({}, params);
         params.parentView = params.element;
 
-        var
+        var that = this,
             metadata = params.metadata,
             element = params.element,
             builder = params.builder;
+
+//devblockstart
+        element.onSelectedElementChange(function() {
+            var path = that._getSelectedElementPath(params.metadata);
+
+            InfinniUI.JsonEditor.setMetadata(params.metadata);
+            InfinniUI.JsonEditor.setPath(path);
+        });
+//devblockstop
 
         var scripts = element.getScripts();
         var parameters = element.getParameters();
@@ -18767,6 +24230,8 @@ _.extend(ViewBuilder.prototype, {
                 scripts.add(script);
             }
         }
+
+        this.triggerStartCreatingEvent(params);
 
         if (metadata.Parameters) {
             var passedParams = params.params || {};
@@ -18798,8 +24263,8 @@ _.extend(ViewBuilder.prototype, {
             }
         }
 
-        if (metadata.DataSources) {
-            var dataSources = builder.buildMany(metadata.DataSources, {parentView: element});
+        if (metadata.DataSources && metadata.DataSources.length) {
+            var dataSources = builder.buildMany(metadata.DataSources, {parentView: element, suspended: params.suspended});
 
             element.getDataSources()
                 .set(dataSources);
@@ -18814,7 +24279,7 @@ _.extend(ViewBuilder.prototype, {
         }
 
         element.setHeaderTemplate(this.buildHeaderTemplate(element, params));
-        element.setCloseButton(metadata.CloseButton);
+        element.setCloseButtonVisibility(metadata.CloseButtonVisibility);
 
         if(metadata.OnOpening){
             element.onOpening(function() {
@@ -18841,6 +24306,19 @@ _.extend(ViewBuilder.prototype, {
         }
 
         ContainerBuilder.prototype.applyMetadata.call(this, params);
+
+        element.setFocusOnControl(metadata.FocusOnControl);
+    },
+
+    triggerStartCreatingEvent: function (params) {
+        var
+            element = params.element,
+            metadata = params.metadata,
+            onStartCreating = metadata.OnStartCreating;
+
+        if (onStartCreating) {
+            new ScriptExecutor(element).executeScript(onStartCreating.Name || onStartCreating, {});
+        }
     }
 },
     viewBuilderHeaderTemplateMixin
@@ -18909,17 +24387,22 @@ _.extend(BaseEditAction.prototype, {
 
         this.setProperty('editDataSource', editDataSource);
         this.setProperty('destinationDataSource', destinationDataSource);
-        this.setSelectedItem();
 
-        editView.open();
+        var isSuccessfulPreset = this.setSelectedItem();
 
-        editView.onClosed(function(){
-            var dialogResult = editView.getDialogResult();
+        if( isSuccessfulPreset ) {
+            editView.open();
 
-            if (dialogResult == DialogResult.accepted) {
-                that.handleClosingView();
-            }
-        });
+            editView.onClosed(function(){
+                var dialogResult = editView.getDialogResult();
+
+                if (dialogResult == DialogResult.accepted) {
+                    that.handleClosingView();
+                }
+            });
+        } else {
+            editView.close();
+        }
     },
 
     handleClosingView: function(){
@@ -18970,28 +24453,30 @@ _.inherit(AddAction, BaseEditAction);
 _.extend(AddAction.prototype, {
     setSelectedItem: function(){
         var editDataSource = this.getProperty('editDataSource'),
-            editView = editDataSource.getView();
+            editView = editDataSource.getView(),
+            item = {};
 
         if( this._isObjectDataSource(editDataSource) ) {
-            editDataSource.setItems([{}]);
-            editDataSource.setSelectedItem({});
+            editDataSource.setItems([item]);
+            editDataSource.setSelectedItem(item);
         } else {
-            var criteria = [ { CriteriaType:1, Property: "Id", Value:  "0000"  } ];
-            editDataSource.setFilter( criteria );
+            editDataSource.suspendUpdate();
 
             editView.onBeforeLoaded(function() {
                 editDataSource.createItem();
             });
         }
+
+        return true;
     },
 
     save: function(){
         var editDataSource = this.getProperty('editDataSource'),
             destinationDataSource = this.getProperty('destinationDataSource'),
-            destinationProperty = this.getProperty('destinationProperty');
+            destinationProperty = this.getProperty('destinationProperty')  || "";
 
         if( this._isObjectDataSource(editDataSource) ) {
-            var items = destinationDataSource.getProperty(destinationProperty),
+            var items = destinationDataSource.getProperty(destinationProperty) || [],
                 newItem = editDataSource.getSelectedItem();
 
             items = _.clone(items);
@@ -19011,19 +24496,17 @@ function AddActionBuilder(){
 
         var action = new AddAction(parentView);
 
-        var linkView = builder.build(metadata['LinkView'], {parent: args.parent, parentView: parentView});
+        var linkView = builder.build(metadata['LinkView'], {parent: args.parent, parentView: parentView, basePathOfProperty: args.basePathOfProperty});
 
         action.setProperty('linkView', linkView);
 		action.setProperty('sourceSource', metadata.SourceValue.Source);
         action.setProperty('destinationSource', metadata.DestinationValue.Source);
 
-        if( !_.isEmpty(metadata.DestinationValue.Property) ){
-            var destinationProperty = (args.basePathOfProperty != null) ?
-                                        args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
-                                        metadata.DestinationValue.Property;
+        var destinationProperty = (args.basePathOfProperty != null) ?
+            args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
+            metadata.DestinationValue.Property;
 
-            action.setProperty('destinationProperty', metadata.DestinationValue.Property);
-        }
+        action.setProperty('destinationProperty', destinationProperty);
 
         return action;
     }
@@ -19089,7 +24572,7 @@ _.extend(DeleteAction.prototype, {
         var dataSource = this.getProperty('destinationSource'),
             property = this.getProperty('destinationProperty');
 
-        if( this._isPredefinedIdentifierProperty(property) ) {
+        if( this._isDocument(property) ) {
             this._deleteDocument(dataSource, property, callback);
         } else {
             this._deleteItem(dataSource, property, callback);
@@ -19124,8 +24607,8 @@ _.extend(DeleteAction.prototype, {
         }
     },
 
-    _isPredefinedIdentifierProperty: function(propertyName){
-        return propertyName == '$' || propertyName == '#';
+    _isDocument: function(propertyName){
+        return propertyName == '$' || _.isFinite(propertyName);
     }
 });
 
@@ -19166,23 +24649,51 @@ _.extend(EditAction.prototype, {
 
         var selectedItem = destinationDataSource.getProperty(destinationProperty);
 
-        if( this._isObjectDataSource(editDataSource) ) {
-            this.setItem(editDataSource, selectedItem);
-        } else {
-            this.setDocument(editDataSource, selectedItem);
+        if( selectedItem == null ){
+
+            // if selectedItem is empty and it is must be document
+            // return error
+            if( this._isDocumentPath(destinationProperty) ){
+                var logger = window.InfinniUI.global.logger;
+                var message = stringUtils.format('EditAction: edit item has not been found. {0} does not have item by path "{1}"', [destinationDataSource.getName(), destinationProperty]);
+                logger.error(message);
+
+                return false;
+            }
+
+            // but if selectedItem is property of document
+            // it will be created
+            selectedItem = selectedItem || {};
         }
+
+        if( this._isObjectDataSource(editDataSource) ) {
+            this._setItem(editDataSource, selectedItem);
+        } else {
+            this._setDocument(editDataSource, selectedItem);
+        }
+
+        return true;
     },
 
-    setDocument: function (editDataSource, selectedItem){
+    _resumeUpdateEditDataSource: function () {
+        var editDataSource = this.getProperty('editDataSource');
+        editDataSource.resumeUpdate('EditAction');
+    },
+
+    _setDocument: function (editDataSource, selectedItem){
         var selectedItemId = editDataSource.idOfItem( selectedItem );
-
-        var criteria = [ { CriteriaType:1, Property: "Id", Value:  selectedItemId  } ];
-        editDataSource.setFilter( criteria );
+        editDataSource.setIdFilter(selectedItemId);
+        editDataSource.tryInitData();
+        this._resumeUpdateEditDataSource();
     },
 
-    setItem: function(editDataSource, selectedItem){
+    _setItem: function(editDataSource, selectedItem){
         var item = _.clone( selectedItem );
 
+        if(item === undefined || item === null){
+            item = {};
+        }
+        this._resumeUpdateEditDataSource();
         editDataSource.setItems( [item] );
         editDataSource.setSelectedItem( item );
     },
@@ -19198,6 +24709,10 @@ _.extend(EditAction.prototype, {
         } else {
             destinationDataSource.updateItems();
         }
+    },
+
+    _isDocumentPath: function(path){
+        return !path.includes('.');
     }
 });
 function EditActionBuilder(){
@@ -19212,7 +24727,15 @@ function EditActionBuilder(){
 
         var action = new EditAction(parentView);
 
-        var linkView = builder.build(metadata['LinkView'], {parent: args.parent, parentView: parentView});
+        var suspended = {};
+        suspended[metadata.DestinationValue.Source] = 'EditAction';
+
+        var linkView = builder.build(metadata['LinkView'], {
+            parent: args.parent,
+            parentView: parentView,
+            basePathOfProperty: args.basePathOfProperty,
+            suspended: suspended
+        });
         action.setProperty('linkView', linkView);
 
         action.setProperty('sourceSource', metadata.SourceValue.Source);
@@ -19474,7 +24997,7 @@ _.extend(SaveAction.prototype, {
         var canClose = this.getProperty('canClose');
 
         var onSuccessSave = function(context, args){
-            if(canClose){
+            if(canClose !== false){
                 parentView.setDialogResult(DialogResult.accepted);
                 parentView.close();
             }
@@ -19492,12 +25015,11 @@ function SaveActionBuilder() {
     this.build = function (context, args) {
         var parentView = args.parentView;
         var dataSource = parentView.getContext().dataSources[args.metadata.DestinationValue.Source];
-        var canClose = (args.metadata.CanClose !== false);
 
         var action = new SaveAction(parentView);
 
         action.setProperty('dataSource', dataSource);
-        action.setProperty('canClose', canClose);
+        action.setProperty('canClose', args.metadata.CanClose);
 
         return action;
     }
@@ -19511,13 +25033,14 @@ _.inherit(SelectAction, BaseAction);
 
 _.extend(SelectAction.prototype, {
     execute: function(callback){
+        var parentView = this.parentView;
         var linkView = this.getProperty('linkView');
 
-        var srcDataSourceName = this.getProperty('srcDataSourceName');
-        var srcPropertyName = this.getProperty('srcPropertyName');
+        var srcDataSourceName = this.getProperty('sourceSource');
+        var srcPropertyName = this.getProperty('sourceProperty');
 
-        var dstDataSourceName = this.getProperty('dstDataSourceName');
-        var dstPropertyName = this.getProperty('dstPropertyName');
+        var dstDataSourceName = this.getProperty('destinationSource');
+        var dstPropertyName = this.getProperty('destinationProperty');
 
         linkView.createView(function(createdView){
 
@@ -19526,10 +25049,10 @@ _.extend(SelectAction.prototype, {
 
                 if (dialogResult == DialogResult.accepted) {
                     var srcDataSource = createdView.getContext().dataSources[srcDataSourceName];
-                    var dstDataSource = createdView.getContext().dataSources[dstDataSourceName];
+                    var dstDataSource = parentView.getContext().dataSources[dstDataSourceName];
 
                     var value = srcDataSource.getProperty(srcPropertyName);
-                    dstDataSource.setProperty(srcPropertyName, value);
+                    dstDataSource.setProperty(dstPropertyName, value);
 
                     if (callback) {
                         callback(value);
@@ -19551,10 +25074,10 @@ function SelectActionBuilder() {
         var linkView = builder.build(metadata['LinkView'], {parentView: parentView});
 
         action.setProperty('linkView', linkView);
-        action.setProperty('srcDataSourceName', metadata.SourceValue.Source);
-        action.setProperty('srcPropertyName', metadata.SourceValue.Property);
-        action.setProperty('dstDataSourceName', metadata.DestinationValue.Source);
-        action.setProperty('dstPropertyName', metadata.DestinationValue.Property);
+        action.setProperty('sourceSource', metadata.SourceValue.Source);
+        action.setProperty('sourceProperty', metadata.SourceValue.Property);
+        action.setProperty('destinationSource', metadata.DestinationValue.Source);
+        action.setProperty('destinationProperty', metadata.DestinationValue.Property);
 
         return action;
     }
@@ -19685,6 +25208,9 @@ DownloadExecutor.prototype.waitResponse = function (beforeStart) {
 };
 function ServerAction(parentView) {
     _.superClass(ServerAction, this, parentView);
+
+    this.provider = window.providerRegister.build('ServerActionProvider');
+
     this.updateContentTypeStrategy();
     this.on('change:contentType', this.updateContentTypeStrategy);
 }
@@ -19694,35 +25220,76 @@ _.inherit(ServerAction, BaseAction);
 _.extend(ServerAction.prototype, {
 
     defaults: {
-        contentType: 'Object'
+        contentType: 'application/x-www-form-urlencoded; charset=utf-8',
+        method: 'GET',
+        data: {}
     },
 
     updateContentTypeStrategy: function () {
         var contentType = this.getProperty('contentType');
-        this.contentTypeStrategy = serverActionContentTypeStrategy[contentType];
+
+        if( _.isString(contentType) && contentType.includes('multipart') ){
+            this.contentTypeStrategy = serverActionContentTypeStrategy['File'];
+        } else {
+            this.contentTypeStrategy = serverActionContentTypeStrategy['Object'];
+        }
     },
 
     execute: function (callback) {
-        this.contentTypeStrategy.run(this.getProperty('provider'), this.getParametersValue(), callback);
+        this.contentTypeStrategy.run(this.provider, this._getRequestData(), callback);
     },
 
-    setParameters: function (parameters) {
-        this.setProperty('parameters', parameters);
+    setParam: function(name, value) {
+        this.setProperty('params.' + name, value);
     },
 
-    getParametersValue: function () {
-        var parameters = this.getProperty('parameters');
-        var values = {};
+    getParam: function(name) {
+        return this.getProperty('params.' + name);
+    },
 
-        for (var i in parameters) {
-            if (!parameters.hasOwnProperty(i)) {
-                continue;
+    _getRequestData: function () {
+        var origin = this._replaceParamsInStr( this.getProperty('origin') );
+        var path = this._replaceParamsInStr( this.getProperty('path') );
+        var method = this.getProperty('method').toUpperCase();
+        var contentType = this.getProperty('contentType');
+        var data = this._replaceParamsInObject( this.getProperty('data') );
+
+        var result = {};
+        result.requestUrl = origin + path;
+        result.method = method;
+        result.contentType = contentType;
+
+        if( !_.isEmpty(data) ){
+            if( method == 'GET') {
+                result.requestUrl = result.requestUrl + '?' + stringUtils.joinDataForQuery(data);
+            } else {
+                result.args = ( _.isString(contentType) && contentType.includes('application/json')) ? JSON.stringify(data) : data;
             }
-
-            values[i] = parameters[i].getValue();
         }
 
-        return values;
+        return result;
+    },
+
+    _replaceParamsInStr: function(str){
+        if(!str){
+            return str;
+        }
+
+        var that = this;
+
+        return str.replace(/<%([\s\S]+?)%>/g, function(p1, p2){
+            return that.getParam(p2);
+        });
+    },
+
+    _replaceParamsInObject: function(obj){
+        if(_.isEmpty(obj) ){
+            return obj;
+        }
+
+        var str = JSON.stringify(obj);
+        var replacedStr = this._replaceParamsInStr(str);
+        return JSON.parse(replacedStr);
     }
 });
 
@@ -19733,27 +25300,60 @@ function ServerActionBuilder() {
             parentView = args.parentView;
 
         var action = new ServerAction(parentView);
-        var provider = window.providerRegister.build('ServerActionProvider', metadata);
 
-        //action.setProperty('linkView', linkView);
-        action.setProperty('provider', provider);
+        action.setProperty('origin', metadata.Origin);
+        action.setProperty('path', metadata.Path);
 
-        var parameters = {};
-
-        if (Array.isArray(metadata.Parameters)) {
-            metadata.Parameters.forEach(function (metadata) {
-                var param = builder.buildType('Parameter', metadata, {parentView: parentView});
-                parameters[param.getName()] = param;
-            });
-            action.setParameters(parameters);
+        if (metadata.Data) {
+            action.setProperty('data', metadata.Data);
         }
 
-        if (metadata.ContentType) {
+        if (metadata.Method) {
+            action.setProperty('method', metadata.Method);
+        }
+
+        if (metadata.ContentType || metadata.ContentType === false) {
             action.setProperty('contentType', metadata.ContentType);
         }
 
+        if(metadata.Params){
+            for(var name in metadata.Params) {
+
+                var value = metadata.Params[name];
+
+                if (typeof value != 'object') {
+                    if (value !== undefined) {
+                        action.setParam(name, value);
+                    }
+                } else {
+                    this._initBinding(name, value, action, parentView, builder);
+                }
+            }
+        }
+
         return action;
-    }
+    };
+
+    this._initBinding = function (paramName, paramValue, action, parentView, builder) {
+        var args = {
+            parent: parentView,
+            parentView: parentView
+        };
+
+        var dataBinding = builder.buildBinding(paramValue, args);
+
+        dataBinding.setMode(InfinniUI.BindingModes.toElement);
+
+        dataBinding.bindElement({
+            setProperty: function (name, value) {
+                action.setParam(name, value);
+            },
+
+            onPropertyChanged: function () {
+            }
+
+        }, paramName);
+    };
 }
 
 var serverActionContentTypeStrategy = {
@@ -19764,7 +25364,6 @@ var serverActionContentTypeStrategy = {
     },
     "Object": {
         run: function (provider, params, callback) {
-
             provider.request(params, callback);
         }
     }
@@ -19813,7 +25412,6 @@ _.extend(ApplicationBuilder.prototype, {
 
         builder.register('View', new ViewBuilder());
         builder.register('InlineView', new InlineViewBuilder());
-        builder.register('ChildView', new ChildViewBuilder());
         builder.register('AutoView', new MetadataViewBuilder());
         builder.register('ExistsView', new MetadataViewBuilder());
 
@@ -19843,33 +25441,33 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('FileBox', new FileBoxBuilder());
         builder.register('Label', new LabelBuilder());
         builder.register('Icon', new IconBuilder());
-        builder.register('LinkLabel', new LinkLabelBuilder());
+        builder.register('DateTimePicker', new DateTimePickerBuilder());
         builder.register('DatePicker', new DatePickerBuilder());
+        builder.register('TimePicker', new TimePickerBuilder());
         builder.register('ToggleButton', new ToggleButtonBuilder());
         builder.register('NumericBox', new NumericBoxBuilder());
         builder.register('Button', new ButtonBuilder());
         builder.register('ToolBar', new ToolBarBuilder());
         builder.register('ToolBarButton', new ButtonBuilder());
-        //builder.register('ToolBarSeparator', new ToolBarSeparatorBuilder());
         builder.register('ComboBox', new ComboBoxBuilder());
         builder.register('RadioGroup', new RadioGroupBuilder());
-        builder.register('SearchPanel', new SearchPanelBuilder());
         builder.register('ExtensionPanel', new ExtensionPanelBuilder());
-        builder.register('FilterPanel', new FilterPanelBuilder());
         builder.register('PopupButton', new PopupButtonBuilder());
         builder.register('DataNavigation', new DataNavigationBuilder());
         builder.register('DocumentViewer', new DocumentViewerBuilder());
         builder.register('PdfViewer', new PdfViewerBuilder());
         builder.register('TreeView', new TreeViewBuilder());
         builder.register('Frame', new FrameBuilder());
+        builder.register('ButtonEdit', new ButtonEditBuilder());
 
+
+        builder.register('RestDataSource', new RestDataSourceBuilder());
         builder.register('DocumentDataSource', new DocumentDataSourceBuilder());
         builder.register('DataBinding', new DataBindingBuilder());
         builder.register('PropertyBinding', new DataBindingBuilder());
         builder.register('ObjectDataSource', new ObjectDataSourceBuilder());
         builder.register('Parameter', new ParameterBuilder());
         builder.register('Validation', new ValidationBuilder());
-        builder.register('Criteria', new CriteriaBuilder());
 
 
         builder.register('AcceptAction', new AcceptActionBuilder());
@@ -19897,8 +25495,6 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('RegexEditMask', new RegexEditMaskBuilder());
 
         builder.register('Comparator', new ComparatorBuilder());
-        builder.register('GlobalNavigationBar', new GlobalNavigationBarBuilder());
-        builder.register('ActionBar', new ActionBarBuilder());
 
         builder.register('Script', new ScriptBuilder());
 
@@ -19999,191 +25595,6 @@ function Builder() {
     };
 }
 
-var AbstractGridPanelControl = function(){
-    _.superClass(AbstractGridPanelControl, this);
-};
-
-_.inherit(AbstractGridPanelControl, Control);
-
-_.extend(AbstractGridPanelControl.prototype, {
-
-    addRow: function(row){
-        this.controlModel.addRow(row);
-    },
-
-    getRows: function(){
-        return this.controlModel.getRows();
-    }
-
-});
-var AbstractGridPanelModel = ControlModel.extend({
-
-    defaults: _.defaults({
-        rows: null
-    }, ControlModel.prototype.defaults),
-
-    initialize: function(){
-        this.set('rows', [])
-
-        ControlModel.prototype.initialize.apply(this);
-    },
-
-    addRow: function(row){
-        this.get('rows').push(row);
-        this.trigger('rowsIsChange', this.get('rows'));
-        this.initRowHandlers(row);
-    },
-
-    getRows: function(){
-        return this.get('rows');
-    },
-
-    initRowHandlers: function(row){
-        var self = this;
-
-        row.onCellsChange( function(){
-            self.trigger('cellsIsChange');
-        });
-
-        row.onItemsChange( function(){
-            self.trigger('itemsIsChange');
-        });
-    }
-
-});
-var AbstractGridPanelView = ControlView.extend({
-
-    templates: {
-        row: null,
-        cell: null
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-        this.listenTo(this.model, 'rowsIsChange', this.rerender);
-        this.listenTo(this.model, 'cellsIsChange', this.rerender);
-        this.listenTo(this.model, 'itemsIsChange', this.rerender);
-    },
-
-    render: function () {
-        var $row;
-        this.prerenderingActions();
-
-        this.$el
-            .empty();
-
-        _.each(this.model.getRows(), function(row){
-            $row = this.renderRow(row);
-            this.$el
-                .append($row);
-        }, this);
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    renderRow: function(row){
-        var $row = $(this.templates.row({})),
-            $cell;
-
-        _.each(row.getCells(), function(cell){
-            $cell = this.renderCell(cell);
-            $row.append($cell);
-        }, this);
-
-        return $row;
-    },
-
-    renderCell: function(cell){
-        var $cell = $(this.templates.cell({colSpan: cell.colSpan})),
-            $item;
-
-        _.each(cell.getItems(), function(item){
-            $item = this.renderItem(item);
-            $cell.append($item);
-        }, this);
-
-        return $cell;
-    },
-
-    renderItem: function(item){
-        return item.render();
-    }
-
-});
-var ActionBarControl = function () {
-    _.superClass(ActionBarControl, this);
-};
-
-_.inherit(ActionBarControl, Control);
-
-_.extend(ActionBarControl.prototype, {
-    createControlModel: function () {
-        return new ActionBarModel();
-    },
-
-    createControlView: function (model) {
-        return new ActionBarView({model: model});
-    }
-});
-
-var ActionBarModel = ControlModel.extend({
-
-    initialize: function () {
-        this.set('pages', []);
-        ControlModel.prototype.initialize.apply(this);
-    }
-
-});
-
-var ActionBarView = ControlView.extend({
-
-    className: 'pl-action-bar',
-
-    template: {
-        //panel: InfinniUI.Template["controls/filterPanel/template/template.tpl.html"],
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-        this.listenTo(this.model, 'change:pages', this.onPagesChange);
-    },
-
-    render: function () {
-        this.renderButtons();
-        return this;
-    },
-
-    renderButtons: function () {
-        var pages = this.model.get('pages');
-        var buttons = _.map(pages, function (pageView) {
-            var button = new ActionBarButtonView({
-                key: pageView.getGuid(),
-                text: pageView.getText()
-            });
-        }, this);
-    },
-
-    onPagesChange: function () {
-
-        var pages = this.model.get('pages');
-        console.log(pages);
-        for (var i = 0, ln = pages.length; i < ln; i = i + 1) {
-
-        }
-    }
-
-});
-var ActionBarButtonModel = Backbone.Model.extend({
-
-});
-
-var ActionBarButtonView = Backbone.Model.extend({
-
-    initialize: function (options) {
-        this.model = new ActionBarButtonModel(options);
-    }
-});
 var ActiveBarModel = Backbone.Model.extend({
 	
 	defaults: {
@@ -21157,6 +26568,13 @@ var GlobalNavigationPopup = Backbone.View.extend({
 
 });
 jQuery(document).ready(function () {
+    InfinniUI.user = {
+        onReadyDeferred: $.Deferred(),
+        onReady: function(handler){
+            this.onReadyDeferred.done(handler);
+        }
+    };
+
     refreshUserInfo();
 });
 
@@ -21176,10 +26594,10 @@ function refreshUserInfo() {
     var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
     authProvider.getCurrentUser(
         function (result) {
-            setUserInfo(result);
+            InfinniUI.user.onReadyDeferred.resolve(result);
         },
         function (error) {
-            showObject('#getCurrentUserResult', error);
+            InfinniUI.user .onReadyDeferred.resolve(null);
         }
     );
 }
@@ -21446,8 +26864,6 @@ _.extend(AuthenticationProvider.prototype, {
             }
 
             this.handlers.onActiveRoleChanged.fire.apply(this.handlers.onActiveRoleChanged, args);
-            var exchange = messageBus.getExchange('global');
-            exchange.send('OnActiveRoleChanged', {value: args});
         }, errorCallback);
     },
 
@@ -21550,14 +26966,16 @@ _.extend(AuthenticationProvider.prototype, {
         };
 
         this.sendPostRequest('/Auth/SignOut', null, function(){
+            InfinniUI.user.onReadyDeferred = $.Deferred();
+            InfinniUI.user.onReadyDeferred.resolve(null);
+
             var args = _.toArray(arguments);
             if(resultCallback){
                 resultCallback.apply(this, args);
             }
 
             this.handlers.onSignOut.fire.apply(this.handlers.onSignOut, args);
-            var exchange = messageBus.getExchange('global');
-            exchange.send('OnSignOut', {value: args});
+
         }.bind(this), errorCallback);
     },
 
@@ -21619,6 +27037,8 @@ _.extend(AuthenticationProvider.prototype, {
     },
 
     sendPostRequest: function (requestUri, requestData, resultCallback, errorCallback) {
+        var that = this;
+
         if (requestData !== null) {
             requestData = JSON.stringify(requestData);
         }
@@ -21632,8 +27052,12 @@ _.extend(AuthenticationProvider.prototype, {
             beforeSend: this.onBeforeRequest(),
             success: this.onSuccessRequest(resultCallback),
             error: this.onErrorRequest(function (error) {
-                if(errorCallback) {
-                    errorCallback(error.responseJSON);
+                if(error.status != 200) {
+                    if(errorCallback) {
+                        errorCallback(error.responseJSON);
+                    }
+                } else {
+                    that.onSuccessRequest(resultCallback).apply(that, arguments);
                 }
             })
         });
@@ -21920,699 +27344,21 @@ var ExtensionPanelView = ContainerView.extend({
         this.extensionObject = new window[extensionName](context, {$el: this.$el, parameters: parameters, itemTemplate: itemTemplate, items: items});
     }
 });
-var FilterPanelControl = function () {
-    _.superClass(FilterPanelControl, this);
-};
-
-_.inherit(FilterPanelControl, Control);
-
-_.extend(FilterPanelControl.prototype, {
-    createControlModel: function () {
-        return new FilterPanelModel();
-    },
-
-    createControlView: function (model) {
-        return new FilterPanelView({model: model});
-    },
-
-    onValueChanged: function (handler) {
-        this.controlView.on('onValueChanged', handler);
-    },
-
-    filter: function () {
-        this.controlView.trigger('applyFilter');
-    }
-
-});
-var FilterPanelModel = ControlModel.extend({
-    defaults: _.defaults({
-    }, ControlModel.prototype.defaults),
-
-    initialize: function(){
-        ControlModel.prototype.initialize.apply(this);
-        this.set({
-            text: 'Найти'
-        }, {silent: true});
-    }
-});
-var FilterPanelView = ControlView.extend({
-    className: 'pl-filter-panel',
-
-    template: {
-        panel: InfinniUI.Template["controls/filterPanel/template/template.tpl.html"],
-        item: InfinniUI.Template["controls/filterPanel/template/item.tpl.html"]
-    },
-
-
-    controlsPerLine: 6,
-
-    events: {
-        'click .btn_reset': 'onButtonResetClickHandler',
-        'submit form': 'submitFormHandler'
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-
-        this.listenTo(this.model, 'change:enabled', this.updateEnabled);
-        this.on('applyFilter', this.onApplyFilterHandler);
-    },
-
-    render: function () {
-        this.prerenderingActions();
-        var filters = this.model.get('filters');
-        var $item;
-
-        this.$el.html(this.template.panel({
-            text: this.model.get('text')
-        }));
-        var $controls = this.$('.pl-filter-controls');
-
-        for (var i = 0; i < filters.length; i = i + 1) {
-            $item = $(this.template.item());
-            $('.pl-filter-panel-label', $item).append(filters[i].text.render());
-            for (var j = 0; j < filters[i].operators.length; j++) {
-                $('.pl-filter-panel-control', $item).append(filters[i].operators[j].el.render());
-            }
-
-            $controls.append($item);
-        }
-
-        this.updateEnabled();
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    onApplyFilterHandler: function () {
-        this.$el.find('.pl-text-box').trigger('synchValue');
-        this.onButtonSearchClickHandler();
-    },
-
-    submitFormHandler: function(event){
-        event.preventDefault();
-        this.trigger('applyFilter');
-    },
-
-    onButtonSearchClickHandler: function () {
-        var query = this.collectFormQuery();
-
-        if(this.model.get('value') !== undefined && JSON.stringify(this.model.get('value')) == JSON.stringify(query)) {
-            return;
-        }
-
-        this.model.set('value', query);
-        this.trigger('onValueChanged', this.model.get('value'));
-    },
-
-    filter:function(){
-        this.onButtonSearchClickHandler();
-    },
-
-    onButtonResetClickHandler: function () {
-        var filters = this.model.get('filters');
-        var value = [];
-
-        for (var i = 0; i < filters.length; i++) {
-            for (var j = 0; j < filters[i].operators.length; j++) {
-                filters[i].operators[j].el.control.set('value', null);
-            }
-        }
-
-        this.model.set('value', value);
-        this.trigger('onValueChanged', this.model.get('value'));
-
-        this.$el.find('.dropdown').one('hidden.bs.dropdown', function(){
-            $(this).children('button.dropdown-toggle').focus();
-        })
-    },
-
-    collectFormQuery: function(){
-        var query = [];
-        var filters = this.model.get('filters');
-
-        for (var i = 0; i < filters.length; i++) {
-            for (var j = 0; j < filters[i].operators.length; j++) {
-                var val = filters[i].operators[j].el.getValue();
-                if(val) {
-                    var obj = {};
-                    obj.Property = filters[i].property;
-                    if(obj.Property) {
-                        obj.CriteriaType = toEnum(filters[i].operators[j].operator);
-
-                        if (typeof val == 'object' && !(val instanceof Date)) {
-                            obj.Value = val.Id;
-                        } else {
-                            obj.Value = val;
-                        }
-                        query.push(obj);
-                    }
-                }
-            }
-        }
-        query.push.apply(query, this.model.get('query'));
-        //console.log(query);
-        return query;
-    },
-
-    updateEnabled: function(){
-        this.$el.find('input, button').prop('disabled', !this.model.get('enabled'));
-    }
-});
-var GlobalNavigationBarButtonModel = Backbone.Model.extend({
-    defaults: {
-        key: '',
-        text: '',
-        active: false,
-        description: ''
-    }
-});
-
-var GlobalNavigationBarButtonView = Backbone.View.extend({
-
-    //className: 'pl-global-navigation-bar-button',
-    className: 'pl-gn-button',
-
-    activeClass: 'pl-active',
-
-    template: InfinniUI.Template["controls/globalNavigationBar/buttons/template/template.tpl.html"],
-    //template: _.template('<a data-key="<%=key%>"><%=text%><i class="fa fa-times"></i></a>'),
-
-    events: {
-        'click .pl-gn-button-link': 'onClickHandler',
-        'click .pl-gn-button-close': 'onClickCloseHandler'
-    },
-
-    initialize: function (options) {
-        this.model = new GlobalNavigationBarButtonModel(options);
-        this.listenTo(this.model, 'change:text', this.render);
-        this.listenTo(this.model, 'change:active', this.onChangeActiveHandler);
-    },
-
-    render: function () {
-        this.$el.html(this.template(this.model.toJSON()));
-        return this;
-    },
-
-    setText: function (text) {
-        this.model.set('text', text);
-    },
-
-    setActive: function (active) {
-        var activate = this.model.get('key') == active;
-        this.model.set('active', activate);
-    },
-
-    getKey: function () {
-        return this.model.get('key');
-    },
-
-    onClickHandler: function (event) {
-        event.preventDefault();
-
-        this.trigger('application:activate', this.model.get('key'));
-    },
-
-    onClickCloseHandler: function (event) {
-        event.preventDefault();
-        this.trigger('application:closing');
-    },
-
-    onClick: function (handler) {
-        this.on('click', handler)
-    },
-
-    onChangeActiveHandler: function () {
-        var active = this.model.get('active');
-
-        this.$el.toggleClass(this.activeClass, active);
-    }
-
-});
-var GlobalNavigationBarControl = function () {
-    _.superClass(GlobalNavigationBarControl, this);
-};
-
-_.inherit(GlobalNavigationBarControl, Control);
-
-_.extend(GlobalNavigationBarControl.prototype, {
-    createControlModel: function () {
-        return new GlobalNavigationBarModel();
-    },
-
-    createControlView: function (model) {
-        return new GlobalNavigationBarView({model: model});
-    },
-
-    addApplicationView: function (view) {
-        var model = this.controlModel;
-        var applications = model.get('applications').slice();
-        if (applications.indexOf(view) === -1) {
-            applications.push(view);
-            model.set('applications', applications);
-        }
-        model.set('active', view.getGuid());
-    },
-
-    removeApplicationView: function (view) {
-        var model = this.controlModel;
-        var applications = model.get('applications').slice();
-        var i = applications.indexOf(view);
-        if (i === -1) {
-            return;
-        }
-        var active = model.get('active');
-        if (active === view.getGuid()) {
-            model.set('active', null);
-        }
-        applications.splice(i, 1);
-        model.set('applications', applications);
-    },
-
-    onActivateApplication: function (handler) {
-        this.controlView.on('application:activate', handler);
-    },
-
-    onClosingApplication: function (handler) {
-        this.controlView.on('application:closing', handler)
-    },
-
-    onCloseApplication: function (handler) {
-        this.controlView.on('application:close', handler);
-    },
-
-    setApplications: function (applications) {
-        this.set('applications', applications.slice());
-    },
-
-    setApplicationText: function (view) {
-        var applications = this.controlModel.get('applications');
-
-        if (applications.indexOf(view) === -1) {
-            return;
-        }
-
-        this.controlModel.trigger('application:text', {
-            key: view.getGuid(),
-            text: view.getText()
-        });
-
-
-    }
-
-});
-var GlobalNavigationBarModel = ControlModel.extend({
-
-    initialize: function () {
-        ControlModel.prototype.initialize.apply(this);
-        this.set('applications', []);
-    }
-
-});
-
-var GlobalNavigationBarView = ControlView.extend({
-
-    className: 'pl-global-navigation-bar',
-
-    UI: {
-        buttons: '.pl-gn-buttons'
-    },
-
-    template: InfinniUI.Template["controls/globalNavigationBar/template/template.tpl.html"],
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-
-        this.listenTo(this.model, 'change:applications', this.onChangeApplicationsHandler);
-        this.listenTo(this.model, 'change:active', this.onChangeActiveHandler);
-        this.model.set('buttons', []);
-        this.model.set('list', []);
-    },
-
-    onChangeApplicationsHandler: function () {
-        //@TODO Обновить список приложений (кнопки выбора и список)
-        var applications = this.model.get('applications');
-        this.renderApplications();
-    },
-
-    onChangeActiveHandler: function () {
-        var buttons = this.model.get('buttons');
-
-        var active = this.model.get('active');
-
-        var index = _.findIndex(buttons, function (button) {
-            return button.getKey() == active;
-        });
-
-        var button;
-        for (var i = 0, ln = buttons.length; i < ln; i = i + 1) {
-            button = buttons[i];
-            button.$el.toggleClass('pl-before-active', i + 1 === index);
-            button.$el.toggleClass('pl-after-active', i === index + 1);
-            button.$el.toggleClass('last', i === ln - 1);
-        }
-    },
-
-    render: function () {
-
-        this.$el.html(this.template({}));
-        this.bindUIElements();
-
-        this.renderApplications();
-        return this;
-    },
-
-    renderApplications: function () {
-        this.renderButtons();
-        this.renderList();
-    },
-
-    renderButtons: function () {
-        //@TODO Рендеринг список кнопок выбора приложений
-        var applications = this.model.get('applications');
-
-        var control = this;
-
-        var buttons = this.model.get('buttons');
-
-        _.forEach(buttons, function (button) {
-            button.remove();
-        });
-
-
-        if (_.isEmpty(applications)) {
-            return;
-        }
-
-        var active = this.model.get('active');
-
-
-        buttons = _.map(applications, function (app){
-            var button = new GlobalNavigationBarButtonView({
-                key: app.getGuid(),
-                text: app.getText() || app.getGuid(),
-                active: app.getGuid() === active
-            });
-
-            button.listenTo(this.model, 'application:text', function (data) {
-                if (app.getGuid() === data.key) {
-                    this.setText(data.text);
-                }
-            });
-
-            button.listenTo(this.model, 'change:active', function (model, active) {
-                button.setActive(active);
-            });
-
-            this.listenTo(button, 'application:closing', function () {
-                control.trigger('application:closing', app);
-            });
-
-            this.listenTo(button, 'application:activate', function () {
-                control.trigger('application:activate', app);
-            });
-
-
-
-
-            button.onClick(this.onActivateApplicationHandler);
-            //this.$el.append(button.render().$el);
-            this.ui.buttons.append(button.render().$el);
-            return button;
-        }, this);
-
-        this.model.set('buttons', buttons);
-
-    },
-
-    onActivateApplicationHandler: function (key) {
-        var applications = this.model.get('applications');
-
-        var app = _.find(applications, function (app) {
-            return app.getGuid() === key;
-        });
-
-        if (typeof app !== 'undefined') {
-            this.trigger('application:activate', app);
-        }
-    },
-
-
-    renderList: function () {
-        //@TODO Рендеринг выпадающего списка приложений
-    }
-
-});
-var LinkLabelControl = function () {
-    _.superClass(LinkLabelControl, this);
-};
-
-_.inherit(LinkLabelControl, Control);
-
-_.extend(LinkLabelControl.prototype, {
-
-    createControlModel: function () {
-        return new LinkLabelModel();
-    },
-
-    createControlView: function (model) {
-        return new LinkLabelView({model: model});
-    },
-
-    onClick: function(handler){
-        this.controlView.onClick(handler);
-    }
-
-}, controlValuePropertyMixin);
-var LinkLabelModel = ControlModel.extend({
-    defaults: _.defaults({
-        horizontalTextAlignment: 'Left'
-    }, ControlModel.prototype.defaults)
-});
-var LinkLabelView = ControlView.extend({
-    className: 'pl-link-label TextWrapping',
-
-    template: InfinniUI.Template["controls/linkLabel/template/linkLabel.tpl.html"],
-
-    UI: {
-        link: 'a',
-        label: 'label',
-        container: 'div'
-    },
-
-    events: {
-        'click a': 'onClickHandler'
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-        this.updateLinkText = _.debounce(this._updateLinkText, 50);
-        this.initModelHandlers();
-    },
-
-    updateReferenceHandler: function (model, value) {
-        this.updateReference();
-    },
-
-    updateReference: function () {
-        if(!this.wasRendered){
-            return;
-        }
-        var href = this.model.get('reference');
-        if(href == null || href == undefined || href == ''){
-            this.ui.link.prop('href', 'javascript:;');
-        }else{
-            this.ui.link.prop('href', href);
-        }
-    },
-
-    initModelHandlers: function () {
-        this.listenTo(this.model, 'change:value', this.updateLinkText);
-        this.listenTo(this.model, 'change:reference', this.updateReferenceHandler);
-        this.listenTo(this.model, 'change:textTrimming', this.updateLinkText);
-        //this.listenTo(this.model, 'change:textWrapping', this.updateLinkText);
-        this.initHorizontalAlignment();
-        this.initHorizontalTextAlignment();
-        this.initForeground();
-        this.initBackground();
-        this.initTextStyle();
-        this.initUpdateLineCount();
-        this.initTextWrapping();
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.$el
-            .html(this.template({}));
-
-        this.bindUIElements();
-        this.updateLineCount();
-        this.updateTextWrapping();
-        this.updateLinkText();
-        this.updateHorizontalTextAlignment();
-        this.updateBackground();
-        this.updateForeground();
-        this.updateTextStyle();
-
-        this.updateReference();
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    /**
-     * @private
-     */
-    _updateLinkText: function () {
-        var text;
-
-        if(!this.wasRendered){
-            return;
-        }
-
-        var link = this.ui.link;
-        var $container = this.ui.container;
-
-        var model = this.model;
-        var textTrimming = this.model.get('textTrimming');
-        //var textWrapping = this.model.get('textWrapping');
-
-        text = this.getTextLabel();
-
-        //this.$el.toggleClass('TextWrapping', textWrapping);
-        //this.$el.toggleClass('NoTextWrapping', !textWrapping);
-
-
-        this.model.set('lineHeight', this.ui.label.innerHeight());
-
-        /*
-        @TODO Режим ellipsis не применяем т.к.
-        setTimeout(function () {
-            var txt = '';
-            var txt2 = '';
-            var ellipsis = ' ...';
-            var lineCount = model.get('lineCount');
-
-            if (textWrapping) {
-                if (typeof lineCount === 'undefined' || lineCount === null) {
-                    link.text(text);
-                    return;
-                }
-            } else {
-                if (!textTrimming) {
-                    link.text(text);
-                    return;
-                }
-            }
-
-            var chars = [" ", "\n"];
-            var fromPosition = 0;
-
-            var maxWidth = $container.innerWidth();
-            var lineHeight = model.get('lineHeight');
-
-            var pos;
-            while(fromPosition < text.length) {
-                pos = Math.min.apply(Math, _.map(chars, function (char) {
-                    var index = text.indexOf(char, fromPosition);
-                    return index === -1 ? text.length : index;
-                }));
-
-                txt2 = text.substring(0, pos);
-
-                if (textTrimming && pos < text.length) {
-                    txt2 = txt2 + ellipsis;
-                }
-                link.text(txt2);
-
-                if (textWrapping) {
-                    if (link.innerHeight() > lineHeight * lineCount) {
-                        break;
-                    } else {
-                        txt = txt2;
-                    }
-                } else {
-                    if (link.innerWidth() > maxWidth) {
-                        break;
-                    } else {
-                        txt = txt2;
-                    }
-                }
-                fromPosition = pos + 1;
-            }
-
-            link.text(txt);
-        }, 150);//Trimming применяется с задержкой
-        */
-
-        link.text(text);//Устанавливаем текст, Trimming примениться позже (см. setTimeOut выше)
-        link.attr('title', text);
-
-    },
-
-    /**
-     * @private
-     * Возвращает текст для контрола.
-     * @returns {String}
-     */
-    getTextLabel: function () {
-        var text = this.model.get('value');
-        var format = this.model.get('format');
-
-        if (typeof text !== 'undefined' && text !== null) {
-            if (typeof format !== 'undefined' && format !== null) {
-                text = format.format(text);
-            }
-        }else{
-            text = this.model.get('text');
-            if (typeof text === 'undefined' || text == null) {
-                text = '';
-            }
-        }
-
-        return text;
-    },
-
-    /**
-     * @description Обработчик щелчка. Если один из обработчиков вернул false - переход по ссылке отменяется
-     * @private
-     * @param event
-     */
-    onClickHandler: function (event) {
-        var cancel = false;
-
-        var enabled = this.model.get('enabled');
-
-        if (!enabled) {
-            event.preventDefault();
-            return;
-        }
-
-        this.callEventHandler('OnClick', function (response) {
-            if (response === false) {
-                cancel = true;
-            }
-        });
-
-        if (cancel) {
-            event.preventDefault();
-        }
-    }
-
-});
-
-_.extend(LinkLabelView.prototype,
-    foregroundPropertyMixin,
-    backgroundPropertyMixin,
-    textStylePropertyMixin,
-    lineCountPropertyMixin,
-    textWrappingPropertyMixin
-    //horizontalTextAlignmentPropertyMixin
-);
-
 (function () {
     var template = InfinniUI.Template["controls/loaderIndicator/template.tpl.html"];
+
+    InfinniUI.loaderIndicator = {
+        show: function(){
+            $.blockUI({
+                message: $(template()),
+                ignoreIfBlocked: true,
+                baseZ: 99999
+            });
+        },
+        hide: function(){
+            $.unblockUI();
+        }
+    };
 
     if (!InfinniUI.config.useLoaderIndicator) {
         return;
@@ -22679,418 +27425,6 @@ var PdfViewerView = PdfViewerViewBase.extend({
         this.listenTo(this.model, 'change:url', renderFrame);
     }
 });
-var SearchPanelControl = function () {
-    _.superClass(SearchPanelControl, this);
-};
-
-_.inherit(SearchPanelControl, Control);
-
-_.extend(SearchPanelControl.prototype, {
-    createControlModel: function () {
-        return new SearchPanelModel();
-    },
-
-    createControlView: function (model) {
-        return new SearchPanelView({model: model});
-    },
-
-    onValueChanged: function (handler) {
-        this.controlView.on('onValueChanged', handler);
-    }
-});
-var SearchPanelModel = ControlModel.extend({
-    defaults: _.extend({
-        value: null
-    }, ControlModel.prototype.defaults),
-
-    initialize: function(){
-        ControlModel.prototype.initialize.apply(this);
-        this.set({
-            text: 'Найти'
-        }, {silent: true});
-    }
-});
-var SearchPanelView = ControlView.extend({
-    className: 'pl-search-panel',
-
-    template: InfinniUI.Template["controls/searchPanel/template/template.tpl.html"],
-
-    events: {
-        'submit form': 'submitFormHandler',
-        'click .btn_remove': 'onButtonRemoveClickHandler',
-        'input .form-control': 'onUpdateUIValue'
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-        this.listenTo(this.model, 'change:value', this.updateValue);
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.$el
-            .html(this.template({
-                placeholder: this.model.get('text')
-            }));
-
-        this.updateValue();
-        this.updateEnabled();
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    submitFormHandler: function(event){
-        event.preventDefault();
-        this.trigger('onValueChanged',this.model.get('value'));
-    },
-
-    updateEnabled: function () {
-        ControlView.prototype.updateEnabled.apply(this);
-
-        if (this.wasRendered) {
-            var isEnabled = this.model.get('enabled'),
-                $control = this.$el.find('.form-control'),
-                $button_search = this.$el.find('.btn_search'),
-                $button_remove = this.$el.find('.btn_remove');
-            $control.prop('disabled', !isEnabled);
-            $button_search.prop('disabled', !isEnabled);
-            $button_remove.prop('disabled', !isEnabled);
-        }
-    },
-
-    updateValue : function () {
-
-        if (this.wasRendered) {
-            this.$el.find('.form-control').val(this.model.get('value'));
-        }
-    },
-
-    onUpdateUIValue : function(e){
-        var newVal = $(e.target).val();
-        this.model.set('value', newVal);
-    },
-
-    onButtonRemoveClickHandler: function() {
-        this.model.set('value','');
-        this.render();
-        this.trigger('onValueChanged',this.model.get('value'));
-    }
-});
-var TreeViewControl = function () {
-    _.superClass(TreeViewControl, this);
-};
-
-_.inherit(TreeViewControl, Control);
-
-_.extend(TreeViewControl.prototype, {
-
-    createControlModel: function () {
-        return new TreeViewModel();
-    },
-
-    createControlView: function (model) {
-        return new TreeViewView({model: model});
-    },
-
-    getSelectedItem: function () {
-        return this.controlView.getSelectedItem();
-    }
-
-    //onChangeTerm: function (handler) {
-    //    var fn = function (model, value) {
-    //        handler(value);
-    //    };
-    //    this.controlModel.on('change:term', fn);
-    //},
-    //
-    //setOpenListFunction: function(f){
-    //    this.controlView.setOpenListFunction(f);
-    //},
-    //
-    //onFirstOpening: function(handler){
-    //    this.controlView.on('firstOpening', handler);
-    //}
-
-}, controlValuePropertyMixin);
-var TreeViewModel = ControlModel.extend({
-    defaults: _.extend({
-        multiSelect: false,
-        showNodeImages: false,
-        keyProperty: '',
-        parentProperty: '',
-        imageProperty: '',
-        verticalAlignment: 'Stretch',
-        /** Inherited from BaseListElement */
-        readOnly: false,
-        items: []
-    }, ControlModel.prototype.defaults)
-});
-
-var TreeViewView = ControlView.extend({
-
-    className: 'pl-treeview',
-
-    template: InfinniUI.Template["controls/treeView/template/treeview.tpl.html"],
-
-    UI: {
-        container: 'div'
-    },
-
-    initialize: function () {
-        this.listenTo(this.model, 'change:value', this.onUpdateValueHandler);
-        this.listenTo(this.model, 'change:items', this.onUpdateItemsHandler);
-        this.listenTo(this.model, 'change:readOnly', this.onUpdateMultipleHandler);
-    },
-
-    render: function () {
-        this.prerenderingActions();
-        var html = this.template();
-
-        this.$el.html(html);
-        this.bindUIElements();
-
-        this.renderData();
-        this.bindTreeEvent();
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    /**
-     * @descroption Конвертирует данные из источника данных в формат, подходящий для используемого плагина TreeView
-     * @param {Array} data
-     * @returns *
-     */
-    convertData: function (data) {
-        var parentProperty = this.model.get('parentProperty');
-        var keyProperty = this.model.get('keyProperty');
-        var displayProperty = this.model.get('displayProperty');
-        var disabled = this.model.get('readOnly');
-        var roots = _.pluck(data, keyProperty);
-        roots = _.unique(roots);
-
-        return _.map(data, function (item) {
-            var id = InfinniUI.ObjectUtils.getPropertyValue(item, keyProperty);
-            var result = {
-                id: id,
-                parent: "#",
-                text: this.getDisplayNameValue(item),//item[displayProperty],
-                state: {
-                    disabled: disabled
-                }
-            };
-            var parentValue;
-
-            if (typeof parentProperty !== 'undefined' && parentProperty !== null) {
-                parentValue = InfinniUI.ObjectUtils.getPropertyValue(item, parentProperty);
-
-                if (typeof parentValue !== 'undefined' && parentValue !== null && _.contains(roots, parentValue)) {
-                    result.parent = parentValue;
-                }
-            }
-
-            return result;
-        }, this);
-    },
-
-    getSelectedItem: function () {
-        var items = this.model.get('items');
-        var value = this.model.get('value');
-        var keyProperty = this.model.get('keyProperty');
-
-        if (value === null || typeof value === 'undefined') {
-            return;
-        }
-
-        var condition;
-        var result;
-
-        var f = function (value) {
-            (condition = {})[keyProperty] = value.Id;
-            return _.findWhere(items, condition);
-        };
-
-        result = (value.constructor === Array) ? _.map(value, f) : f(value);
-
-        return result;
-    },
-
-    /**
-     * @description Рендеринг дерева
-     */
-    renderData: function () {
-        var $el = this.ui.container;
-        var data = this.model.get('items');
-        var multiple = this.model.get('multiSelect');
-
-        var plugins = ['wholerow'];
-        if (multiple) {
-            plugins.push('checkbox');
-        }
-        $el.jstree({
-            plugins: plugins,
-            checkbox: {
-                three_state: false
-            },
-            core: {
-                multiple: multiple,
-                data: this.convertData(data),
-                themes: {
-                    name: 'proton',
-                    responsive: true
-                }
-            }
-        });
-        this.updateTree();
-    },
-
-
-    /**
-     * @description Конвертирование информации об элементе из плагина jsTree в значение контрола
-     * @param data
-     * @returns {*}
-     */
-    buildValueFromTreeData: function (data) {
-        var convertData = function (item) {
-            var data;
-            if (item !== null && typeof item !== 'undefined') {
-                data = {
-                    Id: item.id,
-                    DisplayName: item.text
-                };
-            }
-
-            return data;
-        };
-
-        return (_.isArray(data)) ? _.map(data, convertData) : convertData(data);
-    },
-
-    /**
-     * @description Обработка выборки элемента
-     */
-    bindTreeEvent: function () {
-        var $el = this.ui.container;
-
-        $el.on('changed.jstree', function() {
-            var model = this.model;
-            var multiple = model.get('multiSelect');
-            var value;
-
-            var data;
-
-            if (multiple) {
-                data = $el.jstree("get_checked", true);
-            } else {
-                data = $el.jstree("get_selected", true);
-                if (_.isArray(data) && data.length > 0) {
-                    data = data[0];
-                }
-            }
-
-            value = this.buildValueFromTreeData(data);
-
-            model.set('value', value);
-        }.bind(this));
-    },
-
-
-    /**
-     * @description Обновляет дерево данными из модели
-     */
-    updateTree: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-
-        var $el = this.ui.container;
-        var data = this.model.get('items');
-
-        if (typeof data === 'undefined' || data === null) {
-            data = [];
-        }
-        $el.jstree(true).settings.core.data = this.convertData(data);
-        $el.jstree(true).refresh();
-        this.updateTreeState();
-    },
-
-    /**
-     * @description Обработчик установки значения. Отмечает соотвествующие элементы в TreeView
-     */
-    onUpdateValueHandler: function (/*model, value*/) {
-        this.updateTreeState();
-    },
-
-    /**
-     * @description Возвращает текстовое значение элемента из дерева.
-     * Приоритет: ItemTemplate, ItemFormat, DisplayProperty, toString()
-     * @param {Object} item
-     */
-    getDisplayNameValue: function (item) {
-        var itemFormat = this.model.get('itemFormat');
-        var displayProperty = this.model.get('displayProperty');
-        var result = '' + item;//Вариант по умолчанию - toString()
-
-        /**
-         * @TODO Необходимо реализовать поддержку ItemTemplate
-         */
-        if (typeof itemFormat !== 'undefined' && itemFormat !== null) {
-            result = itemFormat.format(item);
-        } else if (typeof displayProperty !== 'undefined' && displayProperty !== null){
-            result = InfinniUI.ObjectUtils.getPropertyValue(item, displayProperty);
-        }
-
-        return result;
-    },
-
-    /**
-     * @private
-     * @description Отмечает выбранные элементы в дереве, по значениям Value компонента
-     */
-    updateTreeState: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-
-        var value = this.model.get('value');
-        var $el = this.ui.container;
-        var selected = $el.jstree(true).get_selected();
-        var data;
-        var deselect;
-
-        if (_.isArray(value)) {
-            data = _.pluck(value, 'Id');
-
-            deselect = _.difference(selected, data);
-            var select = _.difference(data, selected);
-            if (deselect.length > 0) {
-                $el.jstree(true).deselect_node(deselect, true);
-            }
-            if (select.length > 0) {
-                $el.jstree(true).select_node(select, true);
-            }
-        } else {
-            deselect = _.without(selected, value);
-            $el.jstree(true).deselect_node(deselect, true);
-
-            if (typeof value !== 'undefined' && value !== null) {
-                $el.jstree(true).select_node(value.Id, true);
-            }
-        }
-    },
-
-    onUpdateItemsHandler: function (/*model, value*/) {
-        this.updateTree();
-    },
-
-    onUpdateMultipleHandler: function () {
-        this.updateTree();
-    }
-
-});
-
 var ViewPanelControl = function () {
     _.superClass(ViewPanelControl, this);
 };
@@ -23176,7 +27510,7 @@ ComparatorBuilder.prototype.build = function () {
 
 var ComparatorId = function () {
 
-    this.propertyName = 'Id';
+    this.propertyName = '_id';
 };
 
 ComparatorId.prototype.isEqual = function (a, b) {
@@ -23190,373 +27524,7 @@ ComparatorId.prototype.isEqual = function (a, b) {
 
     return result;
 };
-var Criteria = function (items) {
-    this.onValueChangedHandlers = [];
-    this.items = items || [];
-};
-
-Criteria.prototype.onValueChanged = function (handler) {
-    if (typeof handler === 'function' && this.onValueChangedHandlers.indexOf(handler) === -1) {
-        this.onValueChangedHandlers.push(handler);
-    }
-};
-
-Criteria.prototype.valueChanged = function () {
-    _.each(this.onValueChangedHandlers, function (handler) {
-        handler();
-    });
-};
-
-
-
-Criteria.prototype.getAsArray = function () {
-    var list = [];
-    _.each(this.items, function (item) {
-        var criteria = {};
-        for (var key in item) {
-            if (!item.hasOwnProperty(key)) continue;
-            if (key === 'Value' && typeof item.Value === 'function') {
-                criteria[key] = item.Value();
-            } else {
-                criteria[key] = item[key];
-            }
-        }
-        list.push(criteria);
-    });
-
-    return list;
-};
-
-Criteria.prototype.setItems = function (items) {
-    if (typeof items !== 'undefined' && items !== null) {
-        this.items = items;
-    } else {
-        this.items = [];
-    }
-};
-
-
-/**
- * Обратная совместимость (если строка то конвертирует в "флаговое соответствие")
- */
-Criteria.prototype.decodeCriteriaType = function (value) {
-    var criteriaType = value;
-
-    if (typeof value === 'string') {
-        criteriaType = parseInt(value, 10);
-        if (isNaN(criteriaType)) {
-            criteriaType = this.criteriaType[value]
-        }
-    }
-
-    return criteriaType;
-};
-
-Criteria.prototype.normalizeCriteria = function (criteria) {
-
-};
-
-Criteria.prototype.criteriaType = {
-    IsEquals: 1,
-    IsNotEquals: 2,
-    IsMoreThan: 4,
-    IsLessThan: 8,
-    IsMoreThanOrEquals: 16,
-    IsLessThanOrEquals: 32,
-    IsContains: 64,
-    IsNotContains: 128,
-    IsEmpty: 256,
-    IsNotEmpty: 512,
-    IsStartsWith: 1024,
-    IsNotStartsWith: 2048,
-    IsEndsWith: 4096,
-    IsNotEndsWith: 8192,
-    IsIn: 16384,
-    Script: 32768,
-    FullTextSearch: 65536,
-    IsIdIn: 131072
-};
-
-
-/**
- * Функция конвертирует CriteriaType в "флаговое соответствие"
- * @param val
- * @returns {number}
- */
-
-function toEnum(val) {
-
-    var criteria = new Criteria();
-
-    return criteria.decodeCriteriaType(val);
-}
-
-var criteriaType = {
-    IsEquals: 1,
-    IsNotEquals: 2,
-    IsMoreThan: 4,
-    IsLessThan: 8,
-    IsMoreThanOrEquals: 16,
-    IsLessThanOrEquals: 32,
-    IsContains: 64,
-    IsNotContains: 128,
-    IsEmpty: 256,
-    IsNotEmpty: 512,
-    IsStartsWith: 1024,
-    IsNotStartsWith: 2048,
-    IsEndsWith: 4096,
-    IsNotEndsWith: 8192,
-    IsIn: 16384,
-    Script: 32768,
-    FullTextSearch: 65536,
-    IsIdIn: 131072
-};
-
-
-var CriteriaBuilder = function () {
-
-};
-
-CriteriaBuilder.prototype.build = function(context, args){
-
-    var criteria = new Criteria();
-    var items = [];
-
-    var metadata = args.metadata;
-
-    if (typeof metadata !== 'undefined' && metadata !== null && metadata.length) {
-        for (var i = 0, ln = metadata.length; i < ln; i = i + 1) {
-            items.push(this.buildCriteriaItem(args.builder, args.view, metadata[i], criteria));
-        }
-    }
-
-    criteria.setItems(items);
-
-    return criteria;
-};
-
-CriteriaBuilder.prototype.buildCriteriaItem = function(builder, parent, metadata, criteria){
-
-    var item = {
-        Property: metadata.Property,
-        CriteriaType: criteria.decodeCriteriaType(metadata.CriteriaType)
-    };
-
-    var value = metadata.Value;
-    var binding;
-    item.Value = value;
-
-    if (value !== null && typeof value === 'object') {
-        binding = builder.build(parent, value);
-        if (typeof binding !== 'undefined' && binding !== null) {
-            //Если объект пострен билдером - это Binding
-            item.Value = function () {
-                return binding.getPropertyValue();
-            };
-            binding.onPropertyValueChanged(function () {
-                //Уведомить условие об изменении значение в биндинге
-                criteria.valueChanged();
-            });
-        }
-    }
-
-    return item;
-};
-
-
-var CriteriaType = (function () {
-
-    return {
-        IsEquals: IsEquals,
-        IsNotEquals: IsNotEquals,
-        IsMoreThan: IsMoreThan,
-        IsLessThan: IsLessThan,
-        IsMoreThanOrEquals: IsMoreThanOrEquals,
-        IsLessThanOrEquals: IsLessThanOrEquals,
-        IsContains: IsContains,
-        IsNotContains: IsNotContains,
-        IsEmpty: IsEmpty,
-        IsNotEmpty: IsNotEmpty,
-        IsStartsWith: IsStartsWith,
-        IsNotStartsWith: IsNotStartsWith,
-        IsEndsWith: IsEndsWith,
-        IsNotEndsWith: IsNotEndsWith,
-        IsIn: IsIn,
-        isNotIn: isNotIn
-    };
-
-    function IsEquals(target, property, value) {
-        return InfinniUI.ObjectUtils.getPropertyValue(target, property) === value;
-    }
-
-    function IsNotEquals(target, property, value) {
-        return !IsEquals(target, property, value);
-    }
-
-    function IsMoreThan(target, property, value) {
-        return InfinniUI.ObjectUtils.getPropertyValue(target, property) > value;
-    }
-
-    function IsLessThan(target, property, value) {
-        return InfinniUI.ObjectUtils.getPropertyValue(target, property) < value;
-    }
-
-    function IsMoreThanOrEquals(target, property, value) {
-        return InfinniUI.ObjectUtils.getPropertyValue(target, property) >= value;
-    }
-
-    function IsLessThanOrEquals(target, property, value) {
-        return InfinniUI.ObjectUtils.getPropertyValue(target, property) <= value;
-    }
-
-    function IsContains(target, property, value) {
-        var text = String(InfinniUI.ObjectUtils.getPropertyValue(target, property));
-        return text.indexOf(value) !== -1;
-    }
-
-    function IsNotContains(target, property, value) {
-        return !IsContains(target, property, value);
-    }
-
-    function IsEmpty(target, property, value) {
-        var data = InfinniUI.ObjectUtils.getPropertyValue(target, property);
-
-        return typeof data === 'undefined' || _.isEmpty(data);
-    }
-
-    function IsNotEmpty(target, property, value) {
-        return !IsEmpty(target, property, value);
-    }
-
-    function IsStartsWith(target, property, value) {
-        var text = String(InfinniUI.ObjectUtils.getPropertyValue(target, property));
-        return text.indexOf(value) === 0;
-    }
-
-    function IsNotStartsWith(target, property, value) {
-        return !IsStartsWith(target, property, value);
-    }
-
-    function IsEndsWith(target, property, value) {
-        var
-            searchValue = String(value),
-            text = String(InfinniUI.ObjectUtils.getPropertyValue(target, property));
-
-        var i = text.lastIndexOf(searchValue);
-
-        return (i === -1) ? false : i + searchValue.length === text.length;
-    }
-
-    function IsNotEndsWith(target, property, value) {
-        return !IsEndsWith(target, property, value);
-    }
-
-    function IsIn(target, property, value) {
-        var
-            data = InfinniUI.ObjectUtils.getPropertyValue(target, property),
-            match = false;
-
-        if (Array.isArray(value)) {
-            for (var i = 0; i < value.length; i = i + 1) {
-                if (data === value[i]) {
-                    match = true;
-                    break;
-                }
-            }
-        }
-
-        return match;
-    }
-
-    function isNotIn(target, property, value) {
-        return !IsIn(target, property, value);
-    }
-
-})();
-
-function FilterCriteriaType() {
-
-}
-
-FilterCriteriaType.prototype.getFilterCallback = function (filter) {
-    var callback = function (item) {
-        return true;
-    };
-
-    if (Array.isArray(filter)) {
-        var chain = filter.map(this.getCriteriaCallback, this);
-        callback = function (item) {
-            return chain.every(function (cb) {
-                return cb(item);
-            });
-        }
-    }
-
-    return callback;
-};
-
-FilterCriteriaType.prototype.getCriteriaCallback = function (criteria) {
-    var filter = function () {
-        return true;
-    };
-
-    if (criteria && criteria.criteriaType) {
-        var method = this.getCriteriaByCode(criteria.criteriaType);
-        if (typeof method === 'function') {
-            filter = function (value) {
-                return method(value, criteria.property, criteria.value);
-            }
-        }
-    }
-
-    return filter;
-};
-
-FilterCriteriaType.prototype.CriteriaTypeCode = {
-    IsEquals: 1,
-    IsNotEquals: 2,
-    IsMoreThan: 4,
-    IsLessThan: 8,
-    IsMoreThanOrEquals: 16,
-    IsLessThanOrEquals: 32,
-    IsContains: 64,
-    IsNotContains: 128,
-    IsEmpty: 256,
-    IsNotEmpty: 512,
-    IsStartsWith: 1024,
-    IsNotStartsWith: 2048,
-    IsEndsWith: 4096,
-    IsNotEndsWith: 8192,
-    IsIn: 16384,
-    IsNotIn: 32768
-};
-
-FilterCriteriaType.prototype.decodeCriteria = function (name) {
-    return this.CriteriaTypeCode[name];
-};
-
-FilterCriteriaType.prototype.getCriteriaByName = function (name) {
-    return this.criteria[name];
-};
-
-FilterCriteriaType.prototype.getCriteriaByCode = function (code) {
-    if (typeof this._criteriaByCode === 'undefined') {
-        this._criteriaByCode = {};
-
-        var i;
-        for (var name in this.CriteriaTypeCode) {
-            i = this.CriteriaTypeCode[name];
-            this._criteriaByCode[i] = CriteriaType[name];
-        }
-    }
-    return this._criteriaByCode[code];
-};
-
-
-
-
-
-var BindingModes = {
+InfinniUI.BindingModes = {
     twoWay: 'TwoWay',
     toSource: 'ToSource',
     toElement: 'ToElement'
@@ -23565,14 +27533,22 @@ var BindingModes = {
 
 var DataBinding = Backbone.Model.extend({
     defaults: {
-        mode: BindingModes.twoWay,
+        mode: InfinniUI.BindingModes.twoWay,
         converter: null,
         source: null,
         sourceProperty: null,
         element: null,
-        elementProperty: null
+        elementProperty: null,
+        defaultValue: null
     },
 
+    getDefaultValue: function(){
+        return this.get('defaultValue');
+    },
+
+    setDefaultValue: function(value){
+        this.set('defaultValue', value);
+    },
 
     setMode: function (mode) {
         this.set('mode', mode);
@@ -23596,7 +27572,7 @@ var DataBinding = Backbone.Model.extend({
         var element = this.getElement();
 
         if(this.get('source') != null){
-            var message = stringUtils.format('DataBinding. bindSource: повторная инициализация. {0} заменен на {1}', [this.get('source').getName(), source.getName()])
+            var message = stringUtils.format('DataBinding. bindSource: повторная инициализация. {0} заменен на {1}', [this.get('source').getName(), source.getName()]);
             logger.warn(message);
         }
 
@@ -23610,7 +27586,7 @@ var DataBinding = Backbone.Model.extend({
         }
 
         source.onPropertyChanged(property, function(context, argument){
-            that.onSourcePropertyChangedHandler(context, argument);
+            that._onSourcePropertyChangedHandler(context, argument);
         });
 
         if( this._isWorkingWithSelectedItems(source) ){
@@ -23633,7 +27609,7 @@ var DataBinding = Backbone.Model.extend({
                     property: sourceProperty,
                     newValue: source.getProperty(sourceProperty)
                 };
-                that.onSourcePropertyChangedHandler(context, args);
+                that._onSourcePropertyChangedHandler(context, args);
             });
         }
     },
@@ -23663,11 +27639,11 @@ var DataBinding = Backbone.Model.extend({
         this.set('element', element);
         this.set('elementProperty', property);
 
-        this._initPropertyOnElement();
-
         element.onPropertyChanged(property, function(context, argument){
-            that.onElementPropertyChangedHandler(context, argument);
+            that._onElementPropertyChangedHandler(context, argument);
         });
+
+        this._initPropertyOnElement();
     },
 
     _initPropertyOnElement: function(){
@@ -23676,8 +27652,14 @@ var DataBinding = Backbone.Model.extend({
         var that = this;
         var value;
 
-        if(this.shouldRefreshElement(this.get('mode')) && source){
+        if(this._shouldRefreshElement(this.get('mode')) && source){
             if(typeof source.isDataReady == 'function' && !source.isDataReady()){
+                if(typeof source.tryInitData == 'function'){
+                    if(this.getDefaultValue() !== null){
+                        this._setValueToElement(this.getDefaultValue(), true);
+                    }
+                    source.tryInitData();
+                }
                 return;
 
             }else{
@@ -23698,23 +27680,25 @@ var DataBinding = Backbone.Model.extend({
     /**
      * @description Обработчик события изменения значения элемента
      */
-    onElementPropertyChangedHandler: function (context, argument) {
+    _onElementPropertyChangedHandler: function (context, argument) {
         var mode = this.get('mode');
         var element = this.get('element');
         var elementProperty = this.get('elementProperty');
 
-        if(this.shouldRefreshSource(mode) && argument.property == elementProperty){
-            this._setValueToSource(argument.newValue);
+        if(this._shouldRefreshSource(mode) && argument.property == elementProperty){
+            this._setValueToSource(argument.newValue, context);
         }
     },
 
-    _setValueToSource: function(value){
+    _setValueToSource: function(value, context){
         var element = this.get('element');
         var source = this.get('source');
         var sourceProperty = this.get('sourceProperty');
         var converter = this.get('converter');
 
-        if(converter != null && converter.toSource != null){
+        if(converter != null
+            && converter.hasOwnProperty('toSource') //Mozilla's Object.prototype has method "toSource"!!
+        ){
             value = converter.toSource(context, {value: value, binding: this, source: element});
         }
 
@@ -23726,23 +27710,23 @@ var DataBinding = Backbone.Model.extend({
     /**
      * @description Обработчик события изменения значения источника
      */
-    onSourcePropertyChangedHandler: function (context, argument) {
+    _onSourcePropertyChangedHandler: function (context, argument) {
         var mode = this.get('mode');
         var sourceProperty = this.get('sourceProperty');
 
-        if(this.shouldRefreshElement(mode) && argument.property == sourceProperty){
+        if(this._shouldRefreshElement(mode) && argument.property == sourceProperty){
             this._setValueToElement(argument.newValue);
         }
     },
 
-    _setValueToElement: function(value){
+    _setValueToElement: function(value, notConverting){
         var source = this.get('source');
         var element = this.get('element');
         var elementProperty = this.get('elementProperty');
         var converter = this.get('converter');
         var context = this._getContext();
 
-        if(converter != null && converter.toElement != null){
+        if(converter != null && converter.toElement != null && !notConverting){
             value = converter.toElement(context, {value: value, binding: this, source: source});
         }
 
@@ -23759,12 +27743,12 @@ var DataBinding = Backbone.Model.extend({
         return context;
     },
 
-    shouldRefreshSource: function(mode){
-        return mode == BindingModes.twoWay || mode == BindingModes.toSource;
+    _shouldRefreshSource: function(mode){
+        return mode == InfinniUI.BindingModes.twoWay || mode == InfinniUI.BindingModes.toSource;
     },
 
-    shouldRefreshElement: function(mode){
-        return mode == BindingModes.twoWay || mode == BindingModes.toElement;
+    _shouldRefreshElement: function(mode){
+        return mode == InfinniUI.BindingModes.twoWay || mode == InfinniUI.BindingModes.toElement;
     }
 });
 var DataBindingBuilder = function () {};
@@ -23784,6 +27768,9 @@ DataBindingBuilder.prototype.build = function (context, args) {
         throw new Error('DataBindingBuilder: not declared source in DataBinding metadata.');
     }
 
+    if('DefaultValue' in metadata){
+        result.setDefaultValue(metadata['DefaultValue']);
+    }
 
     var sourceDeferred = args.parentView.getDeferredOfMember(metadata.Source);
     sourceDeferred.done(function(source){
@@ -23794,7 +27781,6 @@ DataBindingBuilder.prototype.build = function (context, args) {
         }else{
             property = metadataProperty;
         }
-        result.bindSource(source, property);
 
         if(metadata.Mode){
             result.setMode(metadata.Mode);
@@ -23811,6 +27797,8 @@ DataBindingBuilder.prototype.build = function (context, args) {
             }
             result.setConverter(converter);
         }
+
+        result.bindSource(source, property);
     });
 
     return result;
@@ -23838,159 +27826,6 @@ DataBindingBuilder.prototype.scriptByNameOrBody = function(nameOrBody, context){
 
 };
 
-function DataProviderREST(urlConstructor, successCallback, failCallback) {
-
-    var queueReplaceItem = new DataProviderReplaceItemQueue();
-
-    this.getItems = function (criteriaList, pageNumber, pageSize, sorting, resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructReadDocumentRequest(criteriaList, pageNumber, pageSize, sorting));
-    };
-
-    this.createItem = function (resultCallback, idProperty) {
-        new RequestExecutor(function(data){
-            data[idProperty] = this._generateLocalId();
-            data['__Id'] = data[idProperty];
-            resultCallback(data);
-        }, successCallback, failCallback).makeRequest(urlConstructor.constructCreateDocumentRequest());
-    };
-
-    this.createLocalItem = function (idProperty) {
-        var result = {};
-
-        result[idProperty] = this._generateLocalId();
-        result['__Id'] = result[idProperty];
-
-        return result;
-    };
-
-    this._generateLocalId = function(){
-        return guid();
-    };
-
-    this.createIdFilter = function(id){
-        return [{
-            "Property": "Id",
-            "Value": id,
-            "CriteriaType": 1
-        }];
-    };
-
-    this.saveItem = function (value, resultCallback, warnings, idProperty) {
-
-        var callback = function(data){
-            data = adaptAnswerOnSavingItem(data);
-            resultCallback(data);
-        };
-
-        if(value['__Id']){
-            delete value[idProperty];
-        }
-
-        var request = (function (success) {
-            return function (data) {
-                var request = new RequestExecutor(success, successCallback, failCallback);
-                return request.makeRequest(urlConstructor.constructUpdateDocumentRequest(data.value, data.warnings));
-            }
-        })(callback);
-
-        queueReplaceItem.append({
-            value: value,
-            warnings: warnings
-        }, request);
-
-    };
-
-    this.setConfigId = function(configId){
-        urlConstructor.setConfigId (configId);
-    };
-
-    this.setDocumentId = function(documentId){
-        urlConstructor.setDocumentId (documentId);
-    };
-
-    this.setCreateAction = function(actionName){
-        urlConstructor.setCreateAction (actionName);
-    };
-
-    this.setReadAction = function(actionName){
-        urlConstructor.setReadAction (actionName);
-    };
-
-    this.setUpdateAction = function(actionName){
-        urlConstructor.setUpdateAction (actionName);
-    };
-
-    this.setDeleteAction = function(actionName){
-        urlConstructor.setDeleteAction (actionName);
-    };
-
-
-    function adaptAnswerOnSavingItem(data){
-        if("IsValid" in data){
-            data.isValid = data.IsValid;
-            delete data.IsValid;
-        }
-
-        if(data.ValidationMessage && data.ValidationMessage.ValidationErrors){
-            var errors = data.ValidationMessage.ValidationErrors;
-            var items = [];
-            if (typeof errors.Message !== 'undefined') {
-                if (!Array.isArray(errors.Message)) {
-                    items = [{Message: errors.Message}];
-                } else {
-                    items = errors.Message;
-                }
-            }
-            data.items = items.map(function (item) {
-                return {
-                    message: item.Message,
-                    property: item.Property
-                }
-            });
-
-            delete data.ValidationMessage.ValidationErrors;
-        }
-        return data;
-    }
-
-    this.deleteItem = function (item, resultCallback) {
-        var instanceId = item["Id"];
-
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructDeleteDocumentRequest(instanceId));
-    };
-
-    this.getItem = function (itemId, resultCallback, criteriaList) {
-        var criteria = {
-            "Property": "Id",
-            "Value": itemId,
-            "CriteriaType": 1
-        };
-
-        criteriaList = criteriaList || [];
-        criteriaList.push(criteria);
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructReadDocumentRequest(criteriaList, 0, 1));
-    };
-
-
-    this.getCreateAction = proxyTo(urlConstructor, 'getCreateAction');
-    this.setCreateAction = proxyTo(urlConstructor, 'setCreateAction');
-    this.getReadAction = proxyTo(urlConstructor, 'getReadAction');
-    this.setReadAction = proxyTo(urlConstructor, 'setReadeAction');
-    this.getUpdateAction = proxyTo(urlConstructor, 'getUpdateAction');
-    this.setUpdateAction = proxyTo(urlConstructor, 'setUpdateAction');
-    this.getDeleteAction = proxyTo(urlConstructor, 'getDeleteAction');
-    this.setDeleteAction = proxyTo(urlConstructor, 'setDeleteAction');
-
-    function proxyTo(obj, methodName) {
-        return function () {
-            var args = Array.prototype.slice.call(arguments);
-            var method = obj[methodName];
-            if (typeof method === 'function') {
-                return method.apply(obj, args);
-            }
-        }
-    }
-}
 function MetadataDataSourceProvider(urlConstructor, successCallback, failCallback) {
 
     this.getRegisteredConfigList = function (resultCallback) {
@@ -24393,7 +28228,14 @@ RequestExecutorDataStrategy.prototype.strategies = {
             },
             beforeSend: this.onBeforeRequest(),
             success: this.onSuccessRequest(onSuccess),
-            error: this.onErrorRequest(onFail),
+            error: function (err) {
+                if (err.status === 200) {
+                    //@TODO Убрать этот костыль. Нужен т.к. запрос на загрузку файла возвращает 200 и пустой ответ!
+                    this.onSuccessRequest(onSuccess)();
+                } else {
+                    this.onErrorRequest(onFail)(err);
+                }
+            }.bind(this),
             data: JSON.stringify(requestData.args),
             contentType: "application/json;charset=UTF-8"
         });
@@ -24410,7 +28252,14 @@ RequestExecutorDataStrategy.prototype.strategies = {
             },
             beforeSend: this.onBeforeRequest(),
             success: this.onSuccessRequest(onSuccess),
-            error: this.onErrorRequest(onFail),
+            error: function (err) {
+                if (err.status === 200) {
+                    //@TODO Убрать этот костыль. Нужен т.к. запрос на загрузку файла возвращает 200 и пустой ответ!
+                    this.onSuccessRequest(onSuccess)();
+                } else {
+                    this.onErrorRequest(onFail)(err);
+                }
+            }.bind(this),
             processData: processData,
             contentType: false,
             data: requestData.args
@@ -24598,9 +28447,9 @@ DocumentUploadQueryConstructor.prototype.constructUploadFileRequest = function (
  */
 DocumentUploadQueryConstructor.prototype.getFileUrl = function (fieldName, instanceId, contentId) {
 
-    if (typeof instanceId === 'undefined' || instanceId === null) {
-        return null;
-    }
+    //if (typeof instanceId === 'undefined' || instanceId === null) {
+    //    return null;
+    //}
 
     var data = {
         Configuration: this.configId,
@@ -24739,7 +28588,7 @@ QueryConstructorUpload.prototype.getUploadParams = function (file) {
 
 var ObjectDataProvider = function (items, idProperty) {
     this.items = items || [];
-    this.idProperty = idProperty || 'Id';
+    this.idProperty = idProperty || '_id';
 };
 
 _.extend(ObjectDataProvider.prototype, {
@@ -24748,10 +28597,10 @@ _.extend(ObjectDataProvider.prototype, {
         this.items = items;
     },
 
-    getItems: function (criteriaList, pageNumber, pageSize, sorting, resultCallback) {
-        var filter = new FilterCriteriaType();
-        var callback = filter.getFilterCallback(criteriaList);
-        resultCallback(this.items.filter(callback));
+    getItems: function (resultCallback, criteriaList, pageNumber, pageSize, sorting) {
+        //var filter = new FilterCriteriaType();
+        //var callback = filter.getFilterCallback(criteriaList);
+        resultCallback({data: this.items});
     },
 
     createItem: function (resultCallback) {
@@ -24794,7 +28643,7 @@ _.extend(ObjectDataProvider.prototype, {
 
     createIdFilter: function (id) {
         return [{
-            "Property": "Id",
+            "Property": "_id",
             "Value": id,
             "CriteriaType": 1
         }];
@@ -24817,1348 +28666,271 @@ _.extend(ObjectDataProvider.prototype, {
     }
 });
 
-function QueryConstructorServerAction (host, metadata) {
-    var defaults = {
-        Method: 'post'
+var RestDataProvider = function(){
+
+    this.requestParams = {
+        'get': {
+            method: 'get',
+            origin: null, // http://abs.com
+            path: '',
+            data: {}
+        },
+
+        'set':{
+            method: 'post',
+            origin: null,
+            path: '',
+            data: {}
+        },
+
+        'delete':{
+            method: 'delete',
+            origin: null,
+            path: '',
+            data: {}
+        }
     };
 
-    this.host = host;
-    this.metadata = _.extend({}, defaults, metadata);
-}
-
-QueryConstructorServerAction.prototype.constructUrlRequest = function (params) {
-    //var data = {
-    //    "Configuration": this.metadata.ConfigId,
-    //    "Metadata": this.metadata.DocumentId,
-    //    "Params": params
-    //};
-
-    var urlTemplate = '{0}/{1}/{2}/{3}';
-    //var urlTemplate = 'http://localhost:3000/json';
-    //var urlTemplate = 'http://localhost:3000/file';
-
-    //@TODO Переделать шаблон, когда будет ясно что нужно.
-    return {
-        requestUrl: stringUtils.format(urlTemplate,[
-            this.host,
-            this.metadata.ConfigId,
-            this.metadata.DocumentId,
-            this.metadata.Action
-        ]),
-        method: this.metadata.Method,
-        args: params
-    };
-};
-var ServerActionProvider = function (urlConstructor, successCallback, failCallback) {
-    this.urlConstructor = urlConstructor;
-    this.successCallback = successCallback;
-    this.failCallback = failCallback;
 };
 
-ServerActionProvider.prototype.request = function (params, resultCallback) {
-    var requestData = this.urlConstructor.constructUrlRequest(params);
-    new RequestExecutor(resultCallback, this.successCallback, this.failCallback)
-        .makeRequestRaw(requestData);
+_.extend(RestDataProvider.prototype, {
 
+    getOrigin: function(type){
+        return this.requestParams[type].origin;
+    },
+
+    setOrigin: function(type, newOrigin){
+        this.requestParams[type].origin = newOrigin;
+    },
+
+    getPath: function(type){
+        return this.requestParams[type].path;
+    },
+
+    setPath: function(type, path){
+        this.requestParams[type].path = path;
+    },
+
+    getData: function(type){
+        return this.requestParams[type].data;
+    },
+
+    setData: function(type, data){
+        this.requestParams[type].data = data;
+    },
+
+    getMethod: function(type){
+        return this.requestParams[type].method;
+    },
+
+    setMethod: function(type, queryMethod){
+        this.requestParams[type].method = queryMethod;
+    },
+
+    send: function(type, successHandler, errorHandler){
+        var params = this.requestParams[type];
+
+        var urlString = params.origin + params.path;
+        var queryString;
+        var requestId = Math.round((Math.random() * 100000));
+        var requestParams;
+
+        var filesInData = this.extractFilesFromData(params.data);
+
+        if( _.size(filesInData.files) == 0){
+
+            requestParams = {
+                type: params.method,
+                xhrFields: {
+                    withCredentials: true
+                },
+                url: urlString,
+                success: function(data){
+                    successHandler({
+                        requestId: requestId,
+                        data: data
+                    });
+                },
+                error: function(data){
+                    if (typeof errorHandler !== 'function') {
+                        //Unhandled error
+                        InfinniUI.global.logger.error(data);
+                        return;
+                    }
+                    errorHandler({
+                        requestId: requestId,
+                        data: data
+                    });
+                }
+            };
+
+            if(params.method.toLowerCase() != 'get'){
+                requestParams.contentType = 'application/json';
+                requestParams.data = JSON.stringify( params.data );
+            }else{
+                if(_.size(params.data) > 0){
+                    requestParams.url = requestParams.url + '?' + stringUtils.joinDataForQuery(params.data);
+                }
+            }
+
+        }else{
+
+            var formData = new FormData();
+            formData.append('document', JSON.stringify( filesInData.dataWithoutFiles ));
+
+            for(var k in filesInData.files){
+                formData.append(k, filesInData.files[k]);
+            }
+
+
+            requestParams = {
+                type: params.method,
+                url: urlString,
+                xhrFields: {
+                    withCredentials: true
+                },
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function(data){
+                    successHandler({
+                        requestId: requestId,
+                        data: data
+                    });
+                },
+                error: function(data){
+                    errorHandler({
+                        requestId: requestId,
+                        data: data
+                    });
+                }
+            };
+        }
+
+        $.ajax(requestParams);
+
+        return requestId;
+    },
+
+    getItems: function(successHandler, errorHandler){
+        return this.send('get', successHandler, errorHandler);
+    },
+
+    saveItem: function(item, successHandler, errorHandler){
+        this.requestParams['set'].data = item;
+        return this.send('set', successHandler, errorHandler);
+    },
+
+    deleteItem: function(item, successHandler, errorHandler){
+        return this.send('delete', successHandler, errorHandler);
+    },
+
+    createItem: function (resultCallback, idProperty) {
+       var that = this;
+        setTimeout( function(){
+            resultCallback(that.createLocalItem(idProperty));
+        }, 10);
+    },
+
+    createLocalItem: function (idProperty) {
+        var result = {};
+
+        result[idProperty] = this._generateLocalId();
+
+        return result;
+    },
+
+    _generateLocalId: function(){
+        return guid();
+    },
+
+    extractFilesFromData: function (data) {
+
+        var files = Object.create(null);
+        var dataWithoutFiles = extractFilesFromNode(data, []);
+
+
+        return {
+            dataWithoutFiles: dataWithoutFiles,
+            files: files
+        };
+
+        function extractFilesFromNode (node, path) {
+            var value, result = Array.isArray(node) ? [] : {}, currentPath;
+            for (var i in node) {
+                if (!node.hasOwnProperty(i)) {
+                    continue;
+                }
+
+                currentPath = path.slice();
+                currentPath.push(i);
+                value = node[i];
+                if (value !== null && typeof (value) === 'object') {
+                    if (value.constructor === Date) {
+                        result[i] = value
+                    } else if (value.constructor === Object || value.constructor === Array)  {
+                        //Plain object
+                        result[i] = extractFilesFromNode(value, currentPath);
+                    } else {
+                        //Object instance
+                        files[currentPath.join('.')] = value;
+                        continue;
+                    }
+                } else {
+                    result[i] = value;
+                }
+
+            }
+
+            return result;
+        }
+    }
+
+
+});
+var ServerActionProvider = function () {
 };
 
-ServerActionProvider.prototype.download = function (params, resultCallback) {
-    var requestData = this.urlConstructor.constructUrlRequest(params);
-    new DownloadExecutor(resultCallback, this.successCallback, this.failCallback)
+ServerActionProvider.prototype.request = function (requestData, resultCallback) {
+    var that = this;
+    var requestId = Math.round((Math.random() * 100000));
+
+    $.ajax({
+        type: requestData.method,
+        url: requestData.requestUrl,
+        xhrFields: {
+            withCredentials: true
+        },
+        data: requestData.args,
+        contentType: requestData.contentType,
+        success: function(data){
+            if( _.isFunction(resultCallback) ){
+                resultCallback({
+                    requestId: requestId,
+                    data: data
+                });
+            }
+        },
+        error: function (data) {
+            if( _.isFunction(resultCallback) ){
+                resultCallback({
+                    requestId: requestId,
+                    data: data
+                });
+            }
+        }
+    });
+
+    return requestId;
+};
+
+ServerActionProvider.prototype.download = function (requestData, resultCallback) {
+    new DownloadExecutor(resultCallback)
         .run(requestData);
 };
 
 
-/**
- *
- * @mixin dataSourceFileProviderMixin
- */
-var dataSourceFileProviderMixin = {
-
-    setFileProvider: function (fileProvider) {
-        this.set('fileProvider', fileProvider);
-    },
-
-    getFileProvider: function () {
-        return this.get('fileProvider');
-    },
-
-    setFile: function (file, propertyName) {
-        var queue = this.get('queueFiles');
-        var item;
-        if (!queue) {
-            queue = [];
-            this.set('queueFiles', queue);
-        }
-        //Отмечаем элемент данных как измененный при установке файла на загрузку
-        this._includeItemToModifiedSet(this.getSelectedItem());
-
-        var items = queue.filter(function(item) {
-            return item.name === propertyName;
-        });
-
-        if (items.length) {
-            var item = items[0];
-            item.file = file;
-        } else {
-            queue.push({
-                name: propertyName,
-                file: file
-            });
-        }
-    },
-
-    uploadFiles: function (instanceId) {
-        var promises = [];
-        var fileProvider = this.getFileProvider();
-        var ds = this;
-        var queue = this.get('queueFiles');
-        if (fileProvider  && queue && queue.length) {
-            promises = queue.map(function (item, index) {
-                return fileProvider.uploadFile(item.name, instanceId, item.file)
-                    .then(function () {
-                        //@TODO Как обрабатывать ошибки загрузки файлов?
-                        var i = queue.indexOf(item);
-                        queue.splice(i, 1);
-                        ds.trigger('onFileUploaded', ds.getContext, {value: item.file});
-                        return true;
-                    });
-            }, this);
-        }
-
-        return $.when.apply($, promises);
-    }
-};
-var dataSourceLookupMixin = {
-
-    lookupIdPropertyValue: function (sourceProperty) {
-        var items = this.getItems();
-        var value, item;
-
-        if (Array.isArray(items)) {
-            var
-                name = [sourceProperty.split('.')[0], this.getIdProperty()].join('.');
-
-            value = this.getProperty(name);
-        }
-
-        return value;
-    },
-
-    lookupPropertyValue: function (name, cb, sourceProperty) {
-        var items = this.getItems();
-        var value, item;
-
-        if (Array.isArray(items) && typeof cb === 'function') {
-            var path = sourceProperty.split('.');
-
-            var propertyValue = this.getProperty(sourceProperty);
-
-            for (var i = 0; i < items.length; i = i + 1) {
-                item = items[i];
-                if (cb.call(null, propertyValue) === true) {
-                    value = InfinniUI.ObjectUtils.getPropertyValue(item, name);
-                    break;
-                }
-            }
-        }
-
-        return value;
-    }
-
-};
-/**
- *
- * @mixin
- */
-var DataSourceValidationNotifierMixin = {
-    /**
-     * @param dataSource
-     */
-    initNotifyValidation: function (dataSource) {
-        dataSource.onErrorValidator(this.notifyOnValidationError.bind(this));
-        dataSource.onWarningValidator(this.notifyOnValidationError.bind(this));
-    },
-
-    /**
-     * @param context
-     * @param args
-     */
-    notifyOnValidationError: function (context, args) {
-        this.notifyOnValidationResult(args.value, 'error');
-    },
-
-    /**
-     * @param context
-     * @param args
-     */
-    notifyOnValidationWarning: function (context, args) {
-        this.notifyOnValidationResult(args.value, 'warning');
-    },
-
-    /**
-     * @param {Object} result
-     * @param {boolean} result.isValid
-     * @param {Array.<Object>} result.items
-     * @param {string} validationType Тип сообщения "error" или "warning"
-     */
-    notifyOnValidationResult: function (result, validationType) {
-        if (typeof result === 'undefined' || result === null || result.isValid || !Array.isArray(result.items)) {
-            return;
-        }
-
-        result.items.forEach(function (item) {
-            if (typeof item.property === 'undefined' || _.isEmpty(item.property)) {
-
-                var exchange = window.InfinniUI.global.messageBus;
-                exchange.send(messageTypes.onNotifyUser, {messageText: item.message, messageType: validationType});
-            }
-        });
-    }
-};
-/**
- * @constructor
- * @augments Backbone.Model
- * @mixes dataSourceFileProviderMixin, dataSourceFindItemMixin
- */
-var BaseDataSource = Backbone.Model.extend({
-    defaults: {
-        name: null,
-        idProperty: 'Id',
-        pageNumber: 0,
-        pageSize: 15,
-        sorting: null,
-        criteriaList: [],
-
-        view: null,
-
-        isDataReady: false,
-
-        dataProvider: null,
-
-        modifiedItems: {},
-        items: null,
-        itemsById: {},
-        selectedItem: null,
-
-        fillCreatedItem: true,
-        isUpdateSuspended: false,
-
-        errorValidator: null,
-        warningValidator: null,
-        showingWarnings: false,
-
-        isRequestInProcess: false,
-
-        isLazy: true,
-
-        bindingBuilder: function(){} // нужен для создания биндингов в фильтрах
-
-    },
-
-    initialize: function () {
-        this.initDataProvider();
-
-        if (!this.get('view')) {
-            throw 'BaseDataSource.initialize: При создании объекта не была задана view.'
-        }
-
-        this._onPropertyChangesList = [];
-    },
-
-    initDataProvider: function () {
-        throw 'BaseDataSource.initDataProvider В потомке BaseDataSource не задан провайдер данных.'
-    },
-
-    onPageNumberChanged: function (handler) {
-        this.on('change:pageNumber', handler);
-    },
-
-    onPageNumberSize: function (handler) {
-        this.on('change:pageSize', handler);
-    },
-
-    onError: function (handler) {
-        this.on('error', handler);
-    },
-
-    onPropertyChanged: function (property, handler) {
-        var list = this._onPropertyChangesList;
-        if (list.indexOf(property) === -1) {
-            list.push(property);
-        }
-        if (typeof property == 'function') {
-            handler = property;
-            this.on('onPropertyChanged', handler);
-        } else {
-            this.on('onPropertyChanged:' + property, handler);
-        }
-
-    },
-
-    onSelectedItemChanged: function (handler) {
-        this.on('onSelectedItemChanged', handler);
-    },
-
-    onSelectedItemModified: function (handler) {
-        this.on('onPropertyChanged', handler);
-    },
-
-    onErrorValidator: function (handler) {
-        this.on('onErrorValidator', handler);
-    },
-
-    onWarningValidator: function (handler) {
-        this.on('onWarningValidator', handler);
-    },
-
-    onItemSaved: function (handler) {
-        this.on('onItemSaved', handler);
-    },
-
-    onItemCreated: function (handler) {
-        this.on('onItemCreated', handler);
-    },
-
-    onItemsUpdated: function (handler) {
-        this.on('onItemsUpdated', handler);
-    },
-
-    onItemDeleted: function (handler) {
-        this.on('onItemDeleted', handler);
-    },
-
-    getName: function () {
-        return this.get('name');
-    },
-
-    setName: function (name) {
-        this.set('name', name);
-        this.name = name;
-    },
-
-    getView: function () {
-        return this.get('view');
-    },
-
-    _setItems: function (items) {
-        var indexOfItemsById;
-
-        this.set('isDataReady', true);
-        this.set('items', items);
-        this._clearModifiedSet();
-        if (items && items.length > 0) {
-            indexOfItemsById = this._indexItemsById(items);
-            this.set('itemsById', indexOfItemsById);
-
-            if( !this._restoreSelectedItem() ){
-                this.setSelectedItem(items[0]);
-            }
-
-        } else {
-            this.setSelectedItem(null);
-        }
-
-        this._notifyAboutItemsUpdatedAsPropertyChanged(items);
-        //this.trigger('settingNewItemsComplete');
-    },
-
-    _restoreSelectedItem: function(){
-        var selectedItem = this.getSelectedItem(),
-            selectedItemId = this.idOfItem(selectedItem);
-
-        if( selectedItemId != null ){
-            var items = this.get('itemsById');
-            var newSelectedItem = items[selectedItemId];
-
-            if( newSelectedItem != null ){
-                this.setSelectedItem(newSelectedItem);
-                return true;
-            }
-        }
-
-        return false;
-    },
-
-    _addItems: function (newItems) {
-        var indexedItemsById = this.get('itemsById'),
-            items = this.getItems(),
-            newIndexedItemsById;
-
-        this.set('isDataReady', true);
-        items = _.union(items, newItems);
-        this.set('items', items);
-        if (newItems && newItems.length > 0) {
-            newIndexedItemsById = this._indexItemsById(newItems);
-            _.extend(indexedItemsById, newIndexedItemsById);
-            this.set('itemsById', indexedItemsById);
-        }
-
-        this._notifyAboutItemsUpdatedAsPropertyChanged(items);
-        //this.trigger('settingNewItemsComplete');
-    },
-
-    getSelectedItem: function () {
-        return this.get('selectedItem');
-    },
-
-    setSelectedItem: function (item, success, error) {
-        var currentSelectedItem = this.getSelectedItem(),
-            items = this.get('itemsById'),
-            itemId = this.idOfItem(item);
-
-
-        if (typeof item == 'undefined') {
-            item = null;
-        }
-
-        if (item == currentSelectedItem) {
-            return;
-        }
-
-        if (item !== null) {
-            if (!items[itemId]) {
-                if (!error) {
-                    throw 'BaseDataSource.setSelectedItem() Попытка выбрать элемент в источнике, которого нет среди элементов этого источника.';
-                } else {
-                    error(this.getContext(), {error: 'BaseDataSource.setSelectedItem() Попытка выбрать элемент в источнике, которого нет среди элементов этого источника.'});
-                    return;
-                }
-            }
-        }
-
-        this.set('selectedItem', item);
-
-        this._notifyAboutSelectedItem(item, success);
-    },
-
-    _notifyAboutSelectedItem: function (item, successHandler) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.value = item;
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onSelectedItemChanged', context, argument);
-    },
-
-    getIdProperty: function () {
-        return this.get('idProperty');
-    },
-
-    setIdProperty: function (value) {
-        this.set('idProperty', value);
-    },
-
-    getFillCreatedItem: function () {
-        return this.get('fillCreatedItem');
-    },
-
-    setFillCreatedItem: function (fillCreatedItem) {
-        this.set('fillCreatedItem', fillCreatedItem);
-    },
-
-    suspendUpdate: function () {
-        this.set('isUpdateSuspended', true);
-    },
-
-    resumeUpdate: function () {
-        this.set('isUpdateSuspended', false);
-    },
-
-    getPageNumber: function () {
-        return this.get('pageNumber');
-    },
-
-    setPageNumber: function (value) {
-        if (!Number.isInteger(value) || value < 0) {
-            throw 'BaseDataSource.setPageNumber() Заданно недопустимое значение: ' + value + '. Должно быть целое, неотрицательное число.';
-        }
-
-        if (value != this.get('pageNumber')) {
-            this.set('pageNumber', value);
-            this.updateItems();
-        }
-    },
-
-    getPageSize: function () {
-        return this.get('pageSize');
-    },
-
-    setPageSize: function (value) {
-        var pageSize = parseInt(value, 10);
-        if (!Number.isInteger(pageSize) || pageSize < 0) {
-            throw 'BaseDataSource.setPageSize() Заданно недопустимое значение: ' + pageSize + '. Должно быть целое, неотрицательное число.';
-        }
-
-        if (pageSize != this.get('pageSize')) {
-            this.set('pageSize', pageSize);
-            this.updateItems();
-        }
-    },
-
-    isModifiedItems: function () {
-        return this.isModified();
-    },
-
-    isModified: function (item) {
-        if (arguments.length == 0) {
-            return _.size(this.get('modifiedItems')) > 0;
-        }
-
-        if (item === null || item === undefined) {
-            return false;
-        }
-        else {
-            var itemId = this.idOfItem(item);
-            return itemId in this.get('modifiedItems');
-        }
-    },
-
-    _includeItemToModifiedSet: function (item) {
-        var itemId = this.idOfItem(item);
-        this.get('modifiedItems')[itemId] = item;
-    },
-
-    _excludeItemFromModifiedSet: function (item) {
-        var itemId = this.idOfItem(item);
-        delete this.get('modifiedItems')[itemId];
-    },
-
-    _clearModifiedSet: function () {
-        this.set('modifiedItems', {});
-    },
-
-    /**
-     * @description Проверяет формат имя свойства атрибута
-     * @param propertyName
-     * @private
-     */
-    _checkPropertyName: function (propertyName) {
-        var result = true;
-        try {
-            if (propertyName && propertyName.length > 0) {
-                result = propertyName.match(/^[\$#@\d]+/);
-            }
-            if (!result) {
-                throw new Error('Wrong property name "' + propertyName + '"');
-            }
-        } catch (e) {
-            console.debug(e);
-        }
-    },
-
-    getProperty: function (property) {
-        var selectedItem = this.getSelectedItem(),
-            bindingByIndexRegEx = /^\d/,
-            relativeProperty, source;
-
-        this._checkPropertyName(property);
-
-        if(!this.isDataReady()){
-            return undefined;
-        }
-
-        if (property == '') {
-            return this.getItems();
-        } else if (property == '$') {
-            return selectedItem;
-        } else {
-            if (property.substr(0, 2) == '$.') {
-                relativeProperty = property.substr(2);
-                source = selectedItem;
-            } else {
-                relativeProperty = property;
-
-                if (bindingByIndexRegEx.test(property)) {
-                    source = this.getItems();
-                } else {
-                    source = selectedItem;
-                }
-            }
-
-
-            return InfinniUI.ObjectUtils.getPropertyValue(source, relativeProperty);
-
-
-        }
-    },
-
-    setProperty: function (property, value) {
-
-        this._checkPropertyName(property);
-
-        var selectedItem = this.getSelectedItem(),
-            bindingByIndexRegEx = /^\d/,
-            relativeProperty, oldValue, source;
-
-        if (property == '') {
-            oldValue = this.get('items');
-            this._setItems(value);
-
-        } else if (property == '$') {
-
-            if (!selectedItem) {
-                return;
-            }
-
-            if (value != selectedItem) {
-                oldValue = this._copyObject(selectedItem);
-                this._replaceAllProperties(selectedItem, value);
-            } else {
-                return;
-            }
-
-        } else {
-
-            if (!selectedItem) {
-                return;
-            }
-
-            if (property.substr(0, 2) == '$.') {
-                relativeProperty = property.substr(2);
-                source = selectedItem;
-            } else {
-                relativeProperty = property;
-
-                if (bindingByIndexRegEx.test(property)) {
-                    source = this.getItems();
-                } else {
-                    source = selectedItem;
-                }
-            }
-
-            oldValue = InfinniUI.ObjectUtils.getPropertyValue(source, relativeProperty);
-            if (value != oldValue) {
-                InfinniUI.ObjectUtils.setPropertyValue(source, relativeProperty, value);
-            } else {
-                return;
-            }
-        }
-
-        this._includeItemToModifiedSet(selectedItem);
-        this._notifyAboutPropertyChanged(property, value, oldValue);
-    },
-
-    prepareAndGetProperty: function(property, onReady){
-        var that = this;
-
-        if (this.get('isDataReady')){
-            onReady( this.getProperty(property) );
-        }else{
-            if (!this.get('isRequestInProcess')){
-                this.updateItems();
-            }
-
-            this.once('onItemsUpdated', function(){
-                onReady( that.getProperty(property) );
-            });
-        }
-    },
-
-    tryInitData: function(){
-        if (!this.get('isDataReady') && !this.get('isRequestInProcess')){
-            this.updateItems();
-        }
-    },
-
-    _notifyAboutPropertyChanged: function (property, newValue, oldValue) {
-        var
-            ds = this,
-            context = this.getContext(),
-            argument = this._getArgumentTemplate(),
-            selectedItem = ds.getSelectedItem(),
-            items = ds.getItems(),
-            selectedItemIndex = items.indexOf(selectedItem);
-
-        argument.property = property;
-        argument.newValue = newValue;
-        argument.oldValue = oldValue;
-
-        this.trigger('onPropertyChanged', context, argument);
-
-        /**
-         * Генерация событий на обновление связанных полей ($ и Значения вложенных полей)
-         */
-        this._onPropertyChangesList
-            .filter(function (name) {
-                var prop, matched = false;
-                if (property === name) {
-                    matched = false;
-                } else if (property.length && name.length){
-                    if (isBindToSelectedItem(name) && isBindToSelectedItem(property)) {
-                        if (name.indexOf(property) === 0) {
-                            matched = true;
-                        }
-                    } else  if (isBindToSelectedItem(name)) {
-                        prop = resolveProperty(name);
-                        if (prop.indexOf(property) === 0) {
-                            matched = true;
-                        }
-                    } else if (isBindToSelectedItem(property)) {
-                        prop = resolveProperty(property);
-                        if (name.indexOf(prop) === 0) {
-                            matched = true;
-                        }
-                    }
-                }
-
-                return matched;
-            })
-            .map(function (name) {
-                var prop,
-                    argument = ds._getArgumentTemplate();
-
-                argument.property = name;
-
-                if(isBindToSelectedItem(name)) {
-                    var prop1 = resolveProperty(name),
-                        prop2 = resolveProperty(property);
-
-                    prop = prop1.substr(prop2.length);
-                } else {
-                    prop = name.substr(property.length);
-                }
-
-                prop = prop.replace(/^\.+/, '');
-
-                argument.newValue = InfinniUI.ObjectUtils.getPropertyValue(newValue, prop);
-                argument.oldValue = InfinniUI.ObjectUtils.getPropertyValue(oldValue, prop);
-
-                return argument
-            })
-            .forEach(function (argument) {
-                ds.trigger('onPropertyChanged:' + argument.property, context, argument);
-            });
-
-        argument.property = property;
-        this.trigger('onPropertyChanged:' + property, context, argument);
-
-        function resolveProperty () {
-
-        }
-        function resolveProperty(property) {
-            return property.replace(/^\$/, selectedItemIndex);
-        }
-
-        function  isBindToSelectedItem(property) {
-            return /^\$/.test(property);
-        }
-
-
-    },
-
-    saveItem: function (item, success, error) {
-        var dataProvider = this.get('dataProvider'),
-            ds = this,
-            logger = window.InfinniUI.global.logger,
-            validateResult;
-
-        if (!this.isModified(item)) {
-            this._notifyAboutItemSaved(item, 'notModified', success);
-            return;
-        }
-
-        validateResult = this.validateOnErrors(item);
-        if (!validateResult.isValid) {
-            this._notifyAboutFailValidationBySaving(item, validateResult, error);
-            return;
-        }
-
-        dataProvider.saveItem(item, function (data) {
-            if (!('isValid' in data) || data.isValid === true) {
-                //@TODO Что приходит в ответ на сохранение?????
-                ds.uploadFiles(data.Id)
-                    .then(function () {
-                        ds._excludeItemFromModifiedSet(item);
-                        ds._notifyAboutItemSaved(item, data, success);
-                    }, function (err) {
-                        logger.error(err);
-                        if (error) {
-                            error(err);
-                        }
-                    });
-            } else {
-                ds._notifyAboutFailValidationBySaving(item, data, error);
-            }
-        });
-    },
-
-    _notifyAboutItemSaved: function (item, result, successHandler) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.value = item;
-        argument.result = result;
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onItemSaved', context, argument);
-    },
-
-    _notifyAboutFailValidationBySaving: function (item, validationResult, errorHandler) {
-        this._notifyAboutValidation(validationResult, errorHandler, 'error');
-    },
-
-    deleteItem: function (item, success, error) {
-        var dataProvider = this.get('dataProvider'),
-            that = this,
-            itemId = this.idOfItem(item),
-            isItemInSet = this.get('itemsById')[itemId] !== undefined;
-
-        if ( item == null || ( itemId !== undefined && !isItemInSet ) ) {
-            this._notifyAboutMissingDeletedItem(item, error);
-            return;
-        }
-
-        dataProvider.deleteItem(item, function (data) {
-            if (!('isValid' in data) || data.isValid === true) {
-                that._handleDeletedItem(item, success);
-            } else {
-                that._notifyAboutFailValidationByDeleting(item, data, error);
-            }
-        });
-    },
-
-    _handleDeletedItem: function (item, successHandler) {
-        var items = this.get('items'),
-            idProperty = this.get('idProperty'),
-            itemId = this.idOfItem(item),
-            selectedItem = this.getSelectedItem();
-
-        for (var i = 0, ii = items.length, needExit = false; i < ii && !needExit; i++) {
-            if (items[i][idProperty] == itemId) {
-                items.splice(i, 1);
-                needExit = true;
-            }
-        }
-        delete this.get('itemsById')[itemId];
-        this._excludeItemFromModifiedSet(item);
-
-        if (selectedItem && selectedItem[idProperty] == itemId) {
-            this.setSelectedItem(null);
-        }
-
-        this._notifyAboutItemDeleted(item, successHandler);
-    },
-
-    _notifyAboutItemDeleted: function (item, successHandler) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.value = item;
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onItemDeleted', context, argument);
-    },
-
-    _notifyAboutMissingDeletedItem: function (item, errorHandler) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.value = item;
-        argument.error = {
-            message: 'Нельзя удалить элемент, которого нет текущем наборе источника данных'
-        };
-
-        if (errorHandler) {
-            errorHandler(context, argument);
-        }
-    },
-
-    _notifyAboutFailValidationByDeleting: function (item, errorData, errorHandler) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.value = item;
-        argument.error = errorData;
-
-        if (errorHandler) {
-            errorHandler(context, argument);
-        }
-    },
-
-    isDataReady: function () {
-        return this.get('isDataReady');
-    },
-
-    getItems: function () {
-        var logger = window.InfinniUI.global.logger;
-
-        if (!this.isDataReady()) {
-            logger.warn({
-                message: 'BaseDataSource: Попытка получить данные источника данных (' + this.get('name') + '), до того как он был проинициализирован данными',
-                source: this
-            });
-        }
-
-        return this.get('items');
-    },
-
-    updateItems: function (onSuccess, onError) {
-        if (!this.get('isUpdateSuspended')) {
-            var filters = this.getFilter(),
-                pageNumber = this.get('pageNumber'),
-                pageSize = this.get('pageSize'),
-                sorting = this.get('sorting'),
-                dataProvider = this.get('dataProvider'),
-                that = this;
-
-            this.set('isRequestInProcess', true);
-            dataProvider.getItems(filters, pageNumber, pageSize, sorting, function (data) {
-
-                that.set('isRequestInProcess', false);
-                that._handleUpdatedItemsData(data, onSuccess);
-
-            }, onError);
-        }
-
-    },
-
-    _handleUpdatedItemsData: function (itemsData, successHandler) {
-        this._setItems(itemsData);
-        this._notifyAboutItemsUpdated(itemsData, successHandler);
-    },
-
-    _notifyAboutItemsUpdated: function (itemsData, successHandler) {
-        var context = this.getContext(),
-            argument = {
-                value: itemsData
-            };
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onItemsUpdated', context, argument);
-    },
-
-    _notifyAboutItemsUpdatedAsPropertyChanged: function (itemsData) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.property = '';
-        argument.newValue = itemsData;
-        argument.oldValue = null;
-
-        this.trigger('onPropertyChanged', context, argument);
-        this.trigger('onPropertyChanged:', context, argument);
-    },
-
-    addNextItems: function (success, error) {
-        if (!this.get('isUpdateSuspended')) {
-            var filters = this.getFilter(),
-                pageNumber = this.get('pageNumber'),
-                pageSize = this.get('pageSize'),
-                sorting = this.get('sorting'),
-                dataProvider = this.get('dataProvider'),
-                that = this;
-
-            this.set('isRequestInProcess', true);
-            this.set('pageNumber', pageNumber + 1);
-            dataProvider.getItems(filters, pageNumber + 1, pageSize, sorting, function (data) {
-
-                that.set('isRequestInProcess', false);
-                that._handleAddedItems(data, success);
-
-            }, error);
-        }
-    },
-
-    _handleAddedItems: function (itemsData, successHandler) {
-        this._addItems(itemsData);
-        this._notifyAboutItemsAdded(itemsData, successHandler);
-
-    },
-
-    _notifyAboutItemsAdded: function (itemsData, successHandler) {
-        var context = this.getContext(),
-            argument = {
-                value: itemsData
-            };
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onItemsAdded', context, argument);
-    },
-
-    createItem: function (success, error) {
-        var dataProvider = this.get('dataProvider'),
-            idProperty = this.get('idProperty'),
-            that = this,
-            localItem;
-
-        if (this.get('fillCreatedItem')) {
-            dataProvider.createItem(
-                function (item) {
-                    that._handleDataForCreatingItem(item, success);
-                },
-                idProperty
-            );
-        } else {
-            localItem = dataProvider.createLocalItem(idProperty);
-            this._handleDataForCreatingItem(localItem, success);
-        }
-    },
-
-    _handleDataForCreatingItem: function (itemData, successHandler) {
-        var items = this.get('items');
-
-        if(items) {
-            items = items.slice();
-            items.push(itemData);
-        }else{
-            items = [itemData];
-        }
-
-        this._setItems(items);
-        this.setSelectedItem(itemData);
-        this._notifyAboutItemCreated(itemData, successHandler);
-    },
-
-    _notifyAboutItemCreated: function (createdItem, successHandler) {
-        var context = this.getContext(),
-            argument = {
-                value: createdItem
-            };
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onItemCreated', context, argument);
-    },
-
-    getFilter: function () {
-        return this.get('criteriaList');
-    },
-
-    setFilter: function (filters, onSuccess, onError) {
-        var bindingBuilder = this.get('bindingBuilder');
-        var boundFilter = new BoundFilter(filters, bindingBuilder);
-        var that = this;
-
-        if(boundFilter.isReady()){
-            that._setCriteriaList(boundFilter.getCriteriaList(), onSuccess, onError);
-        }
-
-        boundFilter.onChange(function(newCriteriaList){
-            if(boundFilter.isReady()){
-                that._setCriteriaList(newCriteriaList, onSuccess, onError);
-            }
-        });
-
-        //this._setCriteriaList(filters);
-    },
-
-    _setCriteriaList: function(criteriaList, onSuccess, onError){
-        this.set('criteriaList', criteriaList);
-        this.updateItems(onSuccess, onError);
-    },
-
-    setIdFilter: function (itemId) {
-        var dataProvider = this.get('dataProvider'),
-            idFilter = dataProvider.createIdFilter(itemId);
-
-        this.setFilter(idFilter);
-    },
-
-    getErrorValidator: function () {
-        return this.get('errorValidator');
-    },
-
-    setErrorValidator: function (validatingFunction) {
-        this.set('errorValidator', validatingFunction);
-    },
-
-    getWarningValidator: function () {
-        return this.get('warningValidator');
-    },
-
-    setWarningValidator: function (validatingFunction) {
-        this.set('warningValidator', validatingFunction);
-    },
-
-    validateOnErrors: function (item, callback) {
-        return this._validatingActions(item, callback, 'error');
-    },
-
-    validateOnWarnings: function (item, callback) {
-        return this._validatingActions(item, callback, 'warning');
-    },
-
-    _validatingActions: function (item, callback, validationType) {
-        var validatingFunction = validationType == 'error' ? this.get('errorValidator') : this.get('warningValidator'),
-            result = {
-                isValid: true,
-                items: []
-            },
-            isCheckingOneItem = !!item,
-            context = this.getContext(),
-            items, subResult, itemIndex;
-
-        if (validatingFunction) {
-            if (isCheckingOneItem) {
-
-                result = validatingFunction(context, item);
-
-            } else {
-
-                items = this.getItems();
-                for (var i = 0, ii = items.length; i < ii; i++) {
-
-                    subResult = validatingFunction(context, items[i]);
-                    if (!subResult.isValid) {
-                        this._addIndexToPropertiesOfValidationMessage(subResult.items, i);
-                        result.isValid = false;
-                        result.items = _.union(result.items, subResult.items);
-                    }
-
-                }
-
-            }
-        }
-
-        this._notifyAboutValidation(result, callback, validationType);
-
-        return result;
-    },
-
-    _addIndexToPropertiesOfValidationMessage: function (validationMessages, index) {
-        for (var i = 0, ii = validationMessages.length; i < ii; i++) {
-            validationMessages[i].property = index + '.' + validationMessages[i].property;
-        }
-    },
-
-    _notifyAboutValidation: function (validationResult, validationHandler, validationType) {
-        var context = this.getContext(),
-            argument = {
-                value: validationResult
-            };
-
-        if (validationHandler) {
-            validationHandler(context, argument);
-        }
-
-        if (validationType == 'error') {
-            this.trigger('onErrorValidator', context, argument);
-        } else {
-            this.trigger('onWarningValidator', context, argument);
-        }
-    },
-
-    getContext: function () {
-        return this.getView().getContext();
-    },
-
-    _indexItemsById: function (items) {
-        var idProperty = this.get('idProperty'),
-            result = {},
-            idValue;
-        for (var i = 0, ii = items.length; i < ii; i++) {
-            idValue = items[i][idProperty];
-            result[idValue] = items[i];
-        }
-
-        return result;
-    },
-
-    idOfItem: function (item) {
-        var idProperty = this.get('idProperty');
-        if (!item) {
-            return undefined;
-        }
-        return item[idProperty];
-    },
-
-    getCurrentRequestPromise: function(){
-        var promise = $.Deferred();
-        var logger = window.InfinniUI.global.logger;
-
-        if(this.get('isRequestInProcess')){
-            this.once('onPropertyChanged:', function(){
-                if(this.isDataReady()){
-                    promise.resolve();
-                }else{
-                    logger.warn({
-                        message: 'BaseDataSource: strange, expected other dataReady status',
-                        source: this
-                    });
-                }
-            });
-        }else{
-            promise.resolve();
-        }
-
-        return promise;
-    },
-
-    setBindingBuilder: function(bindingBuilder){
-        this.set('bindingBuilder', bindingBuilder);
-    },
-
-    setIsLazy: function(isLazy){
-        this.set('isLazy', isLazy);
-    },
-
-    isLazy: function(){
-        return this.get('isLazy');
-    },
-
-    _replaceAllProperties: function (currentObject, newPropertiesSet) {
-        for (var property in currentObject) {
-            delete(currentObject[property]);
-        }
-
-        for (var property in newPropertiesSet) {
-            currentObject[property] = newPropertiesSet[property];
-        }
-    },
-
-    _copyObject: function (currentObject) {
-        return JSON.parse(JSON.stringify(currentObject));
-    },
-
-    _getArgumentTemplate: function () {
-        return {
-            source: this
-        };
-    }
-
-});
-
-_.extend(BaseDataSource.prototype, dataSourceFileProviderMixin, dataSourceLookupMixin);
-
-/**
- * @constructor
- * @mixes DataSourceValidationNotifierMixin
- */
-function BaseDataSourceBuilder() {
-}
-
-_.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.prototype */ {
-    build: function (context, args) {
-        var dataSource = this.createDataSource(args.parentView);
-        dataSource.suspendUpdate();
-
-        var bindingBuilder = this.buildBindingBuilder(args);
-        dataSource.setBindingBuilder(bindingBuilder);
-
-        this.applyMetadata(args.builder, args.parentView, args.metadata, dataSource);
-        this.initFileProvider(dataSource, args.metadata);
-
-        dataSource.resumeUpdate();
-
-        /*if(args.parentView.onLoading){
-         args.parentView.onLoading(function () {
-         //dataSource.resumeUpdate();
-         dataSource.updateItems();
-         });
-         }else{
-         //dataSource.resumeUpdate();
-         dataSource.updateItems();
-         }*/
-
-        return dataSource;
-    },
-
-    applyMetadata: function (builder, parentView, metadata, dataSource) {
-        var idProperty = metadata.IdProperty;
-        if (idProperty) {
-            dataSource.setIdProperty(idProperty);
-        }
-
-        dataSource.setName(metadata.Name);
-        dataSource.setFillCreatedItem(metadata.FillCreatedItem);
-        dataSource.setPageSize(metadata.PageSize || 15);
-        dataSource.setPageNumber(metadata.PageNumber || 0);
-
-        if('Query' in metadata){
-            dataSource.setFilter(metadata['Query']);
-        }
-
-        if('IsLazy' in metadata){
-            dataSource.setIsLazy(metadata['IsLazy']);
-        }
-
-        this.initValidation(parentView, dataSource, metadata);
-        this.initNotifyValidation(dataSource);
-        this.initScriptsHandlers(parentView, metadata, dataSource);
-    },
-
-    createDataSource: function (parent) {
-        throw 'BaseDataSourceBuilder.createDataSource В потомке BaseDataSourceBuilder не переопределен метод createDataSource.';
-    },
-
-    /**
-     * @protected
-     * @description Инициализация обработчиков для валидации данных
-     * @param parentView
-     * @param dataSource
-     * @param metadata
-     */
-    initValidation: function (parentView, dataSource, metadata) {
-        if (metadata.ValidationErrors) {
-            dataSource.setErrorValidator(function (context, args) {
-                return new ScriptExecutor(parentView).executeScript(metadata.ValidationErrors.Name || metadata.ValidationErrors, args);
-            });
-        }
-
-        if (metadata.ValidationWarnings) {
-            dataSource.setWarningValidator(function (context, args) {
-                return new ScriptExecutor(parentView).executeScript(metadata.ValidationWarnings.Name || metadata.ValidationWarnings, args);
-            });
-        }
-    },
-
-    initScriptsHandlers: function (parentView, metadata, dataSource) {
-        //Скриптовые обработчики на события
-        if (parentView && metadata.OnSelectedItemChanged) {
-            dataSource.onSelectedItemChanged(function () {
-                new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemChanged.Name || metadata.OnSelectedItemChanged);
-            });
-        }
-
-        if (parentView && metadata.OnItemsUpdated) {
-            dataSource.onItemsUpdated(function () {
-                new ScriptExecutor(parentView).executeScript(metadata.OnItemsUpdated.Name || metadata.OnItemsUpdated);
-            });
-        }
-
-        if (parentView && metadata.OnSelectedItemModified) {
-            dataSource.onSelectedItemModified(function () {
-                new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemModified.Name || metadata.OnSelectedItemModified);
-            });
-        }
-
-        if (parentView && metadata.OnItemDeleted) {
-            dataSource.onItemDeleted(function () {
-                new ScriptExecutor(parentView).executeScript(metadata.OnItemDeleted.Name || metadata.OnItemDeleted);
-            });
-        }
-    },
-
-    buildBindingBuilder: function(params){
-
-        return function(bindingMetadata){
-            return params.builder.buildBinding(bindingMetadata, {
-                parentView: params.parentView,
-                basePathOfProperty: params.basePathOfProperty
-            });
-        };
-    },
-
-    initFileProvider: function (dataSource, metadata) {
-
-    }
-});
-
-
-_.extend(BaseDataSourceBuilder.prototype, DataSourceValidationNotifierMixin);
 var BoundFilter = function(filtersMetadata, bindingBuilder){
     this.filtersMetadata = filtersMetadata;
     this.filters = filtersMetadata.slice(0);
@@ -26230,6 +29002,70 @@ _.extend(BoundFilter.prototype, {
     }
 
 });
+function CriteriaItem () {
+
+}
+
+(function () {
+
+    function getter (name) {
+        return function () {
+            return this['_' + name];
+        }
+    }
+
+    function setter(name) {
+        return function (value) {
+            var _name = '_' + name;
+            var oldValue = this[_name];
+            if (value !== oldValue) {
+                this[_name] = value;
+                this._triggerOnChange(name, value, oldValue);
+            }
+        }
+    }
+
+    Object.defineProperties(CriteriaItem.prototype, {
+        value: {
+            get: getter('value'),
+            set: setter('value'),
+            enumerable: true
+        },
+        property: {
+            get: getter('property'),
+            set: setter('property'),
+            enumerable: true
+        },
+        criteriaType: {
+            get: getter('criteriaType'),
+            set: setter('criteriaType'),
+            enumerable: true
+        }
+    });
+
+})();
+
+
+
+CriteriaItem.prototype.toJSON = function () {
+    return {
+        Value: this.value,
+        Property: this.property,
+        CriteriaType: this.criteriaType
+    }
+};
+
+CriteriaItem.prototype._triggerOnChange = function (property, newValue, oldValue) {
+    this.trigger('change:' + property, this, newValue, oldValue);
+    this.trigger('change', this, newValue);
+};
+
+CriteriaItem.prototype.setProperty = function (name, value) {
+    this[name] = value;
+};
+
+_.extend(CriteriaItem.prototype, Backbone.Events);
+
 /**
  * @description Организация очереди запросов на создание/изменение документа.
  * Признак одного и того же документа по атрибутам Id или __Id (@see {@link EditDataSourceStrategy.getItems})
@@ -26304,206 +29140,6 @@ var DataProviderReplaceItemQueue = function (attributes) {
     };
 
 };
-var DocumentDataSource = BaseDataSource.extend({
-    defaults: _.defaults({
-
-        configId:           null,
-        documentId:         null,
-        createActionName:   'CreateDocument',
-        readActionName:     'GetDocument',
-        updateActionName:   'SetDocument',
-        deleteActionName:   'DeleteDocument'
-
-    }, BaseDataSource.prototype.defaults),
-
-
-    initDataProvider: function(){
-        var dataProvider = window.providerRegister.build('DocumentDataSource'),
-            createActionName = this.getCreateAction(),
-            readActionName = this.getReadAction(),
-            updateActionName = this.getUpdateAction(),
-            deleteActionName = this.getDeleteAction();
-
-        dataProvider.setCreateAction(createActionName);
-        dataProvider.setReadAction(readActionName);
-        dataProvider.setUpdateAction(updateActionName);
-        dataProvider.setDeleteAction(deleteActionName);
-
-        this.set('dataProvider', dataProvider);
-    },
-
-    getConfigId: function(){
-        return this.get('configId');
-    },
-
-    setConfigId: function(configId){
-        var dataProvider = this.get('dataProvider');
-
-        dataProvider.setConfigId(configId);
-        this.set('configId', configId);
-    },
-
-    getDocumentId: function(){
-        return this.get('documentId');
-    },
-
-    setDocumentId: function(documentId){
-        var dataProvider = this.get('dataProvider');
-
-        dataProvider.setDocumentId(documentId);
-        this.set('documentId', documentId);
-    },
-
-    getCreateAction: function(){
-        return this.get('createActionName');
-    },
-
-    setCreateAction: function(createActionName){
-        var dataProvider = this.get('dataProvider');
-
-        dataProvider.setCreateAction(createActionName);
-        this.set('createActionName', createActionName);
-    },
-
-    getReadAction: function(){
-        return this.get('readActionName');
-    },
-
-    setReadAction: function(readActionName){
-        var dataProvider = this.get('dataProvider');
-
-        dataProvider.setReadAction(readActionName);
-        this.set('readActionName', readActionName);
-    },
-
-    getUpdateAction: function(){
-        return this.get('updateActionName');
-    },
-
-    setUpdateAction: function(updateActionName){
-        var dataProvider = this.get('dataProvider');
-
-        dataProvider.setUpdateAction(updateActionName);
-        this.set('updateActionName', updateActionName);
-    },
-
-    getDeleteAction: function(){
-        return this.get('deleteActionName');
-    },
-
-    setDeleteAction: function(deleteActionName){
-        var dataProvider = this.get('dataProvider');
-
-        dataProvider.setDeleteAction(deleteActionName);
-        this.set('deleteActionName', deleteActionName);
-    }
-
-});
-
-function DocumentDataSourceBuilder() {
-}
-
-_.inherit(DocumentDataSourceBuilder, BaseDataSourceBuilder);
-
-_.extend(DocumentDataSourceBuilder.prototype, {
-    applyMetadata: function(builder, parent, metadata, dataSource){
-        BaseDataSourceBuilder.prototype.applyMetadata.call(this, builder, parent, metadata, dataSource);
-
-        dataSource.setConfigId(metadata['ConfigId']);
-        dataSource.setDocumentId(metadata['DocumentId']);
-
-        if('CreateAction' in metadata){
-            dataSource.setCreateAction(metadata['CreateAction']);
-        }
-        if('ReadAction' in metadata){
-            dataSource.setReadAction(metadata['ReadAction']);
-        }
-        if('UpdateAction' in metadata){
-            dataSource.setUpdateAction(metadata['UpdateAction']);
-        }
-        if('DeleteAction' in metadata){
-            dataSource.setDeleteAction(metadata['DeleteAction']);
-        }
-
-    },
-
-    createDataSource: function(parent){
-        return new DocumentDataSource({
-            view: parent
-        });
-    },
-
-    initFileProvider: function (dataSource) {
-        var fileProvider = window.providerRegister.build('DocumentFileProvider', {
-            documentId: dataSource.getDocumentId(),
-            configId: dataSource.getConfigId()
-        });
-
-        dataSource.setFileProvider(fileProvider);
-    }
-});
-
-function MetadataDataSource(view, metadata) {
-
-    var  provider = window.providerRegister.build('MetadataInfoDataSource', metadata);
-
-    var baseDataSource = new BaseDataSource(view, metadata.IdProperty, provider);
-
-    baseDataSource.getRegisteredConfigList = function (resultCallback) {
-        provider.getRegisteredConfigList(resultCallback);
-    };
-
-    baseDataSource.getConfigurationMetadata = function (resultCallback) {
-        provider.getConfigurationMetadata(resultCallback);
-    };
-
-    baseDataSource.getDocumentListMetadata = function (resultCallback) {
-        provider.getDocumentListMetadata(resultCallback);
-    };
-
-    baseDataSource.getDocumentMetadata = function (resultCallback) {
-        provider.getDocumentMetadata(resultCallback);
-    };
-
-    baseDataSource.getDocumentElementListMetadata = function (resultCallback) {
-        provider.getDocumentElementListMetadata(resultCallback);
-    };
-
-    baseDataSource.getMenuListMetadata = function (resultCallback) {
-        provider.getMenuListMetadata(resultCallback);
-    };
-
-    baseDataSource.getMenuMetadata = function (resultCallback) {
-        provider.getMenuMetadata(resultCallback);
-    };
-
-    baseDataSource.getValidationWarningMetadata = function (resultCallback) {
-        provider.getValidationWarningMetadata(resultCallback);
-    };
-
-    baseDataSource.getValidationErrorMetadata = function (resultCallback) {
-        provider.getValidationErrorMetadata(resultCallback);
-    };
-
-
-
-    return baseDataSource;
-}
-
-function MetadataDataSourceBuilder() {
-
-    this.build = function (context, args) {
-
-        var idProperty = args.metadata.IdProperty || 'Id';
-
-        var dataSource = new MetadataDataSource(args.view, args.metadata);
-        new BaseDataSourceBuilder().build(context,
-                                            _.extend(args, {dataSource: dataSource}));
-
-        return dataSource;
-    }
-}
-
 var ObjectDataSource = BaseDataSource.extend({
 
     initDataProvider: function(){
@@ -26531,6 +29167,11 @@ _.extend(ObjectDataSourceBuilder.prototype, {
 
     applyMetadata: function(builder, parent, metadata, dataSource){
         BaseDataSourceBuilder.prototype.applyMetadata.call(this, builder, parent, metadata, dataSource);
+
+        if(!'IsLazy' in metadata){
+            dataSource.setIsLazy(false);
+        }
+
         if(metadata.Items){
             if($.isArray(metadata.Items)){
                 dataSource.setItems(metadata.Items);
@@ -26541,23 +29182,23 @@ _.extend(ObjectDataSourceBuilder.prototype, {
                     parentView: parent
                 });
 
-                binding.setMode(BindingModes.toElement);
+                binding.setMode(InfinniUI.BindingModes.toElement);
 
                 binding.bindElement(dataSource, '');
             }
 
         }
 
-    },
-
-    initFileProvider: function (dataSource) {
-        var fileProvider = window.providerRegister.build('DocumentFileProvider', {
-            documentId: "documentId",
-            configId: "configId"
-        });
-
-        dataSource.setFileProvider(fileProvider);
     }
+
+    //initFileProvider: function (dataSource) {
+    //    var fileProvider = window.providerRegister.build('DocumentFileProvider', {
+    //        documentId: "documentId",
+    //        configId: "configId"
+    //    });
+    //
+    //    dataSource.setFileProvider(fileProvider);
+    //}
 });
 /**
  * @constructor
@@ -26767,19 +29408,24 @@ function ParameterBuilder() {
             var parameter = new Parameter({view: parentView});
             parameter.setName(metadata['Name']);
 
-            if(this.isBindingMetadata(metadata['Value'])){
+            if(InfinniUI.Metadata.isBindingMetadata(metadata['Value'])){
                 var dataBinding = builder.buildBinding(metadata['Value'], {parentView: parentView, basePathOfProperty: basePathOfProperty});
                 dataBinding.bindElement(parameter, '');
             }else{
                 parameter.setValue(metadata['Value']);
             }
+
+            if (metadata.OnPropertyChanged) {
+                parameter.onPropertyChanged('', function (context, args) {
+                    var scriptExecutor = new ScriptExecutor(parentView);
+                    return scriptExecutor.executeScript(metadata.OnPropertyChanged.Name || metadata.OnPropertyChanged, args);
+                });
+            }
         }
 
-        return parameter;
-    };
 
-    this.isBindingMetadata = function(metadata){
-        return $.isPlainObject(metadata) && 'Source' in metadata;
+
+        return parameter;
     };
 }
 var UploadApi = function () {
@@ -28556,10 +31202,6 @@ function combinePropertyPath(parent, property) {
 
     return result;
 }
-window.dialogResult = {
-    accept: 'Accepted',
-    cancel: 'Canceled'
-};
 var builderBackgroundMixin = {
 
     initBackground: function (params) {
@@ -28609,13 +31251,6 @@ var builderHintTextMixin = {
     }
 
 };
-var builderLabelTextMixin = {
-
-    initLabelText: function (params) {
-        params.element.setLabelText(params.metadata.LabelText);
-    }
-};
-
 var builderLayoutPanelMixin = {
     registerLayoutPanel: function (params) {
         var exchange = window.InfinniUI.global.messageBus;
@@ -28797,328 +31432,6 @@ _.extend(DocumentViewerBuilder.prototype, {
     }
 }, builderValuePropertyMixin);
 
-function FilterPanel(parentView) {
-    _.superClass(FilterPanel, this, parentView);
-}
-
-_.inherit(FilterPanel, Element);
-
-_.extend(FilterPanel.prototype, {
-
-    createControl: function () {
-        return new FilterPanelControl();
-    },
-
-    setView: function (view) {
-        return this.control.set('view', view);
-    },
-
-    getView: function () {
-        return this.control.get('view');
-    },
-
-    setDataSource: function (dataSource) {
-        return this.control.set('dataSource', dataSource);
-    },
-
-    getDataSource: function () {
-        return this.control.get('dataSource');
-    },
-
-    setFilters: function(filters){
-        return this.control.set('filters', filters);
-    },
-
-    getFilters: function(){
-        return this.control.get('filters');
-    },
-
-    setQuery: function(query){
-        return this.control.set('query', query);
-    },
-
-    getQuery: function(){
-        if(!this.control.get('value')) {
-            return this.control.get('query');
-        }else{
-            return this.control.get('value');
-        }
-    },
-
-//    setProperty: function(property){
-//        return this.control.set('property', property)
-//    },
-
-    getOrientation: function () {
-        return this.control.get('orientation');
-    },
-
-    setOrientation: function (orientation) {
-        if (typeof orientation == 'string') {
-            this.control.set('orientation', orientation);
-        }
-    },
-
-    getHeight: function () {
-        return 44;
-    },
-
-    /**
-     * @see {@link http://jira.infinnity.lan/browse/UI-772}
-     */
-    filter: function () {
-        this.control.filter();
-    }
-
-}, valuePropertyMixin);
-function FilterPanelBuilder() {
-}
-
-_.inherit(FilterPanelBuilder, ElementBuilder);
-
-_.extend(FilterPanelBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        this.initValueProperty(params);
-        this.initScriptsHandlers(params);
-
-        params.element.setDataSource(params.metadata.DataSource);
-        params.element.setView(params.view);
-        //params.metadata.Query = [
-        //        {
-        //            CriteriaType: 1,
-        //            Property: "MedicalWorker.Id",
-        //            Value: "9f7df52a-229a-4b6c-978f-83e19573d510"
-        //        }
-        //];
-        params.element.setQuery(params.metadata.Query);
-
-        var array = [];
-        _.each(params.metadata.GeneralProperties, function (metadataProperty) {
-            var obj = {};
-            var label = params.builder.build(params.view, {Label: {}});
-            label.setValue(metadataProperty.Text);
-
-            obj.text = label;
-            obj.property = metadataProperty.Property;
-            obj.operators = [];
-
-            _.each(metadataProperty.Operators, function (metadataOperator) {
-                var operator = {};
-                operator.operator = metadataOperator.Operator;
-                operator.el = params.builder.build(params.view, metadataOperator.Editor);
-                obj.operators.push(operator);
-            });
-
-            array.push(obj);
-        });
-        params.element.setFilters(array);
-
-        this.initDataSource(params);
-    },
-
-    createElement: function (params) {
-        return new FilterPanel(params.view);
-    },
-
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
-            });
-        }
-
-        if (params.view && metadata.OnValueChanged){
-            params.element.onValueChanged(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnValueChanged.Name);
-            });
-        }
-    },
-
-    initDataSource: function (params) {
-        var self = params;
-
-        params.element.onValueChanged(function (value) {
-            var args = {
-                source: self.element,
-                dataSource: self.metadata.DataSource,
-                value: value
-            };
-
-            var view = self.element.getView();
-            var exchange = view.getExchange();
-            exchange.send(messageTypes.onSetPropertyFilters, args);
-        });
-    }
-
-}, builderValuePropertyMixin);
-
-function LinkLabel() {
-    _.superClass(LinkLabel, this);
-}
-
-_.inherit(LinkLabel, Element);
-
-_.extend(LinkLabel.prototype, {
-
-        createControl: function () {
-            return new LinkLabelControl();
-        },
-
-        getReference: function () {
-            return this.control.get('reference');
-        },
-
-        setReference: function (value) {
-            this.control.set('reference', value);
-        },
-
-        onClick: function (handler) {
-            this.control.controlView.addEventHandler('OnClick', handler);
-        },
-
-        getTextTrimming: function () {
-            return this.control.get('textTrimming');
-        },
-
-        setTextTrimming: function (value) {
-            this.control.set('textTrimming', value);
-        },
-
-        getTextWrapping: function () {
-            return this.control.get('textWrapping');
-        },
-
-        setTextWrapping: function (value) {
-            this.control.set('textWrapping', value);
-        },
-
-        getLineCount: function () {
-            return this.control.get('lineCount');
-        },
-
-        setLineCount: function (value) {
-            this.control.set('lineCount', value);
-        },
-        getAction: function () {
-            return this.control.get('action');
-        },
-
-        setAction: function (action) {
-            this.control.set('action', action);
-
-            this.onClick(function () {
-                var action = this.getAction();
-                if (action) {
-                    action.execute();
-                }
-            }.bind(this));
-        }
-
-    },
-    valuePropertyMixin,
-    formatPropertyMixin,
-    elementHorizontalTextAlignmentMixin,
-    elementBackgroundMixin,
-    elementForegroundMixin,
-    elementTextStyleMixin
-);
-function LinkLabelBuilder() {
-}
-
-_.inherit(LinkLabelBuilder, ElementBuilder);
-
-_.extend(LinkLabelBuilder.prototype,
-    {
-        defaults: {
-            Foreground: "Black",
-            Background: "Transparent",
-            HorizontalTextAlignment: "Left",
-            TextStyle: "Body1",
-            TextTrimming: true,
-            TextWrapping: true
-        },
-
-        applyDefaults: function (metadata) {
-            var defaults = this.defaults;
-
-            for (var i in defaults) {
-                if (typeof metadata[i] === 'undefined') {
-                    metadata[i] = defaults[i];
-                }
-            }
-        },
-
-        applyMetadata: function (params) {
-            this.applyDefaults(params.metadata);
-            var metadata = params.metadata;
-            var element = params.element;
-
-            ElementBuilder.prototype.applyMetadata.call(this, params);
-
-            element.setTextWrapping(metadata.TextWrapping);
-            element.setTextTrimming(metadata.TextTrimming);
-            element.setLineCount(metadata.LineCount);
-
-            this.initHorizontalTextAlignmentProperty(params);
-            this.initForeground(params);
-            this.initBackground(params);
-            this.initTextStyle(params);
-            this.initFormatProperty(params);
-            this.initValueProperty(params);
-            this.initBindingToProperty(params, metadata.Reference, 'Reference');
-            this.initScriptsHandlers(params);
-
-            if(params.metadata.Action) {
-                params.element.setAction(params.builder.build(params.view, params.metadata.Action, params.collectionProperty));
-            }
-        },
-
-        initScriptsHandlers: function (params) {
-            var metadata = params.metadata;
-
-            //Скриптовые обработчики на события
-            if (params.view && metadata.OnLoaded) {
-                params.element.onLoaded(function () {
-                    new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
-                });
-            }
-
-            if (params.view && metadata.OnValueChanged) {
-                params.element.onValueChanged(function () {
-                    new ScriptExecutor(params.view).executeScript(metadata.OnValueChanged.Name);
-                });
-            }
-
-            if (params.view && metadata.OnClick) {
-                params.element.onClick(function () {
-                    var script = new ScriptExecutor(params.view);
-                    return script.executeScript(metadata.OnClick.Name);
-                });
-            }
-        },
-
-        createElement: function (params) {
-            var linkLabel = new LinkLabel(params.view);
-            linkLabel.getHeight = function () {
-                return 34;
-            };
-            return linkLabel;
-        }
-
-    },
-    builderValuePropertyMixin,
-    builderFormatPropertyMixin,
-    //builderHorizontalTextAlignmentPropertyMixin,
-    builderBackgroundMixin,
-    builderForegroundMixin,
-    builderTextStyleMixin
-);
 function PdfViewer(parentView) {
     _.superClass(PdfViewer, this, parentView);
 }
@@ -29167,419 +31480,6 @@ _.extend(PdfViewerBuilder.prototype, {
     }
 }, builderValuePropertyMixin);
 
-function SearchPanel(parentView) {
-    _.superClass(SearchPanel, this, parentView);
-}
-
-_.inherit(SearchPanel, Element);
-
-_.extend(SearchPanel.prototype, {
-
-    createControl: function () {
-        return new SearchPanelControl();
-    },
-
-    setDataSource: function (dataSource) {
-        return this.control.set('dataSource', dataSource);
-    },
-
-    getDataSource: function () {
-        return this.control.get('dataSource');
-    },
-
-    setView: function (view) {
-        return this.control.set('view', view);
-    },
-
-    getView: function () {
-        return this.control.get('view');
-    },
-
-    getHeight: function () {
-        return 44;
-    }
-
-}, valuePropertyMixin);
-function SearchPanelBuilder() {
-}
-
-_.inherit(SearchPanelBuilder, ElementBuilder);
-
-_.extend(SearchPanelBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        this.initScriptsHandlers(params);
-        this.initValueProperty(params);
-        this.initDataSource(params);
-
-        params.element.setDataSource(params.metadata.DataSource);
-        params.element.setView(params.view);
-    },
-
-    createElement: function (params) {
-        return new SearchPanel(params.view);
-    },
-
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
-            });
-        }
-
-        if (params.view && metadata.OnValueChanged){
-            params.element.onValueChanged(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnValueChanged.Name);
-            });
-        }
-    },
-
-    initDataSource: function (params) {
-        var self = params;
-
-        params.element.onValueChanged(function (value) {
-            var args = {
-                source: self.element,
-                dataSource: self.metadata.DataSource,
-                value: value
-            };
-            var view = self.element.getView();
-            var exchange = view.getExchange();
-            exchange.send(messageTypes.onSetTextFilter, args);
-        });
-    }
-
-}, builderValuePropertyMixin);
-
-function TreeView() {
-    _.superClass(TreeView, this);
-}
-
-_.inherit(TreeView, Element);
-
-_.extend(TreeView.prototype, {
-
-        createControl: function () {
-            return new TreeViewControl();
-        },
-
-        /**
-         * Возвращает значение, определяющее, разрешен ли выбор нескольких элементов.
-         * @returns {Boolean}
-         */
-        getMultiSelect: function () {
-            return this.control.get('multiSelect');
-        },
-
-        /**
-         * Устанавливает значение, определяющее, разрешен ли выбор нескольких элементов.
-         * @param {Boolean} value
-         */
-        setMultiSelect: function (value) {
-            this.control.set('multiSelect', value);
-        },
-
-        /**
-         * Возвращает значение, определяющее, запрещено ли редактирование значения.
-         * @return {Boolean}
-         */
-        getReadOnly: function () {
-            return this.control.get('readOnly');
-        },
-
-        /**
-         * Устанавливает значение, определяющее, запрещено ли редактирование значения.
-         * @param {Boolean} value
-         */
-        setReadOnly: function (value) {
-            this.control.set('readOnly', value);
-        },
-
-        getValueProperty: function () {
-            return this.control.get('valueProperty');
-        },
-
-        setValueProperty: function (value) {
-            this.control.set('valueProperty', value);
-        },
-
-        getKeyProperty: function () {
-            return this.control.get('keyProperty');
-        },
-
-        setKeyProperty: function (value) {
-            this.control.set('keyProperty', value);
-        },
-
-        getParentProperty: function () {
-            return this.control.get('parentProperty');
-        },
-
-        setParentProperty: function (value) {
-            this.control.set('parentProperty', value);
-        },
-
-        getDisplayProperty: function () {
-            return this.control.get('displayProperty');
-        },
-
-        setDisplayProperty: function (value) {
-            this.control.set('displayProperty', value);
-        },
-
-        getFormat: function () {
-            return this.control.get('itemFormat');
-        },
-
-        setFormat: function (itemFormat) {
-            this.control.set('itemFormat', itemFormat);
-        },
-
-        getItemTemplate: function () {
-
-        },
-
-        setItemTemplate: function () {
-
-        },
-
-        addItem: function () {
-
-        },
-
-        removeItem: function () {
-
-        },
-
-        /**
-         * Возвращает список элементов.
-         * @returns {Object[]}
-         */
-        getItems: function () {
-            return this.control.get('items');
-        },
-
-        /**
-         * Устанавливает список элементов.
-         * @param {Object[]}items
-         */
-        setItems: function (items) {
-            this.control.set('items', items);
-            this.control.controlView.trigger('afterchange:items');
-        },
-
-        getDataNavigation: function () {
-
-        },
-
-        setDataNavigation: function () {
-
-        },
-
-        getSelectedItem: function () {
-            return this.control.controlView.getSelectedItem();
-        }
-
-    },
-    valuePropertyMixin
-);
-
-function TreeViewBuilder () {
-
-}
-
-_.inherit(TreeViewBuilder, ElementBuilder);
-
-_.extend(TreeViewBuilder.prototype, {
-
-    applyMetadata: function (params) {
-
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        this.initFormatProperty(params);
-        this.initValueProperty(params);
-        this.initScriptsHandlers(params);
-
-        var element = params.element,
-            builder = params.builder,
-            metadata = params.metadata,
-            view = params.view,
-            that = this;
-
-        element.setMultiSelect(metadata.MultiSelect);
-        element.setReadOnly(metadata.ReadOnly);
-        element.setDisplayProperty(metadata.DisplayProperty);
-        element.setValueProperty(metadata.ValueProperty);
-        element.setKeyProperty(metadata.KeyProperty);
-        element.setParentProperty(metadata.ParentProperty);
-        this.initFormatProperty(params);
-
-        if (metadata.Items) {
-            // Привязка списка значений элемента к источнику данных
-            var binding = builder.build(view, metadata.Items);
-
-            binding.onPropertyValueChanged(function (dataSourceName, value) {
-                element.setItems(value.value);
-            });
-
-            element.onValueChanged(function (context, args) {
-                view.getExchange().send(messageTypes.onSetSelectedItem, {
-                    dataSource: binding.getDataSource(),
-                    property: '',
-                    value: element.getSelectedItem()
-                });
-            });
-
-            var items = binding.getPropertyValue();
-            if (items) {
-                element.setItems(items);
-            }
-        }
-    },
-
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
-            });
-        }
-
-        if (params.view && metadata.OnValueChanged){
-            params.element.onValueChanged(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnValueChanged.Name);
-            });
-        }
-    },
-
-    createElement: function (params) {
-        return new TreeView(params.view);
-    }
-
-}, builderValuePropertyMixin, builderFormatPropertyMixin, builderFormatPropertyMixin);
-
-function AbstractGridPanel(parentView) {
-    _.superClass(AbstractGridPanel, this, parentView);
-}
-
-_.inherit(AbstractGridPanel, Element);
-
-_.extend(AbstractGridPanel.prototype, {
-
-    addRow: function(){
-        var row = new GridRow();
-        this.control.addRow(row);
-        return row;
-    },
-
-    getRows: function(){
-        return this.control.getRows();
-    }
-
-});
-
-function AbstractGridPanelBuilder() {
-}
-
-_.inherit(AbstractGridPanelBuilder, ElementBuilder);
-
-_.extend(AbstractGridPanelBuilder.prototype, {
-
-    applyMetadata: function(params){
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        var metadata = params.metadata,
-            gridPanel = params.element,
-            row, cell, item;
-
-        _.each(metadata.Rows, function (metadataItem, rowIndex) {
-            row = gridPanel.addRow();
-
-            if (metadataItem.Cells) {
-                _.each(metadataItem.Cells, function (cellMetadata, cellIndex) {
-                    cell = row.addCell(cellMetadata.ColumnSpan);
-
-                    if (cellMetadata.Items) {
-                        _.each(cellMetadata.Items, function (itemMetadata) {
-                            item = params.builder.build(params.view, itemMetadata, params.collectionProperty);
-                            cell.addItem(item);
-                        }, this);
-                    }
-                }, this);
-            }
-        }, this);
-    }
-
-});
-var GridCell = function(colSpan){
-    this.items = [];
-    this.colSpan = colSpan || 1;
-    this.handlers = {
-        onItemsChange: $.Callbacks()
-    };
-};
-
-_.extend(GridCell.prototype, {
-
-    addItem: function(item){
-        this.items.push(item);
-        this.handlers.onItemsChange.fire();
-    },
-
-    getItems: function(){
-        return this.items;
-    },
-
-    onItemsChange: function(handler){
-        this.handlers.onItemsChange.add(handler);
-    }
-
-});
-var GridRow = function(){
-    this.cells = [];
-    this.handlers = {
-        onCellsChange: $.Callbacks(),
-        onItemsChange: $.Callbacks()
-    };
-};
-
-_.extend(GridRow.prototype, {
-
-    addCell: function(colSpan){
-        var cell = new GridCell(colSpan);
-        this.cells.push(cell);
-        this.handlers.onCellsChange.fire();
-        this.initCellHandlers(cell);
-        return cell;
-    },
-
-    getCells: function(){
-        return this.cells;
-    },
-
-    onCellsChange: function(handler){
-        this.handlers.onCellsChange.add(handler);
-    },
-
-    onItemsChange: function(handler){
-        this.handlers.onItemsChange.add(handler);
-    },
-
-    initCellHandlers: function(cell){
-        var self = this;
-        cell.onItemsChange(function(){
-            self.handlers.onItemsChange.fire();
-        });
-    }
-
-});
 function ExtensionPanel(parentView) {
     _.superClass(ExtensionPanel, this, parentView);
 }
@@ -29598,6 +31498,10 @@ _.extend(ExtensionPanel.prototype, {
 
     setParameters: function (parameters) {
         return this.control.set('parameters', parameters);
+    },
+
+    getParameters: function () {
+        return this.control.get('parameters');
     },
 
     setContext: function (context) {
@@ -29793,287 +31697,6 @@ _.extend(ViewPanelBuilder.prototype, {
 
 InfinniUI.global.containers = {};
 
-function ActionBar(parent) {
-    _.superClass(ActionBar, this, parent);
-}
-
-_.inherit(ActionBar, Element);
-
-_.extend(ActionBar.prototype, {
-
-    createControl: function () {
-        return new ActionBarControl();
-    },
-
-    //setApplicationView: function (applicationView) {
-    //    this.control.set('applicationView', applicationView);
-    //},
-    //
-    //getApplicationView: function () {
-    //    return this.control.get('applicationView');
-    //},
-
-    setPages: function (pages) {
-        this.control.set('pages', pages);
-    },
-
-    getPages: function () {
-        return this.control.get('pages');
-    },
-
-    refresh: function (pages) {
-        //var view = this.getApplicationView();
-
-        //console.log('ApplicationView', view);
-
-        //var pages = InfinniUI.global.openMode.getPageViews(view);
-        for (var i = 0, ln = pages.length; i < ln; i = i + 1) {
-            console.log(pages[i]);
-        }
-    }
-
-});
-function ActionBarBuilder() {
-
-}
-
-_.inherit(ActionBarBuilder, ElementBuilder);
-
-_.extend(ActionBarBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-
-        //var applicationView = params.parent.getApplicationView();
-        //params.element.setApplicationView(applicationView);
-
-
-        var exchange = window.InfinniUI.global.messageBus;
-
-        exchange.subscribe(messageTypes.onViewOpened, this.onViewOpened.bind(this, params));
-
-        exchange.subscribe(messageTypes.onViewClosed, this.onViewClosed.bind(this, params));
-
-    },
-
-    createElement: function (params) {
-        return new ActionBar(params.view);
-    },
-
-    onViewOpened: function (params, message) {
-        var applicationView = params.view.getApplicationView();
-        if (message.openMode === 'Page' && applicationView === message.view.getApplicationView()) {
-            //Открывается страница текущего приложения
-            console.log('ActionBar.onViewOpened', message);
-            //console.log(InfinniUI.global.openMode.getPageViews(message.view.getApplicationView()));
-            this.updatePages(params);
-        }
-    },
-
-    updatePages: function (params) {
-        var applicationView = params.view.getApplicationView();
-        var pageViews = InfinniUI.global.openMode.getPageViews(applicationView);
-        params.element.setPages(pageViews.slice());
-    },
-
-    onViewClosed: function (params, message) {
-        var applicationView = params.view.getApplicationView();
-        if (applicationView === message.view.getApplicationView()) {
-            //Закрыта страница текущего приложения
-            console.log('ActionBar.onViewClosed', message);
-            this.updatePages(params);
-        }
-    }
-
-});
-function GlobalNavigationBar(parent) {
-    _.superClass(GlobalNavigationBar, this, parent);
-}
-
-_.inherit(GlobalNavigationBar, Element);
-
-_.extend(GlobalNavigationBar.prototype, {
-
-    createControl: function () {
-        return new GlobalNavigationBarControl();
-    },
-
-    addApplicationView: function (view) {
-        this.control.addApplicationView(view);
-    },
-
-    removeApplicationView: function (view) {
-        this.control.removeApplicationView(view);
-    },
-
-    onActivateApplication: function (handler) {
-        this.control.onActivateApplication(handler);
-    },
-
-    onClosingApplication: function (handler) {
-        this.control.onClosingApplication(handler);
-    },
-
-    onCloseApplication: function (handler) {
-        this.control.onCloseApplication(handler);
-    },
-
-    setApplicationText: function (view, text) {
-        this.control.setApplicationText(view, text);
-    },
-
-    setApplications: function (applications) {
-        this.control.setApplications(applications);
-    }
-
-
-});
-function GlobalNavigationBarBuilder() {
-
-}
-
-_.inherit(GlobalNavigationBarBuilder, ElementBuilder);
-
-_.extend(GlobalNavigationBarBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        var element = params.element;
-
-        element.setApplications(InfinniUI.global.openMode.getApplicationViews());
-        var exchange = this.getGlobalMessageBus();
-        exchange.subscribe(messageTypes.onViewOpened, this.onViewOpenedHandler.bind(this, params));
-
-        exchange.subscribe(messageTypes.onViewClosed, this.onViewClosedHandler.bind(this, params));
-        exchange.subscribe(messageTypes.onViewTextChange, this.onViewTextChangeHandler.bind(this, params));
-
-
-        element.onActivateApplication(this.onActivateApplicationHandler.bind(this, params));
-        element.onClosingApplication(this.onClosingApplicationHandler.bind(this, params));
-    },
-
-    getGlobalMessageBus: function () {
-        return window.InfinniUI.global.messageBus;
-    },
-
-    /**
-     * @description Обработчик запроса на закрытие представления от панели навигации
-     * @param params
-     * @param view
-     */
-    onClosingApplicationHandler: function (params, view) {
-        view.close();
-    },
-
-    /**
-     * @description Обработчик события переключения на другое приложение
-     * @param params
-     */
-    onActivateApplicationHandler: function (params, view) {
-        //@TODO Отправить в шину сообщение о необходимости активировать указанное приложение
-        var exchange = this.getGlobalMessageBus();
-        exchange.send(messageTypes.onShowView, {source: this, view: view});
-    },
-
-    /**
-     * @description Обработчик события открытия представления
-     */
-    onViewOpenedHandler: function (params, message) {
-        var element = params.element;
-
-        if (message.openMode !== 'Application') {
-            return;
-        }
-
-        console.log('messageTypes.onViewOpened', arguments);
-        element.addApplicationView(message.view)
-
-    },
-
-    /**
-     * @description Обработчик события закрытия представления
-     */
-    onViewClosedHandler: function (params, message) {
-        console.log('messageTypes.onViewClosing', message);
-        params.element.removeApplicationView(message.view)
-    },
-
-    /**
-     * @description При изменении заголовка представления, уведомляем об этом компонент навигации
-     * @param params
-     */
-    onViewTextChangeHandler: function (params, message) {
-        params.element.setApplicationText(message.source, message.value);
-    },
-
-    createElement: function (params) {
-        return new GlobalNavigationBar(params.view);
-    }
-
-});
-function EventStore() {
-    var handlers = {};
-
-    this.addEvent = function (name, action) {
-        var event = handlers[name];
-        if (event === undefined) {
-            event = { actions: [] };
-            handlers[name] = event;
-        }
-
-        event.actions.push(action);
-        return {
-            unsubscribe: this.removeEvent.bind(this, name, action)
-        };
-    };
-
-    this.removeEvent = function (name, action) {
-        var events = handlers[name];
-        if (typeof events === 'undefined') {
-            return;
-        }
-        var actions = events.actions;
-        var i;
-        while(true) {
-            i = actions.indexOf(action);
-            if (i === -1) {
-                break;
-            }
-            actions.splice(i, 1);
-        }
-    };
-
-    this.executeEvent = function (name) {
-        var event = handlers[name],
-            response = [],
-            args = _.toArray(arguments).slice(1);
-
-        if (event !== undefined) {
-            response = _.map(event.actions, function (action) {
-                return action.apply(null, args);
-            });
-        }
-        return response;
-    };
-
-    this.executeEventAsync = function (name) {
-        var args = Array.prototype.slice.call(arguments);
-        var callback;
-        if (typeof args[args.length - 1] === 'function') {
-            callback = args.pop();
-        }
-        var response = this.executeEvent.apply(this, args);
-        $.when.apply($, response)
-            .done(function() {
-                var results = [];
-                if (typeof callback === 'function') {
-                    callback(Array.prototype.push.apply(results, arguments));
-                }
-            });
-    };
-}
 /**
  * @description Методы для форматоирования
  * @mixin
@@ -30084,6 +31707,14 @@ var formatMixin = {
      * @description Разделитель для форматирования коллекций
      */
     separator: ", ",
+
+    setOptions: function (options) {
+        this.options = _.defaults({}, options);
+    },
+
+    getOptions: function () {
+        return this.options || {};
+    },
 
     /**
      * Форматирование объекта или коллекции объектов.
@@ -30265,7 +31896,7 @@ _.extend(DateTimeFormat.prototype, {
 
         culture = culture || new Culture(InfinniUI.config.lang);
 
-        var date = new Date(originalDate);
+        var date = this.createDate(originalDate);
 
         format = format||this.getFormat();
 
@@ -30284,6 +31915,14 @@ _.extend(DateTimeFormat.prototype, {
         });
     },
 
+    createDate: function (originalDate) {
+        var date;
+        var options = this.getOptions();
+
+        date = InfinniUI.DateUtils.createDate(originalDate);
+
+        return InfinniUI.DateUtils.changeTimezoneOffset(date, options.TimeZone);//apply timezoneOffset
+    },
 
     rg: new RegExp(
         '"[\\s\\S]*"|' + "'[\\s\\S]*'"+
@@ -30809,10 +32448,6 @@ _.extend(ObjectFormat.prototype, {
      */
     formatValue: function (originalValue, culture, format) {
 
-        if (typeof originalValue === 'undefined' || originalValue === null) {
-            return '';
-        }
-
         culture = culture || new Culture(InfinniUI.config.lang);
         format = format || this.getFormat();
 
@@ -30820,9 +32455,7 @@ _.extend(ObjectFormat.prototype, {
         var trim = /^{|}$/g;
         var value = '';
 
-        if (typeof originalValue !== 'undefined' && originalValue !== null) {
-            value = format.replace(regexp, this.formatIterator.bind(this, originalValue, culture));
-        }
+        value = format.replace(regexp, this.formatIterator.bind(this, originalValue, culture));
         
         return value;
 
@@ -30858,6 +32491,8 @@ _.extend(ObjectFormat.prototype, {
             for (var i = 0, ln = this.formatters.length; i < ln; i = i + 1) {
                 //Пытаемся по очереди отформатировать значение разными форматами
                 formatter = new this.formatters[i](parts[1]);
+                formatter.setOptions(this.getOptions());
+
                 text = formatter.format(value, culture);
                 if (text !== parts[1]) {
                     //Если формат отформатировал строку - оставляем ее
@@ -31033,7 +32668,13 @@ function ObjectFormatBuilder () {
      * @returns {string}
      */
     getText: function () {
-        return this.value.toString();
+        var text;
+
+        if (this.value !== null && typeof this.value !== 'undefined') {
+            text = String(this.value);
+        }
+
+        return text;
     },
 
     /**
@@ -31701,6 +33342,8 @@ function DateTimeEditMask() {
     this.format = null;
 }
 
+_.extend(DateTimeEditMask.prototype, editMaskMixin);
+
 _.extend(DateTimeEditMask.prototype, {
 
     /**
@@ -31962,6 +33605,10 @@ _.extend(DateTimeEditMask.prototype, {
         var width;
         var index;
         var result = null;
+
+        if (!Array.isArray(template)) {
+            return null;
+        }
         for (var i = 0, ln = template.length; i < ln; i = i + 1) {
             item = template[i];
             if (typeof item === 'string') {
@@ -32132,13 +33779,17 @@ _.extend(DateTimeEditMask.prototype, {
 
     /**
      * Получить представление значения для MaskedEdit
-     * @returns {string}
+     * @returns {string|*}
      */
     getText: function () {
         var template = this.template;
         var item;
         var result = [];
         var placeholder;
+
+        if (!Array.isArray(template)) {
+            return;
+        }
 
         for (var i = 0, ln = template.length; i < ln; i = i + 1) {
             item = template[i];
@@ -32214,17 +33865,21 @@ _.extend(DateTimeEditMask.prototype, {
         return template;
     },
 
-
     /**
      * Вернуть введеный результат
      * @returns {*}
      */
     getValue: function () {
+        var formatOptions = this.format.getOptions();
         var template = this.template;
         var item;
         var mask;
-        var value = this.value;
+        var value =  InfinniUI.DateUtils.changeTimezoneOffset(this.value, formatOptions.TimeZone );
         var done = true;
+
+        if (!Array.isArray(template)) {
+            return;
+        }
 
         for (var i = 0; i < template.length; i = i + 1) {
             item = template[i];
@@ -32239,6 +33894,10 @@ _.extend(DateTimeEditMask.prototype, {
             }
         }
 
+        if (done && value instanceof Date) {
+            //value.setHours(0, 0, 0, 0);
+            value =  InfinniUI.DateUtils.restoreTimezoneOffset(value, formatOptions.TimeZone);
+        }
 
         return done ? value : null;
     },
@@ -32248,7 +33907,9 @@ _.extend(DateTimeEditMask.prototype, {
      * @returns {String}
      */
     getData: function () {
-        return InfinniUI.DateUtils.toISO8601(this.getValue());
+        var formatOptions = this.format.getOptions();
+
+        return InfinniUI.DateUtils.toISO8601(this.getValue(), {timezoneOffset: formatOptions.TimeZone});
     },
 
     /**
@@ -32262,12 +33923,7 @@ _.extend(DateTimeEditMask.prototype, {
         if (typeof value !== 'undefined' && value !== null && value !== '') {
             //Если переданное значение является датой - инициалищируем этим значением
             try {
-                if(value instanceof Date){
-                    date = value;
-                }else {
-                    date = new Date(value);
-                }
-
+                date = InfinniUI.DateUtils.createDate(value);
             } catch (e) {
                 date = null;
             }
@@ -32357,6 +34013,8 @@ _.extend(DateTimeEditMask.prototype, {
 function DateTimeEditMaskBuilder () {
     this.build = function (context, args) {
 
+        var formatOptions = args.formatOptions;
+
         var editMask = new DateTimeEditMask();
         var culture = new Culture(InfinniUI.config.lang);
         var mask;
@@ -32370,7 +34028,7 @@ function DateTimeEditMaskBuilder () {
         editMask.mask = mask;
 
         editMask.format = args.builder.buildType('DateTimeFormat', {Format: args.metadata.Mask}, {parentView: args.parentView});
-
+        editMask.format.setOptions(formatOptions);
         return editMask;
     }
 }
@@ -32494,6 +34152,10 @@ _.extend(NumberEditMask.prototype, {
     getText: function () {
         var result = [];
         var item;
+
+        if (!Array.isArray(this.template)) {
+            return;
+        }
 
         for (var i = 0, ln = this.template.length; i < ln; i = i + 1) {
             item = this.template[i];
@@ -32830,25 +34492,29 @@ _.extend(NumberEditMask.prototype, {
         var txt = text.slice(0, index);
 
         var i = (/\d/.test(txt)) ? txt.length - txt.split('').reverse().join('').search(/\d/) - 1 : 0;
-        if (item.value === 0) {
+        
+        item.value = this.parseText(text.slice(0, i) + text.slice(i + 1), item.value);
+        item.text = this.formatMask(item.value, item.mask);
+
+        position = fractional ? position - 1 : position + item.text.length - text.length;
+
+        if (item.value === 0 && position <= 1) {
             item.value = null;
             item.text = this.formatMask(item.value, item.mask);
             position = left;
-        } else {
-            item.value = this.parseText(text.slice(0, i) + text.slice(i + 1), item.value);
-            item.text = this.formatMask(item.value, item.mask);
-            position = fractional ? position - 1 : position + item.text.length - text.length;
-
         }
-
 
         return position;
     },
 
     getValue: function () {
+        var value;
         var itemTemplate = this.getItemTemplate();
 
-        return itemTemplate.item.value;
+        if (itemTemplate) {
+            value = itemTemplate.item.value;
+        }
+        return value;
     },
 
     /**
@@ -32910,6 +34576,10 @@ _.extend(NumberEditMask.prototype, {
         var item;
         var left = 0;
         var result = null;
+
+        if (!Array.isArray(template)) {
+            return null;
+        }
         for (var i = 0, ln = template.length; i < ln; i = i + 1) {
             item = template[i];
             if (typeof item === 'string') {
@@ -33248,12 +34918,16 @@ _.extend(TemplateEditMask.prototype, {
 
     /**
      * Получение введенного значения
-     * @returns {string}
+     * @returns {string|*}
      */
     getValue: function () {
         var template = this.template;
         var result = [];
         var text;
+
+        if (!Array.isArray(template)) {
+            return;
+        }
         for (var i = 0, ln = template.length; i < ln; i = i + 1) {
             if (typeof template[i] === 'string' && this.maskSaveLiteral) {
                 result.push(template[i]);
@@ -33343,6 +35017,11 @@ _.extend(TemplateEditMask.prototype, {
         var width;
         var index;
         var result = null;
+
+        if (!Array.isArray(template)) {
+            return null;
+        }
+
         for (var i = 0, ln = template.length; i < ln; i = i + 1) {
             item = template[i];
             if (typeof item === 'string') {
@@ -33757,28 +35436,18 @@ function TemplateEditMaskBuilder () {
         return editMask;
     }
 }
-function ChildViewBuilder() {
-    this.build = function (context, args) {
-        var linkView = args.parentView.getChildView(args.metadata.Name);
-        linkView.setOpenMode(args.metadata.OpenMode);
-        linkView.setContainer(args.metadata.Container);
-        if (['Application', 'Page', 'Dialog'].indexOf(args.metadata.OpenMode) > -1) {
-            InfinniUI.views.appendView(null, args.metadata, linkView);
-        }
-
-        return linkView;
-    };
-}
 function InlineViewBuilder() {
     this.build = function (context, args){
         var that = this,
             metadata = args.metadata;
 
-        var linkView = new LinkView(args.parentView);
+        var parentView = this.getParentViewByOpenMode(args, metadata.OpenMode);
+
+        var linkView = new LinkView(parentView);
 
         linkView.setViewTemplate(function(onViewReadyHandler){
 
-            that.buildViewByMetadata(args, args.metadata['View'], function (view) {
+            that.buildViewByMetadata(args, args.metadata['View'], parentView, function (view) {
                 return onViewReadyHandler.call(null, view);
             });
         });
@@ -33800,14 +35469,18 @@ function InlineViewBuilder() {
 
 
 
-    this.buildViewByMetadata = function(params, viewMetadata, onViewReadyHandler){
+    this.buildViewByMetadata = function(params, viewMetadata, parentView, onViewReadyHandler){
         var builder = params.builder;
-        var parentView = params.parentView;
         var parameters = this.buildParameters(params);
 
         if (viewMetadata !== null) {
 
-            var view = builder.buildType("View", viewMetadata, {parentView: parentView, parent: params.parent, params: parameters});
+            var view = builder.buildType("View", viewMetadata, {
+                parentView: parentView,
+                parent: parentView,
+                params: parameters,
+                suspended: params.suspended
+            });
 
             onViewReadyHandler(view);
         } else {
@@ -33826,13 +35499,21 @@ function InlineViewBuilder() {
         if (typeof parametersMetadata !== 'undefined' && parametersMetadata !== null) {
             for (var i = 0; i < parametersMetadata.length; i++) {
                 if (parametersMetadata[i].Value !== undefined) {
-                    parameter = builder.buildType('Parameter', parametersMetadata[i], {parentView: parentView})
+                    parameter = builder.buildType('Parameter', parametersMetadata[i], {parentView: parentView, basePathOfProperty: params.basePathOfProperty});
                     result[parameter.getName()] = parameter;
                 }
             }
         }
         return result;
    };
+
+    this.getParentViewByOpenMode = function(params, mode) {
+        if( mode == null || mode == "Default" ) {
+            return params.parentView.getApplicationView();
+        }
+
+        return params.parentView;
+    };
 }
 
 
@@ -33900,6 +35581,8 @@ _.extend(LinkView.prototype, {
             this.parent.addChild(view);
         }
 
+        window.InfinniUI.global.messageBus.send('onViewCreated', {openMode: openMode, view: view});
+
         switch(openMode){
             case 'Container': {
                 container = InfinniUI.global.containers[this.containerName];
@@ -33929,57 +35612,60 @@ function MetadataViewBuilder() {
 
 _.extend(MetadataViewBuilder.prototype, {
 
-    build: function (context, args){
+    build: function (context, args) {
         var metadata = args.metadata;
-        var viewTemplate = this.buildViewTemplate(args);
-        var linkView = new LinkView(args.parent);
+        var parentView = this.getParentViewByOpenMode(args, metadata.OpenMode);
+
+        var viewTemplate = this.buildViewTemplate(args, parentView);
+        var linkView = new LinkView(parentView);
 
         linkView.setViewTemplate(viewTemplate);
 
-        if('OpenMode' in metadata){
+        if ('OpenMode' in metadata) {
             linkView.setOpenMode(metadata.OpenMode);
         }
 
-        if('Container' in metadata){
+        if ('Container' in metadata) {
             linkView.setContainer(metadata.Container);
         }
 
-        if('DialogWidth' in metadata){
+        if ('DialogWidth' in metadata) {
             linkView.setDialogWidth(metadata.DialogWidth);
         }
 
         return linkView;
     },
 
-    buildViewTemplate: function(params, cb){
+    buildViewTemplate: function (params, parentView) {
         var metadata = params.metadata;
         var that = this;
 
-        return function(onViewReadyHandler){
+        return function (onViewReadyHandler) {
             var metadataProvider = window.providerRegister.build('MetadataDataSource', metadata);
 
-            metadataProvider.getViewMetadata( function(viewMetadata){
-                that.buildViewByMetadata(params, viewMetadata, onReady);
+            metadataProvider.getViewMetadata(function (viewMetadata) {
+                that.buildViewByMetadata(params, viewMetadata, parentView, onReady);
                 function onReady() {
                     var args = Array.prototype.slice.call(arguments);
-                    if (cb) {
-                        cb.apply(null, args);
-                    }
                     onViewReadyHandler.apply(null, args);
                 }
             });
         };
     },
 
-    buildViewByMetadata: function(params, viewMetadata, onViewReadyHandler){
+    buildViewByMetadata: function (params, viewMetadata, parentView, onViewReadyHandler) {
         var builder = params.builder;
-        var parentView = params.parentView;
         var logger = InfinniUI.global.logger;
         var parameters = this.buildParameters(params);
 
         if (viewMetadata !== null) {
 
-            var view = builder.buildType("View", viewMetadata, {parentView: parentView, parent: params.parent, params: parameters});
+            var view = builder.buildType("View", viewMetadata, {
+                parentView: parentView,
+                parent: parentView,
+                params: parameters,
+                suspended: params.suspended
+            });
 
             onViewReadyHandler(view);
         } else {
@@ -33987,7 +35673,7 @@ _.extend(MetadataViewBuilder.prototype, {
         }
     },
 
-    buildParameters: function(params){
+    buildParameters: function (params) {
         var parametersMetadata = params.metadata['Parameters'];
         var builder = params.builder;
         var parentView = params.parentView;
@@ -33997,129 +35683,57 @@ _.extend(MetadataViewBuilder.prototype, {
         if (typeof parametersMetadata !== 'undefined' && parametersMetadata !== null) {
             for (var i = 0; i < parametersMetadata.length; i++) {
                 if (parametersMetadata[i].Value !== undefined) {
-                    parameter = builder.buildType('Parameter', parametersMetadata[i], {parentView: parentView, basePathOfProperty: params.basePathOfProperty})
+                    parameter = builder.buildType('Parameter', parametersMetadata[i], {
+                        parentView: parentView,
+                        basePathOfProperty: params.basePathOfProperty
+                    });
                     result[parameter.getName()] = parameter;
                 }
             }
         }
         return result;
+    },
+
+    getParentViewByOpenMode: function(params, mode) {
+        if( mode == null || mode == "Default" ) {
+            return params.parentView.getApplicationView();
+        }
+
+        return params.parentView;
     }
 });
-var OpenMode = function () {
+var openModeAutoFocusMixin = {
 
-    var applications = [];
-    var pages = [];
+    applyAutoFocus: function () {
+        var view = this.view;
+        var focusOnControl = view && view.getFocusOnControl();
 
-    this.getStrategy = function (linkView) {
-        var openMode = linkView.openMode;
-
-        var openModeStrategy = {
-            Application: OpenModeApplicationStrategy,
-            Container: OpenModeContainerStrategy,
-            Page: OpenModePageStrategy,
-            Dialog: OpenModeDialogStrategy
-        };
-
-        if (typeof openModeStrategy[openMode] === 'undefined') {
-            throw new Error("Несуществующий OpenMode: " + openMode);
+        if (!focusOnControl) {
+            return;
         }
 
-        return new openModeStrategy[openMode](linkView);
-    };
-
-    this.getRootContainer = function () {
-        return InfinniUI.config.$rootContainer || $('body');
-    };
-
-    this.resolveContainer = function (list, callback) {
-        var name, layout;
-        _.find(list, function (i) {
-            if (_.isEmpty(i)) return false;
-            name = i;
-            layout = layoutPanelRegistry.getLayoutPanel(name);
-            return !_.isEmpty(layout);
-        });
-
-        callback(name, layout);
-    };
-
-    this.registerPage = function (applicationView, view, openMethod) {
-        pages.push({
-            applicationView: applicationView,
-            view: view,
-            openMethod: openMethod
-        });
-    };
-
-    this.registerApplication = function (applicationView, openMethod) {
-        applications.push({
-            applicationView: applicationView,
-            openMethod: openMethod
-        });
-    };
-
-    this.getApplicationViews = function () {
-        return _.pluck(applications, 'view');
-    };
-
-    this.closeApplicationView = function (applicationView) {
-        var i = _.findIndex(applications, function (app) {
-            return app.applicationView === applicationView;
-        });
-
-        if (i !== -1) {
-            applications.splice(i, 1);
-        }
-
-        //Получаем следущее доступное приложение
-        var ln = applications.length;
-        if (ln > 0) {
-            var next = (i < ln) ? applications[i] : applications[ln - 1];
-            return next.applicationView;
-        }
-    };
-
-    this.closePageView = function (view) {
-        var applicationView;
-        var next;
-        var i, ln;
-
-        for (i = 0, ln = pages.length; i < ln; i = i + 1) {
-            if (pages[i].view === view) {
-                var data = pages.splice(i,1).pop();
-                applicationView = data.applicationView;
-                break;
-            }
-        }
-
-        if (applicationView) {
-            for (i = 0, ln = pages.length; i < ln; i = i + 1) {
-                if (pages[i].applicationView === applicationView) {
-                    next = pages[i].view;
-                    break;
+        var focusInterval = setInterval(function () {
+            var elements = view.findAllChildrenByName(focusOnControl);
+            if (Array.isArray(elements) && elements.length > 0) {
+                var element = elements[0];
+                if (!jQuery.contains(document, element.control.controlView.el)) {
+                    return;
                 }
+
+                element.setFocus && element.setFocus();
+                clearFocusInterval();
             }
+        }, 1000 / 3);
+
+        setTimeout(clearFocusInterval, 3000);
+
+        function clearFocusInterval() {
+            clearInterval(focusInterval);
         }
-        return next;
-    };
 
-    this.getApplication = function (applicationView) {
-        return _.findWhere(applications, {applicationView: applicationView});
-    };
-
-    this.getPageViews = function (applicationView) {
-        return _.chain(pages)
-            .filter(function (data) {
-                return data.applicationView === applicationView;
-            })
-            .pluck('view')
-            .value();
-    };
+    }
 
 };
-
-InfinniUI.global.openMode = new OpenMode();
-
 var OpenModeContainerStrategy = function () {
 };
 
@@ -34166,12 +35780,15 @@ _.extend(OpenModeDefaultStrategy.prototype, {
         $container
             .append(this.view.render())
             .data('view', this.view);
+
+        this.applyAutoFocus();
     },
 
     close: function () {
         this.view.remove();
     }
-});
+
+}, openModeAutoFocusMixin);
 
 var OpenModeDialogStrategy = function () {
     this.dialogWidth = 'default';
@@ -34189,17 +35806,27 @@ _.extend(OpenModeDialogStrategy.prototype, {
     },
 
     open: function(){
+        // чтобы пользователь случайно не обратился к элементу в фокусе,
+        // пока диалоговое окно создается и ещё не перехватило фокус,
+        // необходимо старую фокусировку снять
+        $(document.activeElement).blur();
+
         var modalParams = {dialogWidth: this.dialogWidth};
         var $template = $(this.template(modalParams));
         var $closeButton = $('button', $template);
         var $header =  $('h4', $template);
+        var view = this.view;
 
         var $modal = $template.appendTo($('body'));
+
         this.$modal = $modal;
 
         $modal.on('shown.bs.modal', function (e) {
             $(e.target).find('.first-focus-element-in-modal').focus();
         });
+
+        $modal.on('hidden.bs.modal', this.cleanup.bind(this));
+
         var $modalBody = $modal.find('.modal-body');
 
         $modalBody.append(this.view.render());
@@ -34213,17 +35840,21 @@ _.extend(OpenModeDialogStrategy.prototype, {
 
         this._initBehaviorFocusingInModal($modal, $modalBody);
 
-        var view = this.view;
+
 
         var
             headerTemplate = view.getHeaderTemplate();
-        $closeButton.toggleClass('hidden', !view.getCloseButton());
+        $closeButton.toggleClass('hidden', !view.getCloseButtonVisibility());
         $header.append(headerTemplate().render());
 
         $modal.find('.pl-close-modal').on('click', function(){
             view.close();
         });
 
+        InfinniUI.ModalWindowService.modalWasOpened({
+            modal: this.$modal,
+            background: $('.modal-backdrop').last()
+        });
     },
 
     _initBehaviorFocusingInModal: function($modal, $modalBody){
@@ -34245,12 +35876,15 @@ _.extend(OpenModeDialogStrategy.prototype, {
     },
 
     close: function () {
-        this.view.remove();
         if (this.$modal) {
             this.$modal.modal('hide');
-            this.$modal.remove();
         }
+    },
 
+    cleanup: function () {
+        this.view.remove();
+        this.$modal.remove();
+        InfinniUI.ModalWindowService.modalWasClosed(this.$modal);
     }
 });
 function Culture(name){
@@ -34532,6 +36166,65 @@ var AjaxLoaderIndicatorView = Backbone.View.extend({
 
 });
 /**
+ * @description При изменении размеров окна пересчитывает высоту элементов представления
+ */
+InfinniUI.AutoHeightService = (function () {
+    var TIMEOUT = 40;
+    var WAIT = 50;
+    var resizeTimeout;
+
+    $(window).resize(function () {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(_.debounce(onWindowResize, WAIT), TIMEOUT);
+    });
+
+    function onWindowResize() {
+        layoutManager.init();
+    }
+
+})();
+InfinniUI.ModalWindowService = (function () {
+    var modalQueue = [];
+
+    return {
+        modalWasOpened: function (obj) {
+            if (modalQueue.length != 0) {
+                var previous = modalQueue[modalQueue.length - 1];
+
+                previous.modal.hide();
+                previous.background.hide();
+            }
+
+            modalQueue.push(obj);
+        },
+
+        modalWasClosed: function (modal) {
+            for (var i = 0, length = modalQueue.length; i < length; i++) {
+                if (modalQueue[i].modal == modal) {
+                    // Если последний
+                    if (i == length - 1 && i != 0) {
+                        var previous = modalQueue[i - 1];
+
+                        previous.modal.show();
+                        previous.background.show();
+                        notifyLayoutChange();
+                    }
+
+                    modalQueue.splice(i, 1);
+                    break;
+                }
+            }
+
+        }
+    };
+
+    function notifyLayoutChange () {
+        var exchange = window.InfinniUI.global.messageBus;
+        exchange.send('OnChangeLayout', {});
+    }
+})();
+
+/**
  * @description Отображает всплывающие сообщения на событие onNotifyUser.
  * Используется плдагин http://codeseven.github.io/toastr/
  */
@@ -34592,7 +36285,9 @@ InfinniUI.ToolTipService = (function () {
         $element
             .tooltip({
                 html: true,
-                title:content
+                title:content,
+                container: 'body'
+
             })
             .tooltip('show');
     }
@@ -34630,6 +36325,48 @@ function ExcelButton() {
         target.append($button);
     }
 }
+function LoginForm(context, args) {
+
+    var EVENT_NAME_LOGIN = 'SignIn';
+    var exchange = context.messageBus;
+    var template = InfinniUI.Template["extensions/loginForm/template/loginForm.tpl.html"];
+    var uid = guid();
+    var username = 'Электронная почта';
+    var password = 'Пароль';
+    var submit = 'Войти';
+
+    var $form;
+    this.render = render;
+
+    function render() {
+
+        var html = template({
+            uid: uid,
+            username: username,
+            password: password,
+            submit: submit
+        });
+
+        $form = $(html);
+
+        args.$el.append($form);
+
+        initFormEventsHandler();
+
+    }
+
+    function initFormEventsHandler() {
+        $("button[type=submit]", $form).on('click', onSubmitHandler);
+    }
+
+    function onSubmitHandler() {
+        var username = $("input[type=text]", $form).val();
+        var password = $("input[type=password]", $form).val();
+
+        exchange.send(EVENT_NAME_LOGIN, {value: {username: username, password: password}});
+    }
+}
+
 function Testt(context, args) {
     this.context = args.context;
 

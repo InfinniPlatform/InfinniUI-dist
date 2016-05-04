@@ -1,4 +1,6 @@
-﻿document.title = InfinniUI.config.configName;
+﻿if(InfinniUI.config.configName != null) {
+    document.title = InfinniUI.config.configName;
+}
 
 moment.locale('ru');
 
@@ -34,23 +36,33 @@ moment.locale('ru');
         return new MetadataProviderREST(new QueryConstructorMetadata(host, metadataValue));
     });
 
-    window.providerRegister.register('DocumentDataSource', function (metadataValue) {
-        return new DataProviderREST(new QueryConstructorStandard(host, metadataValue));
-    });
-
     window.providerRegister.register('MetadataInfoDataSource', function (metadataValue) {
         return new MetadataDataSourceProvider(new QueryConstructorMetadataDataSource(host, metadataValue));
     });
+
+    window.providerRegister.register('DocumentDataSource', RestDataProvider);
+    window.providerRegister.register('RestDataSource', RestDataProvider);
+
+     window.providerRegister.register('ServerActionProvider', function () {
+             return new ServerActionProvider();
+     });
+
 
     var builder = new ApplicationBuilder(),
         rootView = new SpecialApplicationView(),
         mainView;
 
+    window.InfinniUI.global.messageBus.subscribe('onViewCreated', function (context, args) {
+        if(args.value.openMode == 'Default') {
+            window.contextApp = args.value.view;
+        }
+    });
+
     rootView.open($target);
     openHomePage()
         .done(function (viewMetadata) {
             var action = builder.buildType('OpenAction', viewMetadata, {parentView: rootView});
-            action.execute(function(){window.contextApp = arguments[0];});
+            action.execute();
         });
 
     function openHomePage() {
@@ -91,6 +103,8 @@ moment.locale('ru');
 function SpecialApplicationView() {
     var $container;
 
+    this.isView = true;
+
     this.getContainer = function () {
         return this.$container;
     };
@@ -111,5 +125,5 @@ function SpecialApplicationView() {
 
     this.getContext = function(){
         return null;
-    }
+    };
 }

@@ -1,174 +1,127 @@
 {
-  "OnLoaded": "OL2",
-  "DataSources": [{
-    "ObjectDataSource":{
-      "Name": "Clone",
-      "Items":{
-        "Source": "BloodGroupDataSource",
-        "Converter":{
-          "ToElement":"{return [args.value[0]];}"
-        }
-      }
-    }
-  },
+  "DataSources": [
     {
       "ObjectDataSource": {
-        "Name": "BloodGroupDataSource",
+        "Name": "ds2",
+        "Items": [
+          {
+          }
+        ]
+      }
+    },
+    {
+      "ObjectDataSource": {
+        "Name": "ds1",
         "Items": [
           {
             "Id": 1,
-            "DisplayName": "44",
-            "SomeField": "",
-            "Array": [
-              {
-                "Id": 5,
-                "DisplayName": "I-1"
-              },
-              {
-                "Id": 6,
-                "DisplayName": "I-2"
-              },
-              {
-                "Id": 7,
-                "DisplayName": "I-3"
-              }
-            ]
+            "Title": "1",
+            "Volume": "I"
           },
           {
             "Id": 2,
-            "DisplayName": "II",
-            "SomeField": "val",
-            "Array": [
-              {
-                "Id": 8,
-                "DisplayName": "II-1"
-              },
-              {
-                "Id": 9,
-                "DisplayName": "II-2"
-              }
-            ]
+            "Title": "2",
+            "Volume": "I"
           },
           {
             "Id": 3,
-            "DisplayName": "III",
-            "SomeField": 3
+            "Title": "3",
+            "Volume": "I"
           },
           {
             "Id": 4,
-            "DisplayName": "IV",
-            "SomeField": null
+            "Title": "4",
+            "Volume": "I"
+          },
+          {
+            "Id": 5,
+            "Title": "5",
+            "Volume": "I"
+          },
+          {
+            "Id": 6,
+            "Title": "6",
+            "Volume": "II"
+          },
+          {
+            "Id": 7,
+            "Title": "7",
+            "Volume": "II"
           }
-        ],
-        "OnSelectedItemChanged": {
-          "Name": "OnSelectedItemChanged_1"
-        }
+        ]
       }
     }
   ],
-  "Items": [{
-    "GridPanel": {
-      "Items": [
-        {
-          "Cell": {
-            "ColumnSpan": 4,
+  "Items": [
+    {
+      "ListBox": {
+        "ItemTemplate": {
+          "StackPanel": {
             "Items": [
               {
-                "ToggleButton": {
-                  "Name": "TB",
-                  "Text": "Subscribe",
-                  "TextOn": "yes",
-                  "TextOff": "no",
-                  "OnValueChanged": {
-                    "Name": "ToggleButtonOnValueChanged"
-                  },
-                  "OnValueChanging": {
-                    "Name": "ToggleButtonOnValueChanging"
+                "Label": {
+                  "Value": {
+                    "Source": "ds1",
+                    "Property": "#.Id"
                   }
                 }
               }
             ]
           }
         },
-        {
-          "Cell": {
-            "ColumnSpan": 4,
-            "Items": [
-              {
-                "ExtensionPanel": {
-                  "ExtensionName": "TestExtension",
-                  "Parameters": [
-                    {
-                      "Name": "p1",
-                      "Value": {
-                        "Source": "BloodGroupDataSource",
-                        "Property": ""
-                      }
-                    }
-                  ],
-                  "Items": [
-                    {
-                      "NumericBox": {
-                        "Background": "Primary1",
-                        "HintText": "I'm NumericBox hint",
-                        "LabelText": "Numeric label",
-                        "Enabled": true,
-                        "MinValue": 0,
-                        "EditMask": {
-                          "NumberEditMask": {
-                            "Mask": "n3"
-                          }
-                        },
-                        "Value": {
-                          "Source": "BloodGroupDataSource",
-                          "Property": "$.Id"
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        },
-        {
-          "Cell": {
-            "ColumnSpan": 4,
-            "Items": [
-              {
-                "TestElement":{
-                  "TestProperty": "Value Of Test Property In TestElement"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "Cell": {
-            "ColumnSpan": 4,
-            "Items": [
-              {
-                "StackPanel":{
-                  "Items": {
-                    "Source": "Clone",
-                    "Property": ""
-                  },
-
-                  "ItemTemplate":{
-                    "Label":{
-                      "Value": {
-                        "Source": "Clone",
-                        "Property": "#.DisplayName"
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
+        "Items": {
+          "Source": "ds1",
+          "Property": ""
         }
-      ]
+      }
+    },
+    {
+      "ComboBox": {
+        "Items": {
+          "Source": "ds1",
+          "Property": ""
+        },
+        "Value": {
+          "Source": "ds2",
+          "Property": "$.uid"
+        },
+        "Autocomplete": true,
+        "ItemProperty": "Title",
+        "ValueFormat": "{Id}: {Title}"
+      }
+    },
+    {
+      "Label": {
+        "Value": {
+          "Source": "ds2",
+          "Property": "$.uid"
+        }
+      }
+    },
+    {
+      "DataGrid": {
+        "MultiSelect": true,
+        "Items": {
+          "Source": "ds1",
+          "Property": ""
+        },
+        "Columns": [
+          {
+            "Header": "Id",
+            "CellProperty": "Id"
+          },
+          {
+            "Header": "Title",
+            "CellProperty": "Title"
+          },
+          {
+            "Header": "Volume",
+            "CellProperty": "Volume"
+          }
+        ]
+      }
     }
-  }]
+
+  ]
 }
 

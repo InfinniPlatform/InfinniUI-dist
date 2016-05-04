@@ -1,0 +1,88 @@
+.pl-treeview {
+
+  &_multi-select {
+
+  }
+
+  &_single-select {
+
+  }
+
+}
+
+.pl-treeview-node {
+  &__button {
+    display:inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    .user-select(none);
+
+    &_expand {
+      &:before {
+        content: "\f196";
+      }
+    }
+
+    &_collapse {
+      &:before {
+        content: "\f147";
+      }
+    }
+  }
+
+  &__item {
+    display: inline-block;
+  }
+
+  &__items {
+    margin-left: 20px;
+
+    &_expanded {
+      display: block;
+    }
+
+    &_collapsed {
+      display: none;
+    }
+  }
+
+}
+
+.pl-treeview-item {
+  &__checker {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    .user-select(none);
+
+    &_checkbox {
+      &:before {
+        content: "\f096";
+      }
+    }
+
+    &_checkbox&_checked {
+      &:before{
+        content: "\f14a";
+      }
+    }
+
+    &_radio {
+      display: none;//nothing
+    }
+
+    &_radio&_checked {
+      display: none;//nothing
+    }
+
+  }
+
+  &__content {
+    display: inline-block;
+    cursor: pointer;
+
+    &_selected {
+      color: @list-group-active-color;
+      background-color: @list-group-active-bg;
+      border-color: @list-group-active-border;
+    }
+  }
+}

@@ -8,14 +8,14 @@
     "benchmark": "1.x",
     "moment": "latest",
     "signalr": "2.1.1",
-    "jstree": "~3.0.9",
-    "jstree-bootstrap-theme": "~1.0.1",
     "font-awesome": "latest",
     "JavaScript-MD5": "~1.1.0",
     "jquery-bootpag": "1.0.7",
     "blockUI": "*",
     "toastr": "~2.1.2",
-    "jquery.cookie": "~1.4.1"
+    "jquery.cookie": "~1.4.1",
+    "hammerjs": "~2.0.6",
+    "jsoneditor": "~5.1.5"
   },
   "homepage": "https://github.com/InfinniPlatform/InfinniUI",
   "authors": [

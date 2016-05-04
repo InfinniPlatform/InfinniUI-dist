@@ -1,0 +1,1 @@
+call grunt build:development

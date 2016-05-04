@@ -1,0 +1,9 @@
+.modal {
+  &.messagebox {
+    z-index: @zindex-modal + 10;
+
+    + .modal-backdrop {
+      z-index: @zindex-modal + 5;
+    }
+  }
+}

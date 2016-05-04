@@ -1,0 +1,25 @@
+@import "../../../bootstrap-framework/less/pl-variables.less";
+@import "../../../bootstrap-framework/less/variables.less";
+
+.pl-listbox{
+  .pl-listbox-i:focus{
+    z-index: 1;
+  }
+}
+
+.pl-listbox-common-mode>.pl-listbox-control>.pl-listbox-i>.pl-listbox-input{
+  position: absolute;
+  visibility: hidden;
+}
+.pl-listbox-common-mode>.pl-listbox-control>.pl-listbox-i-chosen{
+  box-shadow: inset 4px 0 @pl-primary1;
+}
+
+.pl-listbox .radio label, .pl-listbox .checkbox label{
+  padding-left: 0;
+}
+
+.pl-listbox.pl-disabled .radio {
+  color: #cccccc;
+  cursor: @cursor-disabled;
+}

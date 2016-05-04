@@ -1,0 +1,24 @@
+.pl-button-edit {
+
+  &-group {
+    &__control {
+      &[readonly] {
+        background-color: @input-bg;
+        background-image: none;
+      }
+
+      &[disabled] {
+        background-color: @input-bg-disabled;
+        opacity: 1;
+      }
+    }
+  }
+  &-button {
+
+    &_disabled {
+      cursor: not-allowed;
+      .opacity(.65);
+      .box-shadow(none);
+    }
+  }
+}

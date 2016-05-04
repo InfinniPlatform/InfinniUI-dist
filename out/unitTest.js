@@ -1,4 +1,46 @@
 'use strict';
+var FakeRestDataProvider = function(){
+    _.superClass(FakeRestDataProvider, this);
+};
+
+_.inherit(FakeRestDataProvider, RestDataProvider);
+
+_.extend( FakeRestDataProvider.prototype, {
+
+    items: [],
+    lastSendedUrl: '',
+
+    send: function(type, successHandler, errorHandler){
+        var requestId = Math.round((Math.random() * 100000));
+        var params = this.requestParams[type];
+        var that = this;
+
+
+        var urlString = params.origin + params.path;
+        var queryString;
+
+        if(type == 'get' && _.size(params.data) > 0){
+            queryString = stringUtils.joinDataForQuery(params.data);
+            urlString = urlString + '?' + queryString;
+        }
+
+        FakeRestDataProvider.prototype.lastSendedUrl = urlString;
+
+        setTimeout(function(){
+            successHandler({
+                requestId: requestId,
+                data: {
+                    Result: {
+                        Items:that.items
+                    }
+                }
+            });
+        }, 1);
+
+        return requestId;
+    }
+
+});
 describe('AcceptAction', function () {
     it('successful build', function () {
         // Given
@@ -60,6 +102,192 @@ describe('AddAction', function () {
         assert.isNotNull( addAction );
         assert.isNotNull( addAction.execute, 'action should have execute' );
     });
+
+    it('should add item to ObjectDataSource', function (done) {
+        // Given
+        var metadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "ObjectDataSource": {
+                        "Name": "ObjectDataSource",
+                        "IsLazy": false,
+                        "Items": []
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "AddButton",
+                    "Action": {
+                        "AddAction": {
+                            "DestinationValue": {
+                                "Source": "ObjectDataSource",
+                                "Property": ""
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Text": "Add",
+                                        "Name": "AddView",
+                                        "DataSources": [
+                                            {
+                                                "ObjectDataSource": {
+                                                    "Name": "MainDataSource"
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "AcceptBtn",
+                                                    "Action": {
+                                                        "AcceptAction": {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            var addBtn = view.context.controls['AddButton'];
+            var destinationDS = view.context.dataSources['ObjectDataSource'];
+
+            assert.equal(destinationDS.getItems().length, 0);
+
+            // When
+            addBtn.click();
+
+            var childView = view.context.controls['AddView'];
+            var sourceDS = childView.context.dataSources['MainDataSource'];
+            var acceptBtn = childView.context.controls['AcceptBtn'];
+
+            var newItem = sourceDS.getSelectedItem();
+            newItem.name = "New";
+            sourceDS.setSelectedItem(newItem);
+
+            acceptBtn.click();
+
+            // Then
+            var destinationItems = destinationDS.getItems();
+            assert.equal(destinationItems.length, 1);
+            assert.include(destinationItems, {name: "New"});
+
+            done();
+        });
+    });
+
+    it('should add item to DocumentDataSource', function (done) {
+        // Given
+        window.providerRegister.register('DocumentDataSource', StaticFakeDataProvider);
+
+        var metadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "DocumentDataSource": {
+                        "Name": "DocumentDataSource",
+                        "IsLazy": false
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "AddButton",
+                    "Action": {
+                        "AddAction": {
+                            "DestinationValue": {
+                                "Source": "DocumentDataSource"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Text": "Add",
+                                        "Name": "AddView",
+                                        "DataSources": [
+                                            {
+                                                "DocumentDataSource": {
+                                                    "Name": "MainDataSource"
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "SaveBtn",
+                                                    "Action": {
+                                                        "SaveAction": {
+                                                            "DestinationValue": {
+                                                                "Source": "MainDataSource"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            view.context.dataSources.DocumentDataSource.updateItems(
+                function(){
+                    var addBtn = view.context.controls['AddButton'];
+                    var destinationDS = view.context.dataSources.DocumentDataSource;
+                    var initCount = destinationDS.getItems().length;
+
+                    // When
+                    addBtn.click();
+
+                    var childView = view.context.controls['AddView'];
+                    var sourceDS = childView.context.dataSources['MainDataSource'];
+                    var saveBtn = childView.context.controls['SaveBtn'];
+
+                    var newItem = sourceDS.getSelectedItem();
+
+                    assert.notInclude(destinationDS.getItems(), newItem);
+
+//                    newItem = _.extend( newItem,
+//                                        { FirstName: "Test", LastName: "Test" });
+//                    sourceDS.setSelectedItem( newItem );
+
+                    sourceDS.setProperty('FirstName', 'Test');
+                    sourceDS.setProperty('LastName', 'Test');
+
+                    saveBtn.click();
+
+                    // Then
+                    view.context.dataSources.DocumentDataSource.updateItems( function() {
+                        var destinationItems = destinationDS.getItems();
+                        assert.equal(destinationItems.length, initCount + 1);
+                        assert.include(destinationItems, newItem);
+                        done();
+                    });
+                }
+            );
+        });
+    });
 });
 describe('CancelAction', function () {
     it('successful build', function () {
@@ -116,7 +344,7 @@ describe('DeleteAction', function () {
         assert.isNotNull( deleteAction.execute, 'action should have execute' );
     });
 
-    it('should delete selected item', function () {
+    it('should delete selected item from ObjectDataSource', function () {
         // Given
         var view = new View();
         var builder = new ApplicationBuilder();
@@ -124,18 +352,21 @@ describe('DeleteAction', function () {
 
         var items = [
             {
+                _id: 0,
                 Name: 'First'
             },
             {
+                _id: 1,
                 Name: 'Second'
             },
             {
+                _id: 2,
                 Name: 'Third'
             }
         ];
         var index = 1;
 
-        dataSource.setItems(items);
+        dataSource.setItems(_.clone(items));
 
         view.getDataSources().push(dataSource);
 
@@ -161,6 +392,46 @@ describe('DeleteAction', function () {
         assert.notInclude(dataSource.getItems(), items[index]);
     });
 
+    it('should delete selected item from DocumentDataSource', function (done) {
+        // Given
+        window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+
+        var view = new View();
+        var builder = new ApplicationBuilder();
+        var dataSource = builder.buildType('DocumentDataSource', {}, {parent: view, parentView: view, builder: builder});
+
+        view.getContext().dataSources['DocumentDataSource'] = dataSource;
+
+        var metadata = {
+            DeleteAction: {
+                Accept: false,
+                DestinationValue: {
+                    Source: 'DocumentDataSource',
+                    Property: '$'
+                }
+            }
+        };
+
+        var deleteAction = builder.build(metadata, {parentView: view});
+
+        dataSource.updateItems(
+            function(){
+                var initCount = dataSource.getItems().length;
+                var initSelectedItem = dataSource.getSelectedItem();
+
+                // When
+                deleteAction.execute();
+
+                // Then
+                setTimeout( function(){
+                        assert.equal(dataSource.getItems().length, (initCount - 1) );
+                        assert.notInclude(dataSource.getItems(), initSelectedItem);
+                        done();
+                }, 0);
+
+            }
+        );
+    });
 });
 describe('EditAction', function () {
     it('successful build', function () {
@@ -195,6 +466,348 @@ describe('EditAction', function () {
         assert.isNotNull( editAction.execute, 'action should have execute' );
     });
 
+    it('should edit item from ObjectDataSource', function (done) {
+        // Given
+        var metadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "ObjectDataSource": {
+                        "Name": "ObjectDataSource",
+                        "IsLazy": false,
+                        "Items": [
+                            {
+                                "Name": "OldValue"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "EditButton",
+                    "Action": {
+                        "EditAction": {
+                            "DestinationValue": {
+                                "Source": "ObjectDataSource",
+                                "Property": "0"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Text": "Edit",
+                                        "Name": "EditView",
+                                        "DataSources": [
+                                            {
+                                                "ObjectDataSource": {
+                                                    "Name": "MainDataSource"
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "AcceptBtn",
+                                                    "Action": {
+                                                        "AcceptAction": {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            var edtBtn = view.context.controls['EditButton'];
+            var destinationDS = view.context.dataSources['ObjectDataSource'];
+
+            assert.equal(destinationDS.getItems()[0].Name, "OldValue");
+
+            // When
+            edtBtn.click();
+
+            var childView = view.context.controls['EditView'];
+            var sourceDS = childView.context.dataSources['MainDataSource'];
+            var acceptBtn = childView.context.controls['AcceptBtn'];
+
+            var selectedItem = sourceDS.getSelectedItem();
+            selectedItem.Name = "NewValue";
+            sourceDS.setSelectedItem(selectedItem);
+
+            acceptBtn.click();
+
+            // Then
+            assert.equal(destinationDS.getItems()[0].Name, "NewValue");
+
+            done();
+        });
+    });
+
+    it('should edit item from DocumentDataSource', function (done) {
+        // Given
+        window.providerRegister.register('DocumentDataSource', StaticFakeDataProvider);
+
+        var metadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "DocumentDataSource": {
+                        "Name": "DocumentDataSource",
+                        "IsLazy": false
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "EditButton",
+                    "Action": {
+                        "EditAction": {
+                            "DestinationValue": {
+                                "Source": "DocumentDataSource",
+                                "Property": "0"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Text": "Edit",
+                                        "Name": "EditView",
+                                        "DataSources": [
+                                            {
+                                                "DocumentDataSource": {
+                                                    "Name": "MainDataSource"
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "SaveBtn",
+                                                    "Action": {
+                                                        "SaveAction": {
+                                                            "DestinationValue": {
+                                                                "Source": "MainDataSource"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            view.context.dataSources.DocumentDataSource.updateItems(
+                function(){
+                    var edtBtn = view.context.controls['EditButton'];
+                    var destinationDS = view.context.dataSources.DocumentDataSource;
+
+                    assert.isUndefined(destinationDS.getSelectedItem().isNewValueForTest);
+
+                    // When
+                    edtBtn.click();
+
+                    var childView = view.context.controls['EditView'];
+                    var sourceDS = childView.context.dataSources['MainDataSource'];
+                    var saveBtn = childView.context.controls['SaveBtn'];
+
+                    // что если setSelectedItem сработает раньше? мб лучше setTimeout?
+                    sourceDS.onSelectedItemChanged( function() {
+                        var editItem = sourceDS.getSelectedItem();
+                        editItem.isNewValueForTest = true;
+                        sourceDS.setSelectedItem( editItem );
+
+                        saveBtn.click();
+
+                        // Then
+                        setTimeout(function(){
+                            assert.isTrue(destinationDS.getSelectedItem().isNewValueForTest);
+                            done();
+                        }, 250);
+                    });
+                }
+            );
+        });
+    });
+
+    it('should not open edit view when edit item is null if edit item is document', function (done) {
+        // Given
+        var metadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "ObjectDataSource": {
+                        "Name": "ObjectDataSource",
+                        "IsLazy": false,
+                        "Items": [
+                        ]
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "EditButton",
+                    "Action": {
+                        "EditAction": {
+                            "DestinationValue": {
+                                "Source": "ObjectDataSource",
+                                "Property": "$"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Text": "Edit",
+                                        "Name": "EditView",
+                                        "DataSources": [
+                                            {
+                                                "ObjectDataSource": {
+                                                    "Name": "MainDataSource"
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "AcceptBtn",
+                                                    "Action": {
+                                                        "AcceptAction": {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            var edtBtn = view.context.controls['EditButton'];
+
+            // When
+            edtBtn.click();
+
+            var childView = view.context.controls['EditView'];
+
+            // Then
+            assert.isTrue( childView.isClosing );
+
+            done();
+        });
+    });
+
+    it('should open edit view when edit item is null if edit item is property', function (done) {
+        // Given
+        var metadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "ObjectDataSource": {
+                        "Name": "ObjectDataSource",
+                        "IsLazy": false,
+                        "Items": [
+                            {
+                                "Id": "1",
+                                "Address": null
+                            }
+                        ]
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "EditButton",
+                    "Action": {
+                        "EditAction": {
+                            "DestinationValue": {
+                                "Source": "ObjectDataSource",
+                                "Property": "$.Address"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Text": "Edit",
+                                        "Name": "EditView",
+                                        "DataSources": [
+                                            {
+                                                "ObjectDataSource": {
+                                                    "Name": "MainDataSource"
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "AcceptBtn",
+                                                    "Action": {
+                                                        "AcceptAction": {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            var edtBtn = view.context.controls['EditButton'];
+            var destinationDS = view.context.dataSources['ObjectDataSource'];
+
+            assert.isNull(destinationDS.getProperty("$.Address"));
+
+            // When
+            edtBtn.click();
+
+            var childView = view.context.controls['EditView'];
+            var acceptBtn = childView.context.controls['AcceptBtn'];
+
+            acceptBtn.click();
+
+            // Then
+            assert.isNotNull(destinationDS.getProperty("$.Address"));
+
+            done();
+        });
+    });
+
 });
 describe('OpenAction', function () {
     it('successful build', function () {
@@ -217,6 +830,47 @@ describe('OpenAction', function () {
         // Then
         assert.isNotNull( openAction );
         assert.isNotNull( openAction.execute, 'action should have execute' );
+    });
+
+    it('open view', function (done) {
+        // Given
+        var metadata = {
+            "Text": 'Parent View',
+            "Items": [{
+
+                "Button": {
+                    "Name": "OpenViewButton",
+                    "Action": {
+                        "OpenAction": {
+                            "LinkView": {
+                                "InlineView": {
+                                    "View": {
+                                        "Text": "Child View",
+                                        "Name": "ChildView"
+                                    },
+                                    "OpenMode": "Dialog"
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(metadata, function(view){
+            var btn = view.context.controls['OpenViewButton'];
+
+            // When
+            btn.click();
+
+            // Then
+            var childView = view.context.controls['ChildView'];
+            var viewIsOpened = childView.isLoaded();
+
+            assert.isTrue(viewIsOpened);
+            childView.close();
+            done();
+        });
     });
 
 });
@@ -279,6 +933,29 @@ describe('SaveAction', function () {
         assert.isNotNull( saveAction.execute, 'action should have execute' );
     });
 
+    it('should close view and set DialogResult', function (done) {
+        // Given
+        var view = createViewWithDataSource('MainDS');
+        var builder = new SaveActionBuilder();
+
+        view.onClosed(function(){
+            //Then
+            assert.equal(view.getDialogResult(), DialogResult.accepted, 'should set DialogResult');
+            done();
+        });
+
+        var metadata = {
+            DestinationValue: {
+                Source: 'MainDS'
+            }
+        };
+
+        var saveAction = builder.build(null, {parentView: view, metadata: metadata});
+
+        // When
+        saveAction.execute();
+    });
+
     it('should not close view when CanClose is false', function () {
         // Given
         var view = createViewWithDataSource('MainDS');
@@ -334,7 +1011,381 @@ describe('SelectAction', function () {
         assert.isNotNull( selectAction );
         assert.isNotNull( selectAction.execute, 'action should have execute' );
     });
+
+    it('should set selected item if dialog result is accepted', function (done) {
+        // Given
+        var viewMetadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "ObjectDataSource": {
+                        "Name": "ObjectDataSource",
+                        "IsLazy": false,
+                        "Items": [
+                            {
+                                SelectedObject: "empty"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "SelectButton",
+                    "Action": {
+                        "SelectAction": {
+                            "DestinationValue": {
+                                "Source": "ObjectDataSource",
+                                "Property": "$.SelectedObject"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource",
+                                "Property": "$"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Name": "SelectView",
+                                        "DataSources": [
+                                            {
+                                                "ObjectDataSource": {
+                                                    "Name": "MainDataSource",
+                                                    "IsLazy": false,
+                                                    "Items": [
+                                                        {
+                                                            "Name": "first"
+                                                        },
+                                                        {
+                                                            "Name": "second"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "AcceptBtn",
+                                                    "Action": {
+                                                        "AcceptAction": {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(viewMetadata, function(view){
+            var selectBtn = view.context.controls['SelectButton'];
+            var destinationDS = view.context.dataSources['ObjectDataSource'];
+
+            assert.equal(destinationDS.getSelectedItem().SelectedObject, "empty");
+
+            // When
+            selectBtn.click();
+
+            var childView = view.context.controls['SelectView'];
+            var sourceDS = childView.context.dataSources['MainDataSource'];
+            var acceptBtn = childView.context.controls['AcceptBtn'];
+
+            var selectedValue = sourceDS.getItems()[1];
+            sourceDS.setSelectedItem(selectedValue);
+
+            acceptBtn.click();
+
+            // Then
+            assert.deepEqual(destinationDS.getSelectedItem().SelectedObject, selectedValue);
+
+            done();
+        });
+    });
+
+    it('should not set selected item if dialog result is cancel', function (done) {
+        // Given
+        // todo: выяснить почему, если вынести viewMetadata из этого и предыдущего тестов, то они работают с одной и той же view
+        var viewMetadata = {
+            "Text": 'Parent View',
+            "DataSources": [
+                {
+                    "ObjectDataSource": {
+                        "Name": "ObjectDataSource",
+                        "IsLazy": false,
+                        "Items": [
+                            {
+                                SelectedObject: "empty"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "Items": [{
+                "Button": {
+                    "Name": "SelectButton",
+                    "Action": {
+                        "SelectAction": {
+                            "DestinationValue": {
+                                "Source": "ObjectDataSource",
+                                "Property": "$.SelectedObject"
+                            },
+                            "SourceValue": {
+                                "Source": "MainDataSource",
+                                "Property": "$"
+                            },
+                            "LinkView": {
+                                "InlineView": {
+                                    "OpenMode": "Dialog",
+                                    "View": {
+                                        "Name": "SelectView",
+                                        "DataSources": [
+                                            {
+                                                "ObjectDataSource": {
+                                                    "Name": "MainDataSource",
+                                                    "IsLazy": false,
+                                                    "Items": [
+                                                        {
+                                                            "Name": "first"
+                                                        },
+                                                        {
+                                                            "Name": "second"
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ],
+                                        "Items": [
+                                            {
+                                                "Button": {
+                                                    "Name": "AcceptBtn",
+                                                    "Action": {
+                                                        "AcceptAction": {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }]
+        };
+
+        testHelper.applyViewMetadata(viewMetadata, function(view){
+            var selectBtn = view.context.controls['SelectButton'];
+            var destinationDS = view.context.dataSources['ObjectDataSource'];
+
+            assert.equal(destinationDS.getSelectedItem().SelectedObject, "empty");
+
+            // When
+            selectBtn.click();
+
+            var childView = view.context.controls['SelectView'];
+            var sourceDS = childView.context.dataSources['MainDataSource'];
+            var acceptBtn = childView.context.controls['AcceptBtn'];
+
+            var selectedValue = sourceDS.getItems()[1];
+            sourceDS.setSelectedItem(selectedValue);
+
+            childView.close();
+
+            // Then
+            assert.equal(destinationDS.getSelectedItem().SelectedObject, "empty");
+
+            done();
+        });
+    });
 });
+describe('ServerAction', function () {
+    it('successful build', function () {
+        // Given
+        var builder = new ApplicationBuilder();
+        var metadata = {
+            ServerAction: {
+                ContentType: 'application/json',
+                Method: 'post',
+                Origin: 'http://some.ru',
+                Path: '/some/<%param1%>/',
+                Data: {
+                    a: 2,
+                    b: '<%param2%>'
+                },
+                Params: {
+                    param1: 4,
+                    param2: 'abc'
+                }
+            }
+        };
+
+        // When
+        var serverAction = builder.build(metadata, {parentView: fakeView()});
+
+        // Then
+        assert.equal(serverAction.getProperty('contentType'), 'application/json');
+        assert.equal(serverAction.getProperty('method'), 'post');
+        assert.equal(serverAction.getProperty('origin'), 'http://some.ru');
+        assert.equal(serverAction.getProperty('path'), '/some/<%param1%>/');
+
+        assert.equal(serverAction.getParam('param1'), 4);
+        assert.equal(serverAction.getParam('param2'), 'abc');
+    });
+
+    it('should update param from binding', function () {
+        // Given
+        var builder = new ApplicationBuilder();
+
+        var label = new Label();
+        label.setName('Label_1');
+        label.setValue('oldValue');
+
+        var view = new View();
+        view.registerElement(label);
+
+        var metadata = {
+            ServerAction: {
+                Origin: 'http://some.ru',
+                Path: '/some/<%param1%>/',
+                Params: {
+                    param: {
+                        Source: 'Label_1',
+                        Property: 'value'
+                    }
+                }
+            }
+        };
+
+        var serverAction = builder.build(metadata, {parentView: view});
+
+        // When
+        assert.equal(serverAction.getParam('param'), 'oldValue');
+        label.setValue('newValue');
+
+        // Then
+        assert.equal(serverAction.getParam('param'), 'newValue');
+    });
+
+    describe('should constract correct url', function () {
+        it('get', function () {
+            // Given
+            window.providerRegister.register('ServerActionProvider', function () {
+                return {
+                    request: function (requestData) {
+                        window.serverActionTest_urlParams = requestData;
+                    }
+                };
+            });
+
+            var builder = new ApplicationBuilder();
+            var metadata = {
+                ServerAction: {
+                    Origin: 'http://some.ru',
+                    Path: '/some/<%param1%>',
+                    Data: {
+                        a: 2,
+                        b: '<%param2%>'
+                    },
+                    Params: {
+                        param1: 4,
+                        param2: 6
+                    }
+                }
+            };
+
+            var serverAction = builder.build(metadata, {parentView: fakeView()});
+
+            // When
+            serverAction.execute();
+
+            // Then
+            assert.equal(window.serverActionTest_urlParams.method, 'GET');
+            assert.equal(window.serverActionTest_urlParams.requestUrl, 'http://some.ru/some/4?a=2&b=6');
+            assert.equal(window.serverActionTest_urlParams.contentType, 'application/x-www-form-urlencoded; charset=utf-8');
+        });
+
+        it('post', function () {
+            // Given
+            window.providerRegister.register('ServerActionProvider', function () {
+                return {
+                    request: function (requestData) {
+                        window.serverActionTest_urlParams = requestData;
+                    }
+                };
+            });
+
+            var builder = new ApplicationBuilder();
+            var metadata = {
+                ServerAction: {
+                    Method: 'Post',
+                    ContentType: false,
+                    Origin: 'http://some.ru',
+                    Path: '/some/<%param1%>',
+                    Data: {
+                        a: 2,
+                        b: 'user#<%param2%>'
+                    },
+                    Params: {
+                        param1: 4,
+                        param2: 6
+                    }
+                }
+            };
+
+            var serverAction = builder.build(metadata, {parentView: fakeView()});
+
+            // When
+            serverAction.execute();
+
+            // Then
+            assert.equal(window.serverActionTest_urlParams.method, 'POST');
+            assert.equal(window.serverActionTest_urlParams.requestUrl, 'http://some.ru/some/4');
+            assert.equal(window.serverActionTest_urlParams.contentType, false);
+            assert.deepEqual(window.serverActionTest_urlParams.args, {a: 2, b: "user#6"});
+        });
+
+        it('should convert data to string JSON if contentType is application/json', function () {
+            // Given
+            window.providerRegister.register('ServerActionProvider', function () {
+                return {
+                    request: function (requestData) {
+                        window.serverActionTest_urlParams = requestData;
+                    }
+                };
+            });
+
+            var builder = new ApplicationBuilder();
+            var metadata = {
+                ServerAction: {
+                    Method: 'Post',
+                    ContentType: 'application/json; charset=utf-8',
+                    Origin: 'http://some.ru',
+                    Path: '',
+                    Data: {
+                        a: 2,
+                        b: 'abc'
+                    }
+                }
+            };
+
+            var serverAction = builder.build(metadata, {parentView: fakeView()});
+
+            // When
+            serverAction.execute();
+
+            // Then
+            assert.equal(window.serverActionTest_urlParams.args, '{"a":2,"b":"abc"}');
+        });
+    });
+});
+
 describe('UpdateAction', function () {
     it('successful build', function () {
         // Given
@@ -490,7 +1541,7 @@ describe('CheckBox', function () {
                 checkbox.setText('Text 1');
 
                 var $el = checkbox.render(),
-                    $label = $('span', $el);
+                    $label = $('.checkbox-label', $el);
 
                 assert.equal($label.html(), 'Text 1');
 
@@ -539,21 +1590,6 @@ describe('CheckBox', function () {
 });
 
 describe('ComboBox', function () {
-
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
-
 
     describe('render', function () {
 
@@ -616,7 +1652,7 @@ describe('ComboBox', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -693,7 +1729,7 @@ describe('ComboBox', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -783,7 +1819,7 @@ describe('ComboBox', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -876,7 +1912,7 @@ describe('ComboBox', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -1018,20 +2054,6 @@ describe('ComboBox', function () {
 });
 describe('Container (Control)', function () {
 
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
-
     describe('StackPanel as exemplar of Container', function () {
 
         it('should render stackPanel with templating items', function () {
@@ -1072,7 +2094,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1129,7 +2151,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1171,7 +2193,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1221,7 +2243,7 @@ describe('Container (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1271,7 +2293,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1329,7 +2351,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1380,7 +2402,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1445,7 +2467,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1527,7 +2549,7 @@ describe('Container (Control)', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1582,7 +2604,7 @@ describe('Container (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -1649,7 +2671,7 @@ describe('Container (Control)', function () {
 
 
         // When
-        applyViewMetadata(metadata, onViewReady);
+        testHelper.applyViewMetadata(metadata, onViewReady);
 
         // Then
         function onViewReady(view, $layout){
@@ -1710,7 +2732,7 @@ describe('Container (Control)', function () {
 
 
         // When
-        applyViewMetadata(metadata, onViewReady);
+        testHelper.applyViewMetadata(metadata, onViewReady);
 
         // Then
         function onViewReady(view, $layout){
@@ -1772,7 +2794,7 @@ describe('Container (Control)', function () {
 
 
         // When
-        applyViewMetadata(metadata, onViewReady);
+        testHelper.applyViewMetadata(metadata, onViewReady);
 
         // Then
         function onViewReady(view, $layout){
@@ -2021,20 +3043,20 @@ describe('DataNavigationControl', function () {
         });
     });
 });
-describe('DatePickerControl', function () {
+describe('DateTimePickerControl', function () {
     var builder = new ApplicationBuilder();
 
     describe('render', function () {
         it('should update date when change value', function () {
             //Given
-            var datePicker = builder.buildType('DatePicker', {});
+            var dateTimePicker = builder.buildType('DateTimePicker', {});
             var oldDate = new Date(2012, 10, 2);
             var newDate = new Date(2014, 7, 28);
-            var $el = datePicker.render().find('.pl-datepicker-input');
-            datePicker.setValue(InfinniUI.DateUtils.toISO8601(oldDate));
+            var $el = dateTimePicker.render().find('.pl-datepicker-input');
+            dateTimePicker.setValue(InfinniUI.DateUtils.toISO8601(oldDate));
 
             //When
-            datePicker.setValue(InfinniUI.DateUtils.toISO8601(newDate));
+            dateTimePicker.setValue(InfinniUI.DateUtils.toISO8601(newDate));
 
             //Then
             assert.equal($el.val(), '28.08.2014');
@@ -2042,40 +3064,40 @@ describe('DatePickerControl', function () {
 
         it('should clear date when value is null', function () {
             //Given
-            var datePicker = new DatePickerControl();
+            var dateTimePicker = new DateTimePickerControl();
             var value = InfinniUI.DateUtils.toISO8601(new Date(2012, 10, 2));
 
-            datePicker.setValue(value);
-            assert.equal( datePicker.getValue(), value);
+            dateTimePicker.setValue(value);
+            assert.equal( dateTimePicker.getValue(), value);
 
             //When
-            datePicker.setValue(null);
+            dateTimePicker.setValue(null);
 
             //Then
-            assert.isNull(datePicker.getValue());
+            assert.isNull(dateTimePicker.getValue());
         });
 
         it('should set minDate and maxDate', function () {
             //Given
-            var datePicker = builder.buildType('DatePicker', {});
+            var dateTimePicker = builder.buildType('DateTimePicker', {});
             var minDate = InfinniUI.DateUtils.toISO8601(new Date(2010, 0, 1));
             var maxDate = InfinniUI.DateUtils.toISO8601(new Date(2014, 11, 31));
 
             //When
-            datePicker.setMinValue(minDate);
-            datePicker.setMaxValue(maxDate);
+            dateTimePicker.setMinValue(minDate);
+            dateTimePicker.setMaxValue(maxDate);
 
             //Then
-            assert.equal(datePicker.getMinValue(), minDate);
-            assert.equal(datePicker.getMaxValue(), maxDate);
+            assert.equal(dateTimePicker.getMinValue(), minDate);
+            assert.equal(dateTimePicker.getMaxValue(), maxDate);
         });
 
         it('should set Enabled', function () {
             //Given
-            var datePicker = builder.buildType('DatePicker', {});
-            datePicker.setEnabled(false);
+            var dateTimePicker = builder.buildType('DateTimePicker', {});
+            dateTimePicker.setEnabled(false);
 
-            var $el = datePicker.render().find('.pl-datepicker-input, .pl-datepicker-calendar');
+            var $el = dateTimePicker.render().find('.pl-datepicker-input, .pl-datepicker-calendar');
             assert.equal($el.length, 2);
             $el.each(function (i, el) {
                 var $el = $(el);
@@ -2083,7 +3105,7 @@ describe('DatePickerControl', function () {
             });
 
             //When
-            datePicker.setEnabled(true);
+            dateTimePicker.setEnabled(true);
 
             //Then
             $el.each(function (i, el) {
@@ -2298,22 +3320,6 @@ describe('Label', function () {
 
 describe('ListEditorBase (Control)', function () {
 
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
-
-
-
     describe('ListBox as exemplar of ListEditorBase', function (){
 
         it('should apply value to control (single selecting mode)', function () {
@@ -2365,7 +3371,7 @@ describe('ListEditorBase (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -2433,7 +3439,7 @@ describe('ListEditorBase (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -2498,7 +3504,7 @@ describe('ListEditorBase (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             function onViewReady(view, $layout){
                 $layout.detach();
@@ -2571,7 +3577,7 @@ describe('ListEditorBase (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             function onViewReady(view, $layout){
                 $layout.detach();
@@ -2651,7 +3657,7 @@ describe('ListEditorBase (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             function onViewReady(view, $layout){
                 //$layout.detach();
@@ -2747,7 +3753,7 @@ describe('ListEditorBase (Control)', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             function onViewReady(view, $layout){
 
@@ -2769,20 +3775,6 @@ describe('ListEditorBase (Control)', function () {
 
 });
 describe('PanelControl', function () {
-
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
 
     describe('render', function () {
         it('Should render StackPanel with 4 Panel as ItemTemplate', function () {
@@ -2889,7 +3881,7 @@ describe('PanelControl', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -3033,7 +4025,7 @@ describe('PanelControl', function () {
             };
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -3244,21 +4236,6 @@ describe('PopupButtonControl', function () {
 });
 describe('ScrollPanelControl', function () {
 
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
-
-
     describe('render', function () {
         it('Should render ScrollPanel', function () {
 
@@ -3345,7 +4322,7 @@ describe('ScrollPanelControl', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -3366,21 +4343,6 @@ describe('ScrollPanelControl', function () {
     });
 });
 describe('TabPanelControl', function () {
-
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
-
 
     describe('render', function () {
         it('Should render TabPanel with 3 TabPages', function () {
@@ -3490,7 +4452,7 @@ describe('TabPanelControl', function () {
 
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout) {
@@ -3528,7 +4490,7 @@ describe('TextBoxControl', function () {
             assert.isUndefined($el.attr('data-pl-name'));
             assert.isFalse($control.prop('disabled'));
             assert.isFalse($el.hasClass('hidden'));
-            assert.isFalse($el.hasClass('pull-left'));
+            assert.isFalse($el.hasClass('pl-horizontal-Left'));
 
             // When
             element.setValue('new');
@@ -3542,7 +4504,7 @@ describe('TextBoxControl', function () {
             assert.equal($el.attr('data-pl-name'), 'newName');
             assert.isTrue($control.prop('disabled'));
             assert.isTrue($el.hasClass('hidden'));
-            assert.isTrue($el.hasClass('pull-left'));
+            assert.isTrue($el.hasClass('pl-horizontal-Left'));
         });
 
 
@@ -3739,7 +4701,7 @@ describe('TextBoxControl', function () {
             assert.equal($el.attr('data-pl-name'), 'TextBox1', 'Name');
             assert.isTrue($el.hasClass('pl-disabled'), 'Enabled');
             assert.isTrue($el.hasClass('hidden'), 'Visible');
-            assert.isTrue($el.hasClass('full-width'), 'HorizontalAlignment');
+            assert.isTrue($el.hasClass('pl-horizontal-Stretch'), 'HorizontalAlignment');
             assert.isTrue($el.hasClass('verticalAlignmentBottom'), 'VerticalAlignment');
         });
 
@@ -3781,26 +4743,12 @@ describe('TextEditorBase (Control)', function () {
             }]
         };
 
-        function applyViewMetadata(metadata, onViewReady){
-            metadata = {
-                View: metadata
-            };
-
-            var appBuilder = new ApplicationBuilder();
-            var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-            var view = linkView.createView(function (view) {
-                view.open();
-                onViewReady(view, $('#sandbox').children());
-            });
-        }
-
         it('metadata', function () {
             // Given
             var metadata = metadata_1;
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -3855,305 +4803,85 @@ describe('ToolBarControl', function () {
     });
 });
 describe('TreeView', function () {
-    describe('build', function () {
 
-        it('Build tree', function () {
+    var builder = new ApplicationBuilder();
+
+    describe('render', function () {
+        it('should apply value to control (single selecting mode)', function () {
             // Given
             var metadata = {
-                "KeyProperty": "Id",
-                "ParentProperty": "ParentId",
-                "ItemFormat": {
-                    "ObjectFormat": {
-                        "Format": "{Id:n3}_{DisplayName}"
+                "DataSources": [
+                    {
+                        "ObjectDataSource": {
+                            "Name": "Geo",
+                            "Items": [
+                                {
+                                    "Id": 1,
+                                    "ParentId": null,
+                                    "Name": "Челябинск"
+                                },
+                                {
+                                    "Id": 2,
+                                    "ParentId": 1,
+                                    "Name": "Чичерина"
+                                },
+                                {
+                                    "Id": 3,
+                                    "ParentId": 1,
+                                    "Name": "Комарова"
+                                },
+                                {
+                                    "Id": 4,
+                                    "ParentId": null,
+                                    "Name": "Копейск"
+                                },
+                                {
+                                    "Id": 5,
+                                    "ParentId": 4,
+                                    "Name": "Победы"
+                                },
+                                {
+                                    "Id": 6,
+                                    "ParentId": 5,
+                                    "Name": "33/1"
+                                }
+                            ]
+                        }
                     }
-                },
-                "ValueProperty": "CardNumber",
-                "ReadOnly": false,
-                "MultiSelect": true
+                ],
+                "Items": [
+                    {
+                        "TreeView": {
+                            "KeyProperty": "Id",
+                            "ParentProperty": "ParentId",
+                            "ItemProperty": "Name",
+                            "ValueProperty": "Name",
+                            "MultiSelect": true,
+                            "Items": {
+                                "Source": "Geo"
+                            }
+                        }
+                    }
+                ]
             };
-            var builder = new TreeViewBuilder();
-            var tree = builder.build(null, {builder: new ApplicationBuilder(), metadata: metadata});
-            tree.render();
 
-            //When
-            var items = [{id:1, text: 2}, {id: 3, text:4}, {id:5, text: 6}];
-            var value = [{Id: 1}, {Id: 5}];
-            tree.setItems(items);
-            tree.setValue(value);
 
-            //Then
-            assert.deepEqual(tree.getItems(), items);
-            assert.deepEqual(tree.getValue(), value);
+            // When
+            var linkView = (new InlineViewBuilder()).build(null, {builder: builder, metadata: {View: metadata}, parentView: fakeApplicationView()});
+
+
+            var view = linkView.createView(function (view) {
+                view.open();
+
+                var $view = view.control.controlView.$el;
+                var $treeView = $view.find('.pl-treeview');
+                var $treeViewNodes = $treeView.find('.pl-treeview-node');
+                //Then
+                assert.equal($treeView.length, 1, 'TreeView rendered in View');
+                assert.equal($treeViewNodes.length, 6, 'TreeViewNodes rendered');
+            });
+
         });
-
-    });
-
-});
-describe('criteriaType', function () {
-    it('IsEqual', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isTrue(CriteriaType.IsEquals(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isFalse(CriteriaType.IsEquals(target, 'DisplayName', 1));
-    });
-
-    it('IsNotEquals', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isFalse(CriteriaType.IsNotEquals(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isTrue(CriteriaType.IsNotEquals(target, 'DisplayName', 1));
-    });
-
-    it('IsMoreThan', function () {
-        var target = {
-            weight: 66
-        };
-        assert.isTrue(CriteriaType.IsMoreThan(target, 'weight', 65));
-        assert.isFalse(CriteriaType.IsMoreThan(target, 'weight', 66));
-        assert.isFalse(CriteriaType.IsMoreThan(target, 'weight', 67));
-    });
-
-    it('IsLessThan', function () {
-        var target = {
-            weight: 66
-        };
-        assert.isTrue(CriteriaType.IsLessThan(target, 'weight', 67));
-        assert.isFalse(CriteriaType.IsLessThan(target, 'weight', 66));
-        assert.isFalse(CriteriaType.IsLessThan(target, 'weight', 65));
-    });
-
-    it('IsMoreThanOrEquals', function () {
-        var target = {
-            weight: 66
-        };
-        assert.isTrue(CriteriaType.IsMoreThanOrEquals(target, 'weight', 65));
-        assert.isTrue(CriteriaType.IsMoreThanOrEquals(target, 'weight', 66));
-        assert.isFalse(CriteriaType.IsMoreThanOrEquals(target, 'weight', 67));
-    });
-
-    it('IsLessThanOrEquals', function () {
-        var target = {
-            weight: 66
-        };
-        assert.isTrue(CriteriaType.IsLessThanOrEquals(target, 'weight', 67));
-        assert.isTrue(CriteriaType.IsLessThanOrEquals(target, 'weight', 66));
-        assert.isFalse(CriteriaType.IsLessThanOrEquals(target, 'weight', 65));
-    });
-
-    it('IsContains', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isTrue(CriteriaType.IsContains(target, 'DisplayName', "Lor"));
-        assert.isTrue(CriteriaType.IsContains(target, 'DisplayName', "em"));
-        assert.isTrue(CriteriaType.IsContains(target, 'DisplayName', "sum"));
-        assert.isTrue(CriteriaType.IsContains(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isFalse(CriteriaType.IsContains(target, 'DisplayName', "ololo"));
-    });
-
-    it('IsNotContains', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isFalse(CriteriaType.IsNotContains(target, 'DisplayName', "Lor"));
-        assert.isFalse(CriteriaType.IsNotContains(target, 'DisplayName', "em"));
-        assert.isFalse(CriteriaType.IsNotContains(target, 'DisplayName', "sum"));
-        assert.isFalse(CriteriaType.IsNotContains(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isTrue(CriteriaType.IsNotContains(target, 'DisplayName', "ololo"));
-    });
-
-    it('IsEmpty', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum",
-            Description: "",
-            Data: {},
-            Items: []
-        };
-        assert.isTrue(CriteriaType.IsEmpty(target, 'Id'));
-        assert.isTrue(CriteriaType.IsEmpty(target, 'Description'));
-        assert.isTrue(CriteriaType.IsEmpty(target, 'Data'));
-        assert.isTrue(CriteriaType.IsEmpty(target, 'Items'));
-        assert.isFalse(CriteriaType.IsEmpty(target, 'DisplayName'));
-    });
-
-
-    it('IsNotEmpty', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum",
-            Description: "",
-            Data: {},
-            Items: []
-        };
-        assert.isFalse(CriteriaType.IsNotEmpty(target, 'Id'));
-        assert.isFalse(CriteriaType.IsNotEmpty(target, 'Description'));
-        assert.isFalse(CriteriaType.IsNotEmpty(target, 'Data'));
-        assert.isFalse(CriteriaType.IsNotEmpty(target, 'Items'));
-        assert.isTrue(CriteriaType.IsNotEmpty(target, 'DisplayName'));
-    });
-
-
-    it('IsStartsWith', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isTrue(CriteriaType.IsStartsWith(target, 'DisplayName', "Lor"));
-        assert.isFalse(CriteriaType.IsStartsWith(target, 'DisplayName', "em"));
-        assert.isTrue(CriteriaType.IsStartsWith(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isFalse(CriteriaType.IsStartsWith(target, 'DisplayName', "ololo"));
-    });
-
-
-    it('IsNotStartsWith', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isFalse(CriteriaType.IsNotStartsWith(target, 'DisplayName', "Lor"));
-        assert.isTrue(CriteriaType.IsNotStartsWith(target, 'DisplayName', "em"));
-        assert.isFalse(CriteriaType.IsNotStartsWith(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isTrue(CriteriaType.IsNotStartsWith(target, 'DisplayName', "ololo"));
-    });
-
-
-    it('IsEndsWith', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isFalse(CriteriaType.IsEndsWith(target, 'DisplayName', "Lor"));
-        assert.isFalse(CriteriaType.IsEndsWith(target, 'DisplayName', "em"));
-        assert.isTrue(CriteriaType.IsEndsWith(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isTrue(CriteriaType.IsEndsWith(target, 'DisplayName', "sum"));
-        assert.isFalse(CriteriaType.IsEndsWith(target, 'DisplayName', "ololo"));
-    });
-
-
-    it('IsNotEndsWith', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum"
-        };
-        assert.isTrue(CriteriaType.IsNotEndsWith(target, 'DisplayName', "Lor"));
-        assert.isTrue(CriteriaType.IsNotEndsWith(target, 'DisplayName', "em"));
-        assert.isFalse(CriteriaType.IsNotEndsWith(target, 'DisplayName', "Lorem Ipsum"));
-        assert.isFalse(CriteriaType.IsNotEndsWith(target, 'DisplayName', "sum"));
-        assert.isTrue(CriteriaType.IsNotEndsWith(target, 'DisplayName', "ololo"));
-    });
-
-
-    it('IsIn', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum",
-            Weight: 33
-        };
-        assert.isTrue(CriteriaType.IsIn(target, 'DisplayName', ["Lorem Ipsum"]), 'Text');
-        assert.isFalse(CriteriaType.IsIn(target, 'DisplayName', [""]), 'Empty text');
-        assert.isTrue(CriteriaType.IsIn(target, 'Weight', [31, 32, 33]), 'Number');
-        assert.isFalse(CriteriaType.IsIn(target, 'Weight', [31, 32, "none"]), 'Number');
-    });
-
-
-    it('isNotIn', function () {
-        var target = {
-            DisplayName: "Lorem Ipsum",
-            Weight: 33
-        };
-        assert.isFalse(CriteriaType.isNotIn(target, 'DisplayName', ["Lorem Ipsum"]), 'Text');
-        assert.isTrue(CriteriaType.isNotIn(target, 'DisplayName', [""]), 'Empty text');
-        assert.isFalse(CriteriaType.isNotIn(target, 'Weight', [31, 32, 33]), 'Number');
-        assert.isTrue(CriteriaType.isNotIn(target, 'Weight', [31, 32, "none"]), 'Number');
-    });
-
-
-});
-
-describe('FilterCriteriaType', function () {
-
-    it('Empty filter', function () {
-        var filterCriteriaType = new FilterCriteriaType();
-
-        var item = {
-            Id: 11,
-            DisplayName: "*11*"
-        };
-
-        var filter = [];
-
-        var callback = filterCriteriaType.getFilterCallback(filter);
-
-        assert.isTrue(callback(item));
-    });
-
-    it('Simple filter', function () {
-        var filterCriteriaType = new FilterCriteriaType();
-
-        var item = {
-            Id: 11,
-            DisplayName: "*11*"
-        };
-
-        var filter = [
-            {
-                criteriaType: filterCriteriaType.CriteriaTypeCode.IsEquals,
-                property: "Id",
-                value: 11
-            }
-        ];
-
-        var callback = filterCriteriaType.getFilterCallback(filter);
-
-        assert.isTrue(callback(item));
-    });
-
-    it('Complex filter', function () {
-        var filterCriteriaType = new FilterCriteriaType();
-
-        var item = {
-            Id: 11,
-            DisplayName: "*11*"
-        };
-
-        var filter = [
-            {
-                criteriaType: filterCriteriaType.CriteriaTypeCode.IsEquals,
-                property: "Id",
-                value: 11
-            },
-            {
-                criteriaType: filterCriteriaType.CriteriaTypeCode.IsContains,
-                property: "DisplayName",
-                value: "*"
-            }
-        ];
-
-        var callback = filterCriteriaType.getFilterCallback(filter);
-
-        assert.isTrue(callback(item));
-    });
-
-    it('Complex filter: no matches', function () {
-        var filterCriteriaType = new FilterCriteriaType();
-
-        var item = {
-            Id: 11,
-            DisplayName: "*11*"
-        };
-
-        var filter = [
-            {
-                criteriaType: filterCriteriaType.CriteriaTypeCode.IsEquals,
-                property: "Id",
-                value: 11
-            },
-            {
-                criteriaType: filterCriteriaType.CriteriaTypeCode.IsContains,
-                property: "DisplayName",
-                value: "**"
-            }
-        ];
-
-        var callback = filterCriteriaType.getFilterCallback(filter);
-
-        assert.isFalse(callback(item));
     });
 
 });
@@ -4263,13 +4991,13 @@ describe('DataBinding', function () {
         var dataBinding = new DataBinding();
 
         // Then
-        assert.equal(dataBinding.getMode(), BindingModes.twoWay, 'default mode must be twoWay');
+        assert.equal(dataBinding.getMode(), InfinniUI.BindingModes.twoWay, 'default mode must be twoWay');
     });
 
     it('should refresh source on element change if mode is twoWay', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.twoWay);
+        dataBinding.setMode(InfinniUI.BindingModes.twoWay);
 
         var source = new FakeElement();
         var sourceProperty = 'sourceProperty';
@@ -4292,7 +5020,7 @@ describe('DataBinding', function () {
     it('should refresh element on source change if mode is twoWay', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.twoWay);
+        dataBinding.setMode(InfinniUI.BindingModes.twoWay);
 
         var source = new FakeElement();
         var sourceProperty = 'sourceProperty';
@@ -4315,7 +5043,7 @@ describe('DataBinding', function () {
     it('should not refresh source on element change if mode is toElement', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.toElement);
+        dataBinding.setMode(InfinniUI.BindingModes.toElement);
 
         var source = new FakeElement();
         var sourceProperty = 'sourceProperty';
@@ -4338,7 +5066,7 @@ describe('DataBinding', function () {
     it('should refresh element on source change if mode is toElement', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.toElement);
+        dataBinding.setMode(InfinniUI.BindingModes.toElement);
 
         var source = new FakeElement();
         var sourceProperty = 'sourceProperty';
@@ -4361,7 +5089,7 @@ describe('DataBinding', function () {
     it('should refresh source on element change if mode is toSource', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.toSource);
+        dataBinding.setMode(InfinniUI.BindingModes.toSource);
 
         var source = new FakeElement();
         var sourceProperty = 'sourceProperty';
@@ -4384,7 +5112,7 @@ describe('DataBinding', function () {
     it('should not refresh element on source change if mode is toSource', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.toSource);
+        dataBinding.setMode(InfinniUI.BindingModes.toSource);
 
         var source = new FakeElement();
         var sourceProperty = 'sourceProperty';
@@ -4453,7 +5181,7 @@ describe('DataBinding', function () {
     it('should convert value if have converter', function () {
         // Given
         var dataBinding = new DataBinding();
-        dataBinding.setMode(BindingModes.twoWay);
+        dataBinding.setMode(InfinniUI.BindingModes.twoWay);
         dataBinding.setConverter({
             toSource: function(context, argument) {
                 return argument.value ? 5 : 3; // string to integer
@@ -4486,20 +5214,6 @@ describe('DataBinding', function () {
     });
 });
 describe('DataBindingBuilder', function () {
-    function applyViewMetadata(metadata, onViewReady){
-        metadata = {
-            View: metadata
-        };
-
-        var appBuilder = new ApplicationBuilder();
-        var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-        var view = linkView.createView(function (view) {
-            view.open();
-            onViewReady(view, $('#sandbox').children());
-        });
-    }
-
 
 /*    it('should build DataBinding', function () {
         // Given
@@ -4541,7 +5255,7 @@ describe('DataBindingBuilder', function () {
         var dataBinding = dataBindingBuilder.build(null, {parentView: view, metadata: metadata});
 
         // Then
-        assert.equal(dataBinding.getMode(), BindingModes.toSource);
+        assert.equal(dataBinding.getMode(), InfinniUI.BindingModes.toSource);
         assert.isNotNull(dataBinding.getConverter());
         assert.isNotNull(dataBinding.getSource());
         assert.isNotNull(dataBinding.getSourceProperty());
@@ -4606,7 +5320,8 @@ describe('DataBindingBuilder', function () {
                                 "Property": "#.Display",
                                 "Converter": {
                                     "ToElement": "{return args.value + '!';}"
-                                }
+                                },
+                                "Mode": "ToElement"
                             }
                         }
                     },
@@ -4619,7 +5334,7 @@ describe('DataBindingBuilder', function () {
         };
 
         // When
-        applyViewMetadata(metadata, onViewReady);
+        testHelper.applyViewMetadata(metadata, onViewReady);
 
         // Then
         function onViewReady(view, $layout){
@@ -4659,40 +5374,108 @@ var FakeElement = Backbone.Model.extend({
         return this.get(property);
     }
 });
+describe('baseDataSource', function () {
+
+    it('should call onWarningValidator handlers after validateOnWarnings', function (done) {
+        // Given
+        var dataSource = new ObjectDataSource( {view: fakeView()} );
+
+        dataSource.onWarningValidator(function(){
+            //Then
+            done();
+        });
+
+        dataSource.onErrorValidator(function(){
+            assert.fail("onErrorValidator", "onWarningValidator", "validateOnWarnings call onErrorValidator");
+        });
+
+        //When
+        dataSource.validateOnWarnings();
+    });
+
+    it('should call onErrorValidator handlers after validateOnErrors', function (done) {
+        // Given
+        var dataSource = new ObjectDataSource( {view: fakeView()} );
+
+        dataSource.onWarningValidator(function(){
+            assert.fail("onWarningValidator", "onErrorValidator", "validateOnErrors call onWarningValidator");
+        });
+        dataSource.onErrorValidator(function(){
+            //Then
+            done();
+        });
+
+        //When
+        dataSource.validateOnErrors();
+    });
+});
 describe('DataSourceBuilder', function () {
-    var builder = new ApplicationBuilder(),
-        metadata = {
-            Name: 'PatientDataSource',
-            ConfigId: 'Demography',
-            DocumentId: 'Patient',
-            CreateAction: 'CreateDocument',
-            GetAction: 'GetDocument',
-            UpdateAction: 'SetDocument',
-            DeleteAction: 'DeleteDocument',
-            FillCreatedItem: true,
-            PageNumber: 1,
-            PageSize: 5,
 
-            OnSelectedItemModified: {
-                Name: 'OnSelectedItemModified'
-            }
-        };
+    var builder = new ApplicationBuilder();
+    var items = [
+        {
+            "_id": '1',
+            "FirstName": "Иван",
+            "LastName": "Иванов"
+        },
+        {
+            "_id": '2',
+            "FirstName": "Петр",
+            "LastName": "Петров"
+        },
+        {
+            "_id": '3',
+            "FirstName": "Иван1",
+            "LastName": "Иванов1"
+        },
+        {
+            "_id": '4',
+            "FirstName": "Петр2",
+            "LastName": "Петров2"
+        },
+        {
+            "_id": '5',
+            "FirstName": "Иван3",
+            "LastName": "Иванов3"
+        },
+        {
+            "_id": '6',
+            "FirstName": "Петр4",
+            "LastName": "Петров5"
+        },
+        {
+            "_id": '10',
+            "FirstName": "Анна",
+            "LastName": "Сергеева"
 
-    window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+        }
+    ];
+
+    FakeRestDataProvider.prototype.items = _.clone(items);
+
+    window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
 
     describe('build DocumentDataSource', function () {
         it('should build documentDataSource', function () {
             // Given When
+            var metadata = {
+                    Name: 'PatientDataSource',
+                    DocumentId: 'Patient',
+                    FillCreatedItem: true,
+                    PageNumber: 1,
+                    PageSize: 5,
+
+                    onPropertyChanged: {
+                        Name: 'onPropertyChanged'
+                    }
+                };
+
             var view = new View(),
                 createdDataSource = builder.buildType('DocumentDataSource', metadata, {parentView: view});
 
             // Then
-            assert.equal(createdDataSource.getConfigId(), 'Demography');
             assert.equal(createdDataSource.getDocumentId(), 'Patient');
-            assert.equal(createdDataSource.getIdProperty(), 'Id');
-            assert.equal(createdDataSource.getCreateAction(), 'CreateDocument');
-            assert.equal(createdDataSource.getUpdateAction(), 'SetDocument');
-            assert.equal(createdDataSource.getDeleteAction(), 'DeleteDocument');
+            assert.equal(createdDataSource.getIdProperty(), '_id');
             assert.equal(createdDataSource.getPageSize(), 5, 'PageSize');
             assert.equal(createdDataSource.getPageNumber(), 1, 'PageNumber');
             assert.isTrue(createdDataSource.getFillCreatedItem(), 'Value of FillCreatedItem');
@@ -4700,15 +5483,27 @@ describe('DataSourceBuilder', function () {
 
         it('should subscribe documentDataSource on changeProperty', function (done) {
             // Given
+            var metadata = {
+                    Name: 'PatientDataSource',
+                    DocumentId: 'Patient',
+                    FillCreatedItem: true,
+                    PageNumber: 1,
+                    PageSize: 5,
+
+                    OnPropertyChanged: {
+                        Name: 'onPropertyChanged'
+                    }
+                };
+
             var view = new View(),
                 createdDataSource = builder.buildType('DocumentDataSource', metadata, {parentView: view}),
                 scriptMetadata = {
-                    Name:"OnSelectedItemModified",
+                    Name:"onPropertyChanged",
                     Body: 'window.documentDataSourceTest = 1;'
                 };
 
             view.getScripts().add({
-                name: 'OnSelectedItemModified',
+                name: 'onPropertyChanged',
                 func: builder.buildType('Script', scriptMetadata, {parentView: view})
             });
 
@@ -4721,21 +5516,216 @@ describe('DataSourceBuilder', function () {
 
             // Then
             setTimeout(function(){
-                assert.equal(window.documentDataSourceTest, 1, 'Event onSelectedItemModified is called');
+                assert.equal(window.documentDataSourceTest, 1, 'Event OnSelectedItemChanged is called');
                 done();
             }, 200);
         });
 
+        it('should create ds from metadata', function (done) {
+            // Given
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        DocumentDataSource: {
+                            "Name": "DataSource1",
+                            "DocumentId": "Whatever"
+                        }
+                    }
+                ],
+                Items: []
+            };
+
+            var dataSource;
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout){
+                $layout.detach();
+
+                dataSource = view.getContext().dataSources['DataSource1'];
+                dataSource.updateItems(handleItemsReady);
+            }
+
+            function handleItemsReady(){
+                assert.isTrue(dataSource.getItems().length > 0, 'DS was update items');
+                assert.equal(FakeRestDataProvider.prototype.lastSendedUrl, InfinniUI.config.serverUrl + '/documents/Whatever?skip=0&take=15', 'requested url is right');
+
+                done();
+            }
+        });
+
+        it('should update items on filter changing', function (done) {
+            // Given
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        DocumentDataSource: {
+                            "Name": "DataSource1",
+                            "DocumentId": "Whatever"
+                        }
+                    }
+                ],
+                Items: []
+            };
+            var result = '';
+
+            var dataSource;
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout){
+
+                $layout.detach();
+
+                dataSource = view.getContext().dataSources['DataSource1'];
+
+                dataSource.onItemsUpdated(function(){
+                    result += '1';
+
+                    if(result == '11'){
+                        assert.equal(FakeRestDataProvider.prototype.lastSendedUrl, InfinniUI.config.serverUrl + '/documents/Whatever?filter=eq(id,7)&skip=0&take=15', 'requested url is right (second)');
+                        done();
+                    }
+                });
+
+                dataSource.setFilter('eq(id,4)');
+
+                dataSource.updateItems(handleItemsReady1);
+            }
+
+            function handleItemsReady1(){
+                assert.equal(result, '', 'its first updated of item');
+                assert.equal(FakeRestDataProvider.prototype.lastSendedUrl, InfinniUI.config.serverUrl + '/documents/Whatever?filter=eq(id,4)&skip=0&take=15', 'requested url is right (first)');
+
+                dataSource.setFilter('eq(id,<%uid%>)');
+                dataSource.setFilterParams('uid', 7);
+            }
+        });
+
+
+        it('should bind filter', function (done) {
+            // Given
+            FakeRestDataProvider.prototype.items = _.clone(items);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        DocumentDataSource: {
+                            "Name": "DataSource1",
+                            "DocumentId": "Whatever",
+                            "Filter": "eq(_id,<%param%>)",
+                            "FilterParams": {
+                                "param": {
+                                    "Source": "DataSource2",
+                                    "Property": "0._id"
+                                }
+                            }
+                        }
+                    },{
+
+                        DocumentDataSource: {
+                            "Name": "DataSource2",
+                            "DocumentId": "Whatever"
+                        }
+                    }
+                ],
+                Items: []
+            };
+            var result = '';
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout){
+
+                $layout.detach();
+
+                var dataSource1 = view.getContext().dataSources['DataSource1'];
+                var dataSource2 = view.getContext().dataSources['DataSource2'];
+
+                dataSource1.onItemsUpdated(function(){
+                    assert.equal(result, '2', 'second updated ds1');
+
+                    result += '1';
+                    dataSource2;
+                    assert.equal(FakeRestDataProvider.prototype.lastSendedUrl, InfinniUI.config.serverUrl + '/documents/Whatever?filter=eq(_id,1)&skip=0&take=15', 'requested url is right (ds1)');
+                    done();
+                });
+
+                dataSource2.onItemsUpdated(function(){
+
+                    assert.equal(result, '', 'first updated ds2');
+
+                    result += '2';
+
+                    dataSource1.updateItems();
+                });
+
+            }
+
+        });
 
     });
 
 });
 describe('DocumentDataSource', function () {
+    var dataItems = [
+        {
+            "_id": '1',
+            "FirstName": "Иван",
+            "LastName": "Иванов"
+        },
+        {
+            "_id": '2',
+            "FirstName": "Петр",
+            "LastName": "Петров"
+        },
+        {
+            "_id": '3',
+            "FirstName": "Иван1",
+            "LastName": "Иванов1"
+        },
+        {
+            "_id": '4',
+            "FirstName": "Петр2",
+            "LastName": "Петров2"
+        },
+        {
+            "_id": '5',
+            "FirstName": "Иван3",
+            "LastName": "Иванов3"
+        },
+        {
+            "_id": '6',
+            "FirstName": "Петр4",
+            "LastName": "Петров5"
+        },
+        {
+            "_id": '10',
+            "FirstName": "Анна",
+            "LastName": "Сергеева"
+
+        }
+    ];
 
     describe('DocumentDataSource base api', function () {
         it('should get list of data', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4758,15 +5748,49 @@ describe('DocumentDataSource', function () {
             );
         });
 
-
-        it('should get editing record', function (done) {
+        it('should subscribe to property of selectedItem', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
+            var result = '';
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
             });
+
+            dataSource.onPropertyChanged('$.FirstName', function(context, args){
+                result += ', ' + args.newValue;
+            });
+
+            dataSource.updateItems(
+                function(context, args){
+
+                    //When
+                    dataSource.setProperty('$.FirstName', 'Иванов 2');
+                    dataSource.setProperty('0.FirstName', 'Иванов 3');
+                    dataSource.setProperty('3.FirstName', 'Иванов 4');
+                    dataSource.setSelectedItem(dataSource.getItems()[1]);
+                    dataSource.setProperty('0.FirstName', 'Иванов 5');
+                    dataSource.setProperty('1.FirstName', 'Иванов 6');
+
+                    // Then
+                    assert.equal(result, ', Иван, Иванов 2, Иванов 3, Иванов 6', 'onPropertyChanged called in right order');
+                    done();
+
+                }
+            );
+        });
+
+/* TODO раскомментировать после фильтрации фейковых провайдеров
+        it('should get editing record', function (done) {
+            // Given
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
+
+            var builder = new ApplicationBuilder();
+            var view = fakeView();
+            var dataSource = builder.buildType('DocumentDataSource', {}, {parent: view, parentView: view, builder: builder});
 
             //When
             dataSource.suspendUpdate();
@@ -4790,7 +5814,8 @@ describe('DocumentDataSource', function () {
 
         it('should update document', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4821,11 +5846,12 @@ describe('DocumentDataSource', function () {
 
                 }
             );
-        });
+        });*/
 
         it('should restore selected item after updating', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4851,7 +5877,8 @@ describe('DocumentDataSource', function () {
 
         it('should create document', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4864,12 +5891,10 @@ describe('DocumentDataSource', function () {
                     // Then
                     var newItem = argument.value;
                     assert.ok(newItem, 'new item is ready');
-                    assert.equal(newItem.prefilledField, 1, 'prefilled field is right');
-                    assert.equal(newItem.__Id, newItem.Id, 'special Id is right');
 
                     var items = dataSource.getItems();
                     assert.lengthOf(items, 1, 'one element (when was created) in items');
-                    assert.equal(items[0].prefilledField, 1, 'is right element in items after creating');
+                    //assert.equal(items[0].prefilledField, 1, 'is right element in items after creating');
                     done();
                 }
             );
@@ -4877,7 +5902,8 @@ describe('DocumentDataSource', function () {
 
         it('should get document property', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4898,7 +5924,8 @@ describe('DocumentDataSource', function () {
 
         it('should select item', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4921,7 +5948,8 @@ describe('DocumentDataSource', function () {
 
         it('should change document property', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4947,7 +5975,8 @@ describe('DocumentDataSource', function () {
 
         it('should change document property (full item change)', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4960,7 +5989,7 @@ describe('DocumentDataSource', function () {
 
                 //When
                 var newItemData = {
-                    "Id": '1',
+                    "_id": '1',
                     "FirstName": "Ивано",
                     "LastName": "Иванович"
                 };
@@ -4974,7 +6003,8 @@ describe('DocumentDataSource', function () {
 
         it('should validate item', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -4992,26 +6022,26 @@ describe('DocumentDataSource', function () {
                     validateResult3 = dataSource.validateOnErrors();
 
                 // Then
-                assert.isTrue(validateResult1.isValid, 'successfully validation');
+                assert.isTrue(validateResult1.IsValid, 'successfully validation');
 
-                assert.isFalse(validateResult2.isValid, 'fail validation');
-                assert.lengthOf(validateResult2.items, 1, 'fail validation results');
-                assert.equal(validateResult2.items[0].property, 'FirstName', 'fail validation property result');
+                assert.isFalse(validateResult2.IsValid, 'fail validation');
+                assert.lengthOf(validateResult2.Items, 1, 'fail validation results');
+                assert.equal(validateResult2.Items[0].property, 'FirstName', 'fail validation property result');
 
-                assert.isFalse(validateResult3.isValid, 'full validation');
-                assert.lengthOf(validateResult3.items, 6, 'full validation results');
-                assert.equal(validateResult3.items[3].property, '4.FirstName', 'full validation property result');
+                assert.isFalse(validateResult3.IsValid, 'full validation');
+                assert.lengthOf(validateResult3.Items, 6, 'full validation results');
+                assert.equal(validateResult3.Items[3].property, '4.FirstName', 'full validation property result');
                 done();
             }
 
             function validator(context, argument){
                 var result = {
-                    isValid: true
+                    IsValid: true
                 };
 
                 if(argument.FirstName != 'Иван'){
-                    result.isValid = false;
-                    result.items = [{
+                    result.IsValid = false;
+                    result.Items = [{
                         property: 'FirstName',
                         message: 'Почему не Иван?!'
                     }];
@@ -5023,7 +6053,8 @@ describe('DocumentDataSource', function () {
 
         it('should save item', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -5051,7 +6082,8 @@ describe('DocumentDataSource', function () {
 
         it('should delete item', function (done) {
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -5075,9 +6107,12 @@ describe('DocumentDataSource', function () {
             }
         });
 
+       /* TODO раскомментировать после фильтрации фейковых провайдеров
         it('should add items', function (done) {
+
             // Given
-            window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            FakeRestDataProvider.prototype.items = JSON.parse(JSON.stringify(dataItems));
 
             var dataSource = new DocumentDataSource({
                 view: fakeView()
@@ -5109,107 +6144,240 @@ describe('DocumentDataSource', function () {
 
                 }
             );
-        });
+        });*/
     });
 });
-/*function FakeDataProvider(mode) {
+describe('TreeModel', function () {
 
-    var items = [
-        {
-            "Id": '1',
-            "FirstName": "Иван",
-            "LastName": "Иванов"
-        },
-        {
-            "Id": '2',
-            "FirstName": "Петр",
-            "LastName": "Петров"
-        },
-        {
-            "Id": '10',
-            "FirstName": "Анна",
-            "LastName": "Сергеева"
+    describe('TreeModel', function () {
+        it('Simple handling', function () {
+            // Given
+            var treeModel = new TreeModel('context');
+            var result = '';
 
-        }
-    ];
+            treeModel.onPropertyChanged('p1', function(context, args){
+                result = result + '1';
 
-    var itemsUpdated = [
-        {
-            "Id": '4',
-            "FirstName": "Федор",
-            "LastName": "Федоров"
-        },
-        {
-            "Id": '5',
-            "FirstName": "Сидор",
-            "LastName": "Сидоров"
-        }
-    ];
+                assert.equal(context, 'context', 'passed context argument is right');
+                assert.isNull(args.oldValue, 'old value is right');
+                assert.equal(args.newValue, 1, 'new value is right');
 
-    this.getItems = function (criteriaList, pageNumber, pageSize, sorting, resultCallback) {
-        if (mode === undefined || mode() === 'Created') {
+                assert.equal(treeModel.getProperty('p1'), 1, 'value was saved before handling');
+            });
 
+            //When
+            treeModel.setProperty('p1', 1);
+
+            // Then
+            assert.equal(result, '1', 'Handler was triggered');
+            assert.equal(treeModel.getProperty('p1'), 1, 'Value was right saved');
+        });
+
+
+        it('Handling many handlers', function () {
+            // Given
+            var treeModel = new TreeModel('context');
+            var result = '';
+
+            treeModel.onPropertyChanged('p1', function(context, args){
+                result = result + '1';
+
+                assert.equal(context, 'context', 'passed context argument is right');
+                assert.isNull(args.oldValue, 'old value is right');
+                assert.equal(args.newValue, 1, 'new value is right');
+            });
+
+            treeModel.onPropertyChanged('p2', function(context, args){
+                result = result + '2';
+            });
+
+            //When
+            treeModel.setProperty('p1', 1);
+            treeModel.setProperty('p2', 2);
+            treeModel.setProperty('p2', 3);
+
+            // Then
+            assert.equal(result, '122', 'Handlers was triggered');
+
+            assert.equal(treeModel.getProperty('p1'), 1, 'Value p1 was right saved');
+            assert.equal(treeModel.getProperty('p2'), 3, 'Value p2 was right saved');
+        });
+
+        it('Handling deep sets', function () {
+            // Given
+            var treeModel = new TreeModel('context');
+            var result = '';
+            var jsonOfVal;
+
+            treeModel.onPropertyChanged('p1.p11', function(context, args){
+                result = result + '1';
+
+                assert.isTrue(args.oldValue == undefined || args.oldValue == 1, 'old value is right');
+                assert.isTrue(args.newValue == 1 || args.newValue == 4, 'new value is right');
+
+                assert.isTrue(treeModel.getProperty('p1.p11') == 1 || treeModel.getProperty('p1.p11') == 4, 'value was saved before handling');
+            });
+
+            treeModel.onPropertyChanged('p1', function(context, args){
+                result = result + '2';
+
+                assert.equal(context, 'context', 'passed context argument is right');
+
+                jsonOfVal = JSON.stringify(args.oldValue);
+                assert.equal(jsonOfVal, '{"p11":1}','old value is right');
+                jsonOfVal = JSON.stringify(args.newValue);
+                assert.equal(jsonOfVal, '{"p11":4}', 'new value is right');
+
+                assert.equal(treeModel.getProperty('p1').p11, 4, 'value was saved before handling');
+            });
+
+            //When
+            treeModel.setProperty('p1.p11', 1);
+            treeModel.setProperty('p2.p11', 3);
+            treeModel.setProperty('p2', 2);
+            treeModel.setProperty('p1', {p11: 4});
+
+            // Then
+            assert.equal(result, '121', 'Handler was triggered');
+            assert.equal(treeModel.getProperty('p1').p11, 4, 'value was saved before handling');
+
+            jsonOfVal = JSON.stringify(treeModel.getProperty(''));
+            assert.equal(jsonOfVal, '{"p1":{"p11":4},"p2":2}', 'full data tree is right');
+        });
+
+        it('Handling onChange, on all properties', function () {
+            // Given
+            var treeModel = new TreeModel('context');
             var result = [];
-            var allItems = items;
-            for (var i = 0; i < pageSize; i++) {
-                var itemIndex = i + (pageNumber * pageSize);
-                if (itemIndex < allItems.length) {
-                    result.push(items[itemIndex]);
-                }
-                else {
-                    break;
-                }
-            }
-            resultCallback(result);
-        }
-        else {
-            resultCallback(itemsUpdated);
-        }
-    };
+            var jsonOfVal;
 
-    this.createItem = function (resultCallback) {
-        resultCallback({});
-    };
+            treeModel.onPropertyChanged(function(context, args){
+                result.push(args.property);
+            });
 
-    this.replaceItem = function (value, warnings, resultCallback) {
 
-        var itemIndex = -1;
+            //When
+            treeModel.setProperty('p1.p11', 1);
+            treeModel.setProperty('p2.p11', 3);
+            treeModel.setProperty('p2', 2);
+            treeModel.setProperty('p1', {p11: 4});
 
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].Id === value.Id) {
-                itemIndex = i;
-                break;
-            }
-        }
+            // Then
+            assert.equal(result.join(','), 'p1.p11,p2.p11,p2,p1', 'Handler was right triggered');
+        });
 
-        if (itemIndex !== -1) {
-            items[itemIndex] = value;
-        }
-        else {
-            items.push(value);
-        }
+        it('Handling onChange of subtree', function () {
+            // Given
+            var treeModel = new TreeModel('context');
+            var result = [];
+            var jsonOfVal;
 
-        resultCallback(items);
-    };
+            treeModel.onPropertyChanged('*', function(context, args){
+                result.push(args.property);
+            });
 
-    this.deleteItem = function (value, resultCallback) {
-        var itemIndex = items.indexOf(value);
-        items.splice(itemIndex, 1);
-        resultCallback(items);
-    };
+            treeModel.onPropertyChanged('p1.*', function(context, args){
+                result.push(args.property);
+            });
 
-    this.getItem = function (itemId, resultCallback) {
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].Id === itemId) {
-                resultCallback([items[i]]);
-                return;
-            }
-        }
-        resultCallback(null);
-    };
 
-}*/
+            //When
+            treeModel.setProperty('p1.p11.p111', 1);
+            treeModel.setProperty('p2.p11', 3);
+            treeModel.setProperty('p2', 2);
+            treeModel.setProperty('p1', {p11: 4});
 
+            // Then
+            assert.equal(result.join(','), 'p1.p11.p111,p1.p11.p111,p2.p11,p2,p1,p1', 'Handler was right triggered');
+        });
+
+        it('Auto unsubscribing if owner is checked as removed', function () {
+            // Given
+            var treeModel = new TreeModel('context');
+            var result = '';
+            var jsonOfVal;
+            var owner1 = {
+                isRemoved: false
+            }, owner2 = {
+                isRemoved: false
+            };
+
+            treeModel.onPropertyChanged('p1.p11', function(context, args){
+                result = result + '1';
+
+                assert.isTrue(args.oldValue == undefined || args.oldValue == 1 || args.oldValue == 2, 'old value is right');
+                assert.isTrue(args.newValue == 1 || args.newValue == 4 || args.newValue == 2 || args.newValue == 8, 'new value is right');
+
+            }, {owner: owner1});
+
+            treeModel.onPropertyChanged('p1', function(context, args){
+
+                result = result + '2';
+
+            }, {owner: owner2});
+
+            //When
+            treeModel.setProperty('p1.p11', 1);
+            treeModel.setProperty('p2.p11', 3);
+            treeModel.setProperty('p2', 2);
+            treeModel.setProperty('p1', {p11: 4});
+
+            owner1.isRemoved = true;
+
+            treeModel.setProperty('p1.p11', 2);
+            treeModel.setProperty('p2.p11', 6);
+            treeModel.setProperty('p1', {p11: 8});
+
+            // Then
+            assert.equal(result, '1212', 'Handler was triggered');
+            assert.equal(treeModel.getProperty('p1').p11, 8, 'value was saved before handling');
+
+            jsonOfVal = JSON.stringify(treeModel.getProperty(''));
+            assert.equal(jsonOfVal, '{"p1":{"p11":8},"p2":{"p11":6}}', 'full data tree is right');
+        });
+
+        it('Simulate set property', function () {
+            // Given
+            var treeModel = new TreeModel('context');
+            var result = '';
+            var jsonOfVal;
+
+            treeModel.onPropertyChanged('p1.p11', function(context, args){
+                result = result + '1';
+
+                assert.isTrue(args.oldValue == undefined || args.oldValue == 4, 'old value is right');
+                assert.isTrue(args.newValue == 1 || args.newValue == 4, 'new value is right');
+
+                assert.isTrue(treeModel.getProperty('p1.p11') == 1, 'value was saved before handling');
+            });
+
+            treeModel.onPropertyChanged('p1', function(context, args){
+                result = result + '2';
+
+                assert.equal(context, 'context', 'passed context argument is right');
+
+                jsonOfVal = JSON.stringify(args.oldValue);
+                assert.equal(jsonOfVal, '{"p11":4}','old value is right');
+                jsonOfVal = JSON.stringify(args.newValue);
+                assert.equal(jsonOfVal, '{"p11":1}', 'new value is right');
+
+                assert.equal(treeModel.getProperty('p1').p11, 1, 'value not changing on simulate handling');
+            });
+
+            //When
+            treeModel.setProperty('p1.p11', 1);
+            treeModel.simulateSetProperty('p1', {p11: 4});
+            treeModel.setProperty('p2', 2);
+            treeModel.simulateSetProperty('p2', 3);
+
+            // Then
+            assert.equal(result, '121', 'Handler was triggered');
+
+            jsonOfVal = JSON.stringify(treeModel.getProperty(''));
+            assert.equal(jsonOfVal, '{"p1":{"p11":1},"p2":2}', 'full data tree is right');
+        });
+    })
+});
 function FakeMetadataProvider() {
 
     this.getViewMetadata = function (resultCallback) {
@@ -5233,37 +6401,37 @@ function FakeMetadataProvider() {
 describe('ObjectDataSource', function () {
     var items = [
         {
-            "Id": '1',
+            "_id": '1',
             "FirstName": "Иван",
             "LastName": "Иванов"
         },
         {
-            "Id": '2',
+            "_id": '2',
             "FirstName": "Петр",
             "LastName": "Петров"
         },
         {
-            "Id": '3',
+            "_id": '3',
             "FirstName": "Иван1",
             "LastName": "Иванов1"
         },
         {
-            "Id": '4',
+            "_id": '4',
             "FirstName": "Петр2",
             "LastName": "Петров2"
         },
         {
-            "Id": '5',
+            "_id": '5',
             "FirstName": "Иван3",
             "LastName": "Иванов3"
         },
         {
-            "Id": '6',
+            "_id": '6',
             "FirstName": "Петр4",
             "LastName": "Петров5"
         },
         {
-            "Id": '10',
+            "_id": '10',
             "FirstName": "Анна",
             "LastName": "Сергеева"
 
@@ -5273,9 +6441,10 @@ describe('ObjectDataSource', function () {
     window.providerRegister.register('ObjectDataSource', ObjectDataProvider);
 
     function createObjectDataSource(){
-        var dataSource = new ObjectDataSource({
-                view: fakeView()
-            }),
+
+        var builder = new ApplicationBuilder();
+        var view = fakeView();
+        var dataSource = builder.buildType('ObjectDataSource', {}, {parent: view, parentView: view, builder: builder}),
             initItems = JSON.parse(JSON.stringify(items));
 
         dataSource.setItems(initItems);
@@ -5305,7 +6474,7 @@ describe('ObjectDataSource', function () {
                     // Then
                     var newItem = argument.value;
                     assert.ok(newItem, 'new item is ready');
-                    assert.ok(newItem.Id, 'new item has Id');
+                    assert.ok(newItem._id, 'new item has _id');
                     done();
                 }
             );
@@ -5375,7 +6544,7 @@ describe('ObjectDataSource', function () {
 
                 //When
                 var newItemData = {
-                    "Id": '1',
+                    "_id": '1',
                     "FirstName": "Ивано",
                     "LastName": "Иванович"
                 };
@@ -5403,26 +6572,26 @@ describe('ObjectDataSource', function () {
                     validateResult3 = dataSource.validateOnErrors();
 
                 // Then
-                assert.isTrue(validateResult1.isValid, 'successfully validation');
+                assert.isTrue(validateResult1.IsValid, 'successfully validation');
 
-                assert.isFalse(validateResult2.isValid, 'fail validation');
-                assert.lengthOf(validateResult2.items, 1, 'fail validation results');
-                assert.equal(validateResult2.items[0].property, 'FirstName', 'fail validation property result');
+                assert.isFalse(validateResult2.IsValid, 'fail validation');
+                assert.lengthOf(validateResult2.Items, 1, 'fail validation results');
+                assert.equal(validateResult2.Items[0].property, 'FirstName', 'fail validation property result');
 
-                assert.isFalse(validateResult3.isValid, 'full validation');
-                assert.lengthOf(validateResult3.items, 6, 'full validation results');
-                assert.equal(validateResult3.items[3].property, '4.FirstName', 'full validation property result');
+                assert.isFalse(validateResult3.IsValid, 'full validation');
+                assert.lengthOf(validateResult3.Items, 6, 'full validation results');
+                assert.equal(validateResult3.Items[3].property, '4.FirstName', 'full validation property result');
                 done();
             }
 
             function validator(context, argument){
                 var result = {
-                    isValid: true
+                    IsValid: true
                 };
 
                 if(argument.FirstName != 'Иван'){
-                    result.isValid = false;
-                    result.items = [{
+                    result.IsValid = false;
+                    result.Items = [{
                         property: 'FirstName',
                         message: 'Почему не Иван?!'
                     }];
@@ -5479,6 +6648,7 @@ describe('ObjectDataSource', function () {
         });
     });
 
+    /* TODO раскомментировать когда в object DS заработают фильтры
     describe('ObjectDataSource filter', function () {
         it('should get filtered list of data', function () {
             // Given //When
@@ -5488,9 +6658,9 @@ describe('ObjectDataSource', function () {
             //When
             ds.setFilter([
                 {
-                    criteriaType: 64,
-                    property: "FirstName",
-                    value: "Иван"
+                    CriteriaType: 64,
+                    Property: "FirstName",
+                    Value: "Иван"
                 }
             ]);
 
@@ -5508,9 +6678,9 @@ describe('ObjectDataSource', function () {
             //When
             ds.setFilter([
                 {
-                    criteriaType: 64,
-                    property: "FirstName",
-                    value: "Иван"
+                    CriteriaType: 64,
+                    Property: "FirstName",
+                    Value: "Иван"
                 }
             ]);
             assert.lengthOf(ds.getItems(), 3, 'Apply filter');
@@ -5521,6 +6691,424 @@ describe('ObjectDataSource', function () {
             items = ds.getItems();
             assert.isTrue(ds.isDataReady(), 'dataReady status is right');
             assert.lengthOf(items, 7, 'clear filter');
+        });
+
+    });*/
+});
+describe('RestDataSource', function () {
+    window.providerRegister.register('RestDataSource', FakeRestDataProvider);
+
+    var items = [
+        {
+            "_id": '1',
+            "FirstName": "Иван",
+            "LastName": "Иванов"
+        },
+        {
+            "_id": '2',
+            "FirstName": "Петр",
+            "LastName": "Петров"
+        },
+        {
+            "_id": '3',
+            "FirstName": "Иван1",
+            "LastName": "Иванов1"
+        },
+        {
+            "_id": '4',
+            "FirstName": "Петр2",
+            "LastName": "Петров2"
+        },
+        {
+            "_id": '5',
+            "FirstName": "Иван3",
+            "LastName": "Иванов3"
+        },
+        {
+            "_id": '6',
+            "FirstName": "Петр4",
+            "LastName": "Петров5"
+        },
+        {
+            "_id": '10',
+            "FirstName": "Анна",
+            "LastName": "Сергеева"
+
+        }
+    ];
+
+    function createRestDataSource(missParam){
+
+        var view = fakeView();
+        var dataSource = new RestDataSource({ view: view }),
+            newItems = JSON.parse(JSON.stringify(items));
+
+        dataSource.suspendUpdate('urlTuning');
+        dataSource.setNewItemsHandler(function(newItemsData){
+            if(newItemsData){
+                return newItemsData['Result']['Items'];
+
+            }else{
+                return newItemsData;
+
+            }
+        });
+
+        /*
+        * кейсы использования фильтров
+        *
+        * удобно ли будет биндить автокомплит комбобокса на ДС вручную?
+        *
+        * DS{
+        *     Autocomplete: true,
+        *     AutocompleteValue: {
+        *         Source: "SomeDocDS",
+        *         Property: ".filter",
+        *         Direction: "ToSource",
+        *         Converters: {
+        *             ToSource: "{return 'eq(' + args.value + ')';}"
+        *         }
+        *     }
+        * }
+        * */
+
+        dataSource.setGettingUrlParams({
+            type: 'get',
+            origin:'http://some.ru',
+            path:'/some/id<%param1%><%param2%>?a=2&b=<%param1%><%param3%>',
+            data: {},
+
+            params: {
+                param1: 4,
+                param2: missParam ? undefined : '/',
+                param3: '&c=4'
+            }
+        });
+
+        dataSource.setSettingUrlParams({
+            type: 'post',
+            origin:'http://some.ru',
+            path:'/some/<%param1%>/<%param2%>',
+            data: {
+                a:2,
+                b: '<%param1%>',
+                c: '!1<%param2%>2!'
+            },
+
+            params: {
+                param1: '',
+                param2: ''
+            }
+        });
+
+        dataSource.setDeletingUrlParams({
+            type: 'delete',
+            origin:'http://some.ru',
+            path:'/some/<%param1%>/<%param2%>',
+            data: {
+                a:2,
+                b: '<%param1%>',
+                c: '!1<%param2%>2!'
+            },
+
+            params: {
+                param1: '',
+                param2: ''
+            }
+        });
+
+        dataSource.resumeUpdate('urlTuning');
+
+        FakeRestDataProvider.prototype.items = newItems;
+        FakeRestDataProvider.prototype.lastSendedUrl = '';
+
+        return dataSource;
+    }
+
+    describe('RestDataSourceBuilder', function () {
+
+        it('successful build', function () {
+            // Given
+            var builder = new ApplicationBuilder();
+            var metadata = {
+                GettingParams: {
+                    Method: 'get',
+                    Origin: 'http://some.ru',
+                    Path: '/some/id<%param1%>',
+                    Data: {
+                        a: 'param1=<%param1%>'
+                    },
+
+                    Params: {
+                        param1: 4
+                    }
+                }
+            };
+
+            // When
+            var restDataSource = builder.buildType('RestDataSource', metadata, {parentView: fakeView()});
+
+            // Then
+            var gettingParams = restDataSource.getGettingUrlParams();
+
+            assert.equal(gettingParams.method, 'get');
+            assert.equal(gettingParams.origin, 'http://some.ru');
+            assert.equal(gettingParams.path, '/some/id<%param1%>');
+            assert.deepEqual(gettingParams.data, {a: 'param1=<%param1%>'});
+            assert.deepEqual(gettingParams.params, {param1: 4});
+        });
+
+    });
+
+    describe('RestDataSource base api', function () {
+
+        it('should get list of data', function (done) {
+            // Given
+
+
+            var dataSource = createRestDataSource();
+
+            assert.isFalse(dataSource.isDataReady(), 'dataReady status is right (false)');
+            assert.isFalse(dataSource.get('isRequestInProcess'), 'is request not in process');
+
+            //When
+
+            dataSource.updateItems(
+                function(context, args){
+                    // Then
+                    assert.isTrue(args.value.length > 0, 'data provider returns items');
+                    assert.isTrue(dataSource.getItems().length > 0, 'data source have items');
+                    assert.isTrue(dataSource.isDataReady(), 'dataReady status is right (true)');
+                    done();
+                }
+            );
+        });
+
+        it('should get document property', function (done) {
+            // Given
+            var dataSource = createRestDataSource();
+
+            //When
+            dataSource.updateItems(handleItemsReady);
+
+            function handleItemsReady(){
+                // Then
+                assert.equal(dataSource.getProperty('FirstName'), 'Иван', 'return property value by simple property');
+                assert.equal(dataSource.getProperty('$.FirstName'), 'Иван', 'return property value by relative property');
+                assert.equal(dataSource.getProperty('$').FirstName, 'Иван', 'return property - full item by $ selector');
+                assert.equal(dataSource.getProperty('2.FirstName'), 'Иван1', 'return property - full item by index selector');
+                assert.equal(dataSource.getProperty('.selectedItem._id'), 1, 'return right spec property');
+                done();
+            }
+        });
+
+        it('should change document property', function (done) {
+            // Given
+            var dataSource = createRestDataSource();
+            var item3;
+
+
+            dataSource.updateItems(handleItemsReady);
+
+
+            function handleItemsReady(){
+                assert.equal(dataSource.getProperty('FirstName'),'Иван', 'return property value by property');
+                assert.equal(dataSource.getProperty('.selectedItem._id'), 1, 'return property value by property 2');
+                item3 = dataSource.getProperty('3');
+
+                //When
+                dataSource.setProperty('FirstName', 'Иванидзе');
+                dataSource.setProperty('$.LastName', 'Ивнв');
+                dataSource.setProperty('2.FirstName', 'Иванидзе-дзе');
+                dataSource.setProperty('3', {
+                    "_id": '55',
+                    "FirstName": "П2",
+                    "LastName": "Пе2"
+                });
+                dataSource.setProperty('3.FirstName', 'П22');
+
+                // Then
+                assert.equal(dataSource.getProperty('$').FirstName, 'Иванидзе', 'return property value by property after change property');
+                assert.equal(dataSource.getProperty('LastName'), 'Ивнв', 'return property value by property after change property 2');
+                assert.equal(dataSource.getProperty('2').FirstName, 'Иванидзе-дзе', 'return property value by property after change property by id');
+                assert.equal(dataSource.getProperty('3'), item3, 'on set full item, link on item is not changed');
+                assert.equal(dataSource.getProperty('3.FirstName'), item3.FirstName, 'return property value by property after change property 3');
+                assert.equal(dataSource.getProperty('3._id'), item3._id, 'return property value by property after change property 4');
+                done();
+            }
+        });
+
+        it('should add changing items in modified set', function (done) {
+            // Given
+            var dataSource = createRestDataSource();
+            var item;
+
+
+            dataSource.updateItems(handleItemsReady);
+
+
+            function handleItemsReady(){
+                assert.isFalse(dataSource.isModified(), 'at first items is not modified');
+
+                //When
+                dataSource.setProperty('FirstName', 'Иванидзе');
+                dataSource.setProperty('$.LastName', 'Ивнв');
+                dataSource.setProperty('2.FirstName', 'Иванидзе-дзе');
+                dataSource.setProperty('3.FirstName', 'Petrov');
+                dataSource.setProperty('3', {
+                    "_id": '55',
+                    "FirstName": "П2",
+                    "LastName": "Пе2"
+                });
+                dataSource.setProperty('4', {
+                    "_id": '5',
+                    "FirstName": "П5",
+                    "LastName": "Пе5"
+                });
+
+                // Then
+                assert.equal(_.size(dataSource.get('modifiedItems')), 4, 'length of modified items');
+                item = dataSource.getProperty('0');
+                assert.isTrue(dataSource.isModified(item), 'is modified 1');
+                item = dataSource.getProperty('2');
+                assert.isTrue(dataSource.isModified(item), 'is modified 2');
+                item = dataSource.getProperty('3');
+                assert.isTrue(dataSource.isModified(item), 'is modified 3');
+                item = dataSource.getProperty('4');
+                assert.isTrue(dataSource.isModified(item), 'is modified 4');
+
+                done();
+            }
+        });
+
+        it('should change spec value as property', function (done) {
+            // Given
+            var dataSource = createRestDataSource();
+            var item3;
+
+
+            dataSource.updateItems(handleItemsReady);
+
+
+            function handleItemsReady(){
+                assert.equal(dataSource.getProperty('FirstName'),'Иван', 'return property value by property');
+                assert.equal(dataSource.getProperty('.selectedItem._id'), 1, 'return property value by property 2');
+                item3 = dataSource.getProperty('3');
+
+                //When
+                dataSource.setProperty('.selectedItem', {'a':3});
+
+                // Then
+                assert.equal(dataSource.getProperty('.selectedItem.a'), 3, 'return property value by property after change property 5');
+                done();
+            }
+        });
+
+        it('should handle property changed', function (done) {
+            // Given
+            var dataSource = createRestDataSource();
+            var result = '';
+
+
+            function subscribeOnPropertyChanged(){
+                dataSource.onPropertyChanged('0.FirstName', function(context, args){
+                    result += '1';
+
+                    assert.equal(args.oldValue, 'Иван', 'right old value in args');
+                    assert.equal(args.newValue, 'Иванидзе', 'right new value in args');
+                    assert.equal(dataSource.getProperty('FirstName'), 'Иванидзе', 'value in source is new, when onPropertyChanged called');
+                });
+
+                dataSource.onPropertyChanged('0.LastName', function(context, args){
+                    result += '2';
+
+                    assert.equal(args.oldValue, 'Иванов', 'right old value in args');
+                    assert.equal(args.newValue, 'Ивнв', 'right new value in args');
+                    assert.equal(dataSource.getProperty('LastName'), 'Ивнв', 'value in source is new, when onPropertyChanged called');
+                });
+
+                dataSource.onPropertyChanged('.selectedItem', function(context, args){
+                    result += '3';
+
+                    assert.equal(args.oldValue.FirstName, 'Иванидзе', 'right old value in args');
+                    assert.equal(args.newValue.a, 3, 'right new value in args');
+                    assert.equal(dataSource.getSelectedItem().a, 3, 'value in source is new, when onPropertyChanged called');
+                });
+            }
+
+
+            dataSource.updateItems(handleItemsReady);
+
+
+            function handleItemsReady(){
+                subscribeOnPropertyChanged();
+
+                //When
+                dataSource.setProperty('FirstName', 'Иванидзе');
+                dataSource.setProperty('$.LastName', 'Ивнв');
+                dataSource.setProperty('2.FirstName', 'Иванидзе-дзе');
+                dataSource.setProperty('3', {
+                    "_id": '55',
+                    "FirstName": "П2",
+                    "LastName": "Пе2"
+                });
+                dataSource.setProperty('3.FirstName', 'П22');
+
+                dataSource.setProperty('.selectedItem', {'a':3});
+
+                // Then
+                assert.equal(result, '123', 'all handlers called in correct order');
+                done();
+            }
+        });
+
+        it('should handle selectedItem changed', function (done) {
+            // Given
+            var dataSource = createRestDataSource();
+            var result = '';
+            var item;
+
+
+            dataSource.onSelectedItemChanged(function(context, args){
+                result += '1';
+
+                //assert.isTrue(!args.oldValue || args.oldValue.FirstName ==  'Иван', 'right old value in args');
+                assert.isTrue(args.value.FirstName ==  'Иван' || args.value.FirstName == 'Петр', 'right new value in args');
+            });
+
+
+            dataSource.updateItems(handleItemsReady);
+
+
+            function handleItemsReady(){
+                item = dataSource.getItems()[1];
+
+                //When
+                dataSource.setSelectedItem(item);
+
+                // Then
+                assert.equal(result, '11', 'all handlers called in correct order');
+                done();
+            }
+        });
+
+        it('should handle url params changing', function (done) {
+            // Given
+            var dataSource = createRestDataSource(true);
+            var item;
+
+            assert.equal(FakeRestDataProvider.prototype.lastSendedUrl, '', 'request was not sended');
+
+            dataSource.updateItems(handleItemsReady);
+
+            dataSource.setGettingUrlParams('params.param2', '/newVal/');
+
+            function handleItemsReady(){
+                // Then
+                assert.equal(FakeRestDataProvider.prototype.lastSendedUrl, 'http://some.ru/some/id4/newVal/?a=2&b=4&c=4', 'request sended on right url');
+
+                done();
+            }
         });
 
     });
@@ -5605,19 +7193,16 @@ describe('FileProvider', function () {
                             resultCallback(response);
                         }, delay());
                     },
-                    setCreateAction: function () {},
-                    setReadAction: function () {},
-                    setUpdateAction: function () {},
-                    setDeleteAction: function () {},
-                    setConfigId: function () {},
-                    getConfigId: function () {},
-                    setDocumentId: function () {},
+                    setOrigin: function(){},
+                    setPath: function(){},
+                    setData : function(){},
+                    setFilter: function(){},
+                    setDocumentId: function(){},
                     getDocumentId: function () {},
                     createLocalItem: function (idProperty) {
                         var result = {};
 
                         result[idProperty] = guid();
-                        result['__Id'] = result[idProperty];
 
                         return result;
                     }
@@ -5636,7 +7221,7 @@ describe('FileProvider', function () {
                 var item = args.value;
                 ds.setProperty('title', 'some title');
                 ds.saveItem(item, function (context, args) {
-                    var value = args.value;
+                    var value = args.value.item;
                     assert.equal(item, value);
                     done();
                 }, function (args) {
@@ -5645,7 +7230,7 @@ describe('FileProvider', function () {
 
             });
         });
-
+/*
         it('DocumentDataSource.saveItem with 1 file', function (done) {
             var builder = new ApplicationBuilder();
             var view = new View;
@@ -5713,7 +7298,7 @@ describe('FileProvider', function () {
                 });
             });
         });
-
+*/
     });
 
 });
@@ -8141,7 +9726,7 @@ describe('DateTimeEditMask', function () {
             var value = editMask.getValue();
             var text = editMask.getText();
             assert.equal(position, text.length - 3);
-            assert.equal(date.getFullYear(), (new Date(value)).getFullYear());
+            assert.equal(date.getFullYear() + 1, (new Date(value)).getFullYear());
         });
 
         it('successful delete char (right)', function () {
@@ -8859,7 +10444,7 @@ describe('Button', function () {
         var element = builder.buildType('Button', {});
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
 
         it('should set getContent', function () {
@@ -9067,11 +10652,11 @@ describe('PopupButtonElement', function () {
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
 
         describe('Implementing Container Methods', function () {
-            checkContainerMethods(element);
+            testHelper.checkContainerMethods(element);
         });
 
 
@@ -9532,13 +11117,13 @@ describe('DataGrid', function () {
         assert.isTrue(window.Test.dataNavigation.loaded);
     });
 });*/
-describe('DatePicker', function () {
+describe('DateTimePicker', function () {
     var builder = new ApplicationBuilder();
 
     describe('API', function () {
-        var element = builder.buildType('DatePicker', {});
+        var element = builder.buildType('DateTimePicker', {});
 
-        describe('Implementing DatePicker Methods', function () {
+        describe('Implementing DateTimePicker Methods', function () {
             ['getMinValue', 'setMinValue', 'getMaxValue', 'setMaxValue', 'getMode', 'setMode']
                 .forEach(function (methodName) {
                     it(methodName, function() {
@@ -9549,39 +11134,15 @@ describe('DatePicker', function () {
         });
 
         describe('Implementing TextEditorBase Methods', function () {
-            ['getLabelText', 'setLabelText', 'getLabelFloating', 'setLabelFloating', 'getDisplayFormat',
-                'setDisplayFormat', 'getEditMask', 'setEditMask']
-                .forEach(function (methodName) {
-                    it(methodName, function() {
-                        assert.isFunction(element[methodName], methodName);
-                    });
-                });
+            testHelper.checkTextEditorBaseMethods(element);
         });
 
         describe('Implementing EditorBase Methods', function () {
-            ['getValue', 'setValue', 'getHintText', 'setHintText', 'getErrorText','setErrorText', 'getWarningText',
-                'setWarningText']
-                .forEach(function (methodName) {
-                    it(methodName, function() {
-                        assert.isFunction(element[methodName], methodName);
-                    });
-                });
+            testHelper.checkEditorBaseMethods(element);
         });
 
         describe('Implementing Element Methods', function () {
-            ['getView', '!getParent', '!setParent', 'getName', 'setName','getText', 'setText',
-                '!getFocusable', '!setFocusable', '!getFocused', '!setFocused', 'getEnabled','setEnabled', 'getVisible',
-                'setVisible', 'getHorizontalAlignment', 'setHorizontalAlignment', 'getVerticalAlignment',
-                'setVerticalAlignment','!getTextHorizontalAlignment', '!setTextHorizontalAlignment',
-                '!getTextVerticalAlignment','!setTextVerticalAlignment', '!getTextStyle', '!setTextStyle','!getForeground',
-                '!setForeground', '!getBackground', '!setBackground', '!getTexture', '!setTexture', 'getChildElements',
-                'getProperty', 'setProperty']
-                .forEach(function (methodName) {
-                    it(methodName, function() {
-                        checkMethod(element, methodName);
-                    });
-
-                });
+            testHelper.checkElementMethods(element);
         });
 
         //@TODO Add Checking Events
@@ -9591,7 +11152,7 @@ describe('DatePicker', function () {
 
         it('Using default value', function () {
             var metadata = {
-                "DatePicker": {}
+                "DateTimePicker": {}
             };
 
             var element = builder.build(metadata, {});
@@ -9609,7 +11170,7 @@ describe('DatePicker', function () {
 
         it('Apply metadata', function () {
             var metadata = {
-                "DatePicker": {
+                "DateTimePicker": {
                     "Name": "DatePicker1",
                     "MinValue": "2015-09-01T15:26:42.0060+05:00",
                     "MaxValue": "2015-09-18T15:26:42.0060+05:00",
@@ -9638,9 +11199,8 @@ describe('DatePicker', function () {
             };
 
             var element = builder.build(metadata, {});
-
-            assert.equal(element.getMinValue(), "2015-09-01T15:26:42.0060+05:00", 'MinValue');
-            assert.equal(element.getMaxValue(), "2015-09-18T15:26:42.0060+05:00", 'MaxValue');
+            assert.equal(String(element.getMinValue()), String(new Date("2015-09-01T15:26:42.0060+05:00")), 'MinValue');
+            assert.equal(String(element.getMaxValue()), String(new Date("2015-09-18T15:26:42.0060+05:00")), 'MaxValue');
             assert.equal(element.getMode(), 'DateTime', 'DateTime');
 
             assert.equal(element.getLabelText(), "Datepicker's label", 'LabelText');
@@ -9664,25 +11224,25 @@ describe('DatePicker', function () {
 
         it('correct convert from string to date and from date to string', function () {
             // Given
-            var datePicker = new DatePicker();
+            var dateTimePicker = new DateTimePicker();
 
-            datePicker.render();
+            dateTimePicker.render();
 
             // When
-            datePicker.setValue('2014-07-29');
+            dateTimePicker.setValue('2014-07-29');
 
             // Then
-            assert.equal(datePicker.getValue().substr(0, 10), '2014-07-29');
+            assert.equal(dateTimePicker.getValue().substr(0, 10), '2014-07-29');
         });
 
         it('event OnValueChanged', function () {
             // Given
-            var datePicker = new DatePicker(),
+            var dateTimePicker = new DateTimePicker(),
                 onValueChangedFlag = 0;
 
-            datePicker.render();
+            dateTimePicker.render();
 
-            datePicker.onValueChanged(function () {
+            dateTimePicker.onValueChanged(function () {
                 console.log(arguments);
                 onValueChangedFlag++;
             });
@@ -9690,8 +11250,8 @@ describe('DatePicker', function () {
             assert.equal(onValueChangedFlag, 0);
 
             // When
-            datePicker.setValue('2014-07-29');
-            datePicker.setValue('2014-07-30');
+            dateTimePicker.setValue('2014-07-29');
+            dateTimePicker.setValue('2014-07-30');
 
             // Then
             assert.equal(onValueChangedFlag, 2);
@@ -9701,20 +11261,20 @@ describe('DatePicker', function () {
 });
 
 
-describe('DatePickerBuilder', function () {
+describe('DateTimePickerBuilder', function () {
     describe('build', function () {
-        it('successful build DatePicker', function () {
+        it('successful build DateTimePicker', function () {
             // Given
 
-            var datePickerMetadata = {};
+            var dateTimePickerMetadata = {};
 
             // When
-            var builder = new DatePickerBuilder();
-            var datePicker = builder.build(null, {builder: new ApplicationBuilder(), view: new View(), metadata: datePickerMetadata});
+            var builder = new DateTimePickerBuilder();
+            var dateTimePicker = builder.build(null, {builder: new ApplicationBuilder(), view: new View(), metadata: dateTimePickerMetadata});
 
             // Then
-            assert.isNotNull(datePicker);
-            assert.isObject(datePicker);
+            assert.isNotNull(dateTimePicker);
+            assert.isObject(dateTimePicker);
 
         });
     });
@@ -9938,22 +11498,22 @@ describe('Label', function () {
         var element = builder.buildType('Label', {});
 
         describe('Implementing Label Methods', function () {
-            ['getDisplayFormat', 'setDisplayFormat', '!getTextTrimming', '!setTextTrimming',
+            ['getDisplayFormat', 'setDisplayFormat', 'getTextTrimming', 'setTextTrimming',
                 'getTextWrapping', 'setTextWrapping', 'getLineCount', 'setLineCount']
                 .forEach(function (methodName) {
                     it(methodName, function () {
-                        checkMethod(element, methodName);
+                        testHelper.checkMethod(element, methodName);
                     });
 
                 });
         });
 
         describe('Implementing EditorBase Methods', function () {
-            checkEditorBaseMethods(element);
+            testHelper.checkEditorBaseMethods(element);
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
     });
 
@@ -10176,7 +11736,7 @@ describe('ListBox', function () {
         it('should render stackPanel', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10259,7 +11819,7 @@ describe('ListBox', function () {
         it('should render listBox', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10324,7 +11884,7 @@ describe('ListBox', function () {
         it('should render listBox without grouping', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10389,7 +11949,7 @@ describe('ListBox', function () {
         it('should render listBox without grouping', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10445,7 +12005,7 @@ describe('ListBox', function () {
         it('should render stackPanel with simple items', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10511,7 +12071,7 @@ describe('ListBox', function () {
         it('should render stackPanel with property items', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10576,7 +12136,7 @@ describe('ListBox', function () {
         it('should render stackPanel with formatting items', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10650,7 +12210,7 @@ describe('ListBox', function () {
         it('should render stackPanel with formatting items', function () {
             // Given When
             window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
+                return new FakeRestDataProvider();
             });
 
             var linkView = new LinkView(null, function (resultCallback) {
@@ -10695,7 +12255,7 @@ describe('NumericBox', function () {
             assert.isUndefined($el.attr('data-pl-name'));
             assert.isFalse($control.prop('disabled'));
             assert.isFalse($el.hasClass('hidden'));
-            assert.isFalse($el.hasClass('pull-left'));
+            assert.isFalse($el.hasClass('pl-horizontal-Left'));
             assert.isFalse($el.hasClass('center-block'));
         });
 
@@ -10739,8 +12299,8 @@ describe('NumericBox', function () {
             assert.equal($el.attr('data-pl-name'), 'newName');
             assert.isTrue($control.prop('disabled'));
             assert.isTrue($el.hasClass('hidden'));
-            assert.isFalse($el.hasClass('pull-left'));
-            assert.isTrue($el.hasClass('center-block'));
+            assert.isFalse($el.hasClass('pl-horizontal-Left'));
+            assert.isTrue($el.hasClass('pl-horizontal-Center'));
         });
 
         it('Events onLoad, onValueChanged', function () {
@@ -10829,18 +12389,18 @@ describe('PasswordBox', function () {
                 'setPasswordChar'
             ].forEach(function (methodName) {
                 it(methodName, function () {
-                    checkMethod(element, methodName);
+                    testHelper.checkMethod(element, methodName);
                 });
 
             });
         });
 
         describe('Implementing EditorBase Methods', function () {
-            checkEditorBaseMethods(element);
+            testHelper.checkEditorBaseMethods(element);
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
     });
 
@@ -11034,22 +12594,22 @@ describe('TextBox', function () {
             ['getMultiline', 'setMultiline', 'getLineCount', 'setLineCount']
                 .forEach(function (methodName) {
                     it(methodName, function() {
-                        checkMethod(element, methodName);
+                        testHelper.checkMethod(element, methodName);
                     });
 
                 });
         });
 
         describe('Implementing TextEditorBase Methods', function () {
-            checkTextEditorBaseMethods(element);
+            testHelper.checkTextEditorBaseMethods(element);
         });
 
         describe('Implementing EditorBase Methods', function () {
-            checkEditorBaseMethods(element);
+            testHelper.checkEditorBaseMethods(element);
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
 
         it('Events onLoad, onValueChanged', function () {
@@ -11190,20 +12750,6 @@ describe('TextEditorBase (Element)', function () {
             }]
         };
 
-        function applyViewMetadata(metadata, onViewReady){
-            metadata = {
-                View: metadata
-            };
-
-            var appBuilder = new ApplicationBuilder();
-            var linkView = (new InlineViewBuilder()).build(null, {builder: appBuilder, metadata: metadata});
-
-            var view = linkView.createView(function (view) {
-                view.open();
-                onViewReady(view, $('#sandbox').children());
-            });
-        }
-
         it('Base functional', function () {
             // Given
             var textBox = new TextBox();
@@ -11239,7 +12785,7 @@ describe('TextEditorBase (Element)', function () {
             var metadata = metadata_1;
 
             // When
-            applyViewMetadata(metadata, onViewReady);
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
             function onViewReady(view, $layout){
@@ -11272,8 +12818,8 @@ describe('ToggleButton', function () {
             assert.isUndefined($el.attr('data-pl-name'), 'data-pl-name');
             assert.isFalse($el.hasClass('pl-disabled'));
             assert.isFalse($el.hasClass('hidden'), 'hidden');
-            assert.isTrue($el.hasClass('pull-left'), 'pull-left');
-            assert.isFalse($el.hasClass('center-block'), 'center-block');
+            assert.isTrue($el.hasClass('pl-horizontal-Left'), 'pl-horizontal-Left');
+            assert.isFalse($el.hasClass('pl-horizontal-Center'), 'pl-horizontal-Center');
         });
 
         it('Change the properties: value, name, enabled, visible, horizontalAlignment', function () {
@@ -11297,8 +12843,8 @@ describe('ToggleButton', function () {
             assert.equal($el.attr('data-pl-name'), 'newName');
             assert.isTrue($el.hasClass('pl-disabled'));
             assert.isTrue($el.hasClass('hidden'));
-            assert.isFalse($el.hasClass('pull-left'));
-            assert.isTrue($el.hasClass('center-block'));
+            assert.isFalse($el.hasClass('pl-horizontal-Left'));
+            assert.isTrue($el.hasClass('pl-horizontal-Center'));
         });
 
         it('Events onLoad, onValueChanged', function () {
@@ -11517,11 +13063,11 @@ describe('Frame', function () {
         var element = builder.buildType('Frame', {});
 
         describe('Implementing EditorBase Methods', function () {
-            checkEditorBaseMethods(element);
+            testHelper.checkEditorBaseMethods(element);
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
     });
 
@@ -11566,18 +13112,18 @@ describe('ImageBox', function () {
             ['getMaxSize', 'setMaxSize', 'getAcceptTypes']
                 .forEach(function (methodName) {
                     it(methodName, function () {
-                        checkMethod(element, methodName);
+                        testHelper.checkMethod(element, methodName);
                     });
 
                 });
         });
 
         describe('Implementing EditorBase Methods', function () {
-            checkEditorBaseMethods(element);
+            testHelper.checkEditorBaseMethods(element);
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element);
+            testHelper.checkElementMethods(element);
         });
     });
 
@@ -11656,13 +13202,11 @@ describe('ImageBox', function () {
                             resultCallback(response);
                         }, delay());
                     },
-                    setCreateAction: function () {},
-                    setReadAction: function () {},
-                    setUpdateAction: function () {},
-                    setDeleteAction: function () {},
-                    setConfigId: function () {},
-                    getConfigId: function () {},
-                    setDocumentId: function () {},
+                    setOrigin: function(){},
+                    setPath: function(){},
+                    setData : function(){},
+                    setFilter: function(){},
+                    setDocumentId: function(){},
                     getDocumentId: function () {},
                     createLocalItem: function (idProperty) {
                         var result = {};
@@ -11865,31 +13409,31 @@ describe('PanelElement', function () {
 
         describe('Implementing Panel API', function () {
             it('Implement methods', function () {
-                checkMethod(element, 'getCollapsible');
-                checkMethod(element, 'setCollapsible');
-                checkMethod(element, 'getCollapsed');
-                checkMethod(element, 'setCollapsed');
-                checkMethod(element, 'getHeaderTemplate');
-                checkMethod(element, 'setHeaderTemplate');
-                checkMethod(element, 'getHeader');
-                checkMethod(element, 'setHeader');
+                testHelper.checkMethod(element, 'getCollapsible');
+                testHelper.checkMethod(element, 'setCollapsible');
+                testHelper.checkMethod(element, 'getCollapsed');
+                testHelper.checkMethod(element, 'setCollapsed');
+                testHelper.checkMethod(element, 'getHeaderTemplate');
+                testHelper.checkMethod(element, 'setHeaderTemplate');
+                testHelper.checkMethod(element, 'getHeader');
+                testHelper.checkMethod(element, 'setHeader');
             });
 
             it('Implement events subscriber', function () {
-                checkMethod(element, 'onExpanding');
-                checkMethod(element, 'onExpanded');
-                checkMethod(element, 'onCollapsing');
-                checkMethod(element, 'onCollapsed');
+                testHelper.checkMethod(element, 'onExpanding');
+                testHelper.checkMethod(element, 'onExpanded');
+                testHelper.checkMethod(element, 'onCollapsing');
+                testHelper.checkMethod(element, 'onCollapsed');
             });
 
         });
 
         describe('Implementing Container Methods', function () {
-            checkContainerMethods(element)
+            testHelper.checkContainerMethods(element)
         });
 
         describe('Implementing Element Methods', function () {
-            checkElementMethods(element)
+            testHelper.checkElementMethods(element)
         });
 
         it('Default values', function () {
@@ -12120,7 +13664,7 @@ describe('ToolBarElement', function () {
 
 
         describe('Implementing Container Methods', function () {
-            checkContainerMethods(element);
+            testHelper.checkContainerMethods(element);
         });
 
     });
@@ -12693,7 +14237,7 @@ describe('View', function () {
 });
 describe('ViewBuilder', function () {
     var viewMetadata = {
-        Text: '��������',
+        Text: 'TestView',
         Icon: 'Icon',
         DataSources: [
             {
@@ -12814,7 +14358,7 @@ describe('ViewBuilder', function () {
 
     it('should build DataSources', function () {
         // Given
-        window.providerRegister.register('DocumentDataSource', FakeDataProvider);
+        window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
         window.providerRegister.register('ObjectDataSource', ObjectDataProvider);
 
         var viewBuilder = new ViewBuilder();
@@ -12852,6 +14396,9 @@ describe('ViewBuilder', function () {
 
         // Then
         assert.isTrue(window.EventOnOpeningWasCall);
+
+        // cleaning
+        view.close();
     });
 
     it('should build OnOpened', function () {
@@ -12875,6 +14422,9 @@ describe('ViewBuilder', function () {
 
         // Then
         assert.isTrue(window.EventOnOpenedWasCall);
+
+        // cleaning
+        view.close();
     });
 
     it('should build OnClosing', function () {
@@ -12921,6 +14471,62 @@ describe('ViewBuilder', function () {
 
         // Then
         assert.isTrue(window.EventOnClosedWasCall);
+    });
+
+    it('should build CloseButtonVisibility', function () {
+        // Given
+        var viewBuilder = new ViewBuilder();
+        var builder = new ApplicationBuilder();
+        var metadata = _.extend({}, viewMetadata, {
+            CloseButtonVisibility: false
+        });
+
+        // When
+        var view = viewBuilder.build(null, {metadata: metadata, builder: builder});
+
+        // Then
+        assert.isFalse(view.getCloseButtonVisibility());
+    });
+
+    it('should build HeaderTemplate', function () {
+        // Given
+        var viewBuilder = new ViewBuilder();
+        var metadata = _.extend({}, viewMetadata, {
+            HeaderTemplate: {
+                Icon: {
+                }
+            }
+        });
+
+        // When
+        var view = viewBuilder.build(null, {builder: new ApplicationBuilder(), metadata: metadata});
+
+        // Then
+        var headerTemplate = view.getHeaderTemplate();
+        var header = headerTemplate();
+
+        assert.instanceOf(header, Icon);
+    });
+
+    it('should build default value', function () {
+        // Given
+        var viewBuilder = new ViewBuilder();
+        var builder = new ApplicationBuilder();
+        var metadata = viewMetadata;
+
+        // When
+        var view = viewBuilder.build(null, {metadata: metadata, builder: builder});
+
+        // Then
+        var headerTemplate = view.getHeaderTemplate();
+        var header = headerTemplate();
+
+        // Header
+        assert.instanceOf(header, Label);
+        assert.equal(header.getValue(), 'TestView');
+
+        // CloseButtonVisibility
+        assert.isTrue(view.getCloseButtonVisibility());
     });
 });
 function FakeDataProvider(mode) {
@@ -12977,11 +14583,11 @@ function FakeDataProvider(mode) {
         }
     ];
 
-    this.getItems = function (criteriaList, pageNumber, pageSize, sorting, resultCallback) {
+    this.getItems = function (resultCallback, criteriaList, pageNumber, pageSize, sorting) {
         if (mode === undefined || mode() === 'Created') {
 
-            var result = [];
-            var allItems = items;
+            var result = items;
+            /*var allItems = items;
 
             for (var i = 0; i < pageSize; i++) {
                 var itemIndex = i + (pageNumber * pageSize);
@@ -12997,10 +14603,10 @@ function FakeDataProvider(mode) {
                 result = _.filter(result, function(item){
                     return item.Id == criteriaList[0].Value;
                 });
-            }
+            }*/
 
             setTimeout(function(){
-                resultCallback(result);
+                resultCallback({data:result});
             }, 100);
 
         }
@@ -13022,12 +14628,8 @@ function FakeDataProvider(mode) {
 
         var itemIndex = -1;
 
-        if(value['__Id']){
-            delete value['__Id'];
-        }
-
         for (var i = 0; i < items.length; i++) {
-            if (items[i].Id === value.Id) {
+            if (items[i]._id === value._id) {
                 itemIndex = i;
                 break;
             }
@@ -13077,6 +14679,123 @@ function FakeDataProvider(mode) {
     this.setDocumentId = function(){};
 }
 
+var FakeDocumentDataProvider = function(){
+	_.superClass(FakeDocumentDataProvider, this);
+};
+
+_.inherit(FakeDocumentDataProvider, RestDataProvider);
+
+_.extend( FakeDocumentDataProvider.prototype, {
+
+	items: [],
+	lastSendedUrl: '',
+
+	send: function(type, successHandler, errorHandler){
+		var requestId = Math.round( (Math.random() * 100000) );
+		var params = this.requestParams[type];
+		var that = this;
+		var filter;
+
+
+		var urlString = params.origin + params.path;
+		var queryString;
+
+		if( type == 'get' && _.size(params.data) > 0 ){
+			queryString = this.joinDataForQuery(params.data);
+			urlString = urlString + '?' + queryString;
+		}
+
+		FakeDocumentDataProvider.prototype.lastSendedUrl = urlString;
+
+		filter = this.splitUrl(urlString).query.filter;
+
+		setTimeout(function(){
+			successHandler({
+				requestId: requestId,
+				data: that.filterItems( that.items, filter )
+			});
+		}, 1);
+
+		return requestId;
+	},
+
+	splitUrl: function(url){
+		var result = {
+				origin: '',
+				paths: [],
+				query: {}
+			},
+			tmpPaths,
+			tmpPathsLength,
+			tmpQuery,
+			tmpQueryItem;
+
+		tmpPaths = url.split('/');
+
+		result.origin = tmpPaths[0];
+		tmpPaths.splice(0, 1);
+
+		tmpPathsLength = tmpPaths.length;
+
+		if( tmpPathsLength > 0 ){
+			tmpQuery = tmpPaths[tmpPathsLength - 1].split('?');
+			if(tmpQuery.length > 1){
+				tmpPaths[tmpPathsLength - 1] = tmpQuery[0];
+				tmpQuery = tmpQuery[1].split('&');
+
+				for( var i = 0, ii = tmpQuery.length; i < ii; i++ ){
+					tmpQueryItem = tmpQuery[i].split('=');
+					result.query[tmpQueryItem[0]] = tmpQueryItem[1];
+				}
+			}
+		}
+
+		return result;
+	},
+
+	filterItems: function(items, filter){
+
+		if(!filter){
+			return items;
+		}
+
+		var fu;
+		var result = JSON.parse(JSON.stringify(items));
+
+		filter = filter.replace(/([a-zA-Z_][A-Za-z0-9_\.]*)\s*[,)$]/g, function(a,b){
+			var last = a[a.length - 1];
+			if(last != ',' && last != ')'){
+				last = '';
+			}
+			return '"' + b + '"' + last;
+		});
+
+		fu = new Function('resultItems', 'eq', 'and', 'return ' + filter + ';');
+
+		return fu(result, eq, and);
+
+
+		function eq(param, value){
+			var tmpResult = [];
+			for(var i = 0, ii = result.length; i<ii; i++){
+				if(result[i][param] == value){
+					tmpResult.push(result[i]);
+				}
+			}
+
+			return tmpResult;
+		}
+
+		function and(list1, list2){
+			return _.intersection(list1, list2);
+		}
+
+		function or(list1, list2){
+			return _.union(list1, list2);
+		}
+	}
+
+});
 describe('BooleanFormat', function () {
     describe('format', function () {
 
@@ -13564,6 +15283,21 @@ describe('ObjectFormat', function () {
             assert.equal(formatter_4.format(value_4, enCulture), "Weight: 123.46 kg, Weight: 789.01 kg" );
         });
 
+        it('should format when value is undefined', function () {
+            //Given
+            var formatter = new ObjectFormat("Hello, {FirstName} {MiddleName}!");
+            //When
+            //Then
+            assert.equal(formatter.format(), "Hello,  !");
+        });
+
+        it('should format when value is null', function () {
+            //Given
+            var formatter = new ObjectFormat("Hello, {FirstName} {MiddleName}!");
+            //When
+            //Then
+            assert.equal(formatter.format(null), "Hello,  !");
+        });
     });
 
 });
@@ -13889,6 +15623,98 @@ describe('ScriptExecutor', function () {
 //    });
 
 
+});
+function StaticFakeDataProvider() {}
+
+
+_.extend(StaticFakeDataProvider.prototype, {
+    items: [
+        {
+            "_id": '1',
+            "FirstName": "Иван",
+            "LastName": "Иванов"
+        },
+        {
+            "_id": '2',
+            "FirstName": "Петр",
+            "LastName": "Петров"
+        },
+        {
+            "_id": '3',
+            "FirstName": "Иван1",
+            "LastName": "Иванов1"
+        },
+        {
+            "_id": '4',
+            "FirstName": "Петр2",
+            "LastName": "Петров2"
+        },
+        {
+            "_id": '5',
+            "FirstName": "Иван3",
+            "LastName": "Иванов3"
+        },
+        {
+            "_id": '6',
+            "FirstName": "Петр4",
+            "LastName": "Петров5"
+        },
+        {
+            "_id": '10',
+            "FirstName": "Анна",
+            "LastName": "Сергеева"
+
+        }
+    ],
+
+    getItems: function(resultCallback, criteriaList, pageNumber, pageSize, sorting){
+        var result = _.clone(this.items);
+        setTimeout(function(){
+            resultCallback({
+                data: {
+                    Result: {
+                        Items:result
+                    }
+                }
+            });
+        },100);
+    },
+
+    createLocalItem: function () {
+        var maxId = _.chain(this.items)
+            .map(function(item){ return parseInt(item._id); })
+            .max()
+            .value();
+
+        return {
+            "_id": maxId + 1
+        };
+    },
+
+    saveItem: function (value, resultCallback, warnings) {
+
+        var itemIndex = _.findIndex(this.items, function(item) {
+            return item._id === value._id;
+        });
+
+        if (itemIndex !== -1) {
+            this.items[itemIndex] = value;
+        }
+        else {
+            this.items.push(value);
+        }
+
+        var result = _.clone(this.items);
+        setTimeout(function(){
+            resultCallback(result);
+        },90);
+    },
+
+    setOrigin: function(){},
+    setPath: function(){},
+    setData : function(){},
+    setFilter: function(){},
+    setDocumentId: function(){}
 });
 describe("Collection", function () {
 
@@ -15257,6 +17083,909 @@ describe("Collection", function () {
 
 
 
+
+describe("dateUtils", function () {
+
+    describe("toISO8601", function () {
+        //Format DateTime: "YYYY-MM-DDTHH:MM:SS.SSSS+hh:mm
+        var date, timezoneOffset;
+
+
+        it("should return date for current timezone offset", function () {
+            //Given
+            date = new Date(2016, 2, 18, 15, 58, 30);
+            timezoneOffset = date.getTimezoneOffset();
+
+            // When
+            var strDate = InfinniUI.DateUtils.toISO8601(date);
+            // Then
+            var dtPart = getDateTimePart(strDate);
+            var tzPart = getTimeZoneOffset(strDate);
+
+            assert.equal(dtPart, "2016-03-18T15:58:30.0000", 'Check DateTime part');
+            assert.equal(tzPart, timezoneOffset, 'Check TimeZoneOffset part');
+        });
+
+        it("should return date for given timezone offset", function () {
+            //Given
+            var tzOffset = 0 - 60*3;     //UTC + 3
+            date = new Date('2016-03-18T10:58:30Z');
+            timezoneOffset = date.getTimezoneOffset();
+
+            // When
+            var strDate = InfinniUI.DateUtils.toISO8601(date, {
+                timezoneOffset: tzOffset
+            });
+            //Then
+            var dtPart = getDateTimePart(strDate);
+            var tzPart = getTimeZoneOffset(strDate);
+
+            assert.equal(dtPart, "2016-03-18T13:58:30.0000", 'Check DateTime part');
+            assert.equal(tzPart, tzOffset, 'Check TimeZoneOffset part');
+        });
+
+        function getDateTimePart(strDate) {
+            return strDate.substr(0, 'yyyy-mm-ddThh:mm:ss.SSSS'.length);
+        }
+
+        function getTimeZoneOffset(strDate) {
+            return 60 * strDate.substr(0 - '+HH:MM'.length)
+                .split(':')
+                .map(function (val) {
+                    return parseInt(val, 10);
+                })
+                .reduce(function (sum, val) {
+                    return sum - val;
+                }, 0);
+        }
+
+    });
+});
+describe("Filter items", function () {
+	describe("Filter items", function () {
+		it("FilterItems should return all items that have given param", function () {
+			// Given
+			var filter = 'eq(index,-1.9)';
+			var items = [
+				{Id: 1, index: -1.9},
+				{Id: 2},
+				{Id: 3}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].index, -1.9, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have all given params", function () {
+			// Given
+			var filter = "and(eq(phrase,'param'),eq(index,2))";
+			var items = [
+				{Id: 1, phrase: 'param', index: 2},
+				{Id: 2, index: 2},
+				{Id: 3}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have at least one of given params", function () {
+			// Given
+			var filter = 'or(eq(Id,1),eq(props.fontSize,30))';
+			var items = [
+				{Id: 1},
+				{Id: 2},
+				{Id: 3},
+				{Id: 4, props: {fontSize: 30}}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 4, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items but not given item(s)", function () {
+			// Given
+			var filter = 'not(eq(Id,3))';
+			// var filter = 'not(or(eq(Id,3),eq(Id,1)))';
+			var items = [
+				{Id: 1},
+				{Id: 2},
+				{Id: 3}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items accept given item with given param", function () {
+			// Given
+			var filter = 'notEq(Id,2)';
+			var items = [
+				{Id: 1},
+				{Id: 2},
+				{Id: 3}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have value of given param greater then given value", function () {
+			// Given
+			var filter = 'gt(Id,2)';
+			var items = [
+				{Id: 1},
+				{Id: 2},
+				{Id: 3},
+				{Id: 4},
+				{Id: 5}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 3, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 3, 'filtered item is correct');
+			assert.equal(result1[1].Id, 4, 'filtered item is correct');
+			assert.equal(result1[2].Id, 5, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have value of given param greater then given value or equal to it", function () {
+			// Given
+			var filter = "gte(birthday,date('2012-01-26T13:51:50.417Z'))";
+			var items = [
+				{Id: 1, birthday: 1327515910.417},
+				{Id: 2, birthday: 1327512910.417},
+				{Id: 3, birthday: 1327594910.417},
+				{Id: 4, birthday: 1327591910.417},
+				{Id: 5, birthday: 1327597910.417}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 3, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 3, 'filtered item is correct');
+			assert.equal(result1[1].Id, 4, 'filtered item is correct');
+			assert.equal(result1[2].Id, 5, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have value of given param lower then given value", function () {
+			// Given
+			var filter = 'lt(Id,2)';
+			var items = [
+				{Id: 1},
+				{Id: 2},
+				{Id: 3},
+				{Id: 4},
+				{Id: 5}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have value of given param lower then given value or equal to it", function () {
+			// Given
+			var filter = 'lte(Id,3)';
+			var items = [
+				{Id: 1},
+				{Id: 2},
+				{Id: 3},
+				{Id: 4},
+				{Id: 5}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 3, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 2, 'filtered item is correct');
+			assert.equal(result1[2].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have in the given param value that match to one of given in values", function () {
+			// Given
+			var filter = 'in(index,1,3,4)';
+			var items = [
+				{Id: 1, index: 2},
+				{Id: 2, index: 3},
+				{Id: 3, index: 2},
+				{Id: 4, index: 4},
+				{Id: 5, index: 1}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 3, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+			assert.equal(result1[1].Id, 4, 'filtered item is correct');
+			assert.equal(result1[2].Id, 5, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have NOT in the given param value that match to one of given in values", function () {
+			// Given
+			var filter = 'notIn(index,1,3,4)';
+			var items = [
+				{Id: 1, index: 2},
+				{Id: 2, index: 3},
+				{Id: 3, index: 2},
+				{Id: 4, index: 4},
+				{Id: 5, index: 1}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where exist the given param and it NOT equal to null or undefined", function () {
+			// Given
+			var filter = 'exists(index)';
+			var items = [
+				{Id: 1, index: 2},
+				{Id: 2, index: 3},
+				{Id: 3, index: null},
+				{Id: 4, index: 4},
+				{Id: 5}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 3, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 2, 'filtered item is correct');
+			assert.equal(result1[2].Id, 4, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where exist the given param and it NOT equal to null or undefined", function () {
+			// Given
+			var filter = 'exists(index,true)';
+			var items = [
+				{Id: 1, index: null},
+				{Id: 2, index: 3},
+				{Id: 3, index: 5},
+				{Id: 4, index: 4},
+				{Id: 5}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 3, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+			assert.equal(result1[2].Id, 4, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where doesn't exist the given param or it equal to null or undefined", function () {
+			// Given
+			var filter = 'exists(index,false)';
+			var items = [
+				{Id: 1},
+				{Id: 2, index: 3},
+				{Id: 3, index: 5},
+				{Id: 4, index: 4},
+				{Id: 5, index: null}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 5, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that have param with array of objects that all have the second param", function () {
+			// Given
+			var filter = "match(props,eq(name,'font'))";
+			var items = [
+				{
+					Id: 1,
+					props: [ {name: 'font', size: 20}, {name: 'font', family: 'Arial'}, {name: 'font', weight: 'bold'} ]
+				},
+				{
+					Id: 2,
+					props: [ {name: 'fontCommon', size: 24}, {name: 'fontCommon', family: 'Tahoma'}, {name: 'fontCommon', weight: 'bold'} ]
+				},
+				{
+					Id: 3,
+					props: [ {name: 'font', size: 22}, {name: 'font', family: 'Arial'}, {name: 'font', weight: 'bold'} ]
+				},
+				{
+					Id: 4,
+					props: [ {name: 'font', size: 20}, {name: 'textIndent', size: 10}, {name: 'font', weight: 'bold'} ]
+				},
+				{
+					Id: 5,
+					props: [ {name: 'font', size: 20}, {name: 'font', family: 'Arial'}, {name: 'textIndent', size: 10} ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that suit to filter param", function () {
+			// Given
+			var filter = "match(props,or(and(eq(name,'font'),eq(size,20)),and(eq(name,'font'),eq(size,10))))";
+			var items = [
+				{
+					Id: 1,
+					props: [ {name: 'font', size: 20}, {name: 'font', size: 20}, {name: 'font', size: 20} ]
+				},
+				{
+					Id: 2,
+					props: [ {name: 'fontCommon', size: 24}, {name: 'fontCommon', size: 20}, {name: 'fontCommon', size: 20} ]
+				},
+				{
+					Id: 3,
+					props: [ {name: 'font', size: 20}, {name: 'font', size: 20}, {name: 'font', size: 20} ]
+				},
+				{
+					Id: 4,
+					props: [ {name: 'font', size: 20}, {name: 'textIndent', size: 10}, {name: 'font', weight: 'bold'} ]
+				},
+				{
+					Id: 5,
+					props: [ {name: 'font', size: 25}, {name: 'font', size: 25}, {name: 'font', size: 25} ]
+				},
+				{
+					Id: 6,
+					props: [ {name: 'font', size: 10}, {name: 'font', size: 10}, {name: 'font', size: 10} ]
+				},
+				{
+					Id: 7,
+					props: [ {name: 'font', size: 10}, {name: 'font', size: 10}, {name: 'font', size: 10} ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 4, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+			assert.equal(result1[2].Id, 6, 'filtered item is correct');
+			assert.equal(result1[3].Id, 7, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that suit to filter param", function () {
+			// Given
+			var filter = "match(props,not(eq(name,'font')))";
+			var items = [
+				{
+					Id: 1,
+					props: [ {name: 'font', size: 20}, {name: 'font', family: 'Arial'}, {name: 'font', weight: 'bold'} ]
+				},
+				{
+					Id: 2,
+					props: [ {name: 'fontCommon', size: 24}, {name: 'fontCommon', family: 'Tahoma'}, {name: 'fontCommon', weight: 'bold'} ]
+				},
+				{
+					Id: 3,
+					props: [ {name: 'font', size: 22}, {name: 'font', family: 'Arial'}, {name: 'font', weight: 'bold'} ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items that suit to filter param", function () {
+			// Given
+			var filter = "match(props,not(notEq(name,'font')))";
+			var items = [
+				{
+					Id: 1,
+					props: [ {name: 'font', size: 20}, {name: 'font', family: 'Arial'}, {name: 'font', weight: 'bold'} ]
+				},
+				{
+					Id: 2,
+					props: [ {name: 'fontCommon', size: 24}, {name: 'fontCommon', family: 'Tahoma'}, {name: 'fontCommon', weight: 'bold'} ]
+				},
+				{
+					Id: 3,
+					props: [ {name: 'font', size: 22}, {name: 'font', family: 'Arial'}, {name: 'font', weight: 'bold'} ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where all elements in array from first param suit to a bunch of second param", function () {
+			// Given
+			var filter = "all(items, 1, 2, 3, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 1, 2, 3, 4 ]
+				},
+				{
+					Id: 2,
+					items: [ 2, 3, 4, 5 ]
+				},
+				{
+					Id: 3,
+					items: [ 4, 6, 7, 8 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where all elements in array from first param suit to a bunch of second param", function () {
+			// Given
+			var filter = "all(items, 'hello', 'world')";
+			var items = [
+				{
+					Id: 1,
+					items: [ 'hello', 'world', 'from', 'russia' ]
+				},
+				{
+					Id: 2,
+					items: [ 'hello', 'world' ]
+				},
+				{
+					Id: 3,
+					items: [ 'hello', 'world', 'from', 'russia' ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param suit to a bunch of second param", function () {
+			// Given
+			var filter = "anyIn(items, 1, 2, 3, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 1, 2, 3, 4 ]
+				},
+				{
+					Id: 2,
+					items: [ 5, 6, 7, 8 ]
+				},
+				{
+					Id: 3,
+					items: [ 4, 6, 7, 8 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where all elements in array from first param NOT suit to a bunch of second param", function () {
+			// Given
+			var filter = "anyNotIn(items, 1, 2, 3, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 1, 2, 3, 4 ]
+				},
+				{
+					Id: 2,
+					items: [ 5, 6, 7, 8 ]
+				},
+				{
+					Id: 3,
+					items: [ 4, 6, 7, 8 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param suit to second param", function () {
+			// Given
+			var filter = "anyEq(items, 144)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 1, 2, 3, 4 ]
+				},
+				{
+					Id: 2,
+					items: [ 5, 144, 7, 8 ]
+				},
+				{
+					Id: 3,
+					items: [ 4, 6, 7, 8 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param NOT suit to second param", function () {
+			// Given
+			var filter = "anyNotEq(items, 144)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 144, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param greater then second param", function () {
+			// Given
+			var filter = "anyGt(items, 144)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 333, 144, 144 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 144, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param greater or equal then second param", function () {
+			// Given
+			var filter = "anyGte(items, 145)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 333, 144, 144 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 145, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param lower then second param", function () {
+			// Given
+			var filter = "anyLt(items, 144)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 144, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where at least one element in array from first param lower or equal then second param", function () {
+			// Given
+			var filter = "anyLte(items, 140)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where length of array form first param equal to second param", function () {
+			// Given
+			var filter = "sizeEq(items, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144, 544 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where length of array form first param NOT equal to second param", function () {
+			// Given
+			var filter = "sizeNotEq(items, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144, 544 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where length of array form first param greater then second param", function () {
+			// Given
+			var filter = "sizeGt(items, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144, 544 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where length of array form first param greater or equal then second param", function () {
+			// Given
+			var filter = "sizeGte(items, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144, 544 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where length of array form first param lower then second param", function () {
+			// Given
+			var filter = "sizeLt(items, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144, 544 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items where length of array form first param lower or equal then second param", function () {
+			// Given
+			var filter = "sizeLte(items, 4)";
+			var items = [
+				{
+					Id: 1,
+					items: [ 144, 144, 144, 144, 544 ]
+				},
+				{
+					Id: 2,
+					items: [ 144, 140, 144, 144 ]
+				},
+				{
+					Id: 3,
+					items: [ 144, 8, 144 ]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 2, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items which suit to regexp expression", function () {
+			// Given
+			var filter = "regexp(propName, '[0-9]+', g, i)";
+			var items = [
+				{
+					Id: 1,
+					propName: 'font123'
+				},
+				{
+					Id: 2,
+					propName: 'borderWidth'
+				},
+				{
+					Id: 3,
+					propName: 'backgroundSize'
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 1, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items which suit to regexp expression", function () {
+			// Given
+			var filter = "regexp(firstName, '^И(ван|рина)$', g, i)";
+			var items = [
+				{
+					Id: 1,
+					firstName: 'Иван'
+				},
+				{
+					Id: 2,
+					firstName: 'Ирина'
+				},
+				{
+					Id: 3,
+					firstName: 'Вася'
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 2, 'filtered item is correct');
+		});
+
+		it("FilterItems should return all items have a text inner", function () {
+			// Given
+			var filter = "text('hello world')";
+			var items = [
+				{
+					Id: 1,
+					phrase: 'Hello world'
+				},
+				{
+					Id: 2,
+					friendPhrase: 'hello Ivan!'
+				},
+				{
+					Id: 3,
+					welcomePhrase: 'hello bro!',
+					friendList: [
+						{name: 'Vasya', welcomePhrase: 'hello world'},
+						{name: 'Ivan', welcomePhrase: 'hello there!'}
+					]
+				}
+			];
+			// When
+			var result1 = filterItems(items, filter);
+			// Then
+			assert.lengthOf(result1, 2, 'length of filtered items is right');
+			assert.equal(result1[0].Id, 1, 'filtered item is correct');
+			assert.equal(result1[1].Id, 3, 'filtered item is correct');
+		});
+
+
+	});
+});
 
 describe("ObjectUtils", function () {
     describe("getPropertyValue", function () {

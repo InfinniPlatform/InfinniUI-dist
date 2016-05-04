@@ -1,0 +1,67 @@
+.pl-imagebox {
+
+  .pl-image {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    overflow: hidden;
+
+    img {
+      left: 50%;
+      top: 50%;
+      position: relative;
+      transform: translateX(-50%) translateY(-50%);
+    }
+  }
+
+  .pl-image-file {
+    text-align: center;
+
+    .pl-image-file-upload-button {
+      cursor: pointer;
+    }
+  }
+
+  .pl-image-file-input {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+  }
+
+  .pl-image-remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+
+    &:after {
+      color: @pl-accent-danger;
+      content: 	"\2716";
+    }
+  }
+
+  &.pl-empty {
+    .pl-image-remove {
+      display: none;
+    }
+
+    .pl-image {
+      display: none;
+    }
+
+  }
+
+  &.pl-disabled {
+    .pl-image-remove {
+      display: none;
+    }
+
+    .pl-image-file {
+      display: none;
+    }
+  }
+}
+

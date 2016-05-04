@@ -2,11 +2,26 @@
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jst');
     grunt.loadNpmTasks('grunt-contrib-connect');
+    grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-clean');
 
     var appFiles = [
             'js/**/*.js'
         ],
         templateFiles = ["js/**/*.tpl.html"];
+
+    var infinniUIpath = '..';
+    var fromInfinniToConfigPath = 'example/styles';
+    var platformBuildArgs = {
+        "override": {
+            "less": {
+                "pl-override-platform-variables-path": '\"../../<%configPath%>/platform-variables.less\"',
+                "pl-override-bootstrap-variables-path": '\"../../<%configPath%>/bootstrap-variables.less\"',
+                "pl-bootstrap-theme-path": '\"../../<%configPath%>/bootstrap-theme.less\"',
+                "pl-extension-path": '\"../../<%configPath%>/extensions.less\"'
+            }
+        }
+    };
 
     grunt.initConfig({
         concat: {
@@ -19,6 +34,15 @@
                 },
                 src: appFiles,
                 dest: 'www/compiled/js/app.js'
+            }
+        },
+
+        copy: {
+            infinniUI: {
+                expand: true,
+                cwd: infinniUIpath + '/out/',
+                src: '**/*',
+                dest: 'www/compiled/platform/'
             }
         },
 
@@ -47,12 +71,42 @@
                     keepalive: true
                 }
             }
-        }
+        },
+
+        clean: ["www/compiled/"]
+    });
+
+    grunt.registerTask('buildPlatform', function ( buildMode ) {
+        var done = this.async();
+
+        platformBuildArgs.mode = buildMode;
+
+        var platformBuildArgsStr = JSON.stringify(platformBuildArgs);
+        platformBuildArgsStr = platformBuildArgsStr
+                                            .replace(/<%configPath%>/g, fromInfinniToConfigPath)
+                                            .replace(/:/g, '=');
+
+        grunt.util.spawn({
+                grunt: true,
+                args: ['build:' + platformBuildArgsStr ],
+                opts: {
+                    cwd: infinniUIpath
+                }
+            }, function(error, result, code){
+                console.log(result.stdout);
+                console.log(error);
+                done();
+            }
+
+        );
     });
 
     grunt.task.registerTask('build',
-        function () {
+        function (flag) {
             var tasks = [
+                'buildPlatform:' + flag,
+                'clean',
+                'copy',
                 'concat',
                 'jst'
             ];
