@@ -17,6 +17,9 @@
     "toastr": "~2.1.2",
     "jquery.cookie": "~1.4.1"
   },
+  "devDependencies": {
+    "toastr": "*"
+  },
   "homepage": "https://github.com/InfinniPlatform/InfinniUI",
   "authors": [
     "InfinnitySolutions <info@infinnity.ru>"
