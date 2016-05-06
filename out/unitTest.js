@@ -6440,11 +6440,13 @@ describe('ObjectDataSource', function () {
 
     window.providerRegister.register('ObjectDataSource', ObjectDataProvider);
 
-    function createObjectDataSource(){
+    function createObjectDataSource(metadata){
+
+        metadata = metadata || {};
 
         var builder = new ApplicationBuilder();
         var view = fakeView();
-        var dataSource = builder.buildType('ObjectDataSource', {}, {parent: view, parentView: view, builder: builder}),
+        var dataSource = builder.buildType('ObjectDataSource', metadata, {parent: view, parentView: view, builder: builder}),
             initItems = JSON.parse(JSON.stringify(items));
 
         dataSource.setItems(initItems);
@@ -6644,6 +6646,31 @@ describe('ObjectDataSource', function () {
                     assert.equal(dataSource.getSelectedItem(), null, 'deleted item exclude from selected item');
                     done();
                 });
+            }
+        });
+
+        it('should subscribe on itemsUpdated from metadata', function (done) {
+            var metadata = {
+                OnItemsUpdated: '{window.testCount = window.testCount || 0; window.testCount++; window.testArgs = args; window.testContext = context;}'
+            };
+
+            // Given
+            var dataSource = createObjectDataSource(metadata);
+
+            //When
+            dataSource.updateItems(handleItemsReady1);
+
+            function handleItemsReady1(){
+                // Then
+                assert.equal(window.testCount, 1, 'on items updated was called right times');
+                assert.isTrue(!!window.testArgs, 'on items updated handler passed args');
+                assert.isTrue(!!window.testContext, 'on items updated handler passed context');
+
+                delete window['testCount'];
+                delete window['testArgs'];
+                delete window['testContext'];
+
+                done();
             }
         });
     });

@@ -13,6 +13,9 @@
   // MODAL CLASS DEFINITION
   // ======================
 
+  var _scrollbarWidth = 0;
+  var _isMeasureScrollbar = false;
+
   var Modal = function (element, options) {
     this.options             = options
     this.$body               = $(document.body)
@@ -21,7 +24,7 @@
     this.$backdrop           = null
     this.isShown             = null
     this.originalBodyPad     = null
-    this.scrollbarWidth      = 0
+    //this.scrollbarWidth      = 0
     this.ignoreBackdropClick = false
 
     if (this.options.remote) {
@@ -282,7 +285,16 @@
     this.$body.css('padding-right', this.originalBodyPad)
   }
 
-  Modal.prototype.measureScrollbar = function () { // thx walsh
+  Modal.prototype.measureScrollbar = function () {
+    if (_isMeasureScrollbar === false) {
+      _isMeasureScrollbar = true;
+      _scrollbarWidth = this._measureScrollbar()
+    }
+
+    return _scrollbarWidth;
+  }
+
+  Modal.prototype._measureScrollbar = function () { // thx walsh
     var scrollDiv = document.createElement('div')
     scrollDiv.className = 'modal-scrollbar-measure'
     this.$body.append(scrollDiv)
@@ -290,7 +302,6 @@
     this.$body[0].removeChild(scrollDiv)
     return scrollbarWidth
   }
-
 
   // MODAL PLUGIN DEFINITION
   // =======================

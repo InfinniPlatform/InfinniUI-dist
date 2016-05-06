@@ -1,9 +1,48 @@
 .modal {
   &.messagebox {
+    top: 25%;
+
     z-index: @zindex-modal + 10;
 
     + .modal-backdrop {
       z-index: @zindex-modal + 5;
     }
   }
+}
+
+.pl-messagebox {
+
+  &_error {}
+
+  &_warning {}
+
+  &_default {}
+
+}
+
+.pl-messagebox-content {
+
+  &__icon {
+
+    &_error {
+      color: @brand-danger;
+    }
+
+    &_warning {
+      color: @brand-warning
+    }
+
+    &_default {
+      color: @brand-info;
+    }
+
+  }
+}
+
+.pl-messagebox-button {
+
+  &_default {}
+
+  &_action {}
+
 }

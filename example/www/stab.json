@@ -54,71 +54,16 @@
   ],
   "Items": [
     {
-      "ListBox": {
-        "ItemTemplate": {
-          "StackPanel": {
-            "Items": [
-              {
-                "Label": {
-                  "Value": {
-                    "Source": "ds1",
-                    "Property": "#.Id"
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "Items": {
-          "Source": "ds1",
-          "Property": ""
-        }
-      }
-    },
-    {
-      "ComboBox": {
-        "Items": {
-          "Source": "ds1",
-          "Property": ""
-        },
-        "Value": {
-          "Source": "ds2",
-          "Property": "$.uid"
-        },
-        "Autocomplete": true,
-        "ItemProperty": "Title",
-        "ValueFormat": "{Id}: {Title}"
+      "DatePicker": {
+        "Name": "MyDatePicker"
       }
     },
     {
       "Label": {
         "Value": {
-          "Source": "ds2",
-          "Property": "$.uid"
+          "Source": "MyDatePicker",
+          "Property": "value"
         }
-      }
-    },
-    {
-      "DataGrid": {
-        "MultiSelect": true,
-        "Items": {
-          "Source": "ds1",
-          "Property": ""
-        },
-        "Columns": [
-          {
-            "Header": "Id",
-            "CellProperty": "Id"
-          },
-          {
-            "Header": "Title",
-            "CellProperty": "Title"
-          },
-          {
-            "Header": "Volume",
-            "CellProperty": "Volume"
-          }
-        ]
       }
     }
 

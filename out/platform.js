@@ -1562,6 +1562,8 @@ window.InfinniUI.DateUtils = (function () {
 
     init();
 
+    var _defaultTimeZone;
+
     return {
         toISO8601: toISO8601,
         dateToTimestamp: dateToTimestamp,
@@ -1574,7 +1576,8 @@ window.InfinniUI.DateUtils = (function () {
         parseISO8601toDate:parseISO8601toDate,
         checkRangeDate: checkRangeDate,
         getNearestDate: getNearestDate,
-        cloneDate: cloneDate
+        cloneDate: cloneDate,
+        getDefaultTimeZone: getDefaultTimezone
     };
 
     function parseISO8601toDate(value) {
@@ -1801,6 +1804,10 @@ window.InfinniUI.DateUtils = (function () {
         return date;
     }
 
+    function getDefaultTimezone() {
+        return _defaultTimeZone;
+    }
+
     function padInt(value, size) {
         var str = '' + value;
         var pad = '';
@@ -1811,6 +1818,10 @@ window.InfinniUI.DateUtils = (function () {
     }
 
     function init() {
+
+        var date = new Date();
+        _defaultTimeZone = date.getTimezoneOffset();
+
         if (!Math.sign) { //fix for devices not support ES6
             Math.sign = function (x) {
                 return x ? x < 0 ? -1 : 1 : 0;
@@ -3633,166 +3644,6 @@ _.extend(Logger.prototype, {
 })
 
 window.InfinniUI.global.logger = new Logger();
-//####app/utils/messageBox.js
-var MessageBox = Backbone.View.extend({
-    tagName: 'div',
-
-    className: 'modal hide fade messagebox',
-
-    events: {
-        'click .btn': 'btnHandler'
-    },
-
-    template: _.template(
-            ' <div class="modal-dialog">' +
-            '  <div class="modal-content">' +
-            '   <div class="modal-body">' +
-            '       <p>' +
-            '           <i class="fa-lg fa fa-warning" style="color: <%= color %>"></i>' +
-            '           <%= text %>' +
-            '       </p>' +
-            '   </div>' +
-            '   <div class="modal-footer">' +
-            '       <% _.each( buttons, function(button, i){ %>' +
-            '           <% if (i==0){%> <a href="javascript:;" tabindex="0" class="btn firstfocuselementinmodal <%= button.classes %> <%= button.type %>-modal" data-index="<%= i %>"><%= button.name %></a>' +
-            '           <% }else{ %> <a href="javascript:;" class="btn <%= button.classes %> <%= button.type %>-modal" data-index="<%= i %>"><%= button.name %></a>'+
-            '       <% }}); %>' +
-            '   </div>' +
-            '  </div>' +
-            ' </div>'
-    ),
-
-    initialize: function (options) {
-        // чтобы пользователь случайно не обратился к элементу в фокусе,
-        // пока диалоговое окно создается и ещё не перехватило фокус,
-        // необходимо старую фокусировку снять
-        $(document.activeElement).blur();
-
-        this.options = options;
-
-        this.addButtonClasses();
-        this.addColor();
-
-        this.render();
-
-        this.$el
-            .modal({show: true})
-            .removeClass('hide')
-            .css({
-                top: '25%'
-            });
-    },
-
-    render: function () {
-        var $parent = this.options.$parent || $('body');
-
-        this.$el
-            .html($(this.template(this.options)));
-
-
-        //FOCUS IN MODAL WITHOUT FALL
-
-        var self = this;
-        var $container = this.$el.find('.modal-footer');
-
-        this.$el.on('shown.bs.modal', function (e) {
-            $(e.target).find('.firstfocuselementinmodal').focus();
-        });
-
-        $container.append('<div class="lastfocuselementinmodal" tabindex="0">');
-        this.$el.find('.lastfocuselementinmodal').on('focusin', function(){
-            self.$el.find('.firstfocuselementinmodal').focus();
-        });
-        this.$el.on('keydown', function(e){
-            if($(document.activeElement).hasClass('lastfocuselementinmodal') && (e.which || e.keyCode) == 9){
-                e.preventDefault();
-                self.$el.find('.firstfocuselementinmodal').focus();
-            }
-
-            if($(document.activeElement).hasClass('firstfocuselementinmodal') && (e.which || e.keyCode) == 9 && e.shiftKey){
-                e.preventDefault();
-                self.$el.find('.lastfocuselementinmodal').focus();
-            }
-        });
-        //
-
-        $parent
-            .append(this.$el);
-
-        return this;
-    },
-
-    addColor: function(){
-        this.options.color = '#2ECC71;';
-
-        if(this.options.type){
-            if(this.options.type == 'error'){
-                this.options.color = '#E74C3C;';
-            }
-            if(this.options.type == 'warning'){
-                this.options.color = '#F1C40F;';
-            }
-        }
-    },
-
-    addButtonClasses: function(){
-
-        var button;
-
-        for(var k in this.options.buttons){
-            button = this.options.buttons[k];
-
-            if(button.type){
-                if(button.type == 'action'){
-                    button.classes = 'blue';
-                }
-            }else{
-                button.classes = 'default';
-            }
-        }
-
-    },
-
-    btnHandler: function (e) {
-        var $el = $(e.target),
-            i = parseInt( $el.data('index') ),
-            handler = this.options.buttons[i].onClick;
-
-        if(handler){
-            handler.apply(this);
-        }
-
-        this.closeAndRemove();
-    },
-
-    closeAndRemove: function () {
-        if (this.options.onClose) {
-            this.options.onClose();
-        }
-
-        this.$el.modal('hide');
-    }
-});
-
-/*new MessageBox({
-    type: 'error',
-    text:'asdasd',
-    buttons:[
-        {
-            name:'Ok',
-            onClick: function(){
-                alert('ckicked');
-            }
-        },
-        {
-            name:'Error btn',
-            type: 'action',
-            onClick: function(){
-                alert('error ckicked');
-            }
-        }
-    ]
-});*/
 //####app/utils/metadata.js
 InfinniUI.Metadata = InfinniUI.Metadata || {};
 
@@ -4256,7 +4107,7 @@ _.extend(TreeModel.prototype, {
         function checkAndCallAnyHandlers(_handlersNode){
             var handler;
 
-            if('*', _handlersNode){
+            if('*' in _handlersNode){
                 for( var k in _handlersNode['*'] ){
                     handler = _handlersNode['*'][k];
                     if(that._isOwnerAlive(handler)){
@@ -8407,6 +8258,7 @@ var DateTimePickerModel = TextEditorBaseModel.extend(/** @lends DateTimePickerMo
 
     initialize: function () {
         TextEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        this.set('timeZone', InfinniUI.DateUtils.getDefaultTimeZone());
     },
 
     validate: function (attributes, options) {
@@ -17216,6 +17068,27 @@ var ajaxRequestMixin = (function (bus) {
     }
 
 })(window.InfinniUI.global.messageBus);
+//####app/data/dataSource/_mixins/dataSourceBuilderFileProviderMixin.js
+var DataSourceBuilderFileProviderMixin = {
+
+    initFileProvider: function (metadata, dataSource) {
+
+        var host = InfinniUI.config.serverUrl,
+            configId = metadata.ConfigId,
+            documentId = metadata.DocumentId;
+
+        var fileUrlConstructor = new DocumentUploadQueryConstructor(host, {
+            configId: configId,
+            documentId: documentId
+        });
+
+        var fileProvider = new DocumentFileProvider(fileUrlConstructor);
+
+        dataSource.setFileProvider(fileProvider);
+    }
+
+};
+
 //####app/data/dataSource/_mixins/dataSourceFileProviderMixin.js
 /**
  *
@@ -17229,93 +17102,6 @@ var dataSourceFileProviderMixin = {
 
     getFileProvider: function () {
         return this.get('fileProvider');
-    },
-
-    setFile: function (file, propertyName) {
-        var queue = this.get('queueFiles');
-        var item;
-        if (!queue) {
-            queue = [];
-            this.set('queueFiles', queue);
-        }
-        //Отмечаем элемент данных как измененный при установке файла на загрузку
-        this._includeItemToModifiedSet(this.getSelectedItem());
-
-        var items = queue.filter(function (item) {
-            return item.name === propertyName;
-        });
-
-        if (items.length) {
-            var item = items[0];
-            item.file = file;
-        } else {
-            queue.push({
-                name: propertyName,
-                file: file
-            });
-        }
-        this.setProperty(propertyName, file);
-    },
-
-    extractFiles: function (item, callback) {
-
-        var files = Object.create(null);
-        var itemWithoutFiles = extractFile(item, []);
-
-
-        if (typeof callback === 'function') {
-            callback.call(null, files, itemWithoutFiles);
-        }
-
-        function extractFile (item, path) {
-            var value, result = Array.isArray(item) ? [] : {}, currentPath;
-            for (var i in item) {
-                if (!item.hasOwnProperty(i)) {
-                    continue;
-                }
-
-                currentPath = path.slice();
-                currentPath.push(i);
-                value = item[i];
-                if (value !== null && typeof (value) === 'object') {
-                    if (value.constructor === Date) {
-                        result[i] = value
-                    } else if (value.constructor === Object || value.constructor === Array)  {
-                        //Plain object
-                        result[i] = extractFile(value, currentPath);
-                    } else {
-                        //Object instance
-                        files[currentPath.join('.')] = value;
-                        continue;
-                    }
-                } else {
-                    result[i] = value;
-                }
-
-            }
-
-            return result;
-        }
-    },
-
-    uploadFiles: function (instanceId, files) {
-        var promises = [];
-        var promise;
-        var fileProvider = this.getFileProvider();
-        var ds = this;
-
-        for (var path in files) {
-            promise = fileProvider.uploadFile(path, instanceId, files[path])
-                .then(function () {
-                    //@TODO Как обрабатывать ошибки загрузки файлов?
-                    ds.trigger('onFileUploaded', ds.getContext(), {value: files[path]});
-                    return true;
-                });
-
-            promises.push(promise);
-        }
-
-        return $.when.apply($, promises);
     }
 };
 //####app/data/dataSource/_mixins/dataSourceLookupMixin.js
@@ -17898,6 +17684,9 @@ var BaseDataSource = Backbone.Model.extend({
             }else{
                 that._notifyAboutFailValidationBySaving(item, data, error);
             }
+        }, function(data) {
+            var result = data.data.responseJSON['Result']['ValidationResult'];
+            that._notifyAboutFailValidationBySaving(item, result, error);
         });
     },
 
@@ -18050,7 +17839,8 @@ var BaseDataSource = Backbone.Model.extend({
     _notifyAboutItemsUpdated: function (itemsData, successHandler, errorHandler) {
         var context = this.getContext();
         var argument = {
-            value: itemsData
+            value: itemsData,
+            source: this
         };
 
         // вызываем обработчики которые были переданы на отложенных updateItems (из за замороженного источника)
@@ -18190,6 +17980,14 @@ var BaseDataSource = Backbone.Model.extend({
 
     validateOnWarnings: function (item, callback) {
         return this._validatingActions(item, callback, 'warning');
+    },
+
+    setFileProvider: function (fileProvider) {
+        this.set('fileProvider', fileProvider);
+    },
+
+    getFileProvider: function () {
+        return this.get('fileProvider');
     },
 
     _validatingActions: function (item, callback, validationType) {
@@ -18483,6 +18281,9 @@ BaseDataSource.identifyingStrategy = {
         },
     }
 };
+
+_.extend(BaseDataSource.prototype, dataSourceFileProviderMixin);
+
 //####app/data/dataSource/restDataSource.js
 var RestDataSource = BaseDataSource.extend({
 
@@ -18900,14 +18701,6 @@ var DocumentDataSource = RestDataSource.extend({
         this.set('dataProvider', dataProvider);
     },
 
-    setFileProvider: function (fileProvider) {
-        this.set('fileProvider', fileProvider);
-    },
-
-    getFileProvider: function () {
-        return this.get('fileProvider');
-    },
-
     getDocumentId: function(){
         return this.get('model').getProperty('documentId');
     },
@@ -19033,7 +18826,7 @@ var DocumentDataSource = RestDataSource.extend({
 //####app/data/dataSource/baseDataSourceBuilder.js
 /**
  * @constructor
- * @mixes DataSourceValidationNotifierMixin
+ * @mixes DataSourceValidationNotifierMixin, DataSourceBuilderFileProviderMixin
  */
 var BaseDataSourceBuilder = function() {
 }
@@ -19095,6 +18888,8 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
         this.initValidation(parentView, dataSource, metadata);
         this.initNotifyValidation(dataSource);
         this.initScriptsHandlers(parentView, metadata, dataSource);
+
+        this.initFileProvider(metadata, dataSource);
     },
 
     createDataSource: function (parent) {
@@ -19125,14 +18920,14 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
     initScriptsHandlers: function (parentView, metadata, dataSource) {
         //Скриптовые обработчики на события
         if (parentView && metadata.OnSelectedItemChanged) {
-            dataSource.onSelectedItemChanged(function () {
-                new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemChanged.Name || metadata.OnSelectedItemChanged);
+            dataSource.onSelectedItemChanged(function (context, args) {
+                new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemChanged.Name || metadata.OnSelectedItemChanged, args);
             });
         }
 
         if (parentView && metadata.OnItemsUpdated) {
-            dataSource.onItemsUpdated(function () {
-                new ScriptExecutor(parentView).executeScript(metadata.OnItemsUpdated.Name || metadata.OnItemsUpdated);
+            dataSource.onItemsUpdated(function (context, args) {
+                new ScriptExecutor(parentView).executeScript(metadata.OnItemsUpdated.Name || metadata.OnItemsUpdated, args);
             });
         }
 
@@ -19163,15 +18958,15 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
                 basePathOfProperty: params.basePathOfProperty
             });
         };
-    },
-
-    initFileProvider: function (dataSource, metadata) {
-
     }
+
 });
 
 
 _.extend(BaseDataSourceBuilder.prototype, DataSourceValidationNotifierMixin);
+
+_.extend(BaseDataSourceBuilder.prototype, DataSourceBuilderFileProviderMixin);
+
 //####app/data/dataSource/restDataSourceBuilder.js
 var RestDataSourceBuilder = function() {
     _.superClass(RestDataSourceBuilder, this);
@@ -19300,24 +19095,6 @@ _.extend(DocumentDataSourceBuilder.prototype, {
         if('Select' in metadata){ dataSource.setSelect(metadata['Select']); }
         if('Order' in metadata){ dataSource.setOrder(metadata['Order']); }
         if('NeedTotalCount' in metadata){ dataSource.setNeedTotalCount(metadata['NeedTotalCount']); }
-
-        this.initFileProvider(metadata, dataSource);
-    },
-
-    initFileProvider: function (metadata, dataSource) {
-
-        var host = InfinniUI.config.serverUrl,
-            configId = metadata.ConfigId,
-            documentId = metadata.DocumentId;
-
-        var fileUrlConstructor = new DocumentUploadQueryConstructor(host, {
-            configId: configId,
-            documentId: documentId
-        });
-
-        var fileProvider = new DocumentFileProvider(fileUrlConstructor);
-
-        dataSource.setFileProvider(fileProvider);
     },
 
     createDataSource: function(parent){
@@ -20577,7 +20354,9 @@ DateTimePicker.prototype.getTimeZone = function () {
 };
 
 DateTimePicker.prototype.setTimeZone = function (value) {
-    this.control.set('timeZone', value);
+    if (_.isNumber(value)) {
+        this.control.set('timeZone', value);
+    }
 };
 
 DateTimePicker.prototype.setDateFormat = function (value) {
@@ -36710,6 +36489,153 @@ InfinniUI.AutoHeightService = (function () {
     }
 
 })();
+//####app/services/messageBox/messageBox.js
+/**
+ * @constructor
+ * @mixes bindUIElementsMixin
+ */
+var MessageBox = Backbone.View.extend({
+
+    tagName: 'div',
+
+    className: 'modal fade messagebox',
+
+    UI: {
+        firstfocuselementinmodal: '.firstfocuselementinmodal',
+        lastfocuselementinmodal: '.lastfocuselementinmodal'
+    },
+
+    events: {
+        'click .btn': 'onClickButtonHandler',
+        'focusin .lastfocuselementinmodal': 'onFocusinLastElement',
+        'keydown': 'onKeydownHandler'
+    },
+
+    template: InfinniUI.Template["services/messageBox/template/default.tpl.html"],
+
+    initialize: function (options) {
+
+        this.setOptions(options);
+
+        // чтобы пользователь случайно не обратился к элементу в фокусе,
+        // пока диалоговое окно создается и ещё не перехватило фокус,
+        // необходимо старую фокусировку снять
+        $(document.activeElement).blur();
+        this.render();
+        this.bindUIElements();
+        this.$el
+            .modal({show: true});
+    },
+
+    setOptions: function (config) {
+        this.options = this.applyDefaultOptions(config);
+    },
+
+    onFocusinLastElement: function () {
+        this.ui.firstfocuselementinmodal.focus();
+    },
+
+    onKeydownHandler: function (event) {
+        if(document.activeElement === this.ui.lastfocuselementinmodal[0] && (event.which || event.keyCode) == 9) {
+            event.preventDefault();
+            this.ui.firstfocuselementinmodal.focus();
+        }
+
+        if(document.activeElement === this.ui.firstfocuselementinmodal[0] && (event.which || event.keyCode) == 9 && event.shiftKey){
+            event.preventDefault();
+            this.ui.lastfocuselementinmodal.focus();
+        }
+    },
+
+    render: function () {
+        var $parent = this.options.$parent || $('body');
+
+        var html = this.template(this.options);
+        this.$el.html(html);
+
+        this.subscribeToDialog();
+        $parent.append(this.$el);
+
+        return this;
+    },
+
+    subscribeToDialog: function (){
+        var view = this;
+        this.$el.on('shown.bs.modal', function (e) {
+            view.ui.firstfocuselementinmodal.focus();
+        });
+
+        this.$el.on('hidden.bs.modal', function () {
+            view.remove();
+        });
+    },
+
+    onClickButtonHandler: function (event) {
+        event.preventDefault();
+
+        var $el = $(event.target),
+            i = parseInt( $el.data('index'), 10),
+            handler = this.options.buttons[i].onClick;
+
+        if(handler){
+            handler.apply(null);
+        }
+
+        this.close();
+    },
+
+    close: function () {
+        if (typeof this.options.onClose === 'function') {
+            this.options.onClose.call(null);
+        }
+
+        this.$el.modal('hide');
+    },
+
+    applyDefaultOptions: function (config) {
+        var options = _.defaults({}, config, {
+            type: 'default',
+            buttons: []
+        });
+        this.applyDefaultButtonsOptions(options);
+
+        return options;
+    },
+
+    applyDefaultButtonsOptions: function (options) {
+        options.buttons
+            .filter(function (button) {
+                return typeof button.type === 'undefined';
+            })
+            .forEach(function (button) {
+                button.type = 'default';
+            });
+
+        return options;
+    }
+});
+
+_.extend(MessageBox.prototype, bindUIElementsMixin);
+
+/*new MessageBox({
+    type: 'error',
+    text:'asdasd',
+    buttons:[
+        {
+            name:'Ok',
+            onClick: function(){
+                alert('ckicked');
+            }
+        },
+        {
+            name:'Error btn',
+            type: 'action',
+            onClick: function(){
+                alert('error ckicked');
+            }
+        }
+    ]
+});*/
 //####app/services/modalWindowService.js
 InfinniUI.ModalWindowService = (function () {
     var modalQueue = [];

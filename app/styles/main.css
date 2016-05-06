@@ -6639,10 +6639,20 @@ body {
   }
 }
 .modal.messagebox {
+  top: 25%;
   z-index: 1060;
 }
 .modal.messagebox + .modal-backdrop {
   z-index: 1055;
+}
+.pl-messagebox-content__icon_error {
+  color: #e51c23;
+}
+.pl-messagebox-content__icon_warning {
+  color: #f0ad4e;
+}
+.pl-messagebox-content__icon_default {
+  color: #5bc0de;
 }
 .pl-dropdown-container {
   z-index: 2000;
