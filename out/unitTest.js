@@ -5748,6 +5748,24 @@ describe('DocumentDataSource', function () {
             );
         });
 
+        it('should return default list of data', function (done) {
+            // Given
+            window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);
+            var builder = new ApplicationBuilder();
+            var defaultItems = [{"Id": "0000"}];
+            var metadata = {
+                "DefaultItems": defaultItems
+            };
+
+            // When
+            var documentDataSource = builder.buildType('DocumentDataSource', metadata, {parentView: fakeView()});
+
+            // Then
+            var items = documentDataSource.getItems();
+            assert.equal(items, defaultItems);
+            done();
+        });
+
         it('should subscribe to property of selectedItem', function (done) {
             // Given
             window.providerRegister.register('DocumentDataSource', FakeRestDataProvider);

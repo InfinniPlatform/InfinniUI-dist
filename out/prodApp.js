@@ -99,11 +99,7 @@ _.defaults( InfinniUI.config, {
     serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
     configId: 'PTA',
     configName: 'Хабинет'
-//devblockstart
-    ,editorService: {
-        url: 'http://localhost:5500/api/metadata/saveMetadata'
-    }
-//devblockstop
+
 
 });
 /**
@@ -3957,7 +3953,7 @@ _.extend(TreeModel.prototype, {
 
     onPropertyChanged: function(propertyName, handler, params){
         var handlersNode;
-        var bindId = this.counter;
+        var bindId = this.counter + '-bindId';
         this.counter ++;
 
         if(_.isFunction(propertyName)){
@@ -4030,7 +4026,11 @@ _.extend(TreeModel.prototype, {
                     delete handlersSubTree[k];
                 }
 
-            } else if($.isPlainObject(handlersSubTree[k]) && k != '*'){
+            }
+        }
+
+        for( var k in handlersSubTree ){
+            if($.isPlainObject(handlersSubTree[k]) && k != '*'){
 
                 tmpValue = $.isPlainObject(oldValue) ? oldValue[k] : undefined;
                 tmpProperty = propertyName == '' ? k :propertyName + '.' + k;
@@ -16579,8 +16579,32 @@ _.extend(Element.prototype, {
 
     setFocus: function () {
         this.control.setFocus();
+    },
+
+    renderTree: function(textIndent) {
+        var textIndent = textIndent || '';
+        console.log( textIndent + 'Name: ' + this.getName(), this );
+        if( this.childElements !== undefined ) {
+            if( textIndent !== '' ) {
+                textIndent += '_____';
+            } else {
+                textIndent += '_____';
+            }
+            for( var i = 0, ii = this.childElements.length; i < ii; i += 1 ) {
+                this.renderTree.call(this.childElements[i], textIndent);
+            }
+        }
+    },
+
+    renderFullTree: function() {
+        var parent = this.parent;
+        while( parent.parent && parent.parent.parent !== undefined ) {
+            parent = parent.parent;
+        }
+        this.renderTree.call(parent);
     }
 });
+
 /**
  *
  * @constructor
@@ -16605,15 +16629,7 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
             args.parent.addChild(element);
         }
 
-//devblockstart
-        element.onMouseDown( function(eventData) {
-            if( eventData.ctrlKey ){
-                args.metadata.isSelectedElement = true;
-                args.parentView.showSelectedElementMetadata();
-                eventData.nativeEventData.stopPropagation();
-            }
-        });
-//devblockstop
+
 
         return element;
     },
@@ -17485,6 +17501,9 @@ var BaseDataSource = Backbone.Model.extend({
             } else {
                 that._notifyAboutFailValidationByDeleting(item, data, error);
             }
+        }, function(data) {
+            var result = data.data.responseJSON['Result']['ValidationResult'];
+            that._notifyAboutFailValidationByDeleting(item, result, error);
         });
     },
 
@@ -18850,6 +18869,10 @@ _.extend(DocumentDataSourceBuilder.prototype, {
         if('Select' in metadata){ dataSource.setSelect(metadata['Select']); }
         if('Order' in metadata){ dataSource.setOrder(metadata['Order']); }
         if('NeedTotalCount' in metadata){ dataSource.setNeedTotalCount(metadata['NeedTotalCount']); }
+
+        if (Array.isArray(metadata.DefaultItems)) {
+            dataSource.setProperty('', metadata.DefaultItems);
+        }
     },
 
     createDataSource: function(parent){
@@ -23913,17 +23936,7 @@ _.extend(View.prototype,
             return this.control.get('focusOnControl');
         }
 
-//devblockstart
-        ,showSelectedElementMetadata: function(){
-            if(this.handlers.onSelectedElementChange){
-                this.handlers.onSelectedElementChange();
-            }
-        }
 
-        ,onSelectedElementChange: function(handler) {
-            this.handlers.onSelectedElementChange = handler;
-        }
-//devblockstop
     }
 );
 /**
@@ -23941,34 +23954,7 @@ _.extend(ViewBuilder.prototype, {
         return new View(params.parent);
     },
 
-//devblockstart
-    _getSelectedElementPath: function(metadata) {
-        var result;
 
-        if( _.isArray(metadata) ){
-            for (var i = 0, ii =  metadata.length; i<ii; i++){
-                result = this._getSelectedElementPath(metadata[i]);
-                if(result !== false){
-                    return '['+ i + ']' + result;
-                }
-            }
-        } else if( _.isObject(metadata) ){
-            if('isSelectedElement' in metadata) {
-                delete metadata.isSelectedElement;
-                return '';
-            } else {
-                for (var key in metadata){
-                    result = this._getSelectedElementPath(metadata[key]);
-                    if(result !== false){
-                        return '.' + key + result;
-                    }
-                }
-            }
-        }
-
-        return false;
-    },
-//devblockstop
 
     applyMetadata: function (params) {
 
@@ -23983,14 +23969,7 @@ _.extend(ViewBuilder.prototype, {
             element = params.element,
             builder = params.builder;
 
-//devblockstart
-        element.onSelectedElementChange(function() {
-            var path = that._getSelectedElementPath(params.metadata);
 
-            InfinniUI.JsonEditor.setMetadata(params.metadata);
-            InfinniUI.JsonEditor.setPath(path);
-        });
-//devblockstop
 
         var scripts = element.getScripts();
         var parameters = element.getParameters();
@@ -35355,9 +35334,6 @@ _.extend(LinkView.prototype, {
 
         if(view.setParent){
             view.setParent(this.parent);
-        }
-        if(this.parent && this.parent.addChild){
-            this.parent.addChild(view);
         }
 
         window.InfinniUI.global.messageBus.send('onViewCreated', {openMode: openMode, view: view});
