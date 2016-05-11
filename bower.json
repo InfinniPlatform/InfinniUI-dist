@@ -13,5 +13,8 @@
     "infinni-ui",
     "ui-framework"
   ],
-  "license": "GPL"
+  "license": "GPL",
+  "dependencies": {
+    "jsoneditor": "~5.5.2"
+  }
 }
