@@ -3262,6 +3262,12 @@ var layoutManager = {
         var contentHeight = this.setOuterHeight($el, pageHeight);
         var elements = $el.find(this.getSelector());
 
+        //var elements = Array.prototype.filter.call($el.find(this.getSelector()), function (element) {
+        //    //Исключаем элементы которые долдны занитмать всю доступную высоту,
+        //    // которые по какой-то причине оказались внутри ScrollPanel
+        //    return $(element).parents('.pl-scrollpanel').length === 0;
+        //});
+
         if (elements.length === 0) {
             return;
         }
@@ -12593,19 +12599,35 @@ var IconModel = ControlModel.extend({
  */
 var IconView = ControlView.extend({
 
+    className: 'pl-icon fa',
+
     tagName: 'i',
 
     render: function(){
         this.prerenderingActions();
-        
-        var value = this.model.get('value');
-        this.$el.attr('class', 'pl-icon fa fa-' + value);
-        
         this.updateProperties();
-
         this.trigger('render');
         this.postrenderingActions();
         return this;
+    },
+
+    renderIcon: function () {
+        var value = this.model.get('value');
+        this.switchClass('fa', value);
+    },
+
+    initHandlersForProperties: function () {
+        ControlView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:value', this.updateValue);
+    },
+
+    updateProperties: function () {
+        ControlView.prototype.updateProperties.call(this);
+        this.updateValue();
+    },
+
+    updateValue: function () {
+        this.renderIcon();
     }
 
 });
