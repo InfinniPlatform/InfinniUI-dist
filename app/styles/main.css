@@ -7245,6 +7245,9 @@ body {
   display: table;
   clear: both;
 }
+.pl-datagrid_layout_fixed .pl-datagrid-table {
+  table-layout: fixed;
+}
 .pl-datagrid_select_single .pl-datagrid-toggle_all {
   display: none;
 }

@@ -109,19 +109,23 @@ _.defaults( InfinniUI.config, {
 
 window.InfinniUI.BlobUtils = (function () {
 
-    return  {
-        createFromFile: function(file) {
-            var blobData = {
-                Info:{
-                    Name:   file.name,
-                    Type:   file.type,
-                    Size:   file.size,
-                    Time:   file.lastModifiedDate
-                }
-            };
+    var blobUtils = {
+        isFileInfo: isFileInfo,
+        getContentId: getContentByName.bind(null, 'Id'),
+        getName: getContentByName.bind(null, 'Name'),
+        getSize: getContentByName.bind(null, 'Size'),
+        getTime: getContentByName.bind(null, 'Time'),
+        getType: getContentByName.bind(null, 'Type')
+    };
 
-            return blobData;
-        }
+    return blobUtils;
+
+    function isFileInfo (data) {
+        return data && blobUtils.getContentId(data);
+    }
+
+    function getContentByName(name, data, defaultValue) {
+        return _.isObject(data) ? data[name] : defaultValue;
     }
 
 })();
@@ -5865,7 +5869,7 @@ var TextEditor = Backbone.View.extend({
     onMouseLeaveEditorHandler: function (event) {
         var inFocus = event.currentTarget == document.activeElement;
         if (!inFocus && this.isValid) {
-            this.$el.hide();
+            //this.$el.hide();
             this.onBlurEditorHandler();
         }
     },
@@ -6920,7 +6924,7 @@ var dateTimePickerModeDate = {
         calendar.render();
         $('body').append(calendar.$el);
 
-        this.updateDropDownCalendarPosition(this.$el, calendar.$el);
+        calendar.updatePosition(this.el);
 
         this.listenTo(calendar, 'date', function (date) {
             model.set('value', this.convertValue(date));
@@ -6945,7 +6949,7 @@ var dateTimePickerModeDateTime = {
         calendar.render();
         $('body').append(calendar.$el);
 
-        this.updateDropDownCalendarPosition(this.$el, calendar.$el);
+        calendar.updatePosition(this.el);
 
         this.listenTo(calendar, 'date', function (date) {
             model.set('value', this.convertValue(date));
@@ -6970,7 +6974,7 @@ var dateTimePickerModeTime = {
         calendar.render();
         $('body').append(calendar.$el);
 
-        this.updateDropDownCalendarPosition(this.$el, calendar.$el);
+        calendar.updatePosition(this.el);
 
         this.listenTo(calendar, 'date', function (date) {
             model.set('value', this.convertValue(date));
@@ -8307,20 +8311,7 @@ var DateTimePickerView = TextEditorBaseView.extend(/** @lends DateTimePickerView
         throw new Error('Не перекрыт getTemplate');
     },
 
-    onClickDropdownHandler: function (event) {},
-
-    updateDropDownCalendarPosition: function ($dateTimePicker, $calendar) {
-
-        var rect = $dateTimePicker[0].getBoundingClientRect();
-
-        var style = {
-            position: "absolute",
-            top: window.pageYOffset + rect.bottom,
-            left: window.pageXOffset + rect.right - $calendar.width()
-        };
-
-        $calendar.css(style);
-    }
+    onClickDropdownHandler: function (event) {}
 
 });
 
@@ -8462,7 +8453,59 @@ var SelectDate = Backbone.View.extend({
 
     onClickTodayHandler: function () {
         this.useValue(new Date());
+    },
+
+    updatePosition: function (parentDOMElement) {
+        var direction = this.getDropdownDirection(parentDOMElement);
+        this.setPositionFor(parentDOMElement, direction );
+    },
+
+    setPositionFor: function (parentDOMElement, direction) {
+        clearInterval(this._intervalId);
+
+        this.applyStyle(parentDOMElement, direction);
+        this._intervalId = setInterval(this.applyStyle.bind(this, parentDOMElement, direction), 100);
+    },
+
+    remove: function () {
+        clearInterval(this._intervalId);
+        return Backbone.View.prototype.remove.apply(this, arguments);
+    },
+
+    getDropdownDirection: function (parentDOMElement) {
+
+        var windowHeight = $(window).height();
+        var rect = parentDOMElement.getBoundingClientRect();
+        var height = this.$el.height();
+
+        var direction = 'bottom';
+        if (rect.bottom + height + 30 > windowHeight && rect.bottom > windowHeight / 2) {
+            direction = 'top';
+        }
+
+        return direction;
+    },
+
+    applyStyle: function (parentDOMElement, direction) {
+        var rect = parentDOMElement.getBoundingClientRect();
+
+        var rectDropdown = this.el.getBoundingClientRect();
+
+        //@TODO Вынести общие стили в css
+        var style = {
+            position: "absolute",
+            left: window.pageXOffset + rect.right - Math.round(rectDropdown.width)
+        };
+
+        if (direction === 'bottom') {
+            style.top = window.pageYOffset + rect.bottom;
+        } else {
+            style.top = rect.top - this.$el.height();
+        }
+
+        this.$el.css(style);
     }
+
 
 });
 
@@ -8860,7 +8903,6 @@ var dateTimePickerModeTimePicker = _.extend({}, dateTimePickerModeTime, {
         var minValue = InfinniUI.DateUtils.restoreTimezoneOffset(model.get('minValue'), model.get('timeZone'));
         var maxValue = InfinniUI.DateUtils.restoreTimezoneOffset(model.get('maxValue'), model.get('timeZone'));
 
-        console.info(value, minValue, maxValue);
         return InfinniUI.DateUtils.checkRangeDate(value, minValue, maxValue);
     },
 
@@ -11197,6 +11239,33 @@ var DataGridView = ListEditorBaseView.extend({
         this.ui.checkAll.prop('checked', checkAll);
     },
 
+    getHorizontalScrollBarWidth: function () {
+
+        if (typeof DataGridView.scrollbarWidth === 'undefined') {
+            var scrollDiv = document.createElement('div');
+            var body = document.body;
+
+            scrollDiv.className = 'modal-scrollbar-measure';
+            var style = {
+                position: "absolute",
+                top: "-9999px",
+                width: "50px",
+                height: "50px",
+                overflow: "scroll"
+            };
+
+            for(var name in style) {
+                scrollDiv.style[name] = style[name]
+            }
+
+            body.appendChild(scrollDiv);
+            DataGridView.scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+            body.removeChild(scrollDiv);
+        }
+
+        return DataGridView.scrollbarWidth;
+    },
+
     updateCheckAllVisible: function () {
         var checkAllVisible = this.model.get('checkAllVisible');
         this.ui.checkAll.toggleClass('hidden', !checkAllVisible);
@@ -11271,6 +11340,7 @@ var DataGridView = ListEditorBaseView.extend({
 
     applyColumnWidth: function () {
         var columns = this.model.get('columns');
+        var fixedTableLayout = false;
 
         this.ui.firstRows.children().each(function (i, el) {
             var columnIndex = i % (columns.length + 1);
@@ -11285,20 +11355,18 @@ var DataGridView = ListEditorBaseView.extend({
 
             if (width) {
                 $(el).css('width', width);
+                fixedTableLayout = true;
             }
         });
 
+        this.$el.toggleClass('pl-datagrid_layout_fixed', fixedTableLayout);
     },
 
     syncBodyAndHead: function () {
-        var $body = this.ui.body;
+        //var $body = this.ui.body;
         var $head = this.ui.head;
 
-        setTimeout(function () {
-            //Need update after element added to DOM
-            var scrollWidth = $body[0].offsetWidth - $body[0].clientWidth;
-            $head.css('padding-right', scrollWidth + "px");
-        }, 0);
+        $head.css('padding-right', this.getHorizontalScrollBarWidth() + "px");
 
         this.ui.body
             .off('scroll')
@@ -11586,7 +11654,9 @@ var DataNavigationModel = ControlModel.extend({
             pageNumber: 0,
             pageStart: 0,
             _buttonsCount: 5,
-            _buttonsTemplate: ['prev', 'page', 'next']
+            _buttonsTemplate: ['prev', 'page', 'next'],
+            pageCount: null,
+            isDataReady: false
         },
         ControlModel.prototype.defaults
     ),
@@ -11668,6 +11738,8 @@ var DataNavigationView = ControlView.extend({
     initHandlersForProperties: function() {
         ControlView.prototype.initHandlersForProperties.call(this);
         this.listenTo(this.model, 'change:pageStart', this.updateButtons);
+        this.listenTo(this.model, 'change:pageCount', this.updateButtons);
+        this.listenTo(this.model, 'change:isDataReady', this.updateButtons);
     },
 
     updateProperties: function() {
@@ -11694,9 +11766,18 @@ var DataNavigationView = ControlView.extend({
         var
             template = this.model.get('_buttonsTemplate'),
             buttonsCount = this.model.get('_buttonsCount'),
-            buttons;
+            pageCount = this.model.get('pageCount'),
+            pageNumber = this.model.get('pageNumber'),
+            pageStart = this.model.get('pageStart'),
+            isDataReady = this.model.get('isDataReady'),
+            buttons,
+            nowManyElementsRemove;
 
         this._removeChildViews();
+
+        if(!isDataReady){
+            return;
+        }
 
         var
             buttonsFactory = this.buttonsFactory,
@@ -11704,8 +11785,6 @@ var DataNavigationView = ControlView.extend({
 
         buttons = template.reduce(function (buttons, buttonType) {
             if (buttonType === 'page') {
-                var pageNumber = model.get('pageNumber');
-                var pageStart = model.get('pageStart');
                 for (var i = 0; i < buttonsCount; i = i + 1) {
                     var button = buttonsFactory.createButton(buttonType, {pageNumber: pageStart + i});
                     buttons.push(button)
@@ -11717,6 +11796,16 @@ var DataNavigationView = ControlView.extend({
 
             return buttons;
         }, []);
+
+        if(typeof pageCount == 'number' && pageStart + buttonsCount >= pageCount){
+            nowManyElementsRemove = pageStart + buttonsCount - pageCount + 1;
+
+            if(pageCount == 0){
+                nowManyElementsRemove += 1;
+            }
+
+            buttons.splice(buttons.length - nowManyElementsRemove, 100);
+        }
 
         var $buttons = buttons.map(function (button) {
             this.listenTo(button, 'command', this.onCommandHandler);
@@ -17886,6 +17975,23 @@ var BaseDataSource = Backbone.Model.extend({
         return promise;
     },
 
+    getNearestRequestPromise: function(){
+        var promise = $.Deferred();
+
+        this.once('onItemsUpdated', function(){
+            if(this.isDataReady()){
+                promise.resolve();
+            }else{
+                logger.warn({
+                    message: 'BaseDataSource: strange, expected other dataReady status',
+                    source: this
+                });
+            }
+        });
+
+        return promise;
+    },
+
     //setBindingBuilder: function(bindingBuilder){
     //    this.set('bindingBuilder', bindingBuilder);
     //},
@@ -19578,6 +19684,9 @@ var editorBaseBuilderMixin = {
                 if (bindingOptions.converter) {
                     dataBinding.setConverter(bindingOptions.converter);
                 }
+                if (bindingOptions.mode) {
+                    dataBinding.setMode(bindingOptions.mode);
+                }
                 dataBinding.bindElement(params.element, bindingOptions.valueProperty);
 
                 this.initValidationResultText(element, dataBinding);
@@ -20170,12 +20279,12 @@ DateTimePickerBuilder.prototype.applyDefaultMetadata = function (params) {
     var defaultFormat = {
             Date: '{:d}',
             DateTime: '{:g}',
-            Time: '{:t}'
+            Time: '{:T}'
         },
         defaultEditMask = {
             Date: {DateTimeEditMask: {Mask: 'd'}},
             DateTime: {DateTimeEditMask: {Mask: 'g'}},
-            Time: {DateTimeEditMask: {Mask: 't'}}
+            Time: {DateTimeEditMask: {Mask: 'T'}}
         };
 
     _.defaults(metadata, {Mode: 'Date'});
@@ -21459,6 +21568,22 @@ _.extend(DataNavigation.prototype, {
 
     onPageSizeChanged: function (handler) {
         this.control.onPageSizeChanged(this.createControlEventHandler(this, handler));
+    },
+
+    getPageCount: function () {
+        return this.control.get('pageCount');
+    },
+
+    setPageCount: function (value) {
+        this.control.set('pageCount', value)
+    },
+
+    getIsDataReady: function () {
+        return this.control.get('isDataReady');
+    },
+
+    setIsDataReady: function (value) {
+        this.control.set('isDataReady', value)
     }
 
 });
@@ -21479,6 +21604,9 @@ _.extend(DataNavigationBuilder.prototype, {
 
         var element = params.element;
         var metadata = params.metadata;
+        var dsTotalCount;
+        var pageSize;
+        var pageCount;
 
         if (Array.isArray(metadata.AvailablePageSizes)) {
             element.getAvailablePageSizes().reset(metadata.AvailablePageSizes);
@@ -21486,6 +21614,27 @@ _.extend(DataNavigationBuilder.prototype, {
 
         var ds = this.findDataSource(params);
         if (ds) {
+
+            ds.onItemsUpdated(function(){
+                dsTotalCount = ds.getTotalCount();
+                if(typeof dsTotalCount == 'number'){
+                    pageSize = ds.getPageSize();
+                    pageCount = Math.ceil(dsTotalCount/pageSize);
+                    element.setPageCount(pageCount);
+                }
+                element.setIsDataReady(true);
+            });
+
+            if(ds.isDataReady()){
+                dsTotalCount = ds.getTotalCount();
+                if(typeof dsTotalCount == 'number'){
+                    pageSize = ds.getPageSize();
+                    pageCount = Math.ceil(dsTotalCount/pageSize);
+                    element.setPageCount(pageCount);
+                }
+                element.setIsDataReady(true);
+            }
+
             element.setDataSource(ds);
             element.setPageNumber(ds.getPageNumber());
             element.setPageSize(ds.getPageSize());
@@ -21662,45 +21811,16 @@ _.extend(FileBoxBuilder.prototype, {
         // 1. по значению из источника данных - сформировать URL изображения.
         // 2. при выборе в элементе файла на загрузку - добавить выбранный файл в очередь на загрузку
 
-        var converter = {
-            toElement: function (context, args) {
-                var value = args.value;
-                var binding = args.binding;
-                var ds = binding.getSource();
-                var sourceProperty = binding.getSourceProperty();
-                var fileProvider = ds.getFileProvider();
-                var url = null;
-                var info = {};
-                //Формируем ссылку для получения файла
-                if (value) {
-                    if (value.Info && value.Info.ContentId && fileProvider) {
-                        url = fileProvider.getFileUrl(null, null, value.Info.ContentId);
-                        element.setFileName(value.Info.Name)
-                            .setFileSize(value.Info.Size)
-                            .setFileTime(value.Info.Time)
-                            .setFileType(value.Info.Type);
-
-                    } else if (typeof value === 'string') {
-                        //@TODO Добавить проверку на валидность URI
-                        url = value;
-                    } else {
-                        //Native File instance from FileAPI
-                        url = value;
-                    }
-                }
-
-                return url;
-            }
-        };
+        var converter = new FileBoxValueConverter(element);
 
         var data = this.applyMetadata_editorBaseBuilder(params, {
+            mode: InfinniUI.BindingModes.toElement,
             converter: converter
         });
 
         var binding = data.valueBinding;
 
         if (binding) {
-            binding.setMode(InfinniUI.BindingModes.toElement);
             var ds = binding.getSource();
 
             params.element.onPropertyChanged('file', function (context, args) {
@@ -21708,7 +21828,7 @@ _.extend(FileBoxBuilder.prototype, {
 
                 if (file === null) {
                     ds.setProperty(binding.getSourceProperty(), null)
-                } else  if (file instanceof File) {
+                } else if (file instanceof File) {
                     ds.setProperty(binding.getSourceProperty(), args.newValue)
                 }
             })
@@ -21716,7 +21836,41 @@ _.extend(FileBoxBuilder.prototype, {
 
     }
 
-}, editorBaseBuilderMixin);
+    }, editorBaseBuilderMixin);
+
+function FileBoxValueConverter (element) {
+    this._element = element;
+}
+
+FileBoxValueConverter.prototype.toElement = function (context, args) {
+    var value = args.value;
+    var binding = args.binding;
+    var ds = binding.getSource();
+    var fileProvider = ds.getFileProvider();
+    var url = null;
+    //Формируем ссылку для получения файла
+
+    if (value) {
+        if (fileProvider && InfinniUI.BlobUtils.isFileInfo(value)) {
+            url = fileProvider.getFileUrl(null, null, InfinniUI.BlobUtils.getContentId(value));
+            this._element
+                .setFileName(InfinniUI.BlobUtils.getName(value))
+                .setFileSize(InfinniUI.BlobUtils.getSize(value))
+                .setFileTime(InfinniUI.BlobUtils.getTime(value))
+                .setFileType(InfinniUI.BlobUtils.getType(value));
+
+        } else if (typeof value === 'string') {
+            //@TODO Добавить проверку на валидность URI
+            url = value;
+        } else {
+            //Native File instance from FileAPI
+            url = value;
+        }
+
+    }
+
+    return url;
+};
 /**
  *
  * @constructor
@@ -21931,40 +22085,15 @@ _.extend(ImageBoxBuilder.prototype, {
         // 1. по значению из источника данных - сформировать URL изображения.
         // 2. при выборе в элементе файла на загрузку - добавить выбранный файл в очередь на загрузку
 
-        var converter = {
-            toElement: function (context, args) {
-                var value = args.value;
-                var binding = args.binding;
-                var ds = binding.getSource();
-                var sourceProperty = binding.getSourceProperty();
-                var fileProvider = ds.getFileProvider();
-                var url = null;
-                //Формируем URL изображения
-
-                if (value) {
-                    if (value.Info && value.Info.ContentId && fileProvider) {
-                        url = fileProvider.getFileUrl(null, null, value.Info.ContentId);
-                    } else if (typeof value === 'string') {
-                        //@TODO Добавить проверку на валидность URI
-                        url = value;
-                    } else {
-                        //Native File instance from FileAPI
-                        url = value;
-                    }
-                }
-                return url;
-            }
-
-        };
+        var converter = new ImageBoxValueConverter(element);
 
         var data = this.applyMetadata_editorBaseBuilder(params, {
+            mode: InfinniUI.BindingModes.toElement,
             converter: converter
         });
 
         var binding = data.valueBinding;
         if (binding) {
-            binding.setMode(InfinniUI.BindingModes.toElement);
-
             var ds = binding.getSource();
 
             params.element.onPropertyChanged('file', function (context, args) {
@@ -21998,6 +22127,31 @@ _.extend(ImageBoxBuilder.prototype, {
     }
 
 }, editorBaseBuilderMixin);
+function ImageBoxValueConverter (element) {
+    this._element = element;
+}
+
+ImageBoxValueConverter.prototype.toElement = function (context, args) {
+    var value = args.value;
+    var binding = args.binding;
+    var ds = binding.getSource();
+    var fileProvider = ds.getFileProvider();
+    var url = null;
+    //Формируем URL изображения
+
+    if (value) {
+        if (fileProvider && InfinniUI.BlobUtils.isFileInfo(value)) {
+            url = fileProvider.getFileUrl(null, null, InfinniUI.BlobUtils.getContentId(value));
+        } else if (typeof value === 'string') {
+            //@TODO Добавить проверку на валидность URI
+            url = value;
+        } else {
+            //Native File instance from FileAPI
+            url = value;
+        }
+    }
+    return url;
+};
 function Label(parent, viewMode) {
     _.superClass(Label, this, parent, viewMode);
     this.initialize_editorBase();
@@ -35736,7 +35890,7 @@ InfinniUI.localizations['ru-RU'].patternDateFormats = {
     D: 'dd MMMM yyyy г.',
 
     t: 'H:mm',
-    T: 'H:%m:%s',
+    T: 'HH:mm:ss',
 
     y: 'MMMM yyyy', Y: 'MMMM yyyy',
     m: 'MMMM yy', M: 'MMMM yy',

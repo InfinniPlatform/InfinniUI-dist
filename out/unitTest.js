@@ -15114,7 +15114,7 @@ describe('DateTimeFormat', function () {
             var date = new Date("4 January 1908 13:12:01");
 
             //Then
-            assert.equal(formatting.format(date), '13:12:1');
+            assert.equal(formatting.format(date), '13:12:01');
         });
 
         it('format by pattern H', function () {
