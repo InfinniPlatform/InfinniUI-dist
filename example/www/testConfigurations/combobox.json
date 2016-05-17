@@ -1,0 +1,2118 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "EDGE"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "GSM"},
+					{"Id": 7, "rub": 666, "Display": "WAP"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Простой ComboBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ComboBox without ShowClear",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"ShowClear": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value2"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Autocomplete ComboBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"Autocomplete": false,
+												"AutocompleteProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value3"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Autocomplete doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Labeltext for ComboBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"LabelText": "Labeltext for combobox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value4"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "LabelFloating for ComboBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"LabelText": "Labeltext for combobox",
+												"LabelFloating": true,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value5"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "MultiSelect combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"MultiSelect": true,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value6"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueProperty: Id for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueProperty": "Id",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value7"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnSelectedItemChanged for ComboBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value8"
+												},
+												"OnSelectedItemChanged": "{ console.log('Item selected!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "HintText for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"HintText": "This is HintText",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value9"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "HintText for combobox doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ErrorText for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"ErrorText": "This is ErrorText",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value10"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ErrorText for combobox doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "WarningText for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"WarningText": "This is WarningText",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value11"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "WarningText for combobox doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanging for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"OnValueChanging": "{ console.log('OnValueChanging is happend') }",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value12"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanged for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"OnValueChanged": "{ console.log('OnValueChanged is happend') }",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value13"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemFormat ComboBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"GroupItemFormat": "Connect: {Id}",
+												"GroupValueProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value14"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemProperty for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"GroupItemProperty": "Id",
+												"GroupValueProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value15"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemFormat for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value16"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Name for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Name": "NameForComboBox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value17"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Text for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Text": "this is text for combobox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value18"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Focusable false for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Focusable": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value19"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Focusable doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Enabled false for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Enabled": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value20"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Visible false for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Visible": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value21"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"TextHorizontalAlignment": "Right",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value22"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextStyle for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"TextStyle": "display1",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value23"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Foreground": "primary2",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value24"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground doesn't color text",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Background": "primary2",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value25"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background doesn't work correctly",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ToolTip for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"ToolTip": "This is ToolTip for combobox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value26"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Tag and OnLoaded for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Tag": "This is tag",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value27"
+												},
+												"OnLoaded": "{ args.source.setLabelText( args.source.getTag() ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnGotFocus for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value28"
+												},
+												"OnGotFocus": "{ args.source.setLabelText( 'ComboBox got focus' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLostFocus for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value29"
+												},
+												"OnLostFocus": "{ args.source.setLabelText( 'ComboBox lost focus' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnClick for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value30"
+												},
+												"OnClick": "{ args.source.setLabelText( 'OnClick is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnDoubleClick for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value31"
+												},
+												"OnDoubleClick": "{ args.source.setLabelText( 'OnDoubleClick is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseDown for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value32"
+												},
+												"OnMouseDown": "{ args.source.setLabelText( 'OnMouseDown is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseUp for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value33"
+												},
+												"OnMouseUp": "{ args.source.setLabelText( 'OnMouseUp is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseWheel for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value34"
+												},
+												"OnMouseWheel": "{ args.source.setLabelText( 'OnMouseWheel is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseEnter for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value35"
+												},
+												"OnMouseEnter": "{ args.source.setLabelText( 'OnMouseEnter is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseLeave for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value36"
+												},
+												"OnMouseLeave": "{ args.source.setLabelText( 'OnMouseLeave is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseMove for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value37"
+												},
+												"OnMouseMove": "{ args.source.setLabelText( 'OnMouseMove is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyDown for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value38"
+												},
+												"OnKeyDown": "{ args.source.setLabelText( 'OnKeyDown is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyUp for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value39"
+												},
+												"OnKeyUp": "{ args.source.setLabelText( 'OnKeyUp is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value40"
+												},
+												"OnPropertyChanged": "{ args.source.setLabelText( 'OnPropertyChanged is happend' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueTemplate for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value41"
+												},
+												"ValueTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource2",
+															"Property": "$.Value41.Id"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueSelector for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value42"
+												},
+												"ValueSelector": "{ return 'Internet ' + args.value.Display + ' for just $' + args.value.Dollar }",
+												"ItemSelector": "{ args.value.Dollar = Math.floor( args.value.rub * 65.32 ); return 'Cost in dollars: ' + args.value.Dollar; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemSelector for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value43"
+												},
+												"ItemSelector": "{ args.value.Dollar = Math.floor( args.value.rub * 65.32 ); return 'Cost in dollars: ' + args.value.Dollar; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupValueSelector for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value44"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupValueSelector doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemTemplate for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value45"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemTemplate doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemSelector for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value46"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemSelector doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemTemplate for combobox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ComboBox": {
+												"ValueFormat": "{Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value47"
+												},
+												"ItemTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource1",
+															"Property": "#.Id"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+														{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "additional string",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

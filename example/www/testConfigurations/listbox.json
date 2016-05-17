@@ -1,0 +1,2036 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "2G"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "GPRS"},
+					{"Id": 7, "rub": 666, "Display": "LTE"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Простой ListBox(viewmode - base)",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ViewMode": "base",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Divider": {
+												"Name": "nameDivider",
+												"Background": "primary1",
+												"OnLoaded": "{ console.log( 'divider is loaded!' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Простой ListBox(viewmode - common)",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ItemProperty": "Display",
+												"ViewMode": "common",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Простой ListBox(viewmode - checking)",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ItemProperty": "Display",
+												"ViewMode": "checking",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "MultiSelect Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"MultiSelect": true,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value6"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueProperty: Id for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueProperty": "Id",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value7"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnSelectedItemChanged for ListBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value8"
+												},
+												"OnSelectedItemChanged": "{ console.log('Item selected!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "HintText for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"HintText": "This is HintText",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value9"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "HintText for Listbox doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ErrorText for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"ErrorText": "This is ErrorText",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value10"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ErrorText for Listbox doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "WarningText for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"WarningText": "This is WarningText",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value11"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "WarningText for Listbox doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanging for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"OnValueChanging": "{ console.log('OnValueChanging is happend') }",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value12"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanged for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemProperty": "Display",
+												"OnValueChanged": "{ console.log('OnValueChanged is happend') }",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value13"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemFormat for ListBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ItemProperty": "Display",
+												"GroupItemFormat": "Connect: {Display}",
+												"GroupValueProperty": "Display",
+												"Items" : {
+													"Source": "ObjectDataSource1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemFormat doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemProperty for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ItemProperty": "Display",
+												"GroupItemProperty": "Id",
+												"GroupValueProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemProperty doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemFormat for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value16"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Name for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Name": "NameForListBox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value17"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Text for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Text": "this is text for Listbox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value18"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Focusable false for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Focusable": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value19"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Focusable doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Enabled false for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Enabled": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value20"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Enabled doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Visible false for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Visible": false,
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value21"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"TextHorizontalAlignment": "Right",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value22"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextStyle for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"TextStyle": "display1",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value23"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Foreground": "primary2",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value24"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Background": "primary2",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value25"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background doesn't work correctly",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ToolTip for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"ToolTip": "This is ToolTip for Listbox",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value26"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Tag and OnLoaded for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Tag": "This is tag",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value27"
+												},
+												"OnLoaded": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnGotFocus for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value28"
+												},
+												"OnGotFocus": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLostFocus for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value29"
+												},
+												"OnLostFocus": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnClick for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value30"
+												},
+												"OnClick": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnDoubleClick for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value31"
+												},
+												"OnDoubleClick": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseDown for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value32"
+												},
+												"OnMouseDown": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseUp for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value33"
+												},
+												"OnMouseUp": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseWheel for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value34"
+												},
+												"OnMouseWheel": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseEnter for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value35"
+												},
+												"OnMouseEnter": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseLeave for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value36"
+												},
+												"OnMouseLeave": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseMove for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value37"
+												},
+												"OnMouseMove": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyDown for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value38"
+												},
+												"OnKeyDown": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyUp for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value39"
+												},
+												"OnKeyUp": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value40"
+												},
+												"OnPropertyChanged": "{ args.source.setForeground( 'primary2' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueTemplate for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value41"
+												},
+												"ValueTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource2",
+															"Property": "$.Value41.Id"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueTemplate doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueSelector for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value42"
+												},
+												"ItemSelector": "{ args.value.Dollar = Math.floor( args.value.rub * 65.32 ); return 'Cost in dollars: ' + args.value.Dollar; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ValueSelector doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemSelector for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value43"
+												},
+												"ItemSelector": "{ args.value.Dollar = Math.floor( args.value.rub * 65.32 ); return 'Cost in dollars: ' + args.value.Dollar; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupValueSelector for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value44"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupValueSelector doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemTemplate for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemTemplate doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemSelector for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"ItemFormat": "Internet - {Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value46"
+												},
+												"GroupItemSelector": ""
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemSelector doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemTemplate for Listbox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ValueFormat": "{Display}",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"Value": {
+													"Source": "ObjectDataSource2",
+													"Property": "$.Value47"
+												},
+												"ItemTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource1",
+															"Property": "#.Id"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+														{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "additional string",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

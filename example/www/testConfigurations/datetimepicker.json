@@ -1,0 +1,1453 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "2G"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "GPRS"},
+					{"Id": 7, "rub": 666, "Display": "LTE"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DateTimePicker with mode 'Date'",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DateTimePicker with mode 'Time'",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "Time"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DateTimePicker with mode 'DateTime'",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DateTimePicker with TimeZone",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"TimeZone": 180
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DateTimePicker with MinValue",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"MinValue": "2016-05-13T14:43:40.4310+03:00"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DateTimePicker with MaxValue",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"MaxValue": "2016-05-13T14:43:40.4310+03:00"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "LabelText for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"LabelText": "This is labelText for datetimepicker"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "LabelFloating for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"LabelText": "This is labelText for datetimepicker",
+												"LabelFloating": true
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DisplayFormat for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"DisplayFormat": {
+													"DateTimeFormat": {
+														"Format": "d"
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "EditMask for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"EditMask": {
+													"DateTimeEditMask": {
+															"Mask": "d"
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "HintText for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"HintText": "This is HintText"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ErrorText DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"ErrorText": "This is ErrorText"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "WarningText for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"WarningText": "This is WarningText"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanging for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnValueChanging": "{ console.log('value is changing now') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanged for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnValueChanged": "{ console.log('value is changed') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Name for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Name": "NameOfThisDateTimePicker",
+												"OnLoaded": "{ args.source.setHintText(args.source.getName()) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Focusable false for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Focusable": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Enabled false for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Enabled": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Visible false for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Visible": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextStyle for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"TextStyle": "display1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"TextHorizontalAlignment": "right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment doesn't work",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground isn't text color",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Background": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background doesn't work correctly",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ToolTip for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"ToolTip": "ToolTip for DateTimePicker"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Tag for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"Tag": "myDateTimePicker",
+												"OnLoaded": "{ args.source.setHintText(args.source.getTag()) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLoaded for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnLoaded": "{ args.source.setHintText('OnLoaded is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnGotFocus for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnGotFocus": "{ args.source.setHintText('It got focus!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLostFocus for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnLostFocus": "{ args.source.setHintText('It lost focus!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnClick for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnClick": "{ args.source.setHintText('OnClick is happend!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnDoubleClick for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnDoubleClick": "{ args.source.setHintText('It is Double click!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseDown for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnMouseDown": "{ args.source.setHintText('OnMouseDown is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseUp for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnMouseUp": "{ args.source.setHintText('OnMouseUp is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseWheel for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnMouseWheel": "{ args.source.setHintText('OnMouseWheel is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseEnter for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnMouseEnter": "{ args.source.setHintText('OnMouseEnter is happend!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseLeave for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnMouseLeave": "{ args.source.setHintText('OnMouseLeave is happend!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseMove for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnMouseMove": "{ args.source.setHintText('OnMouseMove is happend!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyDown for DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnKeyDown": "{ args.source.setHintText('OnKeyDown is happend!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyUp DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnKeyUp": "{ args.source.setHintText('OnKeyUp is happend!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged DateTimePicker",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"DateTimePicker": {
+												"Value": "2016-05-13T14:43:40.4310+03:00",
+												"Mode": "DateTime",
+												"OnPropertyChanged": "{ debugger; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChange doesn't work",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

@@ -1,0 +1,1316 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "EDGE"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "LTE"},
+					{"Id": 7, "rub": 666, "Display": "WAP"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Simple Horizontal Base StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "Base",
+												"Orientation": "Horizontal",
+												"Items": [
+													{
+														"Label": {
+															"Value": "One"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Two"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Three"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Simple Horizontal FormGroup StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": [
+													{
+														"Label": {
+															"Value": "One"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Two"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Three"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Simple Vertical Base StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "Base",
+												"Orientation": "Vertical",
+												"Items": [
+													{
+														"Label": {
+															"Value": "One"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Two"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Three"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Simple Vertical FormGroup StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Vertical",
+												"Items": [
+													{
+														"Label": {
+															"Value": "One"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Two"
+														}
+													},
+													{
+														"Label": {
+															"Value": "Three"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemTemplate StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource1",
+															"Property": "#.Display"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemFormat StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemSelector StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemSelector": "{ return 'Cost: ' + args.value.rub + ' rub;'; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ItemProperty StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemProperty": "Id"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupValueProperty StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource1",
+															"Property": "#.Display"
+														}
+													}
+												},
+												"GroupValueProperty": "Display",
+												"GroupItemTemplate": {
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource1",
+															"Property": "#.Id"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemFormat StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Vertical",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "- {rub} rub",
+												"GroupValueProperty": "Display",
+												"GroupItemFormat": "Internet - {Display};"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "GroupItemProperty StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Vertical",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{Display} for just {rub} rub",
+												"GroupValueProperty": "Display",
+												"GroupItemProperty": "Display;"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Name StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Name": "NameForStackPanel"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Text StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Text": "TextForStackPanel"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Enabled StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Enabled": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Visible StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Visible": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextStyle StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub};",
+												"TextStyle": "display1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Background StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Background": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "ToolTip StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"ToolTip": "This is tooltip for stackpanel"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Tag StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"Tag": "This is tag for stack panel"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLoaded StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnLoaded": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnClick StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnClick": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnDoubleClick StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnDoubleClick": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseDown StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnMouseDown": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseUp StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnMouseUp": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseWheel StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnMouseWheel": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseEnter StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnMouseEnter": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseLeave StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnMouseLeave": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseMove StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnMouseMove": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged StackPanel",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"StackPanel": {
+												"ViewMode": "FormGroup",
+												"Orientation": "Horizontal",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemFormat": "{rub} rub;",
+												"OnPropertyChanged": "{ args.source.setBackground('primary2') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged doesn't work",
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

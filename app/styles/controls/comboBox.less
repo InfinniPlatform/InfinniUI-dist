@@ -42,10 +42,16 @@
   overflow-y:auto;
   max-height: 30vh;
   cursor: pointer;
+  text-indent: 5px;
+}
+
+.pl-combobox-items > span:hover {
+  background-color: @pl-primary2;
 }
 
 .pl-combobox-items > .pl-combobox-selected {
-  border-left: 4px solid #39b3d7;
+  // border-left: 4px solid #39b3d7;
+  background-color: @pl-background4;
 }
 
 .pl-combobox-items > .pl-combobox-checked {
@@ -57,6 +63,7 @@
   background: #FFFFFF;
   border-left: 1px solid #cccccc;
   border-right: 1px solid #cccccc;
+  border-bottom: 1px solid #cccccc;
   padding: 5px;
   margin-top: 1px;
 }
@@ -75,7 +82,7 @@
 
 .pl-combobox__value {
   position: absolute;
-  left: 0;
+  left: @padding-base-horizontal;
   right: 0;
   overflow: hidden;
 

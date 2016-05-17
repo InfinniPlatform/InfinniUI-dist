@@ -1,0 +1,1196 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "Display": "LTE"},
+					{"Id": 2, "Display": "2G"},
+					{"Id": 3, "Display": "2G"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Простой TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 1
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Multiline TextBox with 3 lines",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 2,
+												"Multiline": true,
+												"LineCount": 3
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextBox with ToolTip",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 3,
+												"ToolTip": "This is tooltip"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextBox with background",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 4,
+												"Background": "primary2",
+												"ErrorText": "Background color applies not to current elem"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Unfocusable TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 5,
+												"Focusable": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Unfocusable doesn't work",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLoaded TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 6,
+												"OnLoaded": "{ args.source.setValue('TextBox is loaded!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnGotFocus TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 7,
+												"OnGotFocus": "{ args.source.setWarningText('TextBox got focus') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnLostFocus TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 8,
+												"OnLostFocus": "{ args.source.setErrorText('TextBox lost focus') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnClick TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 9,
+												"OnClick": "{ args.source.setEnabled(false) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseEnter TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 10,
+												"OnMouseEnter": "{ args.source.setHintText('Mouse was enter the textbox') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseLeave TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 11,
+												"OnMouseLeave": "{ args.source.setHintText('Mouse was leave the textbox') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextBox with visible false",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 12,
+												"Visible": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseMove TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 13,
+												"OnMouseMove": "{ args.source.setValue('pageX: ' + args.nativeEventData.pageX + ', pageY: '+ args.nativeEventData.pageY) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyDown TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 14,
+												"OnKeyDown": "{ args.source.setValue('KeyNum: ' + args.nativeEventData.which + ' = ') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnKeyUp TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 15,
+												"OnKeyUp": "{ args.source.setValue('KeyNum: ' + args.nativeEventData.which + ' = ') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChanged TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 16,
+												"OnPropertyChanged": "{ debugger; }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnPropertyChange doesn't work",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnDoubleClick TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 17,
+												"OnDoubleClick": "{ args.source.setValue('It is Double click!') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseDown TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 18,
+												"OnMouseDown": "{ args.source.setValue('OnMouseDown is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseUp TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 19,
+												"OnMouseUp": "{ args.source.setValue('OnMouseUp is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnMouseWheel TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 20,
+												"OnMouseWheel": "{ args.source.setValue('OnMouseWheel is happend') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Enabled false TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 21,
+												"Enabled": false
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextStyle TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 22,
+												"TextStyle": "display1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Name TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 23,
+												"Name": "NameOfThisTextBox",
+												"OnLoaded": "{ args.source.setValue(args.source.getName()) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 24,
+												"TextHorizontalAlignment": "right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextHorizontalAlignment doesn't work",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 25,
+												"Foreground": "primary2"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Foreground isn't text color",
+												"Foreground": "primary1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Tag TextBox OnClick",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 26,
+												"Tag": "myTextBox",
+												"OnClick": "{ args.source.setValue(args.source.getTag()) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanging TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 27,
+												"OnValueChanging": "{ console.log('value is changing now') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "OnValueChanged TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 28,
+												"OnValueChanged": "{ console.log('value is changed') }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "LabelText TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 29,
+												"LabelText": "this is label text"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "LabelFloating TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 30,
+												"LabelText": "this is label text",
+												"LabelFloating": true
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "DisplayFormat TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 31,
+												"EditMask": {
+													"DateTimeEditMask": {
+															"Mask": "d"
+													}
+												},
+												"DisplayFormat": {
+													"DateTimeFormat": {
+														"Format": "d"
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "EditMask TextBox",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"TextBox": {
+												"Value": 32,
+												"EditMask": {
+													"DateTimeEditMask": {
+															"Mask": "d"
+													}
+												}
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": []
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

@@ -54,16 +54,99 @@
   ],
   "Items": [
     {
-      "DatePicker": {
-        "Name": "MyDatePicker"
+      "Label": {
+        "Text": "Focusable",
+        "Focusable": true
       }
     },
     {
       "Label": {
-        "Value": {
-          "Source": "MyDatePicker",
-          "Property": "value"
+        "Text": "Not Focusable"
+      }
+    },
+    {
+      "NumericBox": {
+        "Focusable": true
+      }
+    },
+    {
+      "ListBox": {
+        "Items": {
+          "Source": "ds1",
+          "Property": ""
+        },
+        "ItemTemplate": {
+          "StackPanel": {
+            "Items": [
+              {
+                "PasswordBox": {
+
+                }
+              },
+              {
+                "ImageBox": {
+                  "Focusable": false,
+                  "Value": {
+                    "Source": "ds1",
+                    "Property": "0.file"
+                  }
+                }
+              },
+              {
+                "Icon": {
+                  "Value": "remove",
+                  "Focusable": true
+                }
+              },
+              {
+                "FileBox": {
+                  "Value": {
+                    "Source": "ds1",
+                    "Property": "0.file"
+                  },
+                  "Focusable": true
+                }
+              },
+              {
+                "Button": {
+                  "Focusable": false,
+                  "Text": "Btn 1"
+                }
+              },
+              {
+                "ButtonEdit": {
+                  "Focusable": true
+                }
+              },
+              {
+                "ComboBox": {
+                  "Focusable": false,
+                  "Items": {
+                    "Source": "ds1",
+                    "Property": ""
+                  },
+                  "ItemProperty": "Title"
+                }
+              },
+              {
+                "CheckBox": {
+                  "Text": "Btn 1"
+                }
+              },
+              {
+                "TextBox": {
+                  "Multiline": true
+                }
+              },
+              {
+                "TextBox": {
+                  "Focusable": false
+                }
+              }
+            ]
+          }
         }
+
       }
     }
 
