@@ -12127,7 +12127,7 @@ var GridPanelView = ContainerView.extend(
         columnCount: 12,
 
         template: {
-            row: InfinniUI.Template["controls/GridPanel/template/row.tpl.html"]
+            row: InfinniUI.Template["controls/gridPanel/template/row.tpl.html"]
         },
 
         initialize: function (options) {
