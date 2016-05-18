@@ -5,6 +5,14 @@ this["InfinniUI"]["Template"]["controls/_base/editor/template/editorTextArea.tpl
 
 this["InfinniUI"]["Template"]["controls/_base/editor/template/editorTextBox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<input tabindex="0" type="' +((__t = (inputType)) == null ? '' : __t) +'" class="pl-control-editor form-control pl-text-box-control">';}return __p};
 
+this["InfinniUI"]["Template"]["controls/application/statusBar/authentication/enterTemplate.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '';}return __p};
+
+this["InfinniUI"]["Template"]["controls/application/statusBar/authentication/loginTemplate.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '';}return __p};
+
+this["InfinniUI"]["Template"]["controls/application/statusBar/authentication/successTemplate.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '';}return __p};
+
+this["InfinniUI"]["Template"]["controls/application/statusBar/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '';}return __p};
+
 this["InfinniUI"]["Template"]["controls/button/commonView/template/button.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<button type="button" class="btntext btn"></button>';}return __p};
 
 this["InfinniUI"]["Template"]["controls/buttonEdit/template/textBoxArea.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<label class="pl-control-label" for="' +__e( guid ) +'"></label>\r\n<textarea class="pl-control form-control pl-text-area-input" id="' +__e( guid ) +'"></textarea>\r\n\r\n<div class="pl-control-editor"></div>\r\n\r\n<div class="pl-control-hint-text help-block hidden"></div>\r\n<div class="pl-control-error-text help-block hidden"></div>\r\n<div class="pl-control-warning-text help-block hidden"></div>';}return __p};

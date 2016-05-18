@@ -8742,6 +8742,14 @@ var TimePickerView = DateTimePickerView .extend({
     className: "pl-datepicker pl-timepicker form-group"
 
 });
+//####app/controls/application/statusBar/authentication/SignInSuccessView.js
+
+//####app/controls/application/statusBar/authentication/SignInView.js
+
+//####app/controls/application/statusBar/authentication/authenticationProvider.js
+
+//####app/controls/application/statusBar/statusBar.js
+
 //####app/controls/button/buttonControl.js
 /**
  *
