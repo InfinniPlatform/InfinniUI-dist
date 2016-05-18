@@ -1,7 +1,10 @@
 ﻿module.exports = function (grunt) {
+    var cwd = process.cwd();
+    process.chdir("../../");
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-clean');
+    process.chdir(cwd);
 
     grunt.initConfig({
         less: {

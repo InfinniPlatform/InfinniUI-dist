@@ -8743,13 +8743,660 @@ var TimePickerView = DateTimePickerView .extend({
 
 });
 //####app/controls/application/statusBar/authentication/SignInSuccessView.js
+jQuery(document).ready(function () {
+    InfinniUI.user = {
+        onReadyDeferred: $.Deferred(),
+        onReady: function(handler){
+            this.onReadyDeferred.done(handler);
+        }
+    };
 
+    refreshUserInfo();
+});
+
+function getUserInfo(self){
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+    authProvider.getCurrentUser(
+        function (result) {
+            self.model.set('result', result);
+        },
+        function (error) {
+            showObject('#signInInternalResult', error);
+        }
+    );
+}
+
+function refreshUserInfo() {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+    authProvider.getCurrentUser(
+        function (result) {
+            InfinniUI.user.onReadyDeferred.resolve(result);
+        },
+        function (error) {
+            InfinniUI.user .onReadyDeferred.resolve(null);
+        }
+    );
+}
+
+function changePassword() {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+
+    authProvider.changePassword(
+        $('#oldPassword').val(),
+        $('#newPassword').val(),
+        function (result) {
+            refreshUserInfo();
+        },
+        function (error) {
+            showObject('#changePasswordResult', error);
+        }
+    );
+}
+
+function changeProfile() {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+
+    authProvider.changeProfile(
+        $('#displayName').val(),
+        $('#description').val(),
+        function (result) {
+            refreshUserInfo();
+        },
+        function (error) {
+            showObject('#changeProfileResult', error);
+        }
+    );
+}
+
+function changeActiveRole() {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+
+    authProvider.changeActiveRole(
+        $('#activeRole').val(),
+        function (result) {
+            refreshUserInfo();
+        },
+        function (error) {
+            showObject('#сhangeActiveRoleResult', error);
+        }
+    );
+}
+
+function getLinkExternalLoginForm() {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+
+    authProvider.getLinkExternalLoginForm(
+        getAbsoluteUri('/Home/SignInSuccess'),
+        getAbsoluteUri('/Home/SignInFailure'),
+        function (result) {
+            $('#linkExternalLoginForm').append(result);
+        },
+        function (error) {
+            showObject('#linkExternalLoginResult', error);
+        }
+    );
+}
+
+function unlinkExternalLogin(provider, providerKey) {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+
+    authProvider.unlinkExternalLogin(
+        provider,
+        providerKey,
+        function (result) {
+            refreshUserInfo();
+        },
+        function (error) {
+            showObject('#unlinkExternalLoginResult', error);
+        }
+    );
+}
+
+function signOut(self) {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+
+    onSuccessSignOut(getHomePageContext());
+
+    authProvider.signOut(
+        function (result) {
+
+
+            window.getCurrentUserName = function(){
+                return null;
+            };
+
+            //self.model.set('result', result);
+            self.model.set('result', null);
+            location.reload();
+//            window.location = '/Home/SignIn';
+        },
+        function (error) {
+            showObject('#getCurrentUserResult', error.responseJSON);
+        }
+    );
+}
+
+function setUserInfo(userInfo) {
+    //showObject('#getCurrentUserResult', userInfo);
+    //$('#displayName').val(userInfo.DisplayName);
+    //$('#description').val(userInfo.Description);
+    //$('#activeRole').val(userInfo.ActiveRole);
+
+    if (userInfo.Logins !== null && userInfo.Logins !== undefined) {
+        var externalLogins = $('#externalLogins');
+
+        for (var i = 0; i < userInfo.Logins.length; ++i) {
+            var loginInfo = userInfo.Logins[i];
+            var provider = loginInfo.Provider;
+            var providerKey = loginInfo.ProviderKey;
+
+            var unlinkButton = $(document.createElement('input'));
+            unlinkButton.attr('type', 'button');
+            unlinkButton.attr('value', provider);
+            unlinkButton.attr('onclick', 'unlinkExternalLogin(\'' + provider + '\', \'' + providerKey + '\')');
+            externalLogins.append(unlinkButton);
+        }
+    }
+    getLinkExternalLoginForm();
+}
+
+function getAbsoluteUri(relativeUri) {
+    return location.protocol + '//' + location.host + relativeUri;
+}
+
+function showObject(element, object) {
+    var text = formatObject(object);
+    $(element).text(text);
+}
+
+function formatObject(object) {
+    return JSON.stringify(object, null, 4);
+}
 //####app/controls/application/statusBar/authentication/SignInView.js
+jQuery(document).ready(function () {
+    getSignInExternalForm();
+});
 
+function signInInternal(self) {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+    authProvider.signInInternal(
+        $('#userName').val(),
+        $('#password').val(),
+        $('#remember').is(':checked'),
+        function (result) {
+
+
+            window.getCurrentUserName = function(){
+                return result.UserName;
+            };
+
+            self.model.set('result', result);
+            self.$modal.modal('hide');
+            location.reload();
+        },
+        function (error) {
+            if(error.Error.indexOf('Invalid username or password') > -1){
+                toastr.error('Неверный логин или пароль', "Ошибка!");
+            }
+            showObject('#signInInternalResult', error);
+        }
+    );
+}
+
+function getSignInExternalForm() {
+    var authProvider = new AuthenticationProvider(InfinniUI.config.serverUrl);
+    authProvider.getSignInExternalForm(
+        getAbsoluteUri('/Home/SignInSuccess'),
+        getAbsoluteUri('/Home/SignInFailure'),
+        function (result) {
+            $('#signInExternalForm').append(result);
+        },
+        function (error) {
+            showObject('#signInExternalResult', error);
+        }
+    );
+}
+
+function getAbsoluteUri(relativeUri) {
+    return location.protocol + '//' + location.host + relativeUri;
+}
+
+function showObject(element, object) {
+    var text = formatObject(object);
+    $(element).text(text);
+}
+
+function formatObject(object) {
+    return JSON.stringify(object, null, 4);
+}
 //####app/controls/application/statusBar/authentication/authenticationProvider.js
+/**
+  * Провайдер аутентификации.
+  *
+  * @constructor
+  */
+function AuthenticationProvider(baseAddress) {
+    this.baseAddress = baseAddress;
+}
 
+
+_.extend(AuthenticationProvider.prototype, {
+    handlers: {
+        onActiveRoleChanged: $.Callbacks(),
+        onSignInInternal: $.Callbacks(),
+        onSignOut: $.Callbacks()
+    },
+
+    /**
+          * Возвращает информацию о текущем пользователе.
+          *
+          * @public
+          */
+    getCurrentUser: function(resultCallback, errorCallback) {
+        this.sendPostRequest('/Auth/GetCurrentUser', {}, resultCallback, errorCallback);
+    },
+
+    /**
+          * Изменяет пароль текущего пользователя.
+          *
+          * @public
+          */
+    changePassword: function (oldPassword, newPassword, resultCallback, errorCallback) {
+        var changePasswordForm = {
+            OldPassword: oldPassword,
+            NewPassword: newPassword
+        };
+
+        this.sendPostRequest('/Auth/ChangePassword', changePasswordForm, resultCallback, errorCallback);
+    },
+
+    /**
+          * Изменяет персональную информацию текущего пользователя.
+          *
+          * @public
+          */
+    changeProfile: function (displayName, description, resultCallback, errorCallback) {
+        var changeProfileForm = {
+            DisplayName: displayName,
+            Description: description
+        };
+
+        this.sendPostRequest('/Auth/ChangeProfile', changeProfileForm, resultCallback, errorCallback);
+    },
+
+    /**
+          * Изменяет активную роль текущего пользователя.
+          *
+          * @public
+          */
+    changeActiveRole: function (activeRole, resultCallback, errorCallback) {
+        var changeActiveRoleForm = {
+            ActiveRole: activeRole
+        };
+
+        this.sendPostRequest('/Auth/ChangeActiveRole', changeActiveRoleForm, function(){
+            var args = _.toArray(arguments);
+            args.push(activeRole);
+            if(resultCallback){
+                resultCallback.apply(this, args);
+            }
+
+            this.handlers.onActiveRoleChanged.fire.apply(this.handlers.onActiveRoleChanged, args);
+        }, errorCallback);
+    },
+
+    /**
+          * Осуществляет вход пользователя в систему через внутренний провайдер.
+          *
+          * @public
+          */
+    signInInternal: function (userName, password, remember, resultCallback, errorCallback) {
+        var signInInternalForm = {
+            UserName: userName,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest('/Auth/SignInInternal', signInInternalForm, resultCallback, errorCallback);
+    },
+
+    /**
+          * Возвращает форму входа пользователя в систему через внешний провайдер.
+          *
+          * @public
+          */
+    getSignInExternalForm: function (successUrl, failureUrl, resultCallback, errorCallback) {
+        this.getExternalLoginForm('/Auth/SignInExternal', successUrl, failureUrl, resultCallback, errorCallback);
+    },
+
+    /**
+          * Возвращает форму добавления текущему пользователю имени входа у внешнего провайдера.
+          *
+          * @public
+          */
+    getLinkExternalLoginForm: function (successUrl, failureUrl, resultCallback, errorCallback) {
+        this.getExternalLoginForm('/Auth/LinkExternalLogin', successUrl, failureUrl, resultCallback, errorCallback);
+    },
+
+    /**
+          * Удаляет у текущего пользователя имя входа у внешнего провайдера.
+          *
+          * @public
+          */
+    unlinkExternalLogin: function (provider, providerKey, resultCallback, errorCallback) {
+        var unlinkExternalLoginForm = {
+            Provider: provider,
+            ProviderKey: providerKey
+        };
+
+        this.sendPostRequest('/Auth/UnlinkExternalLogin', unlinkExternalLoginForm, resultCallback, errorCallback);
+    },
+
+    addClaim: function(userName, claimName, claimValue, resultCallback, errorCallback) {
+        var claim = {
+            "id" : null,
+            "changesObject" : {
+                "UserName" : userName,
+                "ClaimType": claimName,
+                "ClaimValue": claimValue
+            },
+            "replace" : false
+        };
+
+        this.sendPostRequest('/RestfulApi/StandardApi/authorization/setsessiondata', claim, resultCallback, errorCallback);
+    },
+
+    setSessionData: function(claimType, claimValue, resultCallback, errorCallback) {
+        var claim = {
+            "id" : null,
+            "changesObject" : {
+                "ClaimType": claimType,
+                "ClaimValue": claimValue
+            },
+            "replace" : false
+        };
+
+        this.sendPostRequest('/RestfulApi/StandardApi/authorization/setsessiondata', claim, resultCallback, errorCallback);
+    },
+
+    getSessionData: function(claimType, resultCallback, errorCallback) {
+        var claim = {
+            "id" : null,
+            "changesObject" : {
+                "ClaimType": claimType,
+            },
+            "replace" : false
+        };
+
+        this.sendPostRequest('/RestfulApi/StandardApi/authorization/getsessiondata', claim, resultCallback, errorCallback);
+    },
+
+    /**
+          * Выход пользователя из системы.
+          *
+          * @public
+          */
+    signOut: function (resultCallback, errorCallback) {
+        var signOutInternalForm = {
+            "id" : null,
+            "changesObject" : {},
+            "replace" : false
+        };
+
+        this.sendPostRequest('/Auth/SignOut', null, function(){
+            InfinniUI.user.onReadyDeferred = $.Deferred();
+            InfinniUI.user.onReadyDeferred.resolve(null);
+
+            var args = _.toArray(arguments);
+            if(resultCallback){
+                resultCallback.apply(this, args);
+            }
+
+            this.handlers.onSignOut.fire.apply(this.handlers.onSignOut, args);
+
+        }.bind(this), errorCallback);
+    },
+
+    getExternalLoginForm: function (requestUri, successUrl, failureUrl, resultCallback, errorCallback) {
+        var url = this.baseAddress + requestUri;
+        this.sendPostRequest('/Auth/GetExternalProviders', {},
+            function (result) {
+                var formElement = $(document.createElement('form'));
+                formElement.attr('method', 'POST');
+                formElement.attr('action', url);
+
+                var successUrlElement = $(document.createElement('input'));
+                successUrlElement.attr('type', 'hidden');
+                successUrlElement.attr('name', 'SuccessUrl');
+                successUrlElement.attr('value', successUrl);
+                formElement.append(successUrlElement);
+
+                var failureUrlElement = $(document.createElement('input'));
+                failureUrlElement.attr('type', 'hidden');
+                failureUrlElement.attr('name', 'FailureUrl');
+                failureUrlElement.attr('value', failureUrl);
+                formElement.append(failureUrlElement);
+
+                if (result !== null && result !== undefined) {
+                    for (var i = 0; i < result.length; ++i) {
+                        var providerInfo = result[i];
+                        var providerType = providerInfo.Type;
+                        var providerName = providerInfo.Name;
+
+                        var loginButton = $(document.createElement('button'));
+                        loginButton.attr('type', 'submit');
+                        loginButton.attr('name', 'Provider');
+                        loginButton.attr('value', providerType);
+                        loginButton.text(providerName);
+                        formElement.append(loginButton);
+                    }
+                }
+
+                resultCallback(formElement);
+            },
+            errorCallback
+        );
+    },
+
+    sendGetRequest: function (requestUri, resultCallback, errorCallback) {
+        $.ajax(this.baseAddress + requestUri, {
+            type: 'GET',
+            xhrFields: {
+                withCredentials: true
+            },
+            beforeSend: this.onBeforeRequest(),
+            success: this.onSuccessRequest(resultCallback),
+            error: this.onErrorRequest(function (error) {
+                if(errorCallback) {
+                    errorCallback(error.responseJSON);
+                }
+            })
+        });
+    },
+
+    sendPostRequest: function (requestUri, requestData, resultCallback, errorCallback) {
+        var that = this;
+
+        if (requestData !== null) {
+            requestData = JSON.stringify(requestData);
+        }
+        $.ajax(this.baseAddress + requestUri, {
+            type: 'POST',
+            xhrFields: {
+                withCredentials: true
+            },
+            data: requestData,
+            contentType: 'application/json',
+            beforeSend: this.onBeforeRequest(),
+            success: this.onSuccessRequest(resultCallback),
+            error: this.onErrorRequest(function (error) {
+                if(error.status != 200) {
+                    if(errorCallback) {
+                        errorCallback(error.responseJSON);
+                    }
+                } else {
+                    that.onSuccessRequest(resultCallback).apply(that, arguments);
+                }
+            })
+        });
+    },
+
+    onActiveRoleChanged: function(handler){
+        this.handlers.onActiveRoleChanged.add(handler);
+    },
+
+    onSignInInternal: function(handler){
+        this.handlers.onSignInInternal.add(handler);
+    },
+
+    onSignOut: function(handler){
+        this.handlers.onSignOut.add(handler);
+    }
+});
+
+_.extend(AuthenticationProvider.prototype, ajaxRequestMixin);
+
+InfinniUI.global.session = new AuthenticationProvider(InfinniUI.config.serverUrl);
 //####app/controls/application/statusBar/statusBar.js
+var StatusBarControl = function () {
+    _.superClass(StatusBarControl, this);
+};
+_.inherit(StatusBarControl, Control);
+_.extend(StatusBarControl.prototype, {
+    createControlModel: function () {
+        return new StatusBarModel();
+    },
+    createControlView: function (model) {
+        return new StatusBarView({model: model});
+    }
+});
 
+var StatusBarModel = ControlModel.extend({
+    defaults: _.defaults({}, ControlModel.prototype.defaults, {
+        time: '',
+        date: '',
+        result: null
+    })
+});
+
+var StatusBarView = ControlView.extend({
+    className: 'pl-status-bar',
+
+    events: {
+        'click .signIn': 'signInHandler',
+        'click .signOut': 'signOutHandler',
+        'click .status-bar-menu': 'openMenuHandler'
+    },
+
+    template: InfinniUI.Template['controls/application/statusBar/template.tpl.html'],
+    loginTemplate: InfinniUI.Template['controls/application/statusBar/authentication/loginTemplate.tpl.html'],
+
+    enterTemplate: InfinniUI.Template['controls/application/statusBar/authentication/enterTemplate.tpl.html'],
+    successTemplate: InfinniUI.Template['controls/application/statusBar/authentication/successTemplate.tpl.html'],
+
+    initialize: function () {
+        var self = this;
+        self.model.set('time', moment().format('HH:mm'));
+        self.model.set('date', moment().format('D MMMM'));
+
+        window.setInterval(function () {
+            self.model.set('time', moment().format('HH:mm'));
+            self.model.set('date', moment().format('D MMMM'));
+            self.dateRender();
+        }, 10 * 1000);
+
+        getUserInfo(this);
+        this.listenTo(this.model, 'change:result', this.render);
+    },
+
+    dateRender: function () {
+        this.$el.find('.time').text(this.model.get('time'));
+        this.$el.find('.date').text(this.model.get('date'));
+    },
+
+    signInHandler: function () {
+        var self = this;
+        if (!this.$modal) {
+            this.$modal = $(this.loginTemplate({}));
+            this.$modal.appendTo('body');
+        }
+
+        this.$modal.modal('show');
+        this.$modal.on('hidden.bs.modal', function () {
+            $(this).find('#password, #userName').val('');
+            $(this).find('#remember').attr('checked', false);
+        });
+        this.$modal.find('.post').on('click', function () {
+            signInInternal(self);
+        })
+    },
+    openMenuHandler: function(){
+        var menu = $('.app-area').find('.pl-menu');
+        var area = menu.closest('.app-area');
+
+        if(menu.length && area.length) {
+            if($(area).is(':visible')) {
+                area.css({
+                    'display': 'none'
+                });
+            }else{
+                area.css({
+                    'position': 'absolute',
+                    'width': '100%',
+                    'display': 'block',
+                    'overflow': 'hidden'
+                });
+            }
+        }
+    },
+
+    signOutHandler: function () {
+        signOut(this);
+    },
+
+    render: function () {
+        var result = this.model.get('result');debugger;
+        var header = InfinniUI.config.configName;
+        var $wrap = $(this.template({header: header}));
+        var $loginTemplate,
+            self = this;
+
+        window.adjustLoginResult(result).then(function(r){
+            if (result) {
+                $loginTemplate = $(self.successTemplate({
+                    displayName: r.UserName,
+                    activeRole: r.ActiveRole,
+                    roles: _.pluck(result.Roles, 'DisplayName').join(', ')
+                }));
+            } else {
+                $loginTemplate = $(self.enterTemplate({}));
+            }
+
+            $wrap.find('.page-header-inner').prepend($loginTemplate);
+            self.$el
+                .empty()
+                .append($wrap);
+        });
+
+        this.$el.find('.calendar').datepicker({
+            todayHighlight: true,
+            language: 'ru'
+        });
+
+        //~fix DatePicker auto close
+        this.$el.find('.dropdown-toggle').on('click.bs.dropdown', function() {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                $(this).parent('.dropdown').off('hide.bs.dropdown');
+            } else {
+                $(this).parent('.dropdown').on('hide.bs.dropdown', function () {return false;});
+            }
+            $(this).data("clicks", !clicks);
+        });
+
+        return this;
+    }
+});
 //####app/controls/button/buttonControl.js
 /**
  *
