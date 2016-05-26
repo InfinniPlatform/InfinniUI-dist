@@ -8,4 +8,4 @@ window.InfinniUI.config.serverUrl = 'http://localhost:9900';
 window.InfinniUI.config.configId = 'PTA';
 window.InfinniUI.config.configName = 'Хабинет';
 
-window.InfinniUI.config.homePage = 'testConfigurations/listbox.json'; //{ConfigId: InfinniUI.config.configId, DocumentId: 'Common', MetadataName: 'HomePage'}; //'stab.json'
+window.InfinniUI.config.homePage = 'testConfigurations/indeterminatecheckbox.json'; //{ConfigId: InfinniUI.config.configId, DocumentId: 'Common', MetadataName: 'HomePage'}; //'stab.json'

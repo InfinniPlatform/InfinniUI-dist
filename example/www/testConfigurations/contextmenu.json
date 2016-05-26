@@ -1,0 +1,286 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "2G"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "GPRS"},
+					{"Id": 7, "rub": 666, "Display": "LTE"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Простой ListBox(viewmode - base)",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"ListBox": {
+												"ViewMode": "base",
+												"ItemProperty": "Display",
+												"Items": {
+													"Source": "ObjectDataSource1"
+												},
+												"ItemTemplate":{
+													"Label": {
+														"Value": {
+															"Source": "ObjectDataSource1",
+															"Property": "#.Display"
+														}
+													}
+												},
+												"ContextMenu": {
+													"Items": [
+														{
+															"Button": {
+																"ViewMode": "link",
+																"Text": "contextMenuLink1contextMenuLink1contextMenuLink1contextMenuLink1",
+																"OnClick": "{ console.log( 'contextMenuLink1 is clicked!' ) }"
+															}
+														},
+														{
+															"Button": {
+																"ViewMode": "link",
+																"Text": "contextMenuLink2contextMenuLink2contextMenuLink2contextMenuLink2",
+																"OnClick": "{ console.log( 'contextMenuLink2 is clicked!' ) }"
+															}
+														},
+														{
+															"Divider": {}
+														},
+														{
+															"Button": {
+																"ViewMode": "link",
+																"Text": "contextMenuLink3",
+																"OnClick": "{ console.log( 'contextMenuLink3 is clicked!' ) }"
+															}
+														},
+														{
+															"Button": {
+																"ViewMode": "link",
+																"Text": "contextMenuLink4",
+																"OnClick": "{ console.log( 'contextMenuLink4 is clicked!' ) }"
+															}
+														},
+														{
+															"Divider": {}
+														},
+														{
+															"Button": {
+																"ViewMode": "link",
+																"Text": "contextMenuLink5",
+																"OnClick": "{ console.log( 'contextMenuLink5 is clicked!' ) }"
+															}
+														},
+														{
+															"Button": {
+																"ViewMode": "link",
+																"Text": "contextMenuLink6",
+																"OnClick": "{ console.log( 'contextMenuLink6 is clicked!' ) }"
+															}
+														}
+													]
+												},
+												"ToolTip": "this is bottom toolTip"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Divider": {
+												"Name": "nameDivider",
+												"Background": "primary2",
+												"OnLoaded": "{ console.log( 'divider is loaded!' ) }"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Button test",
+												"HorizontalAlignment": "Right"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"PopupButton": {
+												"Text": "popupButton",
+												"ViewMode": "forMenu",
+												"Items": [
+													{
+														"Button": {
+															"Text": "link1"
+														}
+													},
+													{
+														"Button": {
+															"Text": "link2"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Divider": {
+												"Name": "nameDivider",
+												"Background": "primary2"
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

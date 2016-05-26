@@ -17,44 +17,40 @@ InfinniUI.JsonEditor = (function () {
 
     return {
         setMetadata: function (metadata) {
-            metadataForOpen = metadata;
+            // TODO: Не универсально
+            var name = metadata.Namespace + '.' + metadata.Name;
+            return $.get(InfinniUI.config.editorService.url, {name: name})
+                .success(function (data) {
+                    metadataForOpen = data;
 
-            if (!childWindow) {
+                    if (!childWindow) {
 
-                var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
+                        var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
 
-                tempChildWindow.onload = function () {
-                    childWindow = tempChildWindow;
+                        tempChildWindow.onload = function () {
+                            childWindow = tempChildWindow;
 
-                    childWindow.onSaveMetadata(function (metadata) {
-                        /* Данное поле появлятся в платформе, в метаданных оно не нужно */
-                        delete metadata.DocumentId;
+                            childWindow.onSaveMetadata(function (metadata) {
+                                $.post(InfinniUI.config.editorService.url, {Json: JSON.stringify(metadata)})
+                                    .success(function () {
+                                        toastr.success('Metadata saved');
+                                    })
+                                    .error(function (error) {
+                                        alert(JSON.stringify(error));
+                                    });
+                            });
 
-                        $.ajax({
-                            url: InfinniUI.config.editorService.url,
-                            type: 'POST',
-                            data: {
-                                Json: JSON.stringify(metadata)
-                            },
-                            success: function () {
-                                toastr.success('Metadata saved');
-                            },
-                            error: function (error) {
-                                alert(JSON.stringify(error));
-                            }
+                            updateContentOfChildWindow();
+                        };
+
+                        tempChildWindow.addEventListener('unload', function() {
+                            childWindow = undefined;
                         });
-                    });
-
-                    updateContentOfChildWindow();
-                };
-
-                tempChildWindow.addEventListener('unload', function() {
-                    childWindow = undefined;
+                    } else {
+                        updateContentOfChildWindow();
+                        childWindow.focus();
+                    }
                 });
-            } else {
-                updateContentOfChildWindow();
-                childWindow.focus();
-            }
         },
         setPath: function (path) {
             pathForOpen = path;

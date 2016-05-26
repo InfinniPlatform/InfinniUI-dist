@@ -105,7 +105,7 @@ _.defaults( InfinniUI.config, {
     configName: 'Хабинет'
 //devblockstart
     ,editorService: {
-        url: 'http://localhost:5500/api/metadata/saveMetadata'
+        url: 'http://localhost:5500/api/metadata'
     }
 //devblockstop
 
@@ -4001,8 +4001,10 @@ window.messageTypes = {
     onRemoveLayoutPanel: {name: 'onRemoveLayoutPanel'},
     onNotifyUser: {name: 'onNotifyUser'},
     onToolTip: {name: 'onToolTip'},
-    onToolTipShow: {name: 'onToolTipShow'},
-    onToolTipHide: {name: 'onToolTipHide'},
+
+    onContextMenu: {name: 'onContextMenu'},
+    onOpenContextMenu: {name: 'onOpenContextMenu'},
+
     onDataLoading: {name: 'onDataLoading'},
     onDataLoaded: {name: 'onDataLoaded'},
 
@@ -4654,8 +4656,7 @@ var ControlModel = Backbone.Model.extend({
         validationState: 'success',
         validationMessage: '',
         focusable: true,
-        focused: false,
-        showToolTip: false//Тоолтип не показывается
+        focused: false
     },
 
     initialize: function(){
@@ -4664,7 +4665,7 @@ var ControlModel = Backbone.Model.extend({
             this.trigger(value ? 'OnGotFocus' : 'OnLostFocus');
         });
     },
-    
+
     set: function (key, val, options) {
         var
             defaults = this.defaults,
@@ -4691,6 +4692,7 @@ var ControlModel = Backbone.Model.extend({
     }
 
 });
+
 //####app/controls/_base/control/controlView.js
 /**
  * @class
@@ -4739,12 +4741,10 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         this.listenTo(this.model, 'change:focused', this.updateFocused);
 
         this.initFocusHandlers();
-        this.initTooltipHandlers();
     },
 
     initFocusHandlers: function () {
-        var
-            $el = this.$el,
+        var $el = this.$el,
             el = this.el,
             view = this,
             model = this.model;
@@ -4771,30 +4771,6 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
 
     isControlElement: function (el) {
         return this.el ===  el || $.contains(this.el, el)
-    },
-
-    initTooltipHandlers: function () {
-        var
-            view = this,
-            $el = this.$el,
-            el = this.el,
-            model = this.model;
-
-        $el
-            .on('mouseover', onMouseOver)
-            .on('mouseout', onMouseOut);
-
-        function onMouseOver(event) {
-            model.set('showToolTip', true);
-        }
-
-        function onMouseOut(event) {
-            if ($.contains(el, event.relatedTarget)) {
-                //mouse out to element inside control
-            } else {
-                model.set('showToolTip', false);
-            }
-        }
     },
 
     updateProperties: function () {
@@ -5129,6 +5105,7 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
 });
 
 _.extend(ControlView.prototype, bindUIElementsMixin, eventHandlerMixin);
+
 //####app/controls/_base/control/pdfViewerViewBase.js
 var PdfViewerViewBase = ControlView.extend({
     className: 'pl-document-viewer',
@@ -6358,6 +6335,11 @@ var ListEditorBaseModel = ContainerModel.extend( _.extend({
         return this.itemIndexByValue(value);
     },
 
+    isDisabledItem: function(item){
+        var disabledItemCondition = this.get('disabledItemCondition');
+        return (disabledItemCondition != null) && disabledItemCondition(undefined, {value: item});
+    },
+
     updateHashValueByItem: function () {
         var items = this.get('items'),
             value;
@@ -6379,6 +6361,7 @@ var ListEditorBaseView = ContainerView.extend( _.extend( {}, editorBaseViewMixin
 
         this.listenTo(this.model, 'change:selectedItem', this.updateSelectedItem);
         this.listenTo(this.model, 'change:multiSelect', this.updateMultiSelect);
+        this.listenTo(this.model, 'change:disabledItemCondition', this.updateDisabledItem);
     },
 
     updateProperties: function(){
@@ -6387,6 +6370,7 @@ var ListEditorBaseView = ContainerView.extend( _.extend( {}, editorBaseViewMixin
 
         this.updateSelectedItem();
         this.updateMultiSelect();
+        this.updateDisabledItem();
     },
 
     updateMultiSelect: function () {
@@ -10335,6 +10319,10 @@ var ComboBoxView = ListEditorBaseView.extend({
 
     },
 
+    updateDisabledItem: function () {
+        this.toggleDropdown(false);
+    },
+
     isDropdown: function () {
         var model = this.model;
         return !!model.get('dropdown');
@@ -10475,7 +10463,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
         this.ui.noItems.toggleClass('hidden', !noItems);
 
         this.markSelectedItems();
-        this.markCheckedItems()
+        this.markCheckedItems();
     },
 
     setItemsContent: function (content) {
@@ -10599,10 +10587,11 @@ var ComboBoxDropdownView = Backbone.View.extend({
     },
 
     onClickItemHandler: function (item) {
-        var model = this.model;
-
-        model.toggleItem(item);
-        this.close();
+        var isEnabled = !this.model.isDisabledItem(item);
+        if(isEnabled) {
+            this.model.toggleItem(item);
+            this.close();
+        }
     },
 
     onKeyUpHandler: function (event) {
@@ -10758,6 +10747,10 @@ ComboBoxBaseViewStrategy.prototype.getModelAttribute = function (attributeName) 
     return model.get(attributeName);
 };
 
+ComboBoxBaseViewStrategy.prototype.isEnabledItem = function (item) {
+    return !this.dropdownView.model.isDisabledItem(item);
+};
+
 /**
  * @description Рендеринг элементов списка
  * @abstract
@@ -10787,10 +10780,11 @@ ComboBoxBaseViewStrategy.prototype._renderItems = function (items) {
         itemTemplate = this.getModelAttribute('itemTemplate');
 
     $items = items.map(function (item) {
-        var $item = itemTemplate(undefined, {
+        var itemEl = itemTemplate(undefined, {
             value: item,
             index: collection.indexOf(item)
-        }).render();
+        });
+        var $item = itemEl.render();
 
         if (typeof item !== 'undefined') {
             $item.data('pl-data-item', item);
@@ -10798,6 +10792,9 @@ ComboBoxBaseViewStrategy.prototype._renderItems = function (items) {
 
         this.addOnClickEventListener($item, item);
         this.addOnHoverEventListener($item, item);
+
+        itemEl.setEnabled( this.isEnabledItem(item) );
+
         return $item;
     }, this);
 
@@ -11097,6 +11094,190 @@ var ComboBoxValues = Backbone.View.extend({
 });
 
 _.extend(ComboBoxValues.prototype, bindUIElementsMixin);
+//####app/controls/contextMenu/contextMenuControl.js
+function ContextMenuControl() {
+    _.superClass(ContextMenuControl, this);
+}
+
+_.inherit(ContextMenuControl, ContainerControl);
+
+_.extend(ContextMenuControl.prototype, /** @lends ContextMenuControl.prototype */ {
+
+    createControlModel: function () {
+        return new ContextMenuModel();
+    },
+
+    createControlView: function (model) {
+        return new ContextMenuView({model: model});
+    }
+
+});
+
+
+//####app/controls/contextMenu/contextMenuModel.js
+var ContextMenuModel = ContainerModel.extend({
+
+});
+
+//####app/controls/contextMenu/contextMenuView.js
+var ContextMenuView = ContainerView.extend({
+
+	contextMenuTemplate: InfinniUI.Template["controls/contextMenu/template/contextMenu.tpl.html"],
+
+	updateProperties: function(){
+		ContainerView.prototype.updateProperties.call(this);
+
+		this.updateContent();
+	},
+
+	updateContent: CommonButtonView.prototype.updateContent,
+	updateText: CommonButtonView.prototype.updateText,
+
+	updateHorizontalAlignment: function(){
+		var horizontalAlignment = this.model.get('horizontalAlignment');
+		var that = this;
+		var $el;
+
+		this.whenReady(
+			function(){
+				$el = that.$el.parent().parent();
+				return $el.length > 0;
+			},
+
+			function(){
+				if(horizontalAlignment == 'Right'){
+					$el
+						.addClass('pull-right');
+				}else{
+					$el
+						.removeClass('pull-right');
+				}
+			}
+		);
+	},
+
+	getButtonElement: function(){
+		return this.ui.button;
+	},
+
+	render: function () {
+		var exchange = window.InfinniUI.global.messageBus,
+				that = this;
+
+		this.prerenderingActions();
+
+		this.removeChildElements();
+
+		this.$el = this.renderDropdown();
+
+		this.bindUIElements();
+
+		this.updateProperties();
+
+		this.trigger('render');
+
+		this.postrenderingActions();
+
+		exchange.subscribe(messageTypes.onOpenContextMenu.name, function (context, args) {
+			that.open(args.value);
+		});
+
+		return this;
+	},
+
+	renderDropdown: function(){
+		var template = this.contextMenuTemplate;
+		var items = this.model.get('items').toArray();
+		var $result = $(template({items: items}));
+
+		this.appendItemsContent($result, items);
+		$result.on('click', function () {
+			this.close();
+		}.bind(this));
+		$result.on('contextmenu', function (event) {
+			event.preventDefault();
+		}.bind(this));
+		return $result;
+	},
+
+	appendItemsContent: function($dropdown, items){
+		var that = this,
+			itemTemplate = this.model.get('itemTemplate'),
+			itemEl, $el;
+
+		$dropdown.find('.pl-popup-button__item').each(function(i, el){
+			$el = $(el);
+			itemEl = itemTemplate(undefined, {index: i, item: items[i]});
+			that.addChildElement(itemEl);
+			$el.append(itemEl.render());
+		});
+	},
+
+	open: function(rightclickCoords){
+		var that = this;
+
+		$('body').append(this.$el);
+
+		var $parent = this.$el.parent();
+
+		this.$el.addClass('open');
+		$parent.addClass('open');
+
+		this.alignDropdown(rightclickCoords);
+
+		var $ignoredElements = this.$el;
+		new ActionOnLoseFocus($ignoredElements, function(){
+			that.close();
+		});
+	},
+
+	close: function(){
+		this.$el.removeClass('open');
+		this.$el.parent().removeClass('open');
+		this.$el.detach();
+	},
+
+	alignDropdown: function(rightclickCoords){
+		var horizontalAlignment = this.model.get('horizontalAlignment'),
+				$parent = this.$el.parent(),
+				parentDimentions = {width: $parent.width(), height: $parent.height()},
+				elDimentions = {width: this.$el[0].children[0].clientWidth, height: this.$el[0].children[0].clientHeight};
+
+		if(rightclickCoords.x + elDimentions.width > parentDimentions.width){
+			rightclickCoords.x -= elDimentions.width;
+		}
+		if(rightclickCoords.y + elDimentions.height > parentDimentions.height){
+			rightclickCoords.y -= elDimentions.height;
+		}
+
+		this.$el.offset({
+			top: rightclickCoords.y,
+			left: rightclickCoords.x
+		});
+	},
+
+	updateGrouping: function(){},
+
+	whenReady: function(conditionFunction, onConditionFunction, n){
+		var that = this;
+
+		if(n === undefined){
+			n = 100;
+		}
+
+		if(!conditionFunction()){
+			if(n>0){
+				setTimeout( function(){
+					that.whenReady(conditionFunction, onConditionFunction, n-1);
+				}, 10);
+			}
+		}else{
+			onConditionFunction();
+		}
+	}
+
+});
+
 //####app/controls/dataGrid/dataGridControl.js
 /**
  *
@@ -11284,6 +11465,13 @@ var DataGridRowView = ControlView.extend({
         this.$el.toggleClass(this.classNameSelected, !!selected);
     },
 
+    updateEnabled: function () {
+        ControlView.prototype.updateEnabled.call(this);
+
+        var enabled = this.model.get('enabled');
+        this.ui.toggleControl.attr('disabled', enabled ? null : 'disabled');
+    },
+
     onToggleHandler: function (event) {
         this.trigger('toggle');
     },
@@ -11462,6 +11650,20 @@ var DataGridView = ListEditorBaseView.extend({
         });
     },
 
+    updateDisabledItem: function () {
+        var
+            model = this.model,
+            disabledItemCondition = model.get('disabledItemCondition'),
+            isEnabled;
+
+        if(disabledItemCondition != null) {
+            this.rowElements.forEach(function (rowElement, item) {
+                isEnabled = !disabledItemCondition( undefined, {value: item} );
+                rowElement.setEnabled(isEnabled);
+            });
+        }
+    },
+
     render: function () {
         this.prerenderingActions();
 
@@ -11562,6 +11764,7 @@ var DataGridView = ListEditorBaseView.extend({
             $items = this.ui.items;
 
         this.removeRowElements();
+
         items.forEach(function (item, index) {
             var element = itemTemplate(undefined, {index: index, item: item});
 
@@ -11569,10 +11772,16 @@ var DataGridView = ListEditorBaseView.extend({
                 model.set('selectedItem', item);
             });
             element.onToggle(function() {
-                model.toggleValue(valueSelector(undefined, {value:item}));
+                var enabled = this.model.get('enabled');
+
+                if(enabled){
+                    model.toggleValue(valueSelector(undefined, {value:item}));
+                }
             });
             this.addRowElement(item, element);
-            $items.append(element.render());
+
+            var $element = element.render();
+            $items.append($element);
         }, this);
 
     },
@@ -13235,6 +13444,133 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
 
 }));
 
+//####app/controls/indeterminateCheckbox/indeterminateCheckboxControl.js
+function IndeterminateCheckboxControl(parent) {
+	_.superClass(IndeterminateCheckboxControl, this, parent);
+	this.initialize_editorBaseControl();
+}
+
+_.inherit(IndeterminateCheckboxControl, Control);
+
+_.extend(IndeterminateCheckboxControl.prototype, {
+
+	createControlModel: function () {
+		return new IndeterminateCheckboxModel();
+	},
+
+	createControlView: function (model) {
+		return new IndeterminateCheckboxView({model: model});
+	}
+
+}, editorBaseControlMixin);
+
+
+//####app/controls/indeterminateCheckbox/indeterminateCheckboxModel.js
+var IndeterminateCheckboxModel = ControlModel.extend( _.extend({
+
+	defaults: _.defaults({
+		value: 'unchecked'
+	}, ControlModel.prototype.defaults),
+
+	initialize: function () {
+		ControlModel.prototype.initialize.apply(this, arguments);
+		this.initialize_editorBaseModel();
+	}
+
+}, editorBaseModelMixin));
+
+//####app/controls/indeterminateCheckbox/indeterminateCheckboxView.js
+/**
+ * @class IndeterminateCheckboxView
+ * @augments ControlView
+ * @mixes editorBaseViewMixin
+ */
+var IndeterminateCheckboxView = ControlView.extend(/** @lends IndeterminateCheckboxView.prototype */ _.extend({}, editorBaseViewMixin, {
+
+	template: InfinniUI.Template["controls/indeterminateCheckbox/template/indeterminateCheckbox.tpl.html"],
+
+	UI: _.extend({}, editorBaseViewMixin.UI, {
+		text: '.indeterminateCheckbox-label',
+		input: 'input'
+	}),
+
+	events: {
+		'click input': 'onClickHandler'
+	},
+
+	initHandlersForProperties: function(){
+		ControlView.prototype.initHandlersForProperties.call(this);
+		editorBaseViewMixin.initHandlersForProperties.call(this);
+	},
+
+	updateProperties: function(){
+		ControlView.prototype.updateProperties.call(this);
+		editorBaseViewMixin.updateProperties.call(this);
+	},
+
+	updateFocusable: function () {
+		var focusable = this.model.get('focusable');
+
+		if (!focusable) {
+			this.ui.input.attr('tabindex', -1);
+		} else {
+			this.ui.input.removeAttr('tabindex');
+		}
+	},
+
+	updateText: function () {
+		var text = this.model.get('text');
+
+		this.ui.text.text(text ? text : '');
+	},
+
+	updateEnabled: function () {
+		ControlView.prototype.updateEnabled.call(this);
+		var enabled = this.model.get('enabled');
+		this.ui.input.prop('disabled', !enabled);
+	},
+
+	render: function () {
+		this.prerenderingActions();
+		this.renderTemplate(this.template);
+		this.updateProperties();
+
+		this.trigger('render');
+		this.postrenderingActions();
+		return this;
+	},
+
+	onClickHandler: function () {
+		var model = this.model;
+
+		var enabled = model.get('enabled');
+		if (enabled) {
+			var newValue = model.get('value');
+			newValue = newValue === 'indeterminate' ? 'unchecked' : newValue === 'unchecked' ? 'checked' : 'unchecked';
+			model.set('value', newValue);
+		}
+	},
+
+	updateValue: function () {
+		var value = this.model.get('value');
+		if( value === 'checked' ) {
+			this.ui.input.prop('indeterminate', false);
+			this.ui.input.prop('checked', true);
+		} else if( value === 'unchecked' ) {
+			this.ui.input.prop('indeterminate', false);
+			this.ui.input.prop('checked', false);
+		} else if( value === 'indeterminate' ) {
+			this.ui.input.prop('checked', false);
+			this.ui.input.prop('indeterminate', true);
+		}
+
+	},
+
+	setFocus: function () {
+		this.ui.input.focus();
+	}
+}));
+
 //####app/controls/label/commonView/labelView.js
 /**
  * @class LabelView
@@ -13464,7 +13800,6 @@ var BaseListBoxView = ListEditorBaseView.extend({
     initialize: function (options) {
         //@TODO Реализовать обработку значений по умолчанию!
         ListEditorBaseView.prototype.initialize.call(this, options);
-
     },
 
     updateGrouping: function(){
@@ -13482,7 +13817,7 @@ var BaseListBoxView = ListEditorBaseView.extend({
         this.ui.checkingInputs.prop('checked', false);
 
         var value = this.model.get('value'),
-            indexOfChoosingItem;
+            choosingItem, $choosingItem;
 
         if(!this.isMultiselect() && value !== undefined && value !== null){
             value = [value];
@@ -13490,10 +13825,12 @@ var BaseListBoxView = ListEditorBaseView.extend({
 
         if($.isArray(value)){
             for(var i= 0, ii=value.length; i < ii; i++){
-                indexOfChoosingItem = this.model.itemIndexByValue(value[i]);
-                if(indexOfChoosingItem != -1){
-                    this.ui.items.eq(indexOfChoosingItem).addClass('pl-listbox-i-chosen');
-                    this.ui.checkingInputs.eq(indexOfChoosingItem).prop('checked', true);
+                choosingItem = this.model.itemByValue(value[i]);
+                $choosingItem = this._getElementByItem(choosingItem);
+
+                if($choosingItem){
+                    $choosingItem.addClass('pl-listbox-i-chosen');
+                    $choosingItem.find('.pl-listbox-input input').prop('checked', true);
                 }
             }
         }
@@ -13507,10 +13844,10 @@ var BaseListBoxView = ListEditorBaseView.extend({
         this.ui.items.removeClass('pl-listbox-i-selected');
 
         var selectedItem = this.model.get('selectedItem'),
-            indexOfItem = this.model.itemIndexByItem(selectedItem);
+            $selectedItem = this._getElementByItem(selectedItem);
 
-        if(indexOfItem >= 0){
-            this.ui.items.eq(indexOfItem).addClass('pl-listbox-i-selected');
+        if($selectedItem){
+            $selectedItem.addClass('pl-listbox-i-selected');
         }
     },
 
@@ -13580,6 +13917,35 @@ var BaseListBoxView = ListEditorBaseView.extend({
         }
 
         this.model.set('value', valueForModel);
+    },
+
+    updateDisabledItem: function(){
+        var model = this.model,
+            disabledItemCondition = model.get('disabledItemCondition');
+
+        this.ui.items.removeClass('pl-disabled-list-item');
+        this.ui.checkingInputs.attr('disabled', null);
+
+        if( disabledItemCondition != null ){
+            this.ui.items.each(function (i, el) {
+                var $el = $(el),
+                    item = $el.data('pl-data-item'),
+                    isDisabled = disabledItemCondition( undefined, {value: item});
+
+                if(isDisabled){
+                    $el.toggleClass('pl-disabled-list-item', true);
+                    $el.find('.pl-listbox-input input').attr('disabled', 'disabled');
+                }
+            })
+        }
+    },
+
+    _getElementByItem: function(item){
+        var element = _.find(this.ui.items, function(listboxItem){
+            return $(listboxItem).data('pl-data-item') == item;
+        });
+
+        return $(element);
     }
 });
 
@@ -13610,7 +13976,7 @@ _.extend(ListBoxViewGroupStrategy.prototype, {
                 groups[groupKey] = [];
             }
 
-            groups[groupKey].push(item);
+            groups[groupKey].push({index: index, item: item});
         });
 
         for(var k in groups){
@@ -13628,28 +13994,30 @@ _.extend(ListBoxViewGroupStrategy.prototype, {
 
     appendItemsContent: function(preparedItems){
         var $listbox = this.listbox.$el,
-            $listboxItems = $listbox.find('.pl-listbox-body'),
             itemTemplate = this.listbox.getItemTemplate(),
             groupTitleTemplate = this.listbox.getGroupItemTemplate(),
-            index = 0,
             groups = preparedItems.groups,
             listbox = this.listbox,
-            itemEl, titleEl;
+            item, itemEl, titleEl, $el, group;
 
-        $listbox.find('.pl-listbox-group-title').each(function(i, el){
-            titleEl = groupTitleTemplate(undefined, {index: index, item: groups[i]});
+        $listbox.find('.pl-listbox-group-i').each(function(i, el){
+
+            group = groups[i];
+            titleEl = groupTitleTemplate(undefined, {index: group.items[0].index, item: group});
             listbox.addChildElement(titleEl);
-            $(el).append(titleEl.render());
 
-            _.forEach( groups[i].items, function(item){
-                itemEl = itemTemplate(undefined, {index: i, item: item});
+            $el = $(el);
+            $el.find(".pl-listbox-group-title").append(titleEl.render());
+
+            $el.find(".pl-listbox-body").each(function(j, bodyEl){
+                item = group.items[j].item;
+                itemEl = itemTemplate(undefined, {index: group.items[j].index, item: item});
+
                 listbox.addChildElement(itemEl);
-                $listboxItems.eq(index).append(itemEl.render());
 
-                $listboxItems.eq(index).parent()
+                $(bodyEl).append(itemEl.render());
+                $(bodyEl).parent()
                     .data('pl-data-item', item);
-
-                index++;
             });
 
         });
@@ -13729,7 +14097,7 @@ var CheckingListBoxView = BaseListBoxView.extend({
         $listBox.get(0).addEventListener('click', function(e){
             e = $.event.fix(e);
             var $el = $(e.target),
-                $currentListItem, item;
+                $currentListItem, item, isDisabledItem;
 
             if (!that.model.get('enabled')) {
                 return;
@@ -13745,7 +14113,11 @@ var CheckingListBoxView = BaseListBoxView.extend({
 
             if($currentListItem && $currentListItem.length > 0){
                 item = $currentListItem.data('pl-data-item');
-                that.model.toggleValue(item);
+                isDisabledItem = that.model.isDisabledItem(item);
+
+                if(!isDisabledItem) {
+                    that.model.toggleValue(item);
+                }
 
                 that.model.set('selectedItem', item);
             }
@@ -13775,7 +14147,7 @@ var CommonListBoxView = BaseListBoxView.extend({
         $listBox.get(0).addEventListener('click', function(e){
             e = $.event.fix(e);
             var $el = $(e.target),
-                $currentListItem, item;
+                $currentListItem, item, isDisabledItem;
 
             while($el.get(0) != $listBox.get(0)){
                 if($el.hasClass('pl-listbox-i')){
@@ -13787,7 +14159,11 @@ var CommonListBoxView = BaseListBoxView.extend({
 
             if($currentListItem.length > 0){
                 item = $currentListItem.data('pl-data-item');
-                that.model.toggleValue(item);
+                isDisabledItem = that.model.isDisabledItem(item);
+
+                if(!isDisabledItem){
+                    that.model.toggleValue(item);
+                }
 
                 that.model.set('selectedItem', item);
             }
@@ -16796,10 +17172,13 @@ var TreeViewView = ListEditorBaseView.extend({
     updateGrouping: function () {
     },
 
+    updateDisabledItem: function(){
+
+    },
+
     rerender: function () {
 
     }
-
 
 });
 //####app/controls/view/viewControl.js
@@ -17599,25 +17978,12 @@ var BaseDataSource = Backbone.Model.extend({
     beforeDeleteItem: function(item){},
 
     _handleDeletedItem: function (item, successHandler) {
-        var items = this.getItems(),
-            idProperty = this.get('idProperty'),
-            itemId = this.idOfItem(item),
-            selectedItem = this.getSelectedItem();
-
-        for (var i = 0, ii = items.length, needExit = false; i < ii && !needExit; i++) {
-            if (items[i][idProperty] == itemId) {
-                items.splice(i, 1);
-                needExit = true;
-            }
-        }
-        delete this.get('itemsById')[itemId];
-        this._excludeItemFromModifiedSet(item);
-
-        if (selectedItem && selectedItem[idProperty] == itemId) {
-            this.setSelectedItem(null);
-        }
-
-        this._notifyAboutItemDeleted(item, successHandler);
+        // override by strategy
+        var logger = window.InfinniUI.global.logger;
+        logger.warn({
+            message: 'BaseDataSource._handleDeletedItem: not overrided by strategy',
+            source: this
+        });
     },
 
     _notifyAboutItemDeleted: function (item, successHandler) {
@@ -18111,6 +18477,28 @@ BaseDataSource.identifyingStrategy = {
             var itemId = this.idOfItem(item);
             delete this.get('modifiedItems')[itemId];
         },
+
+        _handleDeletedItem: function (item, successHandler) {
+            var items = this.getItems(),
+                idProperty = this.get('idProperty'),
+                itemId = this.idOfItem(item),
+                selectedItem = this.getSelectedItem();
+
+            for (var i = 0, ii = items.length, needExit = false; i < ii && !needExit; i++) {
+                if (items[i][idProperty] == itemId) {
+                    items.splice(i, 1);
+                    needExit = true;
+                }
+            }
+            delete this.get('itemsById')[itemId];
+            this._excludeItemFromModifiedSet(item);
+
+            if (selectedItem && selectedItem[idProperty] == itemId) {
+                this.setSelectedItem(null);
+            }
+
+            this._notifyAboutItemDeleted(item, successHandler);
+        }
     },
 
     byLink: {
@@ -18165,11 +18553,27 @@ BaseDataSource.identifyingStrategy = {
         _excludeItemFromModifiedSet: function (item) {
             delete this.get('modifiedItems')['-'];
         },
+
+        _handleDeletedItem: function (item, successHandler) {
+            var items = this.getItems(),
+                selectedItem = this.getSelectedItem(),
+                index = items.indexOf(item);
+
+            if(index >= 0){
+                items.splice(index, 1);
+                this._excludeItemFromModifiedSet(item);
+
+                if (selectedItem && selectedItem == item) {
+                    this.setSelectedItem(null);
+                }
+            }
+
+            this._notifyAboutItemDeleted(item, successHandler);
+        }
     }
 };
 
 _.extend(BaseDataSource.prototype, dataSourceFileProviderMixin);
-
 //####app/data/dataSource/restDataSource.js
 var RestDataSource = BaseDataSource.extend({
 
@@ -19351,6 +19755,14 @@ _.extend(Element.prototype, {
         return this.control.get('toolTip');
     },
 
+    setContextMenu: function(items) {
+        this.control.set('contextMenu', items);
+    },
+
+    getContextMenu: function(items) {
+        return this.control.get('contextMenu');
+    },
+
     getIsLoaded: function () {
         return this.control.get('isLoaded');
     },
@@ -19501,28 +19913,6 @@ _.extend(Element.prototype, {
         return this.control.onMouseWheel(callback);
     },
 
-    onShowToolTip: function (handler) {
-        var control = this.control;
-
-        control.on('change:showToolTip', function () {
-            var showToolTip = control.get('showToolTip');
-            if (showToolTip && typeof handler === 'function') {
-                handler();
-            }
-        });
-    },
-
-    onHideToolTip: function (handler) {
-        var control = this.control;
-
-        control.on('change:showToolTip', function () {
-            var showToolTip = control.get('showToolTip');
-            if (!showToolTip && typeof handler === 'function') {
-                handler();
-            }
-        });
-    },
-
     remove: function (isInitiatedByParent) {
         var logger = window.InfinniUI.global.logger;
         if(this.isRemoved){
@@ -19660,255 +20050,267 @@ var ElementBuilder = function () {
 
 _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 
-    build: function (context, args) {
-        args = args || {};
-        var element = this.createElement(args);
-        var params = _.extend(args, { element: element });
+	build: function (context, args) {
+		args = args || {};
+		var element = this.createElement(args),
+				params = _.extend(args, { element: element });
 
-        this.applyMetadata(params);
+		this.applyMetadata(params);
 
-        if (args.parentView && args.parentView.registerElement) {
-            args.parentView.registerElement(element);
-        }
+		if (args.parentView && args.parentView.registerElement) {
+			args.parentView.registerElement(element);
+		}
 
-        if (args.parent && args.parent.addChild) {
-            args.parent.addChild(element);
-        }
+		if (args.parent && args.parent.addChild) {
+			args.parent.addChild(element);
+		}
 
 //devblockstart
-        element.onMouseDown( function(eventData) {
-            if( eventData.ctrlKey ){
-                args.metadata.isSelectedElement = true;
-                args.parentView.showSelectedElementMetadata();
-                eventData.nativeEventData.stopPropagation();
-            }
-        });
+		element.onMouseDown( function(eventData) {
+			if( eventData.ctrlKey ){
+				args.metadata.isSelectedElement = true;
+				args.parentView.showSelectedElementMetadata();
+				eventData.nativeEventData.stopPropagation();
+			}
+		});
 //devblockstop
 
-        return element;
-    },
+		return element;
+	},
 
-    /**
-     *
-     * @param {Object} params
-     * @param {Builder} params.builder
-     * @param {View} params.parent
-     * @param {Object} params.metadata
-     * @param {ListBoxItemCollectionProperty} params.collectionProperty
-     */
-    createElement: function (params) {
-        throw ('Не перегружен абстрактный метод ElementBuilder.createElement()');
-    },
+	/**
+	 *
+	 * @param {Object} params
+	 * @param {Builder} params.builder
+	 * @param {View} params.parent
+	 * @param {Object} params.metadata
+	 * @param {ListBoxItemCollectionProperty} params.collectionProperty
+	 */
+	createElement: function (params) {
+		throw ('Не перегружен абстрактный метод ElementBuilder.createElement()');
+	},
 
-    /**
-     *
-     * @param {Object} params
-     * @param {Builder} params.builder
-     * @param {View} params.parent
-     * @param {Object} params.metadata
-     * @param {ListBoxItemCollectionProperty} params.collectionProperty
-     * @param {Element} params.element
-     */
-    applyMetadata: function (params) {
-        var metadata = params.metadata,
-            element = params.element;
+	/**
+	 *
+	 * @param {Object} params
+	 * @param {Builder} params.builder
+	 * @param {View} params.parent
+	 * @param {Object} params.metadata
+	 * @param {ListBoxItemCollectionProperty} params.collectionProperty
+	 * @param {Element} params.element
+	 */
+	applyMetadata: function (params) {
+		var metadata = params.metadata,
+				element = params.element;
 
-        this.initBindingToProperty(params, 'Text');
-        this.initBindingToProperty(params, 'Visible', true);
-        this.initBindingToProperty(params, 'Enabled', true);
-        this.initBindingToProperty(params, 'HorizontalAlignment');
-        this.initBindingToProperty(params, 'TextHorizontalAlignment');
-        this.initBindingToProperty(params, 'VerticalAlignment');
-        this.initBindingToProperty(params, 'TextStyle');
-        this.initBindingToProperty(params, 'Foreground');
-        this.initBindingToProperty(params, 'Background');
-        this.initBindingToProperty(params, 'Texture');
-        this.initBindingToProperty(params, 'Style');
-        this.initBindingToProperty(params, 'Tag');
-        this.initBindingToProperty(params, 'Focusable', true);
+		this.initBindingToProperty(params, 'Text');
+		this.initBindingToProperty(params, 'Visible', true);
+		this.initBindingToProperty(params, 'Enabled', true);
+		this.initBindingToProperty(params, 'HorizontalAlignment');
+		this.initBindingToProperty(params, 'TextHorizontalAlignment');
+		this.initBindingToProperty(params, 'VerticalAlignment');
+		this.initBindingToProperty(params, 'TextStyle');
+		this.initBindingToProperty(params, 'Foreground');
+		this.initBindingToProperty(params, 'Background');
+		this.initBindingToProperty(params, 'Texture');
+		this.initBindingToProperty(params, 'Style');
+		this.initBindingToProperty(params, 'Tag');
+		this.initBindingToProperty(params, 'Focusable', true);
 
-        this.initToolTip(params);
+		if( metadata.ToolTip ) {
+			this.initToolTip(params);
+		}
+		if( metadata.ContextMenu ) {
+			this.initContextMenu(params);
+		}
 
-        if ('Name' in metadata) {
-            element.setName(metadata.Name);
-        }
-
-
-        if (metadata.OnLoaded) {
-            element.onLoaded(function () {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnLoaded.Name || metadata.OnLoaded, { source: element });
-            });
-        }
-
-        if (metadata.OnGotFocus) {
-            element.onGotFocus(function () {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnGotFocus.Name || metadata.OnGotFocus, { source: element });
-            });
-        }
-
-        if (metadata.OnLostFocus) {
-            element.onLostFocus(function () {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnLostFocus.Name || metadata.OnLostFocus, { source: element });
-            });
-        }
-
-        if (metadata.OnDoubleClick) {
-            element.onDoubleClick(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnDoubleClick.Name || metadata.OnDoubleClick, args);
-            });
-        }
-
-        if (metadata.OnClick) {
-            element.onClick(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnClick.Name || metadata.OnClick, args);
-            });
-        }
-
-        if (metadata.OnMouseEnter) {
-            element.onMouseEnter(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseEnter.Name || metadata.OnMouseEnter, args);
-            });
-        }
-
-        if (metadata.OnMouseLeave) {
-            element.onMouseLeave(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseLeave.Name || metadata.OnMouseLeave, args);
-            });
-        }
-
-        if (metadata.OnMouseMove) {
-            element.onMouseMove(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseMove.Name || metadata.OnMouseMove, args);
-            });
-        }
-
-        if (metadata.OnKeyDown) {
-            element.onKeyDown(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnKeyDown.Name || metadata.OnKeyDown, args);
-            });
-        }
-
-        if (metadata.OnKeyUp) {
-            element.onKeyUp(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnKeyUp.Name || metadata.OnKeyUp, args);
-            });
-        }
-
-        if (metadata.OnMouseDown) {
-            element.onMouseDown(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseDown.Name || metadata.OnMouseDown, args);
-            });
-        }
-
-        if (metadata.OnMouseUp) {
-            element.onMouseUp(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseUp.Name || metadata.OnMouseUp, args);
-            });
-        }
-
-        if (metadata.OnMouseWheel) {
-            element.onMouseWheel(function (args) {
-                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseWheel.Name || metadata.OnMouseWheel, args);
-            });
-        }
-    },
-
-    initBindingToProperty: function (params, propertyName, isBooleanBinding) {
-        var metadata = params.metadata;
-        var propertyMetadata = metadata[propertyName];
-        var element = params.element;
-        var lowerCasePropertyName = this.lowerFirstSymbol(propertyName);
-        var converter;
-
-        if (!propertyMetadata || typeof propertyMetadata != 'object') {
-            if (propertyMetadata !== undefined) {
-                params.element['set' + propertyName](propertyMetadata);
-            }
-            return null;
-
-        } else {
-            var args = {
-                parent: params.parent,
-                parentView: params.parentView,
-                basePathOfProperty: params.basePathOfProperty
-            };
-
-            var dataBinding = params.builder.buildBinding(metadata[propertyName], args);
-            var oldConverter;
-
-            if (isBooleanBinding) {
-                dataBinding.setMode(InfinniUI.BindingModes.toElement);
-
-                converter = dataBinding.getConverter();
-                if (!converter) {
-                    converter = {};
-                }
-
-                if(!converter.toElement){
-                    converter.toElement = function (context, args) {
-                        return !!args.value;
-                    };
-                }else{
-                    oldConverter = converter.toElement;
-
-                    converter.toElement = function (context, args) {
-                        var tmp = oldConverter(context, args);
-                        return !!tmp;
-                    };
-                }
+		if ('Name' in metadata) {
+			element.setName(metadata.Name);
+		}
 
 
-                dataBinding.setConverter(converter);
-            }
+		if (metadata.OnLoaded) {
+			element.onLoaded(function () {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnLoaded.Name || metadata.OnLoaded, { source: element });
+			});
+		}
 
-            dataBinding.bindElement(element, lowerCasePropertyName);
+		if (metadata.OnGotFocus) {
+			element.onGotFocus(function () {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnGotFocus.Name || metadata.OnGotFocus, { source: element });
+			});
+		}
 
-            return dataBinding;
-        }
-    },
+		if (metadata.OnLostFocus) {
+			element.onLostFocus(function () {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnLostFocus.Name || metadata.OnLostFocus, { source: element });
+			});
+		}
 
-    initToolTip: function (params) {
-        var
-            exchange = window.InfinniUI.global.messageBus,
-            builder = params.builder,
-            element = params.element,
-            metadata = params.metadata,
-            tooltip;
+		if (metadata.OnDoubleClick) {
+			element.onDoubleClick(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnDoubleClick.Name || metadata.OnDoubleClick, args);
+			});
+		}
 
-        if (metadata.ToolTip) {
-            var argumentForBuilder = {
-                parent: element,
-                parentView: params.parentView,
-                basePathOfProperty: params.basePathOfProperty
-            };
+		if (metadata.OnClick) {
+			element.onClick(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnClick.Name || metadata.OnClick, args);
+			});
+		}
 
-            if (typeof metadata.ToolTip === 'string') {
-                tooltip = builder.buildType("Label", {
-                    "Text": metadata.ToolTip
-                }, argumentForBuilder);
-            } else {
-                tooltip = builder.build(metadata.ToolTip, argumentForBuilder);
-            }
+		if (metadata.OnMouseEnter) {
+			element.onMouseEnter(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseEnter.Name || metadata.OnMouseEnter, args);
+			});
+		}
 
-            element.setToolTip(tooltip);
-            exchange.send(messageTypes.onToolTip.name, { source: element, content: tooltip.render() });
-        }
+		if (metadata.OnMouseLeave) {
+			element.onMouseLeave(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseLeave.Name || metadata.OnMouseLeave, args);
+			});
+		}
 
-        element.onShowToolTip && element.onShowToolTip(function () {
-            if (tooltip) {
-                exchange.send(messageTypes.onToolTipShow.name, { source: element, content: tooltip.render() });
-            }
-        });
+		if (metadata.OnMouseMove) {
+			element.onMouseMove(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseMove.Name || metadata.OnMouseMove, args);
+			});
+		}
 
-        element.onHideToolTip && element.onHideToolTip(function () {
-            exchange.send(messageTypes.onToolTipHide.name, { source: element });
-        });
+		if (metadata.OnKeyDown) {
+			element.onKeyDown(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnKeyDown.Name || metadata.OnKeyDown, args);
+			});
+		}
 
-    },
+		if (metadata.OnKeyUp) {
+			element.onKeyUp(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnKeyUp.Name || metadata.OnKeyUp, args);
+			});
+		}
 
-    lowerFirstSymbol: function(s){
-        return s[0].toLowerCase() + s.substr(1);
-    }
+		if (metadata.OnMouseDown) {
+			element.onMouseDown(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseDown.Name || metadata.OnMouseDown, args);
+			});
+		}
+
+		if (metadata.OnMouseUp) {
+			element.onMouseUp(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseUp.Name || metadata.OnMouseUp, args);
+			});
+		}
+
+		if (metadata.OnMouseWheel) {
+			element.onMouseWheel(function (args) {
+				new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnMouseWheel.Name || metadata.OnMouseWheel, args);
+			});
+		}
+	},
+
+	initBindingToProperty: function (params, propertyName, isBooleanBinding) {
+		var metadata = params.metadata,
+				propertyMetadata = metadata[propertyName],
+				element = params.element,
+				lowerCasePropertyName = this.lowerFirstSymbol(propertyName),
+				converter;
+
+		if (!propertyMetadata || typeof propertyMetadata != 'object') {
+			if (propertyMetadata !== undefined) {
+				params.element['set' + propertyName](propertyMetadata);
+			}
+			return null;
+
+		} else {
+			var args = {
+				parent: params.parent,
+				parentView: params.parentView,
+				basePathOfProperty: params.basePathOfProperty
+			};
+
+			var dataBinding = params.builder.buildBinding(metadata[propertyName], args);
+			var oldConverter;
+
+			if (isBooleanBinding) {
+				dataBinding.setMode(InfinniUI.BindingModes.toElement);
+
+				converter = dataBinding.getConverter();
+				if (!converter) {
+					converter = {};
+				}
+
+				if(!converter.toElement){
+					converter.toElement = function (context, args) {
+						return !!args.value;
+					};
+				}else{
+					oldConverter = converter.toElement;
+
+					converter.toElement = function (context, args) {
+						var tmp = oldConverter(context, args);
+						return !!tmp;
+					};
+				}
+
+
+				dataBinding.setConverter(converter);
+			}
+
+			dataBinding.bindElement(element, lowerCasePropertyName);
+
+			return dataBinding;
+		}
+	},
+
+	initToolTip: function (params) {
+		var exchange = window.InfinniUI.global.messageBus,
+				builder = params.builder,
+				element = params.element,
+				metadata = params.metadata,
+				tooltip;
+
+		var argumentForBuilder = {
+			parent: element,
+			parentView: params.parentView,
+			basePathOfProperty: params.basePathOfProperty
+		};
+
+		if (typeof metadata.ToolTip === 'string') {
+			tooltip = builder.buildType("Label", {
+				"Text": metadata.ToolTip
+			}, argumentForBuilder);
+		} else {
+			tooltip = builder.build(metadata.ToolTip, argumentForBuilder);
+		}
+
+		element.setToolTip(tooltip);
+		exchange.send(messageTypes.onToolTip.name, { source: element, content: tooltip.render() });
+	},
+
+	initContextMenu: function(params) {
+		var exchange = window.InfinniUI.global.messageBus,
+				builder = params.builder,
+				element = params.element,
+				metadata = params.metadata,
+				contextMenu;
+
+		var argumentForBuilder = {
+			parent: element,
+			parentView: params.parentView,
+			basePathOfProperty: params.basePathOfProperty
+		};
+
+		contextMenu = builder.buildType('ContextMenu', {
+			"Items": metadata.ContextMenu.Items
+		}, argumentForBuilder);
+
+		element.setContextMenu(contextMenu);
+		exchange.send(messageTypes.onContextMenu.name, { source: element, content: contextMenu.render() });
+	},
+
+	lowerFirstSymbol: function(s){
+		return s[0].toLowerCase() + s.substr(1);
+	}
 
 });
 
@@ -20818,6 +21220,14 @@ _.extend(ListEditorBase.prototype, {
         this.control.set('valueSelector', value);
     },
 
+    getDisabledItemCondition: function () {
+        return this.control.get('disabledItemCondition');
+    },
+
+    setDisabledItemCondition: function (value) {
+        this.control.set('disabledItemCondition', value);
+    },
+
     setValueItem: function(item){
         var result;
         var isMultiSelect = this.getMultiSelect();
@@ -20876,6 +21286,7 @@ _.extend(ListEditorBaseBuilder.prototype, {
             applyingMetadataResult2;
 
         this.initSelecting(params, itemsBinding);
+        this.initDisabledItemCondition(params);
 
         this.initValueFeatures(params);
 
@@ -20890,7 +21301,6 @@ _.extend(ListEditorBaseBuilder.prototype, {
         var dataSource = itemsBinding.getSource();
         var sourceProperty = itemsBinding.getSourceProperty();
         var isBindingOnWholeDS = sourceProperty == '';
-        var that = this;
 
         if(isBindingOnWholeDS){
             dataSource.setSelectedItem(null);
@@ -20950,6 +21360,21 @@ _.extend(ListEditorBaseBuilder.prototype, {
             }
         }
         element.setValueSelector(valueSelector);
+    },
+
+    initDisabledItemCondition: function (params) {
+        var metadata = params.metadata,
+            element = params.element,
+            disabledItemCondition;
+
+        if (metadata.DisabledItemCondition) {
+            disabledItemCondition = function (context, args) {
+                var scriptExecutor = new ScriptExecutor(element.getScriptsStorage());
+                return scriptExecutor.executeScript(metadata.DisabledItemCondition.Name || metadata.DisabledItemCondition, args)
+            };
+        }
+
+        element.setDisabledItemCondition(disabledItemCondition);
     }
 }, editorBaseBuilderMixin);
 
@@ -21863,6 +22288,49 @@ _.extend(ComboBoxBuilder.prototype, /** @lends ComboBoxBuilder.prototype */{
         return 'combobox-' + guid();
     }
 });
+//####app/elements/contextMenu/contextMenu.js
+/**
+ * @class
+ * @constructor
+ * @arguments Container
+ */
+function ContextMenu(parent) {
+    _.superClass(ContextMenu, this, parent);
+}
+
+_.inherit(ContextMenu, Container);
+
+_.extend(ContextMenu.prototype, {
+
+    createControl: function () {
+        return new ContextMenuControl();
+    }
+
+});
+
+//####app/elements/contextMenu/contextMenuBuilder.js
+/**
+ * @constructor
+ * @arguments ContainerBuilder
+ */
+function ContextMenuBuilder() {
+	_.superClass(ContextMenuBuilder, this);
+}
+
+_.inherit(ContextMenuBuilder, ContainerBuilder);
+
+_.extend(ContextMenuBuilder.prototype, /** @lends ContextMenuBuilder.prototype */{
+
+	createElement: function (params) {
+		return new ContextMenu(params.parent);
+	},
+
+	applyMetadata: function (params) {
+		ContainerBuilder.prototype.applyMetadata.call(this, params);
+	}
+
+});
+
 //####app/elements/dataElement/documentViewer/documentViewer.js
 function DocumentViewer(parentView) {
     _.superClass(DocumentViewer, this, parentView);
@@ -23341,6 +23809,56 @@ ImageBoxValueConverter.prototype.toElement = function (context, args) {
     }
     return url;
 };
+//####app/elements/indeterminateCheckbox/IndeterminateCheckbox.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augment Element
+ */
+function IndeterminateCheckbox(parent) {
+	_.superClass(IndeterminateCheckbox, this, parent);
+	this.initialize_editorBase();
+}
+
+_.inherit(IndeterminateCheckbox, Element);
+
+
+_.extend(IndeterminateCheckbox.prototype, {
+
+	createControl: function (parent) {
+		return new IndeterminateCheckboxControl(parent);
+	}
+
+}, editorBaseMixin);
+
+//####app/elements/indeterminateCheckbox/IndeterminateCheckboxBuilder.js
+/**
+ *
+ * @constructor
+ * @augments ElementBuilder
+ */
+function IndeterminateCheckboxBuilder() {
+	_.superClass(IndeterminateCheckboxBuilder, this);
+	this.initialize_editorBaseBuilder();
+}
+
+_.inherit(IndeterminateCheckboxBuilder, ElementBuilder);
+
+
+_.extend(IndeterminateCheckboxBuilder.prototype, {
+	createElement: function (params) {
+		return new IndeterminateCheckbox(params.parent);
+	},
+
+	applyMetadata: function (params) {
+		ElementBuilder.prototype.applyMetadata.call(this, params);
+		this.applyMetadata_editorBaseBuilder(params);
+	}
+
+}, editorBaseBuilderMixin);
+
+
 //####app/elements/label/label.js
 function Label(parent, viewMode) {
     _.superClass(Label, this, parent, viewMode);
@@ -25539,8 +26057,9 @@ _.extend(ViewBuilder.prototype, {
         element.onSelectedElementChange(function() {
             var path = that._getSelectedElementPath(params.metadata);
 
-            InfinniUI.JsonEditor.setMetadata(params.metadata);
-            InfinniUI.JsonEditor.setPath(path);
+            InfinniUI.JsonEditor.setMetadata(params.metadata).always(function () {
+                InfinniUI.JsonEditor.setPath(path);
+            });
         });
 //devblockstop
 
@@ -25884,27 +26403,40 @@ _.inherit(DeleteAction, BaseAction);
 
 _.extend(DeleteAction.prototype, {
     execute: function(callback){
-        var accept = this.getProperty('accept');
-        var that = this;
+        var accept = this.getProperty('accept'),
+            that = this,
+            dataSource = this.getProperty('destinationSource'),
+            property = this.getProperty('destinationProperty');
 
-        if(accept){
+        if( dataSource.getProperty(property) ) {
+            if(accept){
+                new MessageBox({
+                    text: 'Вы уверены, что хотите удалить?',
+                    buttons: [
+                        {
+                            name: 'Да',
+                            type: 'action',
+                            onClick: function() {
+                                that.remove(callback);
+                            }
+                        },
+                        {
+                            name: 'Нет'
+                        }
+                    ]
+                });
+            } else {
+                this.remove(callback);
+            }
+        } else {
             new MessageBox({
-                text: 'Вы уверены, что хотите удалить?',
+                text: 'Вы не выбрали элемент который необходимо удалить',
                 buttons: [
                     {
-                        name: 'Да',
-                        type: 'action',
-                        onClick: function() {
-                            that.remove(callback);
-                        }
-                    },
-                    {
-                        name: 'Нет'
+                        name: 'Закрыть'
                     }
                 ]
             });
-        } else {
-            this.remove(callback);
         }
     },
 
@@ -26796,6 +27328,7 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('TextBox', new TextBoxBuilder());
         builder.register('PasswordBox', new PasswordBoxBuilder());
         builder.register('CheckBox', new CheckBoxBuilder());
+        builder.register('IndeterminateCheckbox', new IndeterminateCheckboxBuilder());
         builder.register('ImageBox', new ImageBoxBuilder());
         builder.register('FileBox', new FileBoxBuilder());
         builder.register('Label', new LabelBuilder());
@@ -26854,6 +27387,7 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('Script', new ScriptBuilder());
 
         builder.register('Divider', new DividerBuilder());
+        builder.register('ContextMenu', new ContextMenuBuilder());
 
 
         var registerQueue = ApplicationBuilder.registerQueue;
@@ -28043,7 +28577,7 @@ _.extend(ObjectDataProvider.prototype, {
     getItems: function (resultCallback, criteriaList, pageNumber, pageSize, sorting) {
         //var filter = new FilterCriteriaType();
         //var callback = filter.getFilterCallback(criteriaList);
-        resultCallback({data: this.items});
+        resultCallback({data: this.items.slice()});
     },
 
     createItem: function (resultCallback) {
@@ -33265,6 +33799,29 @@ InfinniUI.AutoHeightService = (function () {
     }
 
 })();
+//####app/services/contextMenuService/contextMenuService.js
+InfinniUI.ContextMenuService = (function () {
+
+	var exchange = window.InfinniUI.global.messageBus;
+
+	exchange.subscribe(messageTypes.onContextMenu.name, function (context, args) {
+		var message = args.value;
+		initContextMenu(getSourceElement(message.source), message.content);
+	});
+
+	function getSourceElement(source) {
+		return source.control.controlView.$el
+	}
+
+	function initContextMenu($element, content) {
+		$element.on('contextmenu', function(event) {
+			event.preventDefault();
+
+			exchange.send(messageTypes.onOpenContextMenu.name, { x: event.pageX, y: event.pageY });
+		});
+	}
+})();
+
 //####app/services/messageBox/messageBox.js
 /**
  * @constructor
@@ -33490,48 +34047,29 @@ InfinniUI.NotifyService = (function () {
 //####app/services/toolTipService/toolTipService.js
 InfinniUI.ToolTipService = (function () {
 
-    var template = InfinniUI.Template["services/toolTipService/template/tooltip.tpl.html"];
+	var exchange = window.InfinniUI.global.messageBus;
 
-    var exchange = window.InfinniUI.global.messageBus;
+	exchange.subscribe(messageTypes.onToolTip.name, function (context, args) {
+		var message = args.value;
+		showToolTip(getSourceElement(message.source), message.content);
+	});
 
-    exchange.subscribe(messageTypes.onToolTip.name, function (context, args) {
-        var message = args.value;
-        initToolTip(getSourceElement(message.source));
-    });
+	function getSourceElement(source) {
+		return source.control.controlView.$el
+	}
+	function showToolTip($element, content) {
+		$element
+			.tooltip({
+				html: true,
+				title:content,
+				placement: 'auto top',
+				container: 'body'
 
-    exchange.subscribe(messageTypes.onToolTipShow.name, function (context, args) {
-        var message = args.value;
-        showToolTip(getSourceElement(message.source), message.content);
-    });
-
-
-    exchange.subscribe(messageTypes.onToolTipHide.name, function (context, args) {
-        var message = args.value;
-        hideToolTip(getSourceElement(message.source), message.content);
-    });
-
-    function getSourceElement(source) {
-        return source.control.controlView.$el
-    }
-    function showToolTip($element, content) {
-        $element
-            .tooltip({
-                html: true,
-                title:content,
-                container: 'body'
-
-            })
-            .tooltip('show');
-    }
-
-    function hideToolTip($element) {
-        $element.tooltip('hide');
-    }
-
-    function initToolTip($element) {
-
-    }
+			})
+			.tooltip('show');
+	}
 })();
+
 //####extensions/excelButton.js
 function ExcelButton() {
     this.render = function (target, parameters, context) {
@@ -33636,44 +34174,40 @@ InfinniUI.JsonEditor = (function () {
 
     return {
         setMetadata: function (metadata) {
-            metadataForOpen = metadata;
+            // TODO: Не универсально
+            var name = metadata.Namespace + '.' + metadata.Name;
+            return $.get(InfinniUI.config.editorService.url, {name: name})
+                .success(function (data) {
+                    metadataForOpen = data;
 
-            if (!childWindow) {
+                    if (!childWindow) {
 
-                var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
+                        var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
 
-                tempChildWindow.onload = function () {
-                    childWindow = tempChildWindow;
+                        tempChildWindow.onload = function () {
+                            childWindow = tempChildWindow;
 
-                    childWindow.onSaveMetadata(function (metadata) {
-                        /* Данное поле появлятся в платформе, в метаданных оно не нужно */
-                        delete metadata.DocumentId;
+                            childWindow.onSaveMetadata(function (metadata) {
+                                $.post(InfinniUI.config.editorService.url, {Json: JSON.stringify(metadata)})
+                                    .success(function () {
+                                        toastr.success('Metadata saved');
+                                    })
+                                    .error(function (error) {
+                                        alert(JSON.stringify(error));
+                                    });
+                            });
 
-                        $.ajax({
-                            url: InfinniUI.config.editorService.url,
-                            type: 'POST',
-                            data: {
-                                Json: JSON.stringify(metadata)
-                            },
-                            success: function () {
-                                toastr.success('Metadata saved');
-                            },
-                            error: function (error) {
-                                alert(JSON.stringify(error));
-                            }
+                            updateContentOfChildWindow();
+                        };
+
+                        tempChildWindow.addEventListener('unload', function() {
+                            childWindow = undefined;
                         });
-                    });
-
-                    updateContentOfChildWindow();
-                };
-
-                tempChildWindow.addEventListener('unload', function() {
-                    childWindow = undefined;
+                    } else {
+                        updateContentOfChildWindow();
+                        childWindow.focus();
+                    }
                 });
-            } else {
-                updateContentOfChildWindow();
-                childWindow.focus();
-            }
         },
         setPath: function (path) {
             pathForOpen = path;

@@ -1589,469 +1589,6 @@ describe('CheckBox', function () {
 
 });
 
-describe('ComboBox', function () {
-
-    describe('render', function () {
-
-        it('ValueSelector', function () {
-            // Given
-            var metadata = {
-                "Text": 'Пациенты',
-                "Scripts": [
-                    {
-                        "Name": "ValueSelector1",
-                        "Body": "return {Id: args.value.Id, DisplayName: args.value.Display};"
-                    }
-                ],
-                "DataSources": [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE", "State": "New"},
-                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
-                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
-                            ]
-                        }
-                    }, {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                {"Value": {"Id": 2, "DisplayName": "2G"}}
-                            ]
-                        }
-                    }
-                ],
-                "Items": [{
-
-                    ComboBox: {
-                        "LabelText": "Combobox Label",
-                        "ItemTemplate": {
-                            "Label": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "#.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "ValueSelector": "ValueSelector1",
-                        "ValueFormat": "{Id} - {DisplayName}",
-                        "MultiSelect": false,
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "Value"
-                        }
-                    }
-                }]
-            };
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            // Then
-            function onViewReady(view, $layout) {
-                $layout.detach();
-                var $label = $layout.find('.pl-combobox > .pl-control-label'),
-                    $value = $layout.find('.pl-combobox__value');
-
-
-                assert.equal($label.text(), 'Combobox Label');
-                assert.equal($value.length, 1);
-                assert.equal($value.find('.pl-label').text(), '2 - 2G');
-            }
-        });
-
-        it('ValueSelector multiselect', function () {
-            // Given
-            var metadata = {
-                "Text": 'Пациенты',
-                "Scripts": [
-                    {
-                        "Name": "ValueSelector1",
-                        "Body": "return {Id: args.value.Id, DisplayName: args.value.Display};"
-                    }
-                ],
-                "DataSources": [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE", "State": "New"},
-                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
-                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
-                            ]
-                        }
-                    }, {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                {"Value": [
-                                    {"Id": 2, "DisplayName": "2G"},
-                                    {"Id": 3, "DisplayName": "3G"}
-                                ]}
-                            ]
-                        }
-                    }
-                ],
-                "Items": [{
-
-                    ComboBox: {
-                        "LabelText": "Combobox Label",
-                        "ItemTemplate": {
-                            "Label": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "#.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "ValueSelector": "ValueSelector1",
-                        "ValueFormat": "{Id} - {DisplayName}",
-                        "MultiSelect": true,
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "Value"
-                        }
-                    }
-                }]
-            };
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            // Then
-            function onViewReady(view, $layout) {
-                $layout.detach();
-                var $label = $layout.find('.pl-combobox > .pl-control-label'),
-                    $value = $layout.find('.pl-combobox__value');
-
-                assert.equal($label.text(), 'Combobox Label');
-                assert.equal($value.find('.pl-label').text(), '2 - 2G3 - 3G');
-            }
-        });
-
-        it('ValueTemplate', function () {
-            // Given
-            var metadata = {
-                "Text": 'Пациенты',
-                "DataSources": [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE", "State": "New"},
-                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
-                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
-                            ]
-                        }
-                    }, {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                {"Value": {"Id": 2, "Display": "2G","State": "Deprecated"}}
-                            ]
-                        }
-                    }
-                ],
-                "Items": [{
-
-                    ComboBox: {
-                        "LabelText": "Combobox Label",
-                        "ItemTemplate": {
-                            "Label": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "#.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "ValueTemplate": {
-                            "StackPanel": {
-                                "Orientation": "Horizontal",
-                                "Items": [
-                                    {
-                                        "Label": {
-                                            "HorizontalAlignment": "Left",
-                                            "Value": {
-                                                "Source": "ObjectDataSource2",
-                                                "Property": "$.Value.Display"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "Label": {
-                                            "HorizontalAlignment": "Left",
-                                            "Value": {
-                                                "Source": "ObjectDataSource2",
-                                                "Property": "$.Value.Id"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-
-                        },
-                        "MultiSelect": false,
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            // Then
-            function onViewReady(view, $layout) {
-                $layout.detach();
-                var $label = $layout.find('.pl-combobox > .pl-control-label'),
-                    $value = $layout.find('.pl-combobox__value');
-
-                assert.equal($label.text(), 'Combobox Label');
-                assert.equal($value.find('.pl-label').text(), '2G2');
-            }
-        });
-
-        it('ValueTemplate multiselect', function () {
-            // Given
-            var metadata = {
-                "Text": 'Пациенты',
-                "DataSources": [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE", "State": "New"},
-                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
-                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
-                            ]
-                        }
-                    }, {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                {"Value": [
-                                    {"Id": 2, "Display": "2G","State": "Deprecated"},
-                                    {"Id": 3, "Display": "3G", "State": "Deprecated"}
-                                ]}
-                            ]
-                        }
-                    }
-                ],
-                "Items": [{
-
-                    ComboBox: {
-                        "LabelText": "Combobox Label",
-                        "ItemTemplate": {
-                            "Label": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "#.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "ValueTemplate": {
-                            "StackPanel": {
-                                "Orientation": "Horizontal",
-                                "Items": [
-                                    {
-                                        "Label": {
-                                            "HorizontalAlignment": "Left",
-                                            "Value": {
-                                                "Source": "ObjectDataSource2",
-                                                "Property": "Value.#.Display"
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "Label": {
-                                            "HorizontalAlignment": "Left",
-                                            "Value": {
-                                                "Source": "ObjectDataSource2",
-                                                "Property": "Value.#.Id"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-
-                        },
-                        "MultiSelect": true,
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            // Then
-            function onViewReady(view, $layout) {
-                $layout.detach();
-                var $label = $layout.find('.pl-combobox > .pl-control-label'),
-                    $value = $layout.find('.pl-combobox__value');
-
-                assert.equal($label.text(), 'Combobox Label');
-                assert.equal($value.find('.pl-label').text(), '2G23G3');
-            }
-        });
-
-        //it('debug', function () {
-        //    // Given
-        //    var metadata = {
-        //        "Text": 'Пациенты',
-        //        "Scripts": [
-        //            {
-        //                "Name": "ValueSelector1",
-        //                "Body": "return typeof args.value === 'undefined' ? null : {Id: args.value.Id, DisplayName: args.value.Display};"
-        //            }
-        //        ],
-        //        "DataSources": [
-        //            {
-        //                ObjectDataSource: {
-        //                    "Name": "ObjectDataSource1",
-        //                    "Items": [
-        //                        {"Id": 1, "Display": "LTE", "State": "New"},
-        //                        {"Id": 2, "Display": "2G", "State": "Deprecated"},
-        //                        {"Id": 3, "Display": "3G", "State": "Deprecated"}
-        //                    ]
-        //                }
-        //            }, {
-        //                ObjectDataSource: {
-        //                    "Name": "ObjectDataSource2",
-        //                    "~Items": [
-        //                        {"Value": [{"Id": 2, "DisplayName": "2G"}]}
-        //                    ],
-        //                    "Items": [
-        //                        {"Value": {"Id": 2, "DisplayName": "2G"}}
-        //                    ]
-        //                }
-        //            }
-        //        ],
-        //        "Items": [{
-        //
-        //            ComboBox: {
-        //                "~LabelText": "Combobox Label",
-        //                "ItemTemplate": {
-        //                    "Label": {
-        //                        "Name": "TextBox1",
-        //                        "Value": {
-        //                            "PropertyBinding": {
-        //                                "Source": "ObjectDataSource1",
-        //                                "Property": "$.Display"
-        //                            }
-        //                        }
-        //                    }
-        //                },
-        //                "GroupItemTemplate": {
-        //                    "Label": {
-        //                        "Value": {
-        //                            "PropertyBinding": {
-        //                                "Source": "ObjectDataSource1",
-        //                                "Property": "$.State"
-        //                            }
-        //                        }
-        //                    }
-        //                },
-        //                "~GroupValueProperty": "State",
-        //                "Items": {
-        //                    "PropertyBinding": {
-        //                        "Source": "ObjectDataSource1",
-        //                        "Property": ""
-        //                    }
-        //                },
-        //                "ValueSelector": "ValueSelector1",
-        //                "~ValueProperty": "DisplayName",
-        //                "ValueFormat": "{Id} - {DisplayName}",
-        //                "~ValueTemplate": {
-        //                    "StackPanel": {
-        //                        "Orientation": "Horizontal",
-        //                        "Items": [
-        //                            {
-        //                                "Label": {
-        //                                    "HorizontalAlignment": "Left",
-        //                                    "Value": {
-        //                                        "PropertyBinding": {
-        //                                            "Source": "ObjectDataSource2",
-        //                                            "Property": "Value.$.Display"
-        //                                        }
-        //                                    }
-        //                                }
-        //                            },
-        //                            {
-        //                                "Label": {
-        //                                    "HorizontalAlignment": "Left",
-        //                                    "Value": {
-        //                                        "PropertyBinding": {
-        //                                            "Source": "ObjectDataSource2",
-        //                                            "Property": "Value.$.Id"
-        //                                        }
-        //                                    }
-        //                                }
-        //                            }
-        //                        ]
-        //                    }
-        //
-        //                },
-        //                "MultiSelect": false,
-        //                "Value": {
-        //                    "PropertyBinding": {
-        //                        "Source": "ObjectDataSource2",
-        //                        "Property": "$.Value"
-        //                    }
-        //                }
-        //            }
-        //        }]
-        //    };
-        //
-        //
-        //    // When
-        //    applyViewMetadata(metadata, onViewReady);
-        //
-        //    // Then
-        //    function onViewReady(view, $layout) {
-        //        //$layout.detach();
-        //
-        //        //var $items = $layout.find('.pl-listbox-i'),
-        //        //    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-        //
-        //        //assert.lengthOf($chosen, 1, 'length of chosen item is right');
-        //        //assert.equal($items.index($chosen), 1, 'index of chosen item is right');
-        //    }
-        //});
-
-    });
-
-});
 describe('Container (Control)', function () {
 
     describe('StackPanel as exemplar of Container', function () {
@@ -2807,222 +2344,83 @@ describe('Container (Control)', function () {
         }
     });
 });
-/*describe('DataGrid', function () {
-    describe('render', function () {
+describe('ContextMenu (Control)', function () {
 
-        it('Setting the properties: value, name, enabled, visible, horizontalAlignment', function () {
-            // Given
-            var grid = new DataGrid(),$el, $control;
+	describe('Remove element from ListBox by clicking on button from ContextMenu', function () {
 
-            $el = grid.render();
-            $control = $el.find('table');
+		it('should remove selected item from DS', function () {
+			// Given
+			var metadata = {
+				Text: 'Пациенты',
+				DataSources : [
+					{
+						ObjectDataSource: {
+							"Name": "ObjectDataSource1",
+							"Items": [
+								{ "Id": 1, "Display": "LTE" },
+								{ "Id": 2, "Display": "3G" },
+								{ "Id": 3, "Display": "2G" }
+							]
+						}
+					}
+				],
+				Items: [
+					{
+						ListBox: {
+							ViewMode: "common",
+							ItemProperty: "Display",
+							Items: {
+								Source: "ObjectDataSource1"
+							},
+							"ItemTemplate":{
+								"Label": {
+									"Value": {
+										"Source": "ObjectDataSource1",
+										"Property": "#.Display"
+									}
+								}
+							},
+							ContextMenu: {
+								Items: [
+									{
+										Button: {
+											ViewMode: "link",
+											Text: "RemoveElement",
+											Action: {
+												DeleteAction: {
+													DestinationValue: {
+														Source: "ObjectDataSource1",
+														Property: "$"
+													}
+												}
+											}
+										}
+									}
+								]
+							}
+						}
+					}
+				]
+			};
 
-            assert.lengthOf($control, 1);
-            assert.isUndefined($el.attr('data-pl-name'));
-            assert.isFalse($el.hasClass('pull-left'));
-            assert.isFalse($el.hasClass('pull-right'));
-            assert.isFalse($el.hasClass('center-block'));
+			// When
+			testHelper.applyViewMetadata(metadata, onViewReady);
 
-            // When
-            grid.setHorizontalAlignment('Right');
+			// Then
+			function onViewReady(view, $layout){
+				$layout.detach();
 
-            //Then
-            assert.isTrue($el.hasClass('pull-right'));
-        });
+				$($layout.find('.pl-listbox-i')[1]).trigger('click');
+				view.childElements[0].childElements[0].childElements[0].click();
+				$('a[data-index=0]').trigger('click');
+				assert.lengthOf($layout.find('.pl-listbox-i'), 2, 'length of rest items in listbox');
+				assert.equal($layout.find('.pl-listbox-i:nth-child(1) span[title]').text(), 'LTE', 'binding in itemTemplate is right');
+				assert.equal($layout.find('.pl-listbox-i:nth-child(2) span[title]').text(), '2G', 'binding in itemTemplate is right');
+			}
+		});
+	});
+});
 
-        it('Setting Columns', function () {
-            // Given
-            var metadata = {
-                "Name": "DataGrid1",
-                "Columns": [
-                    {
-                        "Name": "Column1",
-                        "Text": "Фамилия",
-                        "DisplayProperty": "LastName"
-                    },
-                    {
-                        "Name": "Column2",
-                        "Text": "Имя",
-                        "DisplayProperty": "FirstName"
-                    },
-                    {
-                        "Name": "Column3",
-                        "Text": "Отчество",
-                        "DisplayProperty": "MiddleName",
-                        "Visible": false
-                    }
-                ]
-            };
-            var builder = new DataGridBuilder();
-            var grid = builder.build(new ApplicationBuilder(), null, metadata);
-
-            var el = grid.render();
-            var th = el.find('th');
-
-            assert.lengthOf(th, 3);
-            assert.equal(th[0].innerText, 'Фамилия');
-            assert.equal(th[1].innerText, 'Имя');
-            assert.equal(th[2].innerText, 'Отчество');
-
-            assert.notEqual(th[0].style.display.toLowerCase(), 'none');
-            assert.notEqual(th[1].style.display.toLowerCase(), 'none');
-            assert.isTrue(th[2].classList.contains('hidden'));
-
-
-            //When
-            grid.getColumns()[2].setVisible(true);
-            grid.getColumns()[1].setText('Name');
-
-            //Then
-            assert.equal(th[0].innerText, 'Фамилия');
-            assert.equal(th[1].innerText, 'Name');
-            assert.equal(th[2].innerText, 'Отчество');
-            assert.notEqual(th[0].style.display.toLowerCase(), 'none');
-            assert.notEqual(th[1].style.display.toLowerCase(), 'none');
-            assert.notEqual(th[2].style.display.toLowerCase(), 'none');
-
-        });
-
-    });
-
-
-    describe('DataGrid data binding', function () {
-        it('should set DataGrid.items from property binding', function () {
-            //Given
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeDataProvider();
-            });
-
-
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources: [
-                    {
-                        DocumentDataSource: {
-                            Name : "PatientDataSource",
-                            ConfigId: 'Demography',
-                            DocumentId: 'Patient',
-                            IdProperty: 'Id',
-                            CreateAction: 'CreateDocument',
-                            GetAction: 'GetDocument',
-                            UpdateAction: 'SetDocument',
-                            DeleteAction: 'DeleteDocument',
-                            FillCreatedItem: true
-                        }
-                    }
-                ],
-                LayoutPanel: {
-                    StackPanel: {
-                        Name: 'MainViewPanel',
-                        Items: [
-                            {
-                                DataGrid: {
-                                    "Name": "DataGrid1",
-                                    "Columns": [
-                                        {
-                                            "Name": "Column1",
-                                            "Text": "Фамилия",
-                                            "DisplayProperty": "LastName"
-                                        },
-                                        {
-                                            "Name": "Column2",
-                                            "Text": "Имя",
-                                            "DisplayProperty": "FirstName"
-                                        },
-                                        {
-                                            "Name": "Column3",
-                                            "Text": "Отчество",
-                                            "DisplayProperty": "MiddleName",
-                                            "Visible": false
-                                        }
-                                    ],
-                                    "Items": {
-                                        "PropertyBinding": {
-                                            "DataSource": "PatientsDataSource"
-                                        }
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            };
-
-            var $target = $('<div>');
-
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType(fakeView(), 'View', metadata);
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            linkView.createView(function(view){
-                view.open();
-
-                var itemToSelect = null,
-                    dataSource = view.getDataSource('PatientDataSource');
-
-                assert.isNotNull($target.find('table'));
-
-                dataSource.getItems(function(data){
-                    assert.notEqual($target.find('table>tbody').html(), '');
-                });
-
-            });
-        });
-    });
-
-});*/
-/*describe('DataGridBuilder', function () {
-    describe('build', function () {
-        it('successful build', function () {
-            // Given
-
-            var metadata = {
-                "Name": "DataGrid1",
-                "Columns": [
-                    {
-                        "Name": "Column1",
-                        "Text": "Фамилия",
-                        "DisplayProperty": "LastName"
-                    },
-                    {
-                        "Name": "Column2",
-                        "Text": "Имя",
-                        "DisplayProperty": "FirstName"
-                    },
-                    {
-                        "Name": "Column3",
-                        "Text": "Отчество",
-                        "DisplayProperty": "MiddleName",
-                        "Visible": false
-                    }
-                ]
-            };
-
-            // When
-            var builder = new DataGridBuilder();
-            var grid = builder.build(new ApplicationBuilder(), null, metadata);
-            grid.render();
-
-            // Then
-            assert.isNotNull(grid);
-            assert.lengthOf(grid.getColumns(), 3);
-            assert.equal(grid.getName(), 'DataGrid1');
-            assert.isTrue(grid.getColumns()[0].getVisible());
-            assert.isTrue(grid.getColumns()[1].getVisible());
-            assert.isFalse(grid.getColumns()[2].getVisible());
-            assert.equal(grid.getColumns()[0].getName(), 'Column1');
-            assert.equal(grid.getColumns()[1].getName(), 'Column2');
-            assert.equal(grid.getColumns()[2].getName(), 'Column3');
-            assert.equal(grid.getColumns()[0].getText(), 'Фамилия');
-            assert.equal(grid.getColumns()[1].getText(), 'Имя');
-            assert.equal(grid.getColumns()[2].getText(), 'Отчество');
-
-        });
-    });
-});*/
 describe('DataNavigationControl', function () {
     describe('render', function () {
         var builder = new ApplicationBuilder()
@@ -3143,6 +2541,113 @@ describe('Frame', function () {
         });
 
     });
+
+});
+
+describe('IndeterminateCheckbox', function () {
+	var indeterminateCheckbox;
+
+	beforeEach(function () {
+		indeterminateCheckbox = new IndeterminateCheckbox();
+	});
+
+	describe('Render', function () {
+
+		describe('Setting the properties', function () {
+
+			it('Setting property: visible', function () {
+				//Given
+				var $el = indeterminateCheckbox.render();
+				assert.isFalse($el.hasClass('hidden'));
+
+				//When
+				indeterminateCheckbox.setVisible(false);
+
+				//Then
+				assert.isTrue($el.hasClass('hidden'));
+			});
+
+			it('Setting property: text', function () {
+				//Given
+				indeterminateCheckbox.setText('Text 1');
+
+				var $el = indeterminateCheckbox.render(),
+					$label = $('.indeterminateCheckbox-label', $el);
+
+				assert.equal($label.html(), 'Text 1');
+
+				//When
+				indeterminateCheckbox.setText('Text 2');
+
+				//Then
+				assert.equal($label.html(), 'Text 2');
+			});
+
+			it('Setting property: Enabled', function () {
+				//Given
+				var $el = indeterminateCheckbox.render(),
+					$input = $('input', $el);
+
+				assert.equal($input.prop('disabled'), false, 'Enabled by default');
+
+				//When
+				indeterminateCheckbox.setEnabled(false);
+
+				//Then
+				assert.equal($input.prop('disabled'), true, 'Disable element');
+			});
+
+			it('Setting property: indeterminate', function () {
+				//Given
+				var $el = indeterminateCheckbox.render(),
+					$input = $('input', $el);
+
+				assert.equal($input.prop('indeterminate'), false, 'Indeterminate state by default');
+
+				//When
+				indeterminateCheckbox.setValue('indeterminate');
+
+				//Then
+				assert.equal($input.prop('indeterminate'), true, 'Indeterminate state for indeterminateCheckbox');
+			});
+
+		});
+
+		describe('events', function () {
+			it('Change value on click', function () {
+				//Given
+				var $el = indeterminateCheckbox.render(),
+					$input = $('input', $el);
+
+				indeterminateCheckbox.setValue('unchecked');
+
+				//When
+				$input.click();
+
+				//Then
+				assert.equal(indeterminateCheckbox.getValue(), 'checked', 'value changed');
+				assert.equal($input.prop('checked'), true, 'indeterminateCheckbox checked');
+				assert.equal($input.prop('indeterminate'), false, 'Indeterminate state by default');
+
+				//When
+				$input.click();
+
+				//Then
+				assert.equal(indeterminateCheckbox.getValue(), 'unchecked', 'value changed');
+				assert.equal($input.prop('checked'), false, 'indeterminateCheckbox checked');
+				assert.equal($input.prop('indeterminate'), false, 'Indeterminate state by default');
+
+				//When
+				$input.click();
+
+				//Then
+				assert.equal(indeterminateCheckbox.getValue(), 'checked', 'value changed');
+				assert.equal($input.prop('checked'), true, 'indeterminateCheckbox checked');
+				assert.equal($input.prop('indeterminate'), false, 'Indeterminate state by default');
+			});
+		});
+
+	});
 
 });
 
@@ -3318,462 +2823,6 @@ describe('Label', function () {
     });*/
 });
 
-describe('ListEditorBase (Control)', function () {
-
-    describe('ListBox as exemplar of ListEditorBase', function (){
-
-        it('should apply value to control (single selecting mode)', function () {
-            // Given
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources : [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE"},
-                                {"Id": 2, "Display": "2G"},
-                                {"Id": 3, "Display": "2G"}
-                            ]
-                        }
-                    },{
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                { "Value": { "Id": 2, "Display": "2G" }}
-                            ]
-                        }
-                    }
-                ],
-                Items: [{
-
-                    ListBox: {
-                        "ItemTemplate": {
-                            "TextBox": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "$.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            // Then
-            function onViewReady(view, $layout){
-                $layout.detach();
-
-                var $items = $layout.find('.pl-listbox-i'),
-                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-
-                assert.lengthOf($chosen, 1, 'length of chosen item is right');
-                assert.equal($items.index($chosen), 1, 'index of chosen item is right');
-            }
-        });
-
-
-        it('should apply value to control (multiply selecting mode)', function () {
-            // Given
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources : [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE"},
-                                {"Id": 2, "Display": "2G"},
-                                {"Id": 3, "Display": "2G"}
-                            ]
-                        }
-                    },{
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                { "Value": [
-                                    { "Id": 2, "Display": "2G" },
-                                    { "Id": 3, "Display": "2G" }
-                                ]}
-                            ]
-                        }
-                    }
-                ],
-                Items: [{
-
-                    ListBox: {
-                        "MultiSelect": true,
-                        "ItemTemplate": {
-                            "TextBox": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "$.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            // Then
-            function onViewReady(view, $layout){
-                $layout.detach();
-
-                var $items = $layout.find('.pl-listbox-i'),
-                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-
-                assert.lengthOf($chosen, 2, 'length of chosen item is right');
-                assert.equal($items.index($chosen.eq(0)), 1, 'index of first chosen item is right');
-                assert.equal($items.index($chosen.eq(1)), 2, 'index of second chosen item is right');
-            }
-        });
-
-        it('should apply value from control (single selecting)', function () {
-            // Given
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources : [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE"},
-                                {"Id": 2, "Display": "2G"},
-                                {"Id": 3, "Display": "2G"}
-                            ]
-                        }
-                    },{
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                { "Value": null}
-                            ]
-                        }
-                    }
-                ],
-                Items: [{
-
-                    ListBox: {
-                        "ItemTemplate": {
-                            "TextBox": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "$.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            function onViewReady(view, $layout){
-                $layout.detach();
-
-
-                var $items = $layout.find('.pl-listbox-i'),
-                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-
-                // Then
-                assert.lengthOf($chosen, 0, 'length of chosen item is right');
-
-                // When
-                $items.first().find('.pl-listbox-input input').prop('checked', true).change();
-                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-
-                // Then
-                assert.lengthOf($chosen, 1, 'length of chosen item is right');
-                assert.equal($items.index($chosen.eq(0)), 0, 'index of first chosen item is right');
-            }
-        });
-
-        it('should apply value from control (multiply selecting)', function () {
-            // Given
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources : [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE"},
-                                {"Id": 2, "Display": "2G"},
-                                {"Id": 3, "Display": "2G"}
-                            ]
-                        }
-                    },{
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                { "Value": [{"Id": 2, "Display": "2G"}]}
-                            ]
-                        }
-                    }
-                ],
-                Items: [{
-
-                    ListBox: {
-                        "MultiSelect": true,
-                        "ItemTemplate": {
-                            "TextBox": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "$.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            function onViewReady(view, $layout){
-                $layout.detach();
-
-                var $items = $layout.find('.pl-listbox-i'),
-                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen'),
-                    value = view.getContext().dataSources['ObjectDataSource2'].getSelectedItem().Value;
-
-                // Then
-                assert.lengthOf($chosen, 1, 'length of chosen item is right');
-                assert.equal($items.index($chosen.eq(0)), 1, 'index of chosen item is right');
-                assert.lengthOf(value, 1, 'length value in DS is right');
-                assert.equal(value[0].Id, 2, 'value in DS is right');
-
-                // When
-                $items.first().find('.pl-listbox-input input').prop('checked', true).change();
-                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-                value = view.getContext().dataSources['ObjectDataSource2'].getSelectedItem().Value;
-
-                assert.lengthOf($chosen, 2, 'length of chosen item is right');
-                assert.equal($items.index($chosen.eq(0)), 0, 'index of first chosen item is right');
-                assert.equal($items.index($chosen.eq(1)), 1, 'index of second chosen item is right');
-
-                assert.lengthOf(value, 2, 'length value in DS is right');
-                assert.equal(value[0].Id, 1, 'first value in DS is right');
-                assert.equal(value[1].Id, 2, 'second value in DS is right');
-            }
-        });
-
-        it('should bind selectedItem and value', function () {
-            // Given
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources : [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE"},
-                                {"Id": 2, "Display": "2G"},
-                                {"Id": 3, "Display": "2G"}
-                            ]
-                        }
-                    },{
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                { "Value": {"Id": 2, "Display": "2G"}}
-                            ]
-                        }
-                    }
-                ],
-                Items: [{
-
-                    ListBox: {
-                        "ItemTemplate": {
-                            "TextBox": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "$.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        }
-                    }
-                }]
-            };
-
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            function onViewReady(view, $layout){
-                //$layout.detach();
-
-                var $items = $layout.find('.pl-listbox-i'),
-                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen'),
-                    $selected = $layout.find('.pl-listbox-i.pl-listbox-i-selected'),
-                    ds = view.getContext().dataSources['ObjectDataSource1'],
-                    ds2 = view.getContext().dataSources['ObjectDataSource2'],
-                    selectedItem = ds.getSelectedItem(),
-                    items = ds.getItems();
-
-                // Then
-                assert.lengthOf($chosen, 1, 'length of chosen item is right');
-                assert.lengthOf($selected, 0, 'length of selected item is right');
-                assert.isNull(selectedItem, 'value in DS is right');
-                assert.equal(ds2.getProperty('Value.Id'), 2, 'selected item in DS is right');
-
-                // When
-                $items.last().find('.pl-listbox-input input').prop('checked', true).change();
-                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-                $selected = $layout.find('.pl-listbox-i.pl-listbox-i-selected');
-                selectedItem = ds.getSelectedItem();
-
-                // Then
-                assert.lengthOf($chosen, 1, 'length of chosen item is right (after changing)');
-                assert.lengthOf($selected, 0, 'length of selected item is right (after changing)');
-                assert.equal(ds2.getProperty('Value.Id'), 3, 'selected item in DS is right (after changing)');
-
-                // When
-                ds.setSelectedItem(items[0]);
-                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
-                $selected = $layout.find('.pl-listbox-i.pl-listbox-i-selected');
-                selectedItem = ds.getSelectedItem();
-
-                // Then
-                assert.lengthOf($chosen, 1, 'length of chosen item is right (after 2 changing)');
-                assert.lengthOf($selected, 1, 'length of selected item is right (after 2 changing)');
-                assert.equal(selectedItem.Id, 1, 'value in DS is right (after 2 changing)');
-                assert.equal(ds2.getProperty('Value.Id'), 3, 'selected item in DS is right (after 2 changing)');
-            }
-        });
-
-        it('should set value by passed items', function () {
-            // Given
-            var metadata = {
-                Text: 'Пациенты',
-                DataSources : [
-                    {
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource1",
-                            "Items": [
-                                {"Id": 1, "Display": "LTE"},
-                                {"Id": 2, "Display": "2G"},
-                                {"Id": 3, "Display": "2G"}
-                            ]
-                        }
-                    },{
-                        ObjectDataSource: {
-                            "Name": "ObjectDataSource2",
-                            "Items": [
-                                { "Value": 2 }
-                            ]
-                        }
-                    }
-                ],
-                Items: [{
-
-                    ListBox: {
-                        "Name": "LB",
-                        "ItemTemplate": {
-                            "TextBox": {
-                                "Name": "TextBox1",
-                                "Value": {
-                                    "Source": "ObjectDataSource1",
-                                    "Property": "$.Display"
-                                }
-                            }
-                        },
-                        "Items": {
-                            "Source": "ObjectDataSource1",
-                            "Property": ""
-                        },
-                        "Value": {
-                            "Source": "ObjectDataSource2",
-                            "Property": "$.Value"
-                        },
-                        "ValueProperty": "Id"
-                    }
-                }]
-            };
-
-
-
-            // When
-            testHelper.applyViewMetadata(metadata, onViewReady);
-
-            function onViewReady(view, $layout){
-
-                var listBox = view.getContext().controls['LB'];
-                var firstItem = listBox.getItems().getByIndex(0);
-                var value = listBox.getValue();
-                assert.equal(value, 2, 'first value in listbox is right');
-
-                // When
-                listBox.setValueItem(firstItem);
-
-                // Then
-                var value = listBox.getValue();
-                assert.equal(value, 1, 'setValueItem set value right');
-            }
-        });
-    });
-
-
-});
 describe('PanelControl', function () {
 
     describe('render', function () {
@@ -8712,10 +7761,6 @@ describe('PopupButtonBuilder', function () {
     });
 });
 
-describe('ListEditorBase (Control)', function () {
-
-
-});
 describe('ComboBox', function () {
     describe('render', function () {
 
@@ -8766,6 +7811,439 @@ describe('ComboBox', function () {
             assert.equal(onLoadFlag, 1);
             assert.equal(onValueChanged, 1);
         });
+
+        it('ValueSelector', function () {
+            // Given
+            var metadata = {
+                "Text": 'Пациенты',
+                "Scripts": [
+                    {
+                        "Name": "ValueSelector1",
+                        "Body": "return {Id: args.value.Id, DisplayName: args.value.Display};"
+                    }
+                ],
+                "DataSources": [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE", "State": "New"},
+                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
+                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
+                            ]
+                        }
+                    }, {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                {"Value": {"Id": 2, "DisplayName": "2G"}}
+                            ]
+                        }
+                    }
+                ],
+                "Items": [{
+
+                    ComboBox: {
+                        "LabelText": "Combobox Label",
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "ValueSelector": "ValueSelector1",
+                        "ValueFormat": "{Id} - {DisplayName}",
+                        "MultiSelect": false,
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "Value"
+                        }
+                    }
+                }]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout) {
+                $layout.detach();
+                var $label = $layout.find('.pl-combobox > .pl-control-label'),
+                    $value = $layout.find('.pl-combobox__value');
+
+
+                assert.equal($label.text(), 'Combobox Label');
+                assert.equal($value.length, 1);
+                assert.equal($value.find('.pl-label').text(), '2 - 2G');
+            }
+        });
+
+        it('ValueSelector multiselect', function () {
+            // Given
+            var metadata = {
+                "Text": 'Пациенты',
+                "Scripts": [
+                    {
+                        "Name": "ValueSelector1",
+                        "Body": "return {Id: args.value.Id, DisplayName: args.value.Display};"
+                    }
+                ],
+                "DataSources": [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE", "State": "New"},
+                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
+                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
+                            ]
+                        }
+                    }, {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                {"Value": [
+                                    {"Id": 2, "DisplayName": "2G"},
+                                    {"Id": 3, "DisplayName": "3G"}
+                                ]}
+                            ]
+                        }
+                    }
+                ],
+                "Items": [{
+
+                    ComboBox: {
+                        "LabelText": "Combobox Label",
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "ValueSelector": "ValueSelector1",
+                        "ValueFormat": "{Id} - {DisplayName}",
+                        "MultiSelect": true,
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "Value"
+                        }
+                    }
+                }]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout) {
+                $layout.detach();
+                var $label = $layout.find('.pl-combobox > .pl-control-label'),
+                    $value = $layout.find('.pl-combobox__value');
+
+                assert.equal($label.text(), 'Combobox Label');
+                assert.equal($value.find('.pl-label').text(), '2 - 2G3 - 3G');
+            }
+        });
+
+        it('ValueTemplate', function () {
+            // Given
+            var metadata = {
+                "Text": 'Пациенты',
+                "DataSources": [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE", "State": "New"},
+                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
+                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
+                            ]
+                        }
+                    }, {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                {"Value": {"Id": 2, "Display": "2G","State": "Deprecated"}}
+                            ]
+                        }
+                    }
+                ],
+                "Items": [{
+
+                    ComboBox: {
+                        "LabelText": "Combobox Label",
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "ValueTemplate": {
+                            "StackPanel": {
+                                "Orientation": "Horizontal",
+                                "Items": [
+                                    {
+                                        "Label": {
+                                            "HorizontalAlignment": "Left",
+                                            "Value": {
+                                                "Source": "ObjectDataSource2",
+                                                "Property": "$.Value.Display"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "Label": {
+                                            "HorizontalAlignment": "Left",
+                                            "Value": {
+                                                "Source": "ObjectDataSource2",
+                                                "Property": "$.Value.Id"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+
+                        },
+                        "MultiSelect": false,
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
+                        }
+                    }
+                }]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout) {
+                $layout.detach();
+                var $label = $layout.find('.pl-combobox > .pl-control-label'),
+                    $value = $layout.find('.pl-combobox__value');
+
+                assert.equal($label.text(), 'Combobox Label');
+                assert.equal($value.find('.pl-label').text(), '2G2');
+            }
+        });
+
+        it('ValueTemplate multiselect', function () {
+            // Given
+            var metadata = {
+                "Text": 'Пациенты',
+                "DataSources": [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE", "State": "New"},
+                                {"Id": 2, "Display": "2G", "State": "Deprecated"},
+                                {"Id": 3, "Display": "3G", "State": "Deprecated"}
+                            ]
+                        }
+                    }, {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                {"Value": [
+                                    {"Id": 2, "Display": "2G","State": "Deprecated"},
+                                    {"Id": 3, "Display": "3G", "State": "Deprecated"}
+                                ]}
+                            ]
+                        }
+                    }
+                ],
+                "Items": [{
+
+                    ComboBox: {
+                        "LabelText": "Combobox Label",
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "ValueTemplate": {
+                            "StackPanel": {
+                                "Orientation": "Horizontal",
+                                "Items": [
+                                    {
+                                        "Label": {
+                                            "HorizontalAlignment": "Left",
+                                            "Value": {
+                                                "Source": "ObjectDataSource2",
+                                                "Property": "Value.#.Display"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "Label": {
+                                            "HorizontalAlignment": "Left",
+                                            "Value": {
+                                                "Source": "ObjectDataSource2",
+                                                "Property": "Value.#.Id"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+
+                        },
+                        "MultiSelect": true,
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
+                        }
+                    }
+                }]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout) {
+                $layout.detach();
+                var $label = $layout.find('.pl-combobox > .pl-control-label'),
+                    $value = $layout.find('.pl-combobox__value');
+
+                assert.equal($label.text(), 'Combobox Label');
+                assert.equal($value.find('.pl-label').text(), '2G23G3');
+            }
+        });
+
+    });
+
+    describe('api', function () {
+        it('should update DisabledItemCondition', function (done) {
+            // Given
+            var metadata = {
+                "Text": 'Пациенты',
+                "Scripts": [
+                    {
+                        "Name": "ValueSelector1",
+                        "Body": "return {Id: args.value.Id, DisplayName: args.value.Display};"
+                    }
+                ],
+                "DataSources": [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE", "Type": 1},
+                                {"Id": 2, "Display": "2G", "Type": 2},
+                                {"Id": 3, "Display": "3G", "Type": 2}
+                            ]
+                        }
+                    }, {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                {"Value": {"Id": 2, "DisplayName": "2G"}}
+                            ]
+                        }
+                    }
+                ],
+                "Items": [{
+
+                    ComboBox: {
+                        "Name": "ComboBox1",
+                        "LabelText": "Combobox Label",
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "ValueProperty": "Display",
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "GroupItemTemplate": {
+                            "Label": {
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Type"
+                                },
+                                "TextHorizontalAlignment": "Center"
+                            }
+                        },
+                        "GroupValueProperty": "Type",
+                        "DisabledItemCondition": "{ return (args.value.Id == 2); }",
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "Value"
+                        }
+                    }
+                }]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            // Then
+            function onViewReady(view, $layout) {
+                var combobox = view.context.controls['ComboBox1'];
+                var $value = $layout.find('.pl-combobox__value');
+
+                $value.click();
+
+                var items = $('.pl-combobox-group__items .pl-label');
+                assert.isFalse(items.eq(0).hasClass('pl-disabled'), 'bad render for enabled item');
+                assert.isTrue(items.eq(1).hasClass('pl-disabled'), 'bad render for disabled item');
+
+                // When
+                combobox.setDisabledItemCondition(function (context, args) {
+                        return args.value.Id == 1;
+                });
+                $value.click();
+
+                // Then
+                var items = $('.pl-combobox-group__items .pl-label');
+                assert.isTrue(items.eq(0).hasClass('pl-disabled'), 'items not updated');
+                assert.isFalse(items.eq(1).hasClass('pl-disabled'), 'items not updated');
+
+                done();
+                view.close();
+            }
+        });
     });
 
 
@@ -8774,7 +8252,6 @@ describe('ComboBox', function () {
 describe('DataGrid', function () {
 
     var metadata = {
-        Text: 'Пациенты',
         DataSources : [
             {
                 ObjectDataSource: {
@@ -8789,26 +8266,21 @@ describe('DataGrid', function () {
         ],
         Items: [{
 
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "Items" : [
+            "DataGrid": {
+                "Name": "DataGrid1",
+                "Items": {
+                    "Source": "ObjectDataSource1",
+                    "Property": ""
+                },
+                "DisabledItemCondition": "{ return (args.value.Id == 2); }",
+                "Columns": [
                     {
-                        "DataGrid": {
-                            "Items": {
-                                "Source": "ObjectDataSource1",
-                                "Property": ""
-                            },
-                            "Columns": [
-                                {
-                                    "Header": "Id",
-                                    "CellProperty": "Id"
-                                },
-                                {
-                                    "Header": "Display",
-                                    "CellProperty": "Display"
-                                }
-                            ]
-                        }
+                        "Header": "Id",
+                        "CellProperty": "Id"
+                    },
+                    {
+                        "Header": "Display",
+                        "CellProperty": "Display"
                     }
                 ]
             }
@@ -8816,36 +8288,57 @@ describe('DataGrid', function () {
     };
 
     describe('render', function () {
-        it('should render DataGrid', function () {
+        it('should render DataGrid', function (done) {
             // Given When
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
-
-                onListboxReady($stackPanel);
-            });
+            testHelper.applyViewMetadata(metadata, onDataGridReady);
 
             // Then
-            function onListboxReady($grid){
-                console.log($grid);
+            function onDataGridReady(view, $grid){
                 assert.isObject($grid);
 
+                var headers = $grid.find(".pl-datagrid-row_header .pl-label");
+                assert.equal(headers.first().text(), "Id");
+                assert.equal(headers.last().text(), "Display");
+
+                var $body = $grid.find(".pl-datagrid-row_data");
+                assert.equal($body.length, 3);
+
+                done();
+                view.close();
             }
         });
     });
 
+    describe('API', function () {
+        it('should update DisabledItemCondition', function (done) {
+            // Given
+            testHelper.applyViewMetadata(metadata, function (view, $grid) {
+                var grid = view.context.controls['DataGrid1'];
+                //var $grid = grid.control.controlView.$el;
+
+                var $rows = $grid.find("tbody .pl-datagrid-row");
+
+                assert.isFalse($rows.eq(0).hasClass('pl-disabled'), 'bad render for enabled item');
+                assert.isTrue($rows.eq(1).hasClass('pl-disabled'), 'bad render for disabled item');
+
+                // When
+                grid.setDisabledItemCondition( function (context, args) {
+                    return args.value.Id == 1;
+                });
+
+                $rows = $grid.find("tbody .pl-datagrid-row");
+
+                // Then
+                assert.isTrue($rows.eq(0).hasClass('pl-disabled'), 'items not updated');
+                assert.isFalse($rows.eq(1).hasClass('pl-disabled'), 'items not updated');
+
+                done();
+                view.close();
+            });
 
 
-
+        });
+    });
 });
 /*describe('DataNavigation', function () {
     it('should pass test default property', function () {
@@ -9316,6 +8809,327 @@ describe('Element', function () {
         });
     });
 });
+describe('Frame', function () {
+    var builder = new ApplicationBuilder();
+
+    describe('API', function () {
+        var element = builder.buildType('Frame', {});
+
+        describe('Implementing EditorBase Methods', function () {
+            testHelper.checkEditorBaseMethods(element);
+        });
+
+        describe('Implementing Element Methods', function () {
+            testHelper.checkElementMethods(element);
+        });
+    });
+
+});
+
+describe('FrameBuilder', function () {
+    describe('build', function () {
+        it('successful build Frame', function () {
+            // Given
+
+            var metadata = {};
+
+            // When
+            var builder = new FrameBuilder();
+            var element = builder.build(null, {builder: new ApplicationBuilder(), view: new View(), metadata: metadata});
+
+            // Then
+            assert.isNotNull(element);
+            assert.isObject(element);
+        });
+    });
+});
+
+describe('ImageBox', function () {
+
+    function delay(min, max) {
+        if (typeof min === 'undefined') {
+            min = 100;
+        }
+        if (typeof  max === 'undefined') {
+            max = 200;
+        }
+
+        return Math.ceil(Math.random() * (max - min) + min);
+    }
+
+    describe('API', function () {
+        var builder = new ApplicationBuilder();
+        var element = builder.buildType('ImageBox', {});
+
+        describe('Implementing ImageBox Methods', function () {
+            ['getMaxSize', 'setMaxSize', 'getAcceptTypes']
+                .forEach(function (methodName) {
+                    it(methodName, function () {
+                        testHelper.checkMethod(element, methodName);
+                    });
+
+                });
+        });
+
+        describe('Implementing EditorBase Methods', function () {
+            testHelper.checkEditorBaseMethods(element);
+        });
+
+        describe('Implementing Element Methods', function () {
+            testHelper.checkElementMethods(element);
+        });
+    });
+
+    describe('debug', function () {
+
+        it('render', function () {
+            var builder = new ApplicationBuilder();
+            var view = new View();
+            var metadata = {
+                MaxSize: 0,
+                AcceptTypes: [
+                    'image/png'
+                ]
+            };
+
+            var element = builder.buildType("ImageBox", metadata, {parent: view, parentView: view, builder: builder});
+
+            var $el = element.render();
+            //$('body').append($el);
+        });
+
+
+    });
+
+    describe('Upload new file', function () {
+
+        beforeEach(function () {
+            //register fake upload provider
+            window.providerRegister.register('DocumentFileProvider', function (metadata) {
+                return {
+                    uploadFile: function () {
+                        var deferred = $.Deferred();
+                        setTimeout(function () {
+                            deferred.resolve();
+                        }, delay());
+
+                        return deferred.promise();
+                    },
+                    getFileUrl: function (fieldName, instanceId) {
+                        return [fieldName, instanceId, 'fake.html'].join('.');
+                    }
+                };
+            });
+
+            //register fake DocumentDataSource provider
+            window.providerRegister.register('DocumentDataSource', function (metadataValue) {
+                return {
+                    getItems: function (criteriaList, pageNumber, pageSize, sorting, resultCallback) {
+                        var items = [{
+                            "Id": "1",
+                            photo: {
+                                Info: {
+                                    ContentId: 'somePhotoId'
+                                }
+                            }
+                        }];
+                        setTimeout(function () {
+                            resultCallback(items);
+                        }, delay());
+                    },
+                    createItem: function (resultCallback, idProperty) {
+                        var response = {
+                            'DisplayName': 'display name'
+                        };
+                        setTimeout(function () {
+                            resultCallback(response);
+                        }, delay());
+                    },
+
+                    saveItem: function (value, resultCallback, warnings, idProperty) {
+                        var response = [{
+                            InstanceId: "42"
+                        }];
+
+                        setTimeout(function () {
+                            resultCallback(response);
+                        }, delay());
+                    },
+                    setOrigin: function(){},
+                    setPath: function(){},
+                    setData : function(){},
+                    setFilter: function(){},
+                    setDocumentId: function(){},
+                    getDocumentId: function () {},
+                    createLocalItem: function (idProperty) {
+                        var result = {};
+
+                        result[idProperty] = guid();
+                        result['__Id'] = result[idProperty];
+
+                        return result;
+                    }
+                };
+
+            });
+        });
+
+        //
+        //it('Should set image url', function (done) {
+        //    var builder = new ApplicationBuilder();
+        //
+        //    //Build view
+        //    var view = new View();
+        //
+        //    //Build DataSource
+        //    var dataSources = view.getDataSources();
+        //    var dsMetadata = {
+        //        Name: 'MyDataSource',
+        //        ConfigId: 'MyConfig',
+        //        DocumentId: 'MyDocument'
+        //    };
+        //    var ds = builder.buildType('DocumentDataSource', dsMetadata, {parentView: view});
+        //    dataSources.add(ds);
+        //
+        //    var PROPERTY_NAME = 'photo';
+        //
+        //    //build ImageBox
+        //    var imageBoxMetadata = {
+        //        Value: {
+        //            Source: 'MyDataSource',
+        //            Property: PROPERTY_NAME
+        //        }
+        //    };
+        //    var imageBox = builder.buildType('ImageBox', imageBoxMetadata, {parent: view, parentView: view});
+        //
+        //    imageBox.render();
+        //
+        //    ds.onItemsUpdated(function () {
+        //        var items = ds.getItems();
+        //        ds.setSelectedItem(items[0]);
+        //        assert.equal(imageBox.getValue(), [PROPERTY_NAME, '1', 'fake.html'].join('.'), 'Image URL for existing item');
+        //
+        //        ds.createItem(function (context, args) {
+        //            imageBox.onPropertyChanged('value', function (context, args) {
+        //                var url = [PROPERTY_NAME, 'MyPhotoId', 'fake.html'].join('.');
+        //                assert.equal(imageBox.getValue(), url, 'image URL for new item');
+        //                done();
+        //            });
+        //
+        //            ds.setProperty(PROPERTY_NAME, {ContentId: 'MyPhotoId2'});
+        //        });
+        //    });
+        //
+        //});
+
+    });
+
+    describe('Render', function () {
+        var element;
+
+        beforeEach(function () {
+            element = new ImageBox();
+        });
+
+        it('Setting properties', function () {
+
+            // Given
+            element.setEnabled(true);
+            element.setAcceptTypes(['video/*']);
+            element.setMaxSize(50000);
+            //element.setValue({Info: {}});
+
+            assert.equal(element.getEnabled(), true);
+            assert.deepEqual(element.getAcceptTypes().toArray(), ['video/*']);
+            //assert.deepEqual(element.getValue(), {Info: {}});
+            assert.equal(element.getMaxSize(), 50000);
+        });
+
+    });
+
+
+//    describe('ImageBox data binding', function () {
+//        it('should set ImageBox.value from property binding', function () {
+//
+//            //это говнокод
+//            $('#page-content').empty();
+//
+//            window.providerRegister.register('UploadDocumentDataSource', function (metadataValue) {
+//                return new DataProviderUpload(new QueryConstructorUpload('http://127.0.0.1:8888', metadataValue));
+//            });
+//
+//            window.providerRegister.register('DocumentDataSource', function () {
+//                return new FakeDataProvider();
+//            });
+//
+//            $('body').append($('<div>').attr('id', 'page-content'));
+//
+//            var metadata = {
+//                Text: 'Пациенты',
+//                DataSources: [
+//                    {
+//                        DocumentDataSource: {
+//                            Name : "PatientDataSource",
+//                            ConfigId: 'Demography',
+//                            DocumentId: 'Patient',
+//                            IdProperty: 'Id',
+//                            CreateAction: 'CreateDocument',
+//                            GetAction: 'GetDocument',
+//                            UpdateAction: 'SetDocument',
+//                            DeleteAction: 'DeleteDocument',
+//                            FillCreatedItem: true
+//                        }
+//                    }
+//                ],
+//                LayoutPanel: {
+//                    StackPanel: {
+//                        Name: 'MainViewPanel',
+//                        Items: [
+//                            {
+//                                ImageBox: {
+//                                    Name: 'ImageBox1',
+//                                    Value : {
+//                                        FileBinding : {
+//                                            DataSource : 'PatientDataSource',
+//                                            Property : '$.photo'
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        ]
+//                    }
+//                }
+//            };
+//
+//            var linkView = new LinkView(null, function (resultCallback) {
+//                var builder = new ApplicationBuilder();
+//                var view = builder.buildType(fakeView(), 'View', metadata);
+//                resultCallback(view);
+//            });
+//            linkView.setOpenMode('Application');
+//
+//            linkView.createView(function(view){
+//                view.open();
+//
+//                var itemToSelect = null;
+//                view.getDataSource('PatientDataSource').getItems(function(data){
+//                    itemToSelect = data[1];
+//                });
+//
+//                view.getDataSource('PatientDataSource').setSelectedItem(itemToSelect);
+//
+//
+//                window.maindatasource = view.getDataSource('PatientDataSource');
+//
+//                //check text
+//               // assert.equal($('#page-content').find('input:text').val(), itemToSelect.LastName);
+//               // $('#page-content').remove();
+//            });
+//        });
+//    });
+
+
+});
 describe('Label', function () {
     var builder = new ApplicationBuilder();
 
@@ -9450,618 +9264,861 @@ describe('LabelBuilder', function () {
     });
 });
 
+//describe('Extension Panel', function () {
+//    it('should be true if scriptsHandlers call', function () {
+//        //Given
+//        var extensionPanel = new ApplicationBuilder();
+//        var view = new View();
+//        var metadata = {
+//            ExtensionPanel: {
+//                ExtensionName: 'Banner',
+//                OnLoaded: {
+//                    Name: 'OnLoaded'
+//                }
+//            }
+//        };
+//        window.Test = {extensionPanelLoaded:false};
+//        view.setScripts([{Name:"OnLoaded", Body:"window.Test.extensionPanelLoaded = true"}]);
+//
+//        //When
+//        var build = extensionPanel.build(view, metadata);
+//        var el = build.render();
+//
+//        // Then
+////        assert.isTrue(window.Test.extensionPanelLoaded);
+//    });
+//});
+describe('PanelElement', function () {
+    var builder = new ApplicationBuilder();
+
+    describe('API', function () {
+        var element = builder.buildType('Panel', {});
+
+        describe('Implementing Panel API', function () {
+            it('Implement methods', function () {
+                testHelper.checkMethod(element, 'getCollapsible');
+                testHelper.checkMethod(element, 'setCollapsible');
+                testHelper.checkMethod(element, 'getCollapsed');
+                testHelper.checkMethod(element, 'setCollapsed');
+                testHelper.checkMethod(element, 'getHeaderTemplate');
+                testHelper.checkMethod(element, 'setHeaderTemplate');
+                testHelper.checkMethod(element, 'getHeader');
+                testHelper.checkMethod(element, 'setHeader');
+            });
+
+            it('Implement events subscriber', function () {
+                testHelper.checkMethod(element, 'onExpanding');
+                testHelper.checkMethod(element, 'onExpanded');
+                testHelper.checkMethod(element, 'onCollapsing');
+                testHelper.checkMethod(element, 'onCollapsed');
+            });
+
+        });
+
+        describe('Implementing Container Methods', function () {
+            testHelper.checkContainerMethods(element)
+        });
+
+        describe('Implementing Element Methods', function () {
+            testHelper.checkElementMethods(element)
+        });
+
+        it('Default values', function () {
+            var element = builder.buildType('Panel', {});
+
+            assert.equal(element.getCollapsible(), false, 'Collapsible');
+            assert.equal(element.getCollapsed(), false, 'Collapsed');
+            assert.isFunction(element.getHeaderTemplate, 'HeaderTemplate by default');
+        });
+
+    });
+
+
+    describe('Panel events handler', function () {
+
+        function bindEvents(element) {
+            var events = [];
+            element.onCollapsed(function () {
+                events.push('onCollapsed');
+            });
+
+            element.onCollapsing(function () {
+                events.push('onCollapsing');
+            });
+
+            element.onExpanded(function () {
+                events.push('onExpanded');
+            });
+
+            element.onExpanding(function () {
+                events.push('onExpanding');
+            });
+
+            return events;
+        }
+
+        function createPanel() {
+            return builder.buildType('Panel', {});
+        }
+
+        it('Should fire onCollapsing on setCollapsed(true)', function () {
+            //Given
+            var element = createPanel();
+            var events = bindEvents(element);
+            //When
+            element.setCollapsed(true);
+
+            //Then
+            assert.lengthOf(events, 2);
+            assert.equal(events[0], 'onCollapsing', 'onCollapsing');
+            assert.equal(events[1], 'onCollapsed', 'onCollapsed');
+            assert.equal(element.getCollapsed(), true);
+        });
+
+        it('Should fire onExpanding on setCollapsed(false)', function () {
+            //Given
+            var element = createPanel();
+            element.setCollapsed(true);
+            var events = bindEvents(element);
+            //When
+            element.setCollapsed(false);
+
+            //Then
+            assert.lengthOf(events, 2);
+            assert.equal(events[0], 'onExpanding', 'onExpanding');
+            assert.equal(events[1], 'onExpanded', 'onExpanded');
+            assert.equal(element.getCollapsed(), false);
+        });
+
+        it('Should cancel setCollapsed(true) when one of onCollapsing returns false', function () {
+            //Given
+            var element = createPanel();
+            var events = bindEvents(element);
+            element.onCollapsing(function () {
+                events.push('onCollapsing');
+                return false;
+            });
+
+            //When
+            element.setCollapsed(true);
+
+            //Then
+            assert.lengthOf(events, 2);
+            assert.equal(events[0], 'onCollapsing', 'onCollapsing');
+            assert.equal(events[1], 'onCollapsing', 'onCollapsing');
+            assert.equal(element.getCollapsed(), false);
+        });
+
+        it('Should cancel setCollapsed(false) when one of onExpanding returns false', function () {
+            //Given
+            var element = createPanel();
+            element.setCollapsed(true);
+            var events = bindEvents(element);
+
+            element.onExpanding(function () {
+                events.push('onExpanding');
+                return false;
+            });
+
+            //When
+            element.setCollapsed(false);
+
+            //Then
+            assert.lengthOf(events, 2);
+            assert.equal(events[0], 'onExpanding', 'onExpanding');
+            assert.equal(events[1], 'onExpanding', 'onExpanding');
+            assert.equal(element.getCollapsed(), true);
+        });
+
+
+    });
+
+});
+describe('PanelBuilder', function () {
+    it('should build', function () {
+
+        //Given
+        var metadata = {
+            Panel: {
+                Text: 'panel',
+                Items: [
+                    {
+                        TextBox: {
+                            Name: 'text'
+                        }
+                    }
+                ]
+            }
+        };
+
+        var builder = new ApplicationBuilder();
+        var panel = builder.build(metadata, {parentView: fakeView()});
+
+        //When
+        assert.equal(panel.getText(), 'panel');
+    });
+
+});
 describe('ListBox', function () {
 
-    var metadata2 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        { "Id": 1, "Display": "LTE" },
-                        { "Id": 2, "Display": "3G" },
-                        { "Id": 3, "Display": "2G" }
-                    ]
-                }
-            }
-        ],
-        Items: [{
+    describe('render', function () {
 
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "ItemTemplate": {
-                    "TextBox": {
-                        "Name": "TextBox1",
-                        "Value": {
-                            "Source": "ObjectDataSource1",
-                            "Property": "$.Display"
+        it('should render listBox with grouping', function () {
+            // Given
+
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                { "Id": 1, "Display": "LTE", "Type": 1 },
+                                { "Id": 2, "Display": "A", "Type": 2 },
+                                { "Id": 3, "Display": "3G", "Type": 1 },
+                                { "Id": 4, "Display": "01", "Type": 3 },
+                                { "Id": 5, "Display": "2G", "Type": 1 },
+                                { "Id": 6, "Display": "02", "Type": 3 },
+                                { "Id": 7, "Display": "03", "Type": 3 },
+                                { "Id": 8, "Display": "B", "Type": 2 }
+                            ]
                         }
                     }
-                },
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
-            }
-        }]
-    };
+                ],
+                Items: [{
 
-    describe('render', function () {
-        it('should render stackPanel', function () {
-            // Given When
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata2, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
+                    ListBox: {
+                        "ItemProperty": "Display",
+                        "GroupItemProperty": "Type",
+                        "GroupValueProperty": "Type",
+                        "Items" : {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        }
+                    }
+                }]
+            };
 
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
-
-                onListboxReady($stackPanel);
-            });
+            // When
+            testHelper.applyViewMetadata(metadata, onListboxReady);
 
             // Then
-            function onListboxReady($stackPanel){
-                assert.lengthOf($stackPanel.find('.pl-stack-panel-i'), 3, 'length of rendered stackPanel');
-                assert.lengthOf($stackPanel.find('.pl-text-box-input'), 3, 'length of rendered textbox');
-                assert.equal($stackPanel.find('.pl-text-box-input:first').val(), 'LTE', 'binding in itemTemplate is right');
+            function onListboxReady(view, $view){
+                var titles = $view.find('.pl-listbox-group-title .pl-label')
+                                .map(function(i, item){return $(item).text()})
+                                .toArray();
+
+                assert.sameMembers(titles, ['1', '2', '3'], 'incorrect titles');
+
+                var firstGroup = $view.find('.pl-listbox-group-i:nth-child(1) .pl-listbox-group-body .pl-label')
+                                    .map(function(i, item){return $(item).text()})
+                                    .toArray();
+
+                assert.sameMembers(firstGroup, ['LTE', '2G', '3G'], 'incorrect first group');
+
+                var secondGroup = $view.find('.pl-listbox-group-i:nth-child(2) .pl-listbox-group-body .pl-label')
+                    .map(function(i, item){return $(item).text()})
+                    .toArray();
+
+                assert.sameMembers(secondGroup, ['A', 'B'], 'incorrect second group');
+
+                var thirdGroup = $view.find('.pl-listbox-group-i:nth-child(3) .pl-listbox-group-body .pl-label')
+                    .map(function(i, item){return $(item).text()})
+                    .toArray();
+
+                assert.sameMembers(thirdGroup, ['01', '02', '03'], 'incorrect third group');
+
+                view.close();
+            }
+        });
+
+        it('should render listBox without grouping', function () {
+            // Given
+
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                { "Id": 1, "Display": "LTE" },
+                                { "Id": 2, "Display": "3G" },
+                                { "Id": 3, "Display": "2G" }
+                            ]
+                        }
+                    }
+                ],
+                Items: [{
+
+                    ListBox: {
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "Items" : {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        }
+                    }
+                }]
+            };
+
+            // When
+
+            testHelper.applyViewMetadata(metadata, onListboxReady);
+
+            // Then
+            function onListboxReady(view, $view){
+                var items = $view.find('.pl-listbox-body .pl-label')
+                                .map(function(i, item){return $(item).text()})
+                                .toArray();
+
+                assert.sameMembers(items, ['LTE', '3G', '2G']);
+
+                view.close();
+            }
+        });
+
+    });
+
+    describe('api', function () {
+        it('should update DisabledItemCondition', function () {
+            // Given
+            var metadata = {
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                { "Id": 1, "Display": "LTE" },
+                                { "Id": 2, "Display": "3G" },
+                                { "Id": 3, "Display": "2G" }
+                            ]
+                        }
+                    }
+                ],
+                Items: [{
+                    ListBox: {
+                        "Name": "ListBox1",
+                        "DisabledItemCondition": "{ return (args.value.Id == 2); }",
+                        "ViewMode": "base",
+                        "MultiSelect": true,
+                        "ItemTemplate": {
+                            "Label": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "#.Display"
+                                }
+                            }
+                        },
+                        "Items" : {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        }
+                    }
+                }]
+            };
+
+
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+
+            function onViewReady(view, $view) {
+                var listbox = view.context.controls['ListBox1'];
+                var items = $view.find('.pl-listbox-i');
+
+                assert.isFalse(items.eq(0).hasClass('pl-disabled-list-item'), 'bad render for enabled item');
+                assert.isTrue(items.eq(1).hasClass('pl-disabled-list-item'), 'bad render for disabled item');
+
+                // When
+                listbox.setDisabledItemCondition( function (context, args) {
+                    return args.value.Id == 1;
+                });
+
+                // Then
+                items = $view.find('.pl-listbox-i');
+
+                assert.isTrue(items.eq(0).hasClass('pl-disabled-list-item'), 'items not updated');
+                assert.isFalse(items.eq(1).hasClass('pl-disabled-list-item'), 'items not updated');
+                view.close();
             }
         });
     });
 
+});
+describe('ListEditorBase', function () {
 
-    var metadata3 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        { "Id": 1, "Display": "LTE" },
-                        { "Id": 2, "Display": "3G" },
-                        { "Id": 3, "Display": "2G" }
-                    ]
-                }
-            }
-        ],
-        Items: [{
+    describe('ListBox as exemplar of ListEditorBase', function (){
 
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "Items" : [
+        it('should apply value to control (single selecting mode)', function () {
+            // Given
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
                     {
-                        "TextBox": {
-                            "Name": "TextBox1",
-                            "Value": {
-                                "Source": "ObjectDataSource1",
-                                "Property": "Display"
-                            }
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE"},
+                                {"Id": 2, "Display": "2G"},
+                                {"Id": 3, "Display": "2G"}
+                            ]
                         }
                     },{
-                        "TextBox": {
-                            "Name": "TextBox2",
-                            "Value": {
-                                "Source": "ObjectDataSource1",
-                                "Property": "Id"
-                            }
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                { "Value": { "Id": 2, "Display": "2G" }}
+                            ]
                         }
                     }
-                ]
-            }
-        }]
-    };
+                ],
+                Items: [{
 
-    describe('render2', function () {
-        it('should render stackPanel', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
+                    ListBox: {
+                        "ItemTemplate": {
+                            "TextBox": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "$.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
+                        }
+                    }
+                }]
+            };
 
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata3, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
 
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
-
-                onListboxReady($stackPanel);
-            });
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
-            function onListboxReady($stackPanel){
-                assert.lengthOf($stackPanel.find('.pl-stack-panel-i'), 2, 'length of rendered stackPanel');
-                assert.lengthOf($stackPanel.find('.pl-text-box-input'), 2, 'length of rendered textbox');
-                assert.equal($stackPanel.find('.pl-text-box-input:first').val(), 'LTE', 'binding in itemTemplate is right');
+            function onViewReady(view, $layout){
+                $layout.detach();
+
+                var $items = $layout.find('.pl-listbox-i'),
+                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+
+                assert.lengthOf($chosen, 1, 'length of chosen item is right');
+                assert.equal($items.index($chosen), 1, 'index of chosen item is right');
+
+                view.close();
             }
         });
-    });
 
 
-    var metadata = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        { "Id": 1, "Display": "LTE" },
-                        { "Id": 2, "Display": "2G" },
-                        { "Id": 3, "Display": "2G" }
-                    ]
-                }
-            }
-        ],
-        Items: [{
-
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "Items" : [
+        it('should apply value to control (multiply selecting mode)', function () {
+            // Given
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
                     {
-                        ListBox: {
-                            "ItemTemplate": {
-                                "TextBox": {
-                                    "Name": "TextBox1",
-                                    "Value": {
-                                        "Source": "ObjectDataSource1",
-                                        "Property": "$.Display"
-                                    }
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE"},
+                                {"Id": 2, "Display": "2G"},
+                                {"Id": 3, "Display": "2G"}
+                            ]
+                        }
+                    },{
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                { "Value": [
+                                    { "Id": 2, "Display": "2G" },
+                                    { "Id": 3, "Display": "2G" }
+                                ]}
+                            ]
+                        }
+                    }
+                ],
+                Items: [{
+
+                    ListBox: {
+                        "MultiSelect": true,
+                        "ItemTemplate": {
+                            "TextBox": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "$.Display"
                                 }
-                            },
-                            "GroupItemTemplate": {
-                                "TextBox": {
-                                    "Value": {
-                                        "Source": "ObjectDataSource1",
-                                        "Property": "$.Display"
-                                    }
-                                }
-                            },
-                            "GroupValueProperty": "Display",
-                            "Items" : {
-                                "Source": "ObjectDataSource1",
-                                "Property": ""
                             }
-                        }
-                    }
-                ]
-            }
-        }]
-    };
-
-    describe('render lb', function () {
-        it('should render listBox', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
-
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $listbox = $('#sandbox').children();
-                $listbox.detach();
-
-                onListboxReady($listbox);
-            });
-
-            // Then
-            function onListboxReady($listbox){
-                assert.lengthOf($listbox.find('.pl-listbox-body'), 3, 'length of rendered listbox');
-            }
-        });
-    });
-
-
-    var metadata4 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        { "Id": 1, "Display": "LTE" },
-                        { "Id": 2, "Display": "2G" },
-                        { "Id": 3, "Display": "2G" }
-                    ]
-                }
-            }
-        ],
-        Items: [{
-
-            ListBox: {
-                "ItemTemplate": {
-                    "TextBox": {
-                        "Name": "TextBox1",
-                        "Value": {
+                        },
+                        "Items": {
                             "Source": "ObjectDataSource1",
-                            "Property": "$.Display"
-                        }
-                    }
-                },
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
-            }
-        }]
-    };
-
-    describe('render lb2', function () {
-        it('should render listBox without grouping', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
-
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata4, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $listbox = $('#sandbox').children();
-                $listbox.detach();
-
-                onListboxReady($listbox);
-            });
-
-            // Then
-            function onListboxReady($listbox){
-                assert.lengthOf($listbox.find('.pl-listbox-body'), 3, 'length of rendered listbox');
-            }
-        });
-    });
-
-
-
-    var metadata5 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        { "Id": 1, "Display": "LTE" },
-                        { "Id": 2, "Display": "2G" },
-                        { "Id": 3, "Display": "2G" }
-                    ]
-                }
-            }
-        ],
-        Items: [{
-
-            ListBox: {
-                "ItemTemplate": {
-                    "Label": {
+                            "Property": ""
+                        },
                         "Value": {
-                            "Source": "ObjectDataSource1",
-                            "Property": "$.Display"
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
                         }
                     }
-                },
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
-            }
-        }]
-    };
+                }]
+            };
 
-    describe('render lb3', function () {
-        it('should render listBox without grouping', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
 
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata5, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $listbox = $('#sandbox').children();
-                $listbox.detach();
-
-                onListboxReady($listbox);
-            });
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
             // Then
-            function onListboxReady($listbox){
-                assert.lengthOf($listbox.find('.pl-listbox-body'), 3, 'length of rendered listbox');
+            function onViewReady(view, $layout){
+                $layout.detach();
+
+                var $items = $layout.find('.pl-listbox-i'),
+                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+
+                assert.lengthOf($chosen, 2, 'length of chosen item is right');
+                assert.equal($items.index($chosen.eq(0)), 1, 'index of first chosen item is right');
+                assert.equal($items.index($chosen.eq(1)), 2, 'index of second chosen item is right');
+
+                view.close();
             }
         });
-    });
 
-    var metadata6 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        "LTE",
-                        "3G",
-                        "2G"
-                    ]
-                }
-            }
-        ],
-        Items: [{
-
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
-            }
-        }]
-    };
-
-    describe('render simple list templating', function () {
-        it('should render stackPanel with simple items', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
-
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata6, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
-
-                onStackPanelReady($stackPanel);
-            });
-
-            // Then
-            function onStackPanelReady($stackPanel){
-                assert.lengthOf($stackPanel.find('.pl-stack-panel-i'), 3, 'length of rendered stackPanel');
-                assert.lengthOf($stackPanel.find('.pl-label').not(':empty'), 3, 'length of rendered stackPanel');
-                assert.equal($stackPanel.find('.pl-label').first().text(), 'LTE', 'content of first element is right');
-            }
-        });
-    });
-
-
-    var metadata7 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        {
-                            Name: {Temp: "LTE"}
-                        },
-                        {
-                            Name: {Temp: "3G"}
-                        },
-                        {
-                            Name: {Temp: "2G"}
+        it('should apply value from control (single selecting)', function () {
+            // Given
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE"},
+                                {"Id": 2, "Display": "2G"},
+                                {"Id": 3, "Display": "2G"}
+                            ]
                         }
-                    ]
-                }
-            }
-        ],
-        Items: [{
-
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "ItemProperty": "Name.Temp",
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
-            }
-        }]
-    };
-
-    describe('render property list templating ', function () {
-        it('should render stackPanel with property items', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
-
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata7, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
-
-                onStackPanelReady($stackPanel);
-            });
-
-            // Then
-            function onStackPanelReady($stackPanel){
-                assert.lengthOf($stackPanel.find('.pl-stack-panel-i'), 3, 'length of rendered stackPanel');
-                assert.lengthOf($stackPanel.find('.pl-label').not(':empty'), 3, 'length of rendered stackPanel');
-                assert.equal($stackPanel.find('.pl-label').first().text(), 'LTE', 'content of first element is right');
-            }
-        });
-    });
-
-    var metadata8 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        {
-                            Name: {Temp: "LTE"}
-                        },
-                        {
-                            Name: {Temp: "3G"}
-                        },
-                        {
-                            Name: {Temp: "2G"}
+                    },{
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                { "Value": null}
+                            ]
                         }
-                    ]
-                }
-            }
-        ],
-        Items: [{
+                    }
+                ],
+                Items: [{
 
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "ItemFormat": "Connect: {Name.Temp}",
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
-            }
-        }]
-    };
-
-    describe('render property list formatting ', function () {
-        it('should render stackPanel with formatting items', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
-
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata8, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
-
-                onStackPanelReady($stackPanel);
-            });
-
-            // Then
-            function onStackPanelReady($stackPanel){
-                assert.lengthOf($stackPanel.find('.pl-stack-panel-i'), 3, 'length of rendered stackPanel');
-                assert.lengthOf($stackPanel.find('.pl-label').not(':empty'), 3, 'length of rendered stackPanel');
-                assert.equal($stackPanel.find('.pl-label').first().text(), 'Connect: LTE', 'content of first element is right');
-            }
-        });
-    });
-
-    var metadata9 = {
-        Text: 'Пациенты',
-        DataSources : [
-            {
-                ObjectDataSource: {
-                    "Name": "ObjectDataSource1",
-                    "Items": [
-                        {
-                            Name: {Temp: "LTE"}
+                    ListBox: {
+                        "ItemTemplate": {
+                            "TextBox": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "$.Display"
+                                }
+                            }
                         },
-                        {
-                            Name: {Temp: "3G"}
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
                         },
-                        {
-                            Name: {Temp: "2G"}
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
                         }
-                    ]
-                }
+                    }
+                }]
+            };
+
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            function onViewReady(view, $layout){
+                $layout.detach();
+
+
+                var $items = $layout.find('.pl-listbox-i'),
+                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+
+                // Then
+                assert.lengthOf($chosen, 0, 'length of chosen item is right');
+
+                // When
+                $items.first().find('.pl-listbox-input input').prop('checked', true).change();
+                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+
+                // Then
+                assert.lengthOf($chosen, 1, 'length of chosen item is right');
+                assert.equal($items.index($chosen.eq(0)), 0, 'index of first chosen item is right');
+
+                view.close();
             }
-        ],
-        Items: [{
+        });
 
-            StackPanel: {
-                Name: 'MainViewPanel',
-                "ItemSelector":{
-                    Name: 'GetTitle'
-                },
-                "Items" : {
-                    "Source": "ObjectDataSource1",
-                    "Property": ""
-                }
+        it('should apply value from control (multiply selecting)', function () {
+            // Given
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE"},
+                                {"Id": 2, "Display": "2G"},
+                                {"Id": 3, "Display": "2G"}
+                            ]
+                        }
+                    },{
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                { "Value": [{"Id": 2, "Display": "2G"}]}
+                            ]
+                        }
+                    }
+                ],
+                Items: [{
+
+                    ListBox: {
+                        "MultiSelect": true,
+                        "ItemTemplate": {
+                            "TextBox": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "$.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
+                        }
+                    }
+                }]
+            };
+
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            function onViewReady(view, $layout){
+                $layout.detach();
+
+                var $items = $layout.find('.pl-listbox-i'),
+                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen'),
+                    value = view.getContext().dataSources['ObjectDataSource2'].getSelectedItem().Value;
+
+                // Then
+                assert.lengthOf($chosen, 1, 'length of chosen item is right');
+                assert.equal($items.index($chosen.eq(0)), 1, 'index of chosen item is right');
+                assert.lengthOf(value, 1, 'length value in DS is right');
+                assert.equal(value[0].Id, 2, 'value in DS is right');
+
+                // When
+                $items.first().find('.pl-listbox-input input').prop('checked', true).change();
+                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+                value = view.getContext().dataSources['ObjectDataSource2'].getSelectedItem().Value;
+
+                assert.lengthOf($chosen, 2, 'length of chosen item is right');
+                assert.equal($items.index($chosen.eq(0)), 0, 'index of first chosen item is right');
+                assert.equal($items.index($chosen.eq(1)), 1, 'index of second chosen item is right');
+
+                assert.lengthOf(value, 2, 'length value in DS is right');
+                assert.equal(value[0].Id, 1, 'first value in DS is right');
+                assert.equal(value[1].Id, 2, 'second value in DS is right');
+
+                view.close();
             }
-        }],
+        });
 
-        Scripts: [
-            {
-                Name: 'GetTitle',
-                Body: "return '!! ' + args.value.Name.Temp;"
+        it('should bind selectedItem and value', function () {
+            // Given
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE"},
+                                {"Id": 2, "Display": "2G"},
+                                {"Id": 3, "Display": "2G"}
+                            ]
+                        }
+                    },{
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                { "Value": {"Id": 2, "Display": "2G"}}
+                            ]
+                        }
+                    }
+                ],
+                Items: [{
+
+                    ListBox: {
+                        "ItemTemplate": {
+                            "TextBox": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "$.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
+                        }
+                    }
+                }]
+            };
+
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
+
+            function onViewReady(view, $layout){
+                //$layout.detach();
+
+                var $items = $layout.find('.pl-listbox-i'),
+                    $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen'),
+                    $selected = $layout.find('.pl-listbox-i.pl-listbox-i-selected'),
+                    ds = view.getContext().dataSources['ObjectDataSource1'],
+                    ds2 = view.getContext().dataSources['ObjectDataSource2'],
+                    selectedItem = ds.getSelectedItem(),
+                    items = ds.getItems();
+
+                // Then
+                assert.lengthOf($chosen, 1, 'length of chosen item is right');
+                assert.lengthOf($selected, 0, 'length of selected item is right');
+                assert.isNull(selectedItem, 'value in DS is right');
+                assert.equal(ds2.getProperty('Value.Id'), 2, 'selected item in DS is right');
+
+                // When
+                $items.last().find('.pl-listbox-input input').prop('checked', true).change();
+                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+                $selected = $layout.find('.pl-listbox-i.pl-listbox-i-selected');
+                selectedItem = ds.getSelectedItem();
+
+                // Then
+                assert.lengthOf($chosen, 1, 'length of chosen item is right (after changing)');
+                assert.lengthOf($selected, 0, 'length of selected item is right (after changing)');
+                assert.equal(ds2.getProperty('Value.Id'), 3, 'selected item in DS is right (after changing)');
+
+                // When
+                ds.setSelectedItem(items[0]);
+                $chosen = $layout.find('.pl-listbox-i.pl-listbox-i-chosen');
+                $selected = $layout.find('.pl-listbox-i.pl-listbox-i-selected');
+                selectedItem = ds.getSelectedItem();
+
+                // Then
+                assert.lengthOf($chosen, 1, 'length of chosen item is right (after 2 changing)');
+                assert.lengthOf($selected, 1, 'length of selected item is right (after 2 changing)');
+                assert.equal(selectedItem.Id, 1, 'value in DS is right (after 2 changing)');
+                assert.equal(ds2.getProperty('Value.Id'), 3, 'selected item in DS is right (after 2 changing)');
+
+                view.close();
             }
-        ]
-    };
+        });
 
-    describe('render property list formatting ', function () {
-        it('should render stackPanel with formatting items', function () {
-            // Given When
-            window.providerRegister.register('DocumentDataSource', function () {
-                return new FakeRestDataProvider();
-            });
+        it('should set value by passed items', function () {
+            // Given
+            var metadata = {
+                Text: 'Пациенты',
+                DataSources : [
+                    {
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource1",
+                            "Items": [
+                                {"Id": 1, "Display": "LTE"},
+                                {"Id": 2, "Display": "2G"},
+                                {"Id": 3, "Display": "2G"}
+                            ]
+                        }
+                    },{
+                        ObjectDataSource: {
+                            "Name": "ObjectDataSource2",
+                            "Items": [
+                                { "Value": 2 }
+                            ]
+                        }
+                    }
+                ],
+                Items: [{
 
-            var linkView = new LinkView(null, function (resultCallback) {
-                var builder = new ApplicationBuilder();
-                var view = builder.buildType('View', metadata9, {parentView: fakeView()});
-                resultCallback(view);
-            });
-            linkView.setOpenMode('Application');
+                    ListBox: {
+                        "Name": "LB",
+                        "ItemTemplate": {
+                            "TextBox": {
+                                "Name": "TextBox1",
+                                "Value": {
+                                    "Source": "ObjectDataSource1",
+                                    "Property": "$.Display"
+                                }
+                            }
+                        },
+                        "Items": {
+                            "Source": "ObjectDataSource1",
+                            "Property": ""
+                        },
+                        "Value": {
+                            "Source": "ObjectDataSource2",
+                            "Property": "$.Value"
+                        },
+                        "ValueProperty": "Id"
+                    }
+                }]
+            };
 
-            var view = linkView.createView(function (view) {
-                view.open();
 
-                var $stackPanel = $('#sandbox').children();
-                $stackPanel.detach();
 
-                onStackPanelReady($stackPanel);
-            });
+            // When
+            testHelper.applyViewMetadata(metadata, onViewReady);
 
-            // Then
-            function onStackPanelReady($stackPanel){
-                assert.lengthOf($stackPanel.find('.pl-stack-panel-i'), 3, 'length of rendered stackPanel');
-                assert.lengthOf($stackPanel.find('.pl-label').not(':empty'), 3, 'length of rendered stackPanel');
-                assert.equal($stackPanel.find('.pl-label').first().text(), '!! LTE', 'content of first element is right');
+            function onViewReady(view, $layout){
+
+                var listBox = view.getContext().controls['LB'];
+                var firstItem = listBox.getItems().getByIndex(0);
+                var value = listBox.getValue();
+                assert.equal(value, 2, 'first value in listbox is right');
+
+                // When
+                listBox.setValueItem(firstItem);
+
+                // Then
+                var value = listBox.getValue();
+                assert.equal(value, 1, 'setValueItem set value right');
+
+                view.close();
             }
         });
     });
+
 
 });
 describe('NumericBox', function () {
@@ -10325,6 +10382,53 @@ describe('PasswordBoxBuilder', function () {
     });
 });
 
+describe('ScrollPanelElement', function () {
+    var builder = new ApplicationBuilder();
+
+    describe('API', function () {
+
+        it('implements API methods', function () {
+            var element = builder.buildType('ScrollPanel', {});
+
+            assert.isFunction(element.getHorizontalScroll, 'getHorizontalScroll');
+            assert.isFunction(element.setHorizontalScroll, 'setHorizontalScroll');
+            assert.isFunction(element.getVerticalScroll, 'getVerticalScroll');
+            assert.isFunction(element.setVerticalScroll, 'setVerticalScroll');
+        });
+
+
+        it('Default values', function () {
+            var element = builder.buildType('ScrollPanel', {});
+
+            assert.equal(element.getHorizontalScroll(), InfinniUI.ScrollVisibility.auto, 'getHorizontalScroll');
+            assert.equal(element.getVerticalScroll(), InfinniUI.ScrollVisibility.auto, 'getVerticalScroll');
+        });
+
+
+    });
+
+
+});
+describe('ScrollPanelBuilder', function () {
+    it('should build', function () {
+
+        //Given
+        var metadata = {
+            ScrollPanel: {
+                Items: []
+            }
+        };
+
+        var applicationBuilder = new ApplicationBuilder();
+
+        //When
+        var scrollPanel = applicationBuilder.build(metadata, {});
+
+        //Then
+        assert.isObject(scrollPanel, 'scrollPanel');
+    });
+
+});
 //describe('SearchPanel', function () {
 //    it('Setting the default properties', function () {
 //        // Given
@@ -10409,6 +10513,43 @@ describe('PasswordBoxBuilder', function () {
 //        assert.isTrue(window.Test2.searchPanelLoaded);
 //    });
 //});
+describe('TabPanelElement', function () {
+    var builder = new ApplicationBuilder();
+
+    describe('API', function () {
+
+        it('Default values', function () {
+            var element = builder.buildType('TabPanel', {});
+
+            assert.equal(element.getHeaderLocation(), InfinniUI.TabHeaderLocation.top, 'HeaderLocation');
+            assert.equal(element.getHeaderOrientation(), InfinniUI.TabHeaderOrientation.horizontal, 'HeaderOrientation');
+        });
+
+
+    });
+
+
+});
+describe('TabPanelBuilder', function () {
+    it('should build', function () {
+
+        //Given
+        var metadata = {
+            TabPanel: {
+                Items: []
+            }
+        };
+
+        var applicationBuilder = new ApplicationBuilder();
+
+        //When
+        var element = applicationBuilder.build(metadata, {});
+
+        //Then
+        assert.isObject(element, 'TabPanel');
+    });
+
+});
 describe('TextBox', function () {
     var builder = new ApplicationBuilder();
 
@@ -10740,6 +10881,67 @@ describe('ToggleButton', function () {
         });
     });
 });
+describe('ToolBarElement', function () {
+    var builder = new ApplicationBuilder();
+
+    describe('API', function () {
+        var element = builder.buildType('ToolBar', {Items: []});
+
+
+        describe('Implementing Container Methods', function () {
+            testHelper.checkContainerMethods(element);
+        });
+
+    });
+
+    describe('render', function () {
+
+        var element = builder.buildType('ToolBar', {
+            Items: [
+                {
+                    Button: {
+                        Text: "Button 1"
+                    }
+                },
+                {
+                    Button: {
+                        Text: "Button 2"
+                    }
+
+                }
+            ]
+        });
+
+        it('render element', function () {
+            // Given
+
+            // When
+            var $el = element.render();
+
+            // Then
+            assert.equal($el.length, 1)
+        });
+
+        it('contains items', function () {
+            var items = element.getItems();
+
+            assert.equal(items.length, 2);
+        })
+
+    });
+});
+describe('ToolBarBuilder', function () {
+    var builder = new ApplicationBuilder();
+
+
+    it('Build ToolBar instance', function () {
+        var element = builder.buildType('ToolBar', {Items: []});
+
+        assert.isTrue(typeof element !== 'undefined' && element !== null);
+        assert.isTrue(element instanceof ToolBar);
+    });
+
+});
 describe('UploadFileBox', function () {
 
     describe('debug', function () {
@@ -10879,667 +11081,6 @@ describe('UploadFileBox', function () {
 //        });
 //    });
 
-
-});
-describe('Frame', function () {
-    var builder = new ApplicationBuilder();
-
-    describe('API', function () {
-        var element = builder.buildType('Frame', {});
-
-        describe('Implementing EditorBase Methods', function () {
-            testHelper.checkEditorBaseMethods(element);
-        });
-
-        describe('Implementing Element Methods', function () {
-            testHelper.checkElementMethods(element);
-        });
-    });
-
-});
-
-describe('FrameBuilder', function () {
-    describe('build', function () {
-        it('successful build Frame', function () {
-            // Given
-
-            var metadata = {};
-
-            // When
-            var builder = new FrameBuilder();
-            var element = builder.build(null, {builder: new ApplicationBuilder(), view: new View(), metadata: metadata});
-
-            // Then
-            assert.isNotNull(element);
-            assert.isObject(element);
-        });
-    });
-});
-
-describe('ImageBox', function () {
-
-    function delay(min, max) {
-        if (typeof min === 'undefined') {
-            min = 100;
-        }
-        if (typeof  max === 'undefined') {
-            max = 200;
-        }
-
-        return Math.ceil(Math.random() * (max - min) + min);
-    }
-
-    describe('API', function () {
-        var builder = new ApplicationBuilder();
-        var element = builder.buildType('ImageBox', {});
-
-        describe('Implementing ImageBox Methods', function () {
-            ['getMaxSize', 'setMaxSize', 'getAcceptTypes']
-                .forEach(function (methodName) {
-                    it(methodName, function () {
-                        testHelper.checkMethod(element, methodName);
-                    });
-
-                });
-        });
-
-        describe('Implementing EditorBase Methods', function () {
-            testHelper.checkEditorBaseMethods(element);
-        });
-
-        describe('Implementing Element Methods', function () {
-            testHelper.checkElementMethods(element);
-        });
-    });
-
-    describe('debug', function () {
-
-        it('render', function () {
-            var builder = new ApplicationBuilder();
-            var view = new View();
-            var metadata = {
-                MaxSize: 0,
-                AcceptTypes: [
-                    'image/png'
-                ]
-            };
-
-            var element = builder.buildType("ImageBox", metadata, {parent: view, parentView: view, builder: builder});
-
-            var $el = element.render();
-            //$('body').append($el);
-        });
-
-
-    });
-
-    describe('Upload new file', function () {
-
-        beforeEach(function () {
-            //register fake upload provider
-            window.providerRegister.register('DocumentFileProvider', function (metadata) {
-                return {
-                    uploadFile: function () {
-                        var deferred = $.Deferred();
-                        setTimeout(function () {
-                            deferred.resolve();
-                        }, delay());
-
-                        return deferred.promise();
-                    },
-                    getFileUrl: function (fieldName, instanceId) {
-                        return [fieldName, instanceId, 'fake.html'].join('.');
-                    }
-                };
-            });
-
-            //register fake DocumentDataSource provider
-            window.providerRegister.register('DocumentDataSource', function (metadataValue) {
-                return {
-                    getItems: function (criteriaList, pageNumber, pageSize, sorting, resultCallback) {
-                        var items = [{
-                            "Id": "1",
-                            photo: {
-                                Info: {
-                                    ContentId: 'somePhotoId'
-                                }
-                            }
-                        }];
-                        setTimeout(function () {
-                            resultCallback(items);
-                        }, delay());
-                    },
-                    createItem: function (resultCallback, idProperty) {
-                        var response = {
-                            'DisplayName': 'display name'
-                        };
-                        setTimeout(function () {
-                            resultCallback(response);
-                        }, delay());
-                    },
-
-                    saveItem: function (value, resultCallback, warnings, idProperty) {
-                        var response = [{
-                            InstanceId: "42"
-                        }];
-
-                        setTimeout(function () {
-                            resultCallback(response);
-                        }, delay());
-                    },
-                    setOrigin: function(){},
-                    setPath: function(){},
-                    setData : function(){},
-                    setFilter: function(){},
-                    setDocumentId: function(){},
-                    getDocumentId: function () {},
-                    createLocalItem: function (idProperty) {
-                        var result = {};
-
-                        result[idProperty] = guid();
-                        result['__Id'] = result[idProperty];
-
-                        return result;
-                    }
-                };
-
-            });
-        });
-
-        //
-        //it('Should set image url', function (done) {
-        //    var builder = new ApplicationBuilder();
-        //
-        //    //Build view
-        //    var view = new View();
-        //
-        //    //Build DataSource
-        //    var dataSources = view.getDataSources();
-        //    var dsMetadata = {
-        //        Name: 'MyDataSource',
-        //        ConfigId: 'MyConfig',
-        //        DocumentId: 'MyDocument'
-        //    };
-        //    var ds = builder.buildType('DocumentDataSource', dsMetadata, {parentView: view});
-        //    dataSources.add(ds);
-        //
-        //    var PROPERTY_NAME = 'photo';
-        //
-        //    //build ImageBox
-        //    var imageBoxMetadata = {
-        //        Value: {
-        //            Source: 'MyDataSource',
-        //            Property: PROPERTY_NAME
-        //        }
-        //    };
-        //    var imageBox = builder.buildType('ImageBox', imageBoxMetadata, {parent: view, parentView: view});
-        //
-        //    imageBox.render();
-        //
-        //    ds.onItemsUpdated(function () {
-        //        var items = ds.getItems();
-        //        ds.setSelectedItem(items[0]);
-        //        assert.equal(imageBox.getValue(), [PROPERTY_NAME, '1', 'fake.html'].join('.'), 'Image URL for existing item');
-        //
-        //        ds.createItem(function (context, args) {
-        //            imageBox.onPropertyChanged('value', function (context, args) {
-        //                var url = [PROPERTY_NAME, 'MyPhotoId', 'fake.html'].join('.');
-        //                assert.equal(imageBox.getValue(), url, 'image URL for new item');
-        //                done();
-        //            });
-        //
-        //            ds.setProperty(PROPERTY_NAME, {ContentId: 'MyPhotoId2'});
-        //        });
-        //    });
-        //
-        //});
-
-    });
-
-    describe('Render', function () {
-        var element;
-
-        beforeEach(function () {
-            element = new ImageBox();
-        });
-
-        it('Setting properties', function () {
-
-            // Given
-            element.setEnabled(true);
-            element.setAcceptTypes(['video/*']);
-            element.setMaxSize(50000);
-            //element.setValue({Info: {}});
-
-            assert.equal(element.getEnabled(), true);
-            assert.deepEqual(element.getAcceptTypes().toArray(), ['video/*']);
-            //assert.deepEqual(element.getValue(), {Info: {}});
-            assert.equal(element.getMaxSize(), 50000);
-        });
-
-    });
-
-
-//    describe('ImageBox data binding', function () {
-//        it('should set ImageBox.value from property binding', function () {
-//
-//            //это говнокод
-//            $('#page-content').empty();
-//
-//            window.providerRegister.register('UploadDocumentDataSource', function (metadataValue) {
-//                return new DataProviderUpload(new QueryConstructorUpload('http://127.0.0.1:8888', metadataValue));
-//            });
-//
-//            window.providerRegister.register('DocumentDataSource', function () {
-//                return new FakeDataProvider();
-//            });
-//
-//            $('body').append($('<div>').attr('id', 'page-content'));
-//
-//            var metadata = {
-//                Text: 'Пациенты',
-//                DataSources: [
-//                    {
-//                        DocumentDataSource: {
-//                            Name : "PatientDataSource",
-//                            ConfigId: 'Demography',
-//                            DocumentId: 'Patient',
-//                            IdProperty: 'Id',
-//                            CreateAction: 'CreateDocument',
-//                            GetAction: 'GetDocument',
-//                            UpdateAction: 'SetDocument',
-//                            DeleteAction: 'DeleteDocument',
-//                            FillCreatedItem: true
-//                        }
-//                    }
-//                ],
-//                LayoutPanel: {
-//                    StackPanel: {
-//                        Name: 'MainViewPanel',
-//                        Items: [
-//                            {
-//                                ImageBox: {
-//                                    Name: 'ImageBox1',
-//                                    Value : {
-//                                        FileBinding : {
-//                                            DataSource : 'PatientDataSource',
-//                                            Property : '$.photo'
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        ]
-//                    }
-//                }
-//            };
-//
-//            var linkView = new LinkView(null, function (resultCallback) {
-//                var builder = new ApplicationBuilder();
-//                var view = builder.buildType(fakeView(), 'View', metadata);
-//                resultCallback(view);
-//            });
-//            linkView.setOpenMode('Application');
-//
-//            linkView.createView(function(view){
-//                view.open();
-//
-//                var itemToSelect = null;
-//                view.getDataSource('PatientDataSource').getItems(function(data){
-//                    itemToSelect = data[1];
-//                });
-//
-//                view.getDataSource('PatientDataSource').setSelectedItem(itemToSelect);
-//
-//
-//                window.maindatasource = view.getDataSource('PatientDataSource');
-//
-//                //check text
-//               // assert.equal($('#page-content').find('input:text').val(), itemToSelect.LastName);
-//               // $('#page-content').remove();
-//            });
-//        });
-//    });
-
-
-});
-//describe('Extension Panel', function () {
-//    it('should be true if scriptsHandlers call', function () {
-//        //Given
-//        var extensionPanel = new ApplicationBuilder();
-//        var view = new View();
-//        var metadata = {
-//            ExtensionPanel: {
-//                ExtensionName: 'Banner',
-//                OnLoaded: {
-//                    Name: 'OnLoaded'
-//                }
-//            }
-//        };
-//        window.Test = {extensionPanelLoaded:false};
-//        view.setScripts([{Name:"OnLoaded", Body:"window.Test.extensionPanelLoaded = true"}]);
-//
-//        //When
-//        var build = extensionPanel.build(view, metadata);
-//        var el = build.render();
-//
-//        // Then
-////        assert.isTrue(window.Test.extensionPanelLoaded);
-//    });
-//});
-describe('PanelElement', function () {
-    var builder = new ApplicationBuilder();
-
-    describe('API', function () {
-        var element = builder.buildType('Panel', {});
-
-        describe('Implementing Panel API', function () {
-            it('Implement methods', function () {
-                testHelper.checkMethod(element, 'getCollapsible');
-                testHelper.checkMethod(element, 'setCollapsible');
-                testHelper.checkMethod(element, 'getCollapsed');
-                testHelper.checkMethod(element, 'setCollapsed');
-                testHelper.checkMethod(element, 'getHeaderTemplate');
-                testHelper.checkMethod(element, 'setHeaderTemplate');
-                testHelper.checkMethod(element, 'getHeader');
-                testHelper.checkMethod(element, 'setHeader');
-            });
-
-            it('Implement events subscriber', function () {
-                testHelper.checkMethod(element, 'onExpanding');
-                testHelper.checkMethod(element, 'onExpanded');
-                testHelper.checkMethod(element, 'onCollapsing');
-                testHelper.checkMethod(element, 'onCollapsed');
-            });
-
-        });
-
-        describe('Implementing Container Methods', function () {
-            testHelper.checkContainerMethods(element)
-        });
-
-        describe('Implementing Element Methods', function () {
-            testHelper.checkElementMethods(element)
-        });
-
-        it('Default values', function () {
-            var element = builder.buildType('Panel', {});
-
-            assert.equal(element.getCollapsible(), false, 'Collapsible');
-            assert.equal(element.getCollapsed(), false, 'Collapsed');
-            assert.isFunction(element.getHeaderTemplate, 'HeaderTemplate by default');
-        });
-
-    });
-
-
-    describe('Panel events handler', function () {
-
-        function bindEvents(element) {
-            var events = [];
-            element.onCollapsed(function () {
-                events.push('onCollapsed');
-            });
-
-            element.onCollapsing(function () {
-                events.push('onCollapsing');
-            });
-
-            element.onExpanded(function () {
-                events.push('onExpanded');
-            });
-
-            element.onExpanding(function () {
-                events.push('onExpanding');
-            });
-
-            return events;
-        }
-
-        function createPanel() {
-            return builder.buildType('Panel', {});
-        }
-
-        it('Should fire onCollapsing on setCollapsed(true)', function () {
-            //Given
-            var element = createPanel();
-            var events = bindEvents(element);
-            //When
-            element.setCollapsed(true);
-
-            //Then
-            assert.lengthOf(events, 2);
-            assert.equal(events[0], 'onCollapsing', 'onCollapsing');
-            assert.equal(events[1], 'onCollapsed', 'onCollapsed');
-            assert.equal(element.getCollapsed(), true);
-        });
-
-        it('Should fire onExpanding on setCollapsed(false)', function () {
-            //Given
-            var element = createPanel();
-            element.setCollapsed(true);
-            var events = bindEvents(element);
-            //When
-            element.setCollapsed(false);
-
-            //Then
-            assert.lengthOf(events, 2);
-            assert.equal(events[0], 'onExpanding', 'onExpanding');
-            assert.equal(events[1], 'onExpanded', 'onExpanded');
-            assert.equal(element.getCollapsed(), false);
-        });
-
-        it('Should cancel setCollapsed(true) when one of onCollapsing returns false', function () {
-            //Given
-            var element = createPanel();
-            var events = bindEvents(element);
-            element.onCollapsing(function () {
-                events.push('onCollapsing');
-                return false;
-            });
-
-            //When
-            element.setCollapsed(true);
-
-            //Then
-            assert.lengthOf(events, 2);
-            assert.equal(events[0], 'onCollapsing', 'onCollapsing');
-            assert.equal(events[1], 'onCollapsing', 'onCollapsing');
-            assert.equal(element.getCollapsed(), false);
-        });
-
-        it('Should cancel setCollapsed(false) when one of onExpanding returns false', function () {
-            //Given
-            var element = createPanel();
-            element.setCollapsed(true);
-            var events = bindEvents(element);
-
-            element.onExpanding(function () {
-                events.push('onExpanding');
-                return false;
-            });
-
-            //When
-            element.setCollapsed(false);
-
-            //Then
-            assert.lengthOf(events, 2);
-            assert.equal(events[0], 'onExpanding', 'onExpanding');
-            assert.equal(events[1], 'onExpanding', 'onExpanding');
-            assert.equal(element.getCollapsed(), true);
-        });
-
-
-    });
-
-});
-describe('PanelBuilder', function () {
-    it('should build', function () {
-
-        //Given
-        var metadata = {
-            Panel: {
-                Text: 'panel',
-                Items: [
-                    {
-                        TextBox: {
-                            Name: 'text'
-                        }
-                    }
-                ]
-            }
-        };
-
-        var builder = new ApplicationBuilder();
-        var panel = builder.build(metadata, {parentView: fakeView()});
-
-        //When
-        assert.equal(panel.getText(), 'panel');
-    });
-
-});
-describe('ScrollPanelElement', function () {
-    var builder = new ApplicationBuilder();
-
-    describe('API', function () {
-
-        it('implements API methods', function () {
-            var element = builder.buildType('ScrollPanel', {});
-
-            assert.isFunction(element.getHorizontalScroll, 'getHorizontalScroll');
-            assert.isFunction(element.setHorizontalScroll, 'setHorizontalScroll');
-            assert.isFunction(element.getVerticalScroll, 'getVerticalScroll');
-            assert.isFunction(element.setVerticalScroll, 'setVerticalScroll');
-        });
-
-
-        it('Default values', function () {
-            var element = builder.buildType('ScrollPanel', {});
-
-            assert.equal(element.getHorizontalScroll(), InfinniUI.ScrollVisibility.auto, 'getHorizontalScroll');
-            assert.equal(element.getVerticalScroll(), InfinniUI.ScrollVisibility.auto, 'getVerticalScroll');
-        });
-
-
-    });
-
-
-});
-describe('ScrollPanelBuilder', function () {
-    it('should build', function () {
-
-        //Given
-        var metadata = {
-            ScrollPanel: {
-                Items: []
-            }
-        };
-
-        var applicationBuilder = new ApplicationBuilder();
-
-        //When
-        var scrollPanel = applicationBuilder.build(metadata, {});
-
-        //Then
-        assert.isObject(scrollPanel, 'scrollPanel');
-    });
-
-});
-describe('TabPanelElement', function () {
-    var builder = new ApplicationBuilder();
-
-    describe('API', function () {
-
-        it('Default values', function () {
-            var element = builder.buildType('TabPanel', {});
-
-            assert.equal(element.getHeaderLocation(), InfinniUI.TabHeaderLocation.top, 'HeaderLocation');
-            assert.equal(element.getHeaderOrientation(), InfinniUI.TabHeaderOrientation.horizontal, 'HeaderOrientation');
-        });
-
-
-    });
-
-
-});
-describe('TabPanelBuilder', function () {
-    it('should build', function () {
-
-        //Given
-        var metadata = {
-            TabPanel: {
-                Items: []
-            }
-        };
-
-        var applicationBuilder = new ApplicationBuilder();
-
-        //When
-        var element = applicationBuilder.build(metadata, {});
-
-        //Then
-        assert.isObject(element, 'TabPanel');
-    });
-
-});
-describe('ToolBarElement', function () {
-    var builder = new ApplicationBuilder();
-
-    describe('API', function () {
-        var element = builder.buildType('ToolBar', {Items: []});
-
-
-        describe('Implementing Container Methods', function () {
-            testHelper.checkContainerMethods(element);
-        });
-
-    });
-
-    describe('render', function () {
-
-        var element = builder.buildType('ToolBar', {
-            Items: [
-                {
-                    Button: {
-                        Text: "Button 1"
-                    }
-                },
-                {
-                    Button: {
-                        Text: "Button 2"
-                    }
-
-                }
-            ]
-        });
-
-        it('render element', function () {
-            // Given
-
-            // When
-            var $el = element.render();
-
-            // Then
-            assert.equal($el.length, 1)
-        });
-
-        it('contains items', function () {
-            var items = element.getItems();
-
-            assert.equal(items.length, 2);
-        })
-
-    });
-});
-describe('ToolBarBuilder', function () {
-    var builder = new ApplicationBuilder();
-
-
-    it('Build ToolBar instance', function () {
-        var element = builder.buildType('ToolBar', {Items: []});
-
-        assert.isTrue(typeof element !== 'undefined' && element !== null);
-        assert.isTrue(element instanceof ToolBar);
-    });
 
 });
 describe('View', function () {

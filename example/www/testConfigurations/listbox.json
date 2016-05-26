@@ -158,7 +158,7 @@
 										{
 											"Divider": {
 												"Name": "nameDivider",
-												"Background": "primary1",
+												"Background": "primary2",
 												"OnLoaded": "{ console.log( 'divider is loaded!' ) }"
 											}
 										}
