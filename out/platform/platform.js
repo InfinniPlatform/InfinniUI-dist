@@ -29234,7 +29234,7 @@ var formatMixin = {
     separator: ", ",
 
     setOptions: function (options) {
-        this.options = _.defaults({}, options);
+        this.options = _.extend({}, this.options || {}, options);
     },
 
     getOptions: function () {
@@ -29761,6 +29761,10 @@ function DateTimeFormatBuilder () {
         var format = new DateTimeFormat();
 
         format.setFormat(args.metadata.Format);
+
+        if (_.isNumber(args.metadata.TimeZone)) {
+            format.setOptions({ TimeZone: args.metadata.TimeZone });
+        }
 
         return format;
     }
