@@ -184,8 +184,9 @@ describe('AddAction', function () {
             var destinationItems = destinationDS.getItems();
             assert.equal(destinationItems.length, 1);
             assert.include(destinationItems, {name: "New"});
-
+            view.control.controlView.$el.detach();
             done();
+            view.close();
         });
     });
 
@@ -282,13 +283,17 @@ describe('AddAction', function () {
                         var destinationItems = destinationDS.getItems();
                         assert.equal(destinationItems.length, initCount + 1);
                         assert.include(destinationItems, newItem);
+                        view.control.controlView.$el.detach();
                         done();
+
+                        view.close();
                     });
                 }
             );
         });
     });
 });
+
 describe('CancelAction', function () {
     it('successful build', function () {
         // Given
@@ -427,12 +432,13 @@ describe('DeleteAction', function () {
                         assert.equal(dataSource.getItems().length, (initCount - 1) );
                         assert.notInclude(dataSource.getItems(), initSelectedItem);
                         done();
-                }, 0);
+                }, 50);
 
             }
         );
     });
 });
+
 describe('EditAction', function () {
     it('successful build', function () {
         // Given
@@ -551,6 +557,7 @@ describe('EditAction', function () {
             assert.equal(destinationDS.getItems()[0].Name, "NewValue");
 
             done();
+            view.close();
         });
     });
 
@@ -643,6 +650,7 @@ describe('EditAction', function () {
                         setTimeout(function(){
                             assert.isTrue(destinationDS.getSelectedItem().isNewValueForTest);
                             done();
+                            view.close();
                         }, 250);
                     });
                 }
@@ -721,6 +729,7 @@ describe('EditAction', function () {
             assert.isTrue( childView.isClosing );
 
             done();
+            view.close();
         });
     });
 
@@ -805,6 +814,7 @@ describe('EditAction', function () {
             assert.isNotNull(destinationDS.getProperty("$.Address"));
 
             done();
+            view.close();
         });
     });
 
@@ -869,7 +879,9 @@ describe('OpenAction', function () {
 
             assert.isTrue(viewIsOpened);
             childView.close();
+
             done();
+            view.close();
         });
     });
 
@@ -1105,6 +1117,7 @@ describe('SelectAction', function () {
             assert.deepEqual(destinationDS.getSelectedItem().SelectedObject, selectedValue);
 
             done();
+            view.close();
         });
     });
 
@@ -1202,6 +1215,7 @@ describe('SelectAction', function () {
             assert.equal(destinationDS.getSelectedItem().SelectedObject, "empty");
 
             done();
+            view.close();
         });
     });
 });
@@ -2090,7 +2104,7 @@ describe('Container (Control)', function () {
 
             // Then
             function onViewReady(view, $layout){
-                //$layout.detach();
+                $layout.detach();
 
                 assert.lengthOf($layout.find('.pl-text-box-input'), 6, 'count of textboxes is right');
                 assert.equal($layout.find('.pl-text-box-input:first').val(), 'LTE', 'value in first textbox is right');
@@ -3848,12 +3862,12 @@ describe('ToolBarControl', function () {
             $('#sandbox').append($el);
             //Then
             assert.isTrue($el.hasClass('pl-tool-bar'));
+            $el.detach();
         });
     });
 });
-describe('TreeView', function () {
 
-    var builder = new ApplicationBuilder();
+describe('TreeView', function () {
 
     describe('render', function () {
         it('should apply value to control (single selecting mode)', function () {
@@ -3916,18 +3930,102 @@ describe('TreeView', function () {
 
 
             // When
-            var linkView = (new InlineViewBuilder()).build(null, {builder: builder, metadata: {View: metadata}, parentView: fakeApplicationView()});
+            testHelper.applyViewMetadata(metadata, function (view, $view) {
 
-
-            var view = linkView.createView(function (view) {
-                view.open();
-
-                var $view = view.control.controlView.$el;
                 var $treeView = $view.find('.pl-treeview');
                 var $treeViewNodes = $treeView.find('.pl-treeview-node');
+
                 //Then
                 assert.equal($treeView.length, 1, 'TreeView rendered in View');
                 assert.equal($treeViewNodes.length, 6, 'TreeViewNodes rendered');
+
+                view.close();
+            });
+
+        });
+    });
+
+    describe('api', function () {
+        it('should update DisabledItemCondition', function () {
+            // Given
+            var metadata = {
+                "DataSources": [
+                    {
+                        "ObjectDataSource": {
+                            "Name": "Geo",
+                            "Items": [
+                                {
+                                    "Id": 1,
+                                    "ParentId": null,
+                                    "Name": "Челябинск"
+                                },
+                                {
+                                    "Id": 2,
+                                    "ParentId": 1,
+                                    "Name": "Чичерина"
+                                },
+                                {
+                                    "Id": 3,
+                                    "ParentId": 1,
+                                    "Name": "Комарова"
+                                },
+                                {
+                                    "Id": 4,
+                                    "ParentId": null,
+                                    "Name": "Копейск"
+                                },
+                                {
+                                    "Id": 5,
+                                    "ParentId": 4,
+                                    "Name": "Победы"
+                                },
+                                {
+                                    "Id": 6,
+                                    "ParentId": 5,
+                                    "Name": "33/1"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "Items": [
+                    {
+                        "TreeView": {
+                            "Name": "TreeView1",
+                            "DisabledItemCondition": "{ return (args.value.Id == 3); }",
+                            "KeyProperty": "Id",
+                            "ParentProperty": "ParentId",
+                            "ItemProperty": "Name",
+                            "ValueProperty": "Name",
+                            "MultiSelect": true,
+                            "Items": {
+                                "Source": "Geo"
+                            }
+                        }
+                    }
+                ]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, function (view, $view) {
+
+                var treeView = view.context.controls['TreeView1'];
+                var nodes = $view.find('.pl-treeview-node');
+
+                assert.isFalse(nodes.eq(1).hasClass('pl-disabled-list-item'), 'bad render for enabled item');
+                assert.isTrue(nodes.eq(2).hasClass('pl-disabled-list-item'), 'bad render for disabled item');
+
+                // When
+                treeView.setDisabledItemCondition( function (context, args) {
+                    return args.value.Id == 2;
+                });
+
+                // Then
+                assert.isTrue(nodes.eq(1).hasClass('pl-disabled-list-item'), 'items not updated');
+                assert.isFalse(nodes.eq(2).hasClass('pl-disabled-list-item'), 'items not updated');
+
+                view.close();
             });
 
         });
@@ -6336,7 +6434,7 @@ describe('FileProvider', function () {
                 var item = args.value;
                 ds.setProperty('title', 'some title');
                 ds.saveItem(item, function (context, args) {
-                    var value = args.value.item;
+                    var value = args.item;
                     assert.equal(item, value);
                     done();
                 }, function (args) {
@@ -8236,7 +8334,7 @@ describe('ComboBox', function () {
                 $value.click();
 
                 // Then
-                var items = $('.pl-combobox-group__items .pl-label');
+                items = $('.pl-combobox-group__items .pl-label');
                 assert.isTrue(items.eq(0).hasClass('pl-disabled'), 'items not updated');
                 assert.isFalse(items.eq(1).hasClass('pl-disabled'), 'items not updated');
 
@@ -8325,8 +8423,6 @@ describe('DataGrid', function () {
                 grid.setDisabledItemCondition( function (context, args) {
                     return args.value.Id == 1;
                 });
-
-                $rows = $grid.find("tbody .pl-datagrid-row");
 
                 // Then
                 assert.isTrue($rows.eq(0).hasClass('pl-disabled'), 'items not updated');
@@ -9643,8 +9739,6 @@ describe('ListBox', function () {
                 });
 
                 // Then
-                items = $view.find('.pl-listbox-i');
-
                 assert.isTrue(items.eq(0).hasClass('pl-disabled-list-item'), 'items not updated');
                 assert.isFalse(items.eq(1).hasClass('pl-disabled-list-item'), 'items not updated');
                 view.close();
@@ -10960,6 +11054,7 @@ describe('UploadFileBox', function () {
 
             var $el = element.render();
             $('body').append($el);
+            $el.detach();
         });
 
 
@@ -11083,6 +11178,7 @@ describe('UploadFileBox', function () {
 
 
 });
+
 describe('View', function () {
 
     it('should get scripts', function () {

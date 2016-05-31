@@ -3396,6 +3396,12 @@ Number.isInteger = Number.isInteger || function(value) {
         Math.floor(value) === value;
 };
 //####app/utils/stringUtils.js
+if (!String.prototype.includes) {
+    String.prototype.includes = function() {
+        return String.prototype.indexOf.apply(this, arguments) !== -1;
+    };
+}
+
 var stringUtils = {
     format: function(value,args){
         return value.replace(/{(\d+)}/g, function (match, number) {
@@ -3461,6 +3467,7 @@ function guid() {
         return v.toString(16);
     });
 }
+
 //####app/utils/testMode.js
 (function (window, document, $) {
     'use strict';
@@ -17024,6 +17031,8 @@ var TreeViewView = ListEditorBaseView.extend({
 
     initialize: function (options) {
         ListEditorBaseView.prototype.initialize.call(this, options);
+        this.ItemsMap = new HashMap();
+
     },
 
     render: function () {
@@ -17049,7 +17058,10 @@ var TreeViewView = ListEditorBaseView.extend({
             parentSelector = model.get('parentSelector'),
             keySelector = model.get('keySelector'),
             nodeConstructor = this.getNodeConstructor(),
-            itemTemplate = model.get('itemTemplate');
+            itemTemplate = model.get('itemTemplate'),
+            itemsMap = this.ItemsMap;
+
+        itemsMap.clear();
 
         $nodes = renderNodes();
         this.$el.append($nodes);
@@ -17067,6 +17079,8 @@ var TreeViewView = ListEditorBaseView.extend({
                         value: item,
                         index: collection.indexOf(item)
                     }).render();
+
+                    $node.data('pl-data-item', item);
 
                     node.listenTo(model, 'change:selectedItem', function (model, selectedItem) {
                         node.setSelected(selectedItem === item);
@@ -17090,8 +17104,11 @@ var TreeViewView = ListEditorBaseView.extend({
                     view.listenTo(node, 'check', view.onCheckNodeHandler.bind(view, item, node));
 
                     node.setItemContent($item);
-                    var $subitems = renderNodes(keySelector(null, {value: item}));
+                    var key = keySelector(null, {value: item}),
+                        $subitems = renderNodes(key);
                     node.setItemsContent($subitems);
+
+                    itemsMap.add(key, item);
 
                     return $node;
 
@@ -17120,8 +17137,7 @@ var TreeViewView = ListEditorBaseView.extend({
         model.set('selectedItem', item);
         if (!multiSelect) {
             //Клик по элементу одновременно переключает значение и делает элемент выделенным
-            var value = model.valueByItem(item);
-            model.toggleValue(value);
+            this.tryToggleValue(item);
         }
     },
 
@@ -17130,13 +17146,37 @@ var TreeViewView = ListEditorBaseView.extend({
 
         var multiSelect = model.get('multiSelect');
 
-        var value = model.valueByItem(item);
-        model.toggleValue(value);
+        this.tryToggleValue(item);
 
         if (!multiSelect) {
             //Клик по элементу одновременно переключает значение и делает элемент выделенным
             model.set('selectedItem', item);
         }
+    },
+
+    tryToggleValue: function(item){
+        var model = this.model;
+        var isDisabledItem = this.isDisabledItem(item);
+
+        if(!isDisabledItem){
+            var value = model.valueByItem(item);
+            model.toggleValue(value);
+        }
+    },
+
+    isDisabledItem: function(item){
+        if(item == null){
+            return false;
+        }
+
+       return this.model.isDisabledItem(item) || this.isDisabledItem(this.getParent(item));
+    },
+
+    getParent: function(item){
+        var parentSelector = this.model.get('parentSelector'),
+            parentId = parentSelector(null, {value: item});
+
+        return parentId && this.ItemsMap.get(parentId);
     },
 
     getTemplate: function () {
@@ -17172,13 +17212,29 @@ var TreeViewView = ListEditorBaseView.extend({
     updateGrouping: function () {
     },
 
-    updateDisabledItem: function(){
+    updateDisabledItem: function() {
+        var model = this.model;
+        var disabledItemCondition = model.get('disabledItemCondition');
+        var nodes = this.$el.find('.pl-treeview-node');
 
+        nodes.removeClass('pl-disabled-list-item');
+
+        if( disabledItemCondition != null){
+            nodes.each(function(i, el){
+                var $el = $(el),
+                    item = $el.data('pl-data-item');
+
+                if(model.isDisabledItem(item)){
+                    $el.addClass('pl-disabled-list-item');
+                }
+            });
+        }
     },
 
     rerender: function () {
 
     }
+
 
 });
 //####app/controls/view/viewControl.js
@@ -17911,44 +17967,57 @@ var BaseDataSource = Backbone.Model.extend({
             validateResult;
 
         if (!this.isModified(item)) {
-            this._notifyAboutItemSaved({item: item, result: null}, 'notModified', success);
+            this._notifyAboutItemSaved({item: item, result: null}, 'notModified');
+            that._executeCallback(success, {item: item, result: {IsValid: true}});
             return;
         }
 
         validateResult = this.validateOnErrors(item);
         if (!validateResult.IsValid) {
-            this._notifyAboutFailValidationBySaving(item, validateResult, error);
+            that._notifyAboutValidation(validateResult, 'error');
+            this._executeCallback(error, {item: item, result: validateResult});
             return;
         }
 
         dataProvider.saveItem(item, function(data){
             if( !('IsValid' in data) || data.IsValid === true ){
                 that._excludeItemFromModifiedSet(item);
-                that._notifyAboutItemSaved({item: item, result: data.data}, 'modified', success);
+                that._notifyAboutItemSaved({item: item, result: data.data}, 'modified');
+                that._executeCallback(success, {item: item, result: that._getValidationResult(data)});
             }else{
-                that._notifyAboutFailValidationBySaving(item, data, error);
+                var result = that._getValidationResult(data);
+                that._notifyAboutValidation(result, 'error');
+                that._executeCallback(error, {item: item, result: result});
             }
         }, function(data) {
-            var result = data.data.responseJSON['Result']['ValidationResult'];
-            that._notifyAboutFailValidationBySaving(item, result, error);
+            var result = that._getValidationResult(data);
+            that._notifyAboutValidation(result, 'error');
+            that._executeCallback(error, {item: item, result: result});
         });
     },
 
-    _notifyAboutItemSaved: function (data, result, successHandler) {
+    _getValidationResult: function(data){
+        if(data.data && data.data.responseJSON && data.data.responseJSON['Result']){
+            return data.data.responseJSON['Result']['ValidationResult'];
+        }
+        
+        return data.data && data.data['Result'] && data.data['Result']['ValidationResult'];
+    },
+
+    _executeCallback: function(callback, args){
+        if(callback){
+            callback(this.getContext(), args);
+        }
+    },
+
+    _notifyAboutItemSaved: function (data, result) {
         var context = this.getContext(),
             argument = this._getArgumentTemplate();
 
         argument.value = data;
         argument.result = result;
 
-        if (successHandler) {
-            successHandler(context, argument);
-        }
         this.trigger('onItemSaved', context, argument);
-    },
-
-    _notifyAboutFailValidationBySaving: function (item, validationResult, errorHandler) {
-        this._notifyAboutValidation(validationResult, errorHandler, 'error');
     },
 
     deleteItem: function (item, success, error) {
@@ -17967,11 +18036,14 @@ var BaseDataSource = Backbone.Model.extend({
             if (!('IsValid' in data) || data['IsValid'] === true) {
                 that._handleDeletedItem(item, success);
             } else {
-                that._notifyAboutFailValidationByDeleting(item, data, error);
+                var result = that._getValidationResult(data);
+                that._notifyAboutValidation(result, 'error');
+                that._executeCallback(error, {item: item, result: result});
             }
         }, function(data) {
-            var result = data.data.responseJSON['Result']['ValidationResult'];
-            that._notifyAboutFailValidationByDeleting(item, result, error);
+            var result = that._getValidationResult(data);
+            that._notifyAboutValidation(result, 'error');
+            that._executeCallback(error, {item: item, result: result});
         });
     },
 
@@ -18010,16 +18082,6 @@ var BaseDataSource = Backbone.Model.extend({
         if (errorHandler) {
             errorHandler(context, argument);
         }
-    },
-
-    _notifyAboutFailValidationByDeleting: function (item, errorData, errorHandler) {
-        var context = this.getContext(),
-            argument = this._getArgumentTemplate();
-
-        argument.value = item;
-        argument.error = errorData;
-
-        this._notifyAboutValidation(errorData, errorHandler);
     },
 
     isDataReady: function () {
@@ -18257,7 +18319,8 @@ var BaseDataSource = Backbone.Model.extend({
             }
         }
 
-        this._notifyAboutValidation(result, callback, validationType);
+        this._notifyAboutValidation(result, validationType);
+        this._executeCallback(callback, {item: item, result: result});
 
         return result;
     },
@@ -18268,15 +18331,11 @@ var BaseDataSource = Backbone.Model.extend({
         }
     },
 
-    _notifyAboutValidation: function (validationResult, validationHandler, validationType) {
+    _notifyAboutValidation: function (validationResult, validationType) {
         var context = this.getContext(),
             argument = {
                 value: validationResult
             };
-
-        if (validationHandler) {
-            validationHandler(context, argument);
-        }
 
         var eventType = (validationType == 'warning') ? 'onWarningValidator' : 'onErrorValidator';
         this.trigger(eventType, context, argument);
