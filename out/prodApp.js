@@ -18082,6 +18082,10 @@ var BaseDataSource = Backbone.Model.extend({
     },
 
     _notifyAboutValidation: function (validationResult, validationType) {
+        if(!validationResult) {
+            return;
+        }
+
         var context = this.getContext(),
             argument = {
                 value: validationResult
