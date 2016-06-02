@@ -3446,11 +3446,20 @@ var stringUtils = {
         return !isNaN(parseFloat(n)) && isFinite(n);
     },
 
+    replaced: {
+        '+': '%2B'
+    },
+
     joinDataForQuery: function(data){
         var result = [];
+        var that = this;
 
         for(var k in data){
-            result.push(k + '=' + data[k]);
+            var p = _.isString(data[k]) ? data[k].replace(/[\+]/g, function (c) {
+                return that.replaced[c] || c;
+            }) : data[k];
+
+            result.push(k + '=' + p);
         }
 
         return result.join('&');
