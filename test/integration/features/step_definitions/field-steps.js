@@ -163,7 +163,8 @@ this.Then(/^значение в выпадающем списке "([^"]*)" ра
                 .$('.pl-combobox[data-pl-name="' + fieldName + '"]')
                 .find('.pl-combobox__value')
                 .text()
-                .trim();
+                .trim()
+                .replace(/''/g, '"');
 
             chai.assert.equal(value, actValue);
 
@@ -240,7 +241,7 @@ this.Then(/^значение в текстовом поле "([^"]*)" равно
             }
 
             if (typeof actValue == "string") {
-                value = value.replace(/'/g, '"');
+                value = value.replace(/''/g, '"');
             }
 
             chai.assert.isTrue((actValue === value), actValue + ' != ' + value);

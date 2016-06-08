@@ -291,7 +291,7 @@ this.Then(/^я отмечу в таблице "([^"]*)" строку под но
 });
 
 this.Then(/^я выберу в выпадающем списке "([^"]*)" значение "([^"]*)"$/, function (listName, itemText, next) {
-    itemText = itemText.replace(/'/g, '"');
+    itemText = itemText.replace(/''/g, '"');
 
     var listSelector = '.pl-combobox[data-pl-name="' + listName + '"]';
     var itemSelector = ".pl-dropdown-container .pl-combobox-dropdown .pl-combobox-items .pl-label:contains('" + itemText + "')";
@@ -323,8 +323,8 @@ this.Then(/^я выберу в выпадающем списке "([^"]*)" зн�
 });
 
 this.Then(/^я выберу в выпадающем списке "([^"]*)" с фильтром "([^"]*)" значение "([^"]*)"$/, function (listName, filterText, itemText, next) {
-    itemText = itemText.replace(/'/g, '"');
-    filterText = filterText.replace(/'/g, '"');
+    itemText = itemText.replace(/''/g, '"');
+    filterText = filterText.replace(/''/g, '"');
 
     var listSelector = '.pl-combobox[data-pl-name="' + listName + '"]';
     var itemSelector = ".pl-dropdown-container .pl-combobox-dropdown .pl-combobox-items .pl-label:contains('" + itemText + "')";
@@ -446,4 +446,21 @@ this.Then(/^я перейду на предыдущую страницу по к
         next(new Error(navigatorName + ' not found!'));
     });
 
+});
+
+this.Then(/^я очищу выпадающий список "([^"]*)"$/, function (listName, next) {
+    var listSelector = '.pl-combobox[data-pl-name="' + listName + '"]';
+
+    window.testHelpers.waitCondition(function () {
+        return window.configWindow.$(listSelector).length != 0;
+    }, function () {
+        try {
+            window.configWindow.$(listSelector + ' .pl-combobox__clear').click();
+            next();
+        } catch (err) {
+            next(err);
+        }
+    }, function () {
+        next(new Error(listName + ' not found!'));
+    });
 });
