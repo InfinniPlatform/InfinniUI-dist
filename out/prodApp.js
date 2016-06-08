@@ -6771,7 +6771,7 @@ var SelectComponentModel = Backbone.Model.extend({
             this.set({
                 year: date.getFullYear(),
                 month: date.getMonth(),
-                day: date.getDay(),
+                day: date.getDate(),
                 hour: date.getHours(),
                 minute: date.getMinutes(),
                 second: date.getSeconds(),
@@ -17214,7 +17214,7 @@ var DataSourceValidationNotifierMixin = {
      */
     initNotifyValidation: function (dataSource) {
         dataSource.onErrorValidator(this.notifyOnValidationError.bind(this));
-        dataSource.onWarningValidator(this.notifyOnValidationError.bind(this));
+        dataSource.onWarningValidator(this.notifyOnValidationWarning.bind(this));
     },
 
     /**
@@ -17290,6 +17290,10 @@ var BaseDataSource = Backbone.Model.extend({
         isRequestInProcess: false,
 
         isLazy: true,
+
+        isWaiting: false,
+
+        resolvePriority: 0,
 
         newItemsHandler: null,
 
@@ -17382,6 +17386,10 @@ var BaseDataSource = Backbone.Model.extend({
 
     onItemsUpdated: function (handler) {
         this.on('onItemsUpdated', handler);
+    },
+
+    onItemsUpdatedOnce: function (handler) {
+        this.once('onItemsUpdated', handler);
     },
 
     onItemDeleted: function (handler) {
@@ -17868,10 +17876,22 @@ var BaseDataSource = Backbone.Model.extend({
             this.set('isRequestInProcess', true);
             dataProvider.getItems(function (data) {
 
-                that.set('isRequestInProcess', false);
-                that._handleUpdatedItemsData(data.data, onSuccess, onError);
+                var isWaiting =  that.get('isWaiting'),
+                    finishUpdating = function(){
+                        that.set('isRequestInProcess', false);
+                        that._handleUpdatedItemsData(data.data, onSuccess, onError);
+                    };
+
+                if(isWaiting){
+                    that.once('change:isWaiting', function () {
+                        finishUpdating();
+                    });
+                } else {
+                    finishUpdating();
+                }
 
             }, onError);
+
         }else{
             var handlers = this.get('waitingOnUpdateItemsHandlers');
             handlers.push({
@@ -17880,6 +17900,10 @@ var BaseDataSource = Backbone.Model.extend({
             });
         }
 
+    },
+
+    setIsWaiting: function(value){
+        this.set('isWaiting', value);
     },
 
     _handleUpdatedItemsData: function (itemsData, successHandler, errorHandler) {
@@ -18147,7 +18171,7 @@ var BaseDataSource = Backbone.Model.extend({
         var logger = window.InfinniUI.global.logger;
 
         if(this.get('isRequestInProcess')){
-            this.once('onItemsUpdated', function(){
+            this.onItemsUpdatedOnce(function(){
                 if(this.isDataReady()){
                     promise.resolve();
                 }else{
@@ -18167,7 +18191,7 @@ var BaseDataSource = Backbone.Model.extend({
     getNearestRequestPromise: function(){
         var promise = $.Deferred();
 
-        this.once('onItemsUpdated', function(){
+        this.onItemsUpdatedOnce( function(){
             if(this.isDataReady()){
                 promise.resolve();
             }else{
@@ -18191,6 +18215,14 @@ var BaseDataSource = Backbone.Model.extend({
 
     isLazy: function(){
         return this.get('isLazy');
+    },
+
+    setResolvePriority: function(priority){
+        this.set('resolvePriority', priority);
+    },
+
+    getResolvePriority: function(){
+        return this.get('resolvePriority');
     },
 
     _replaceAllProperties: function (currentObject, newPropertiesSet) {
@@ -18992,6 +19024,10 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
 
         if('IsLazy' in metadata){
             dataSource.setIsLazy(metadata['IsLazy']);
+        }
+
+        if('ResolvePriority' in metadata){
+            dataSource.setResolvePriority(metadata['ResolvePriority']);
         }
 
         this.initValidation(parentView, dataSource, metadata);
@@ -21073,7 +21109,6 @@ _.inherit(ListEditorBaseBuilder, ContainerBuilder);
 _.extend(ListEditorBaseBuilder.prototype, {
 
     applyMetadata: function (params) {
-        var itemsBinding;
 
         var applyingMetadataResult = ContainerBuilder.prototype.applyMetadata.call(this, params),
             itemsBinding = applyingMetadataResult.itemsBinding,
@@ -25780,6 +25815,8 @@ _.extend(ViewBuilder.prototype, {
             element.getDataSources()
                 .set(dataSources);
 
+            this.changeDataSourcesReadinessByPriority(dataSources);
+
             for(var i = 0, ii = dataSources.length; i < ii; i++){
                 if(!dataSources[i].isLazy()){
                     dataSources[i].tryInitData();
@@ -25829,6 +25866,40 @@ _.extend(ViewBuilder.prototype, {
 
         if (onStartCreating) {
             new ScriptExecutor(element).executeScript(onStartCreating.Name || onStartCreating, {});
+        }
+    },
+
+    changeDataSourcesReadinessByPriority: function(dataSources) {
+        var dataSourcesByPriority = _.groupBy(dataSources, function(ds) {return ds.getResolvePriority();});
+
+        var updateTopPriorityDataSources = function(priorityGroups){
+            if(_.keys(priorityGroups).length){
+                var maxPriority = _.chain(priorityGroups).keys().max().value(),
+                    topPriorityDataSources = priorityGroups[maxPriority],
+                    topPriorityDataSourcesCount = topPriorityDataSources.length,
+                    nonPriorityDataSourceGroups = _.omit(priorityGroups, maxPriority),
+                    count = 0;
+
+                _.each(topPriorityDataSources, function(ds){
+                    ds.onItemsUpdatedOnce(function(context, args){
+                        if(++count == topPriorityDataSourcesCount){
+                            setTimeout( function() {
+                                updateTopPriorityDataSources(nonPriorityDataSourceGroups)
+                            }, 0);
+                        }
+                    });
+
+                    ds.setIsWaiting(false);
+                });
+            }
+        };
+
+        if(_.keys(dataSourcesByPriority).length > 1) {
+            _.each(dataSources, function(ds){
+                ds.setIsWaiting(true);
+            });
+
+            updateTopPriorityDataSources(dataSourcesByPriority);
         }
     }
 },
@@ -25971,8 +26042,6 @@ _.extend(AddAction.prototype, {
             editDataSource.setItems([item]);
             editDataSource.setSelectedItem(item);
         } else {
-            editDataSource.suspendUpdate();
-
             editView.onBeforeLoaded(function() {
                 editDataSource.createItem();
             });
@@ -26007,7 +26076,15 @@ function AddActionBuilder(){
 
         var action = new AddAction(parentView);
 
-        var linkView = builder.build(metadata['LinkView'], {parent: args.parent, parentView: parentView, basePathOfProperty: args.basePathOfProperty});
+        var suspended = {};
+        suspended[metadata.DestinationValue.Source] = 'AddAction';
+
+        var linkView = builder.build(metadata['LinkView'], {
+            parent: args.parent,
+            parentView: parentView,
+            basePathOfProperty: args.basePathOfProperty,
+            suspended: suspended
+        });
 
         action.setProperty('linkView', linkView);
 		action.setProperty('sourceSource', metadata.SourceValue.Source);
