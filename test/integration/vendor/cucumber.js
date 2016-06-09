@@ -199,7 +199,9 @@ function Assembler(features, filter) {
       if (filter.isElementEnrolled(scenario)) {
         var currentFeature = self.getCurrentFeature();
         currentFeature.addFeatureElement(scenario);
-      }
+      } else {
+				tsm.forseIgnore(scenario.getName());
+			}
     },
 
     insertExamples: function insertExamples(examples) {

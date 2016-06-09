@@ -1478,7 +1478,7 @@ describe('Builder', function () {
             assert.equal(builder.build({ TextBox: {} }), 42);
         });
 
-        it('should pick concrete value from metadata if no metadataType passed', function () {
+        it('should pick concrete value from metadata if no metadataType passed', function (done) {
             var viewBuilder = {
                 build: function (context, args) {
                     assert.isNotNull(args.metadata.Name);
@@ -1486,11 +1486,12 @@ describe('Builder', function () {
 
                     assert.equal(args.metadata.Name, 'TextBox');
                     assert.isTrue(args.metadata.Multiline);
+                    done();
                 }
             };
 
             builder.register('TextBox', viewBuilder);
-            builder.build(null, { metadata: { TextBox: { Name: 'TextBox', Multiline: true } } });
+            builder.build({ TextBox: { Name: 'TextBox', Multiline: true } });
         });
     });
 
@@ -7589,7 +7590,7 @@ describe('ButtonBuilder', function () {
                 HorizontalAlignment: 'Right',
                 Action: {
                     OpenAction: {
-                        View: {
+                        LinkView: {
                             InlineView: {
                                 "ConfigId": "Structure",
                                 "DocumentId": "Department",
@@ -7602,14 +7603,13 @@ describe('ButtonBuilder', function () {
 
             // When
             var builder = new ButtonBuilder();
-            var button = builder.build(null, {builder: new ApplicationBuilder(), metadata: metadata});
+            var button = builder.build(null, {builder: new ApplicationBuilder(), metadata: metadata, parentView: new View()});
 
             // Then
             assert.isNotNull(button);
             assert.equal(button.getText(), 'Click me');
             assert.isFalse(button.getVisible());
             assert.equal(button.getHorizontalAlignment(), 'Right');
-            assert.isNotNull(button.getAction());
         });
 
     });
@@ -7810,7 +7810,7 @@ describe('PopupButtonBuilder', function () {
                 Text: "Click me",
                 Action: {
                     OpenAction: {
-                        View: {
+                        LinkView: {
                             InlineView: {
                                 "ConfigId": "Structure",
                                 "DocumentId": "Department",
@@ -7848,11 +7848,10 @@ describe('PopupButtonBuilder', function () {
 
             // When
             var builder = new PopupButtonBuilder();
-            var button = builder.build(null, {builder: new ApplicationBuilder(), metadata: metadata});
+            var button = builder.build(null, {builder: new ApplicationBuilder(), metadata: metadata, parentView: new View()});
             // Then
             assert.isNotNull(button);
             assert.equal(button.getText(), 'Click me');
-            assert.isNotNull(button.getAction());
             assert.equal(2,button.getItems().length);
 
         });
@@ -8657,7 +8656,6 @@ describe('DateTimePicker', function () {
             dateTimePicker.render();
 
             dateTimePicker.onValueChanged(function () {
-                console.log(arguments);
                 onValueChangedFlag++;
             });
 
@@ -9325,7 +9323,6 @@ describe('Label', function () {
             label.render();
 
             label.onValueChanged(function () {
-                console.log(arguments);
                 onValueChangedFlag++;
             });
 

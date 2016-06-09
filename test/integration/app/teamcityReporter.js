@@ -21,5 +21,11 @@ var tsm = {
 
     testIgnored: function (testName) {
         console.log("##teamcity[testIgnored name='" + testName + "']");
+    },
+
+    forseIgnore: function (testName) {
+        this.testStarted(testName);
+        this.testIgnored(testName);
+        this.testFinished(testName);
     }
 };
