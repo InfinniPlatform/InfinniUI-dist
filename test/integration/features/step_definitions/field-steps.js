@@ -6,7 +6,7 @@ this.When(/^я введу в текстовое поле "([^"]*)" значен�
     };
     var success = function () {
         try {
-            window.testHelpers.getControlByName(fieldName).setValue(value.replace(/'/g, '"'));
+            window.testHelpers.getControlByName(fieldName).setValue(value.replace(/''/g, '"'));
             next();
         } catch (err) {
             next(err);
