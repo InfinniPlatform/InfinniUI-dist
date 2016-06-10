@@ -377,7 +377,6 @@ this.Then(/^я увижу в таблице "([^"]*)" строку под ном
 
                 var cellText = $cells
                     .eq(i)
-                    .find('.pl-label:visible')
                     .text()
                     .trim();
 
@@ -432,5 +431,22 @@ this.Then(/^таблица "([^"]*)" будет пустой$/, function (tableN
         }
     }, function () {
         next(new Error(tableName + ' not found'));
+    });
+});
+
+this.Then(/^я увижу в таблице "([^"]*)" количество строк "([^"]*)"$/, function (tableName, rowCount, next) {
+    window.testHelpers.waitCondition(function () {
+        return window.testHelpers.getControlByName(tableName) != undefined;
+    }, function () {
+        try {
+            var $table = window.configWindow.$('.pl-datagrid[data-pl-name="' + tableName + '"] .table');
+            var $rows = $table.find('.pl-datagrid-row.pl-datagrid-row_data');
+            chai.assert.equal(parseInt(rowCount), $rows.length);
+            next();
+        } catch (err) {
+            next(err);
+        }
+    }, function () {
+        next(new Error(tableName + ' not found!'));
     });
 });
