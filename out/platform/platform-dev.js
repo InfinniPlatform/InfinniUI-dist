@@ -26437,17 +26437,11 @@ _.inherit(AddAction, BaseEditAction);
 _.extend(AddAction.prototype, {
     setSelectedItem: function(){
         var editDataSource = this.getProperty('editDataSource'),
-            editView = editDataSource.getView(),
-            item = {};
+            editView = editDataSource.getView();
 
-        if( this._isObjectDataSource(editDataSource) ) {
-            editDataSource.setItems([item]);
-            editDataSource.setSelectedItem(item);
-        } else {
-            editView.onBeforeLoaded(function() {
-                editDataSource.createItem();
-            });
-        }
+        editView.onBeforeLoaded(function() {
+            editDataSource.createItem();
+        });
 
         return true;
     },

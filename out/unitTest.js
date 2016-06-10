@@ -183,7 +183,7 @@ describe('AddAction', function () {
             // Then
             var destinationItems = destinationDS.getItems();
             assert.equal(destinationItems.length, 1);
-            assert.include(destinationItems, {name: "New"});
+            assert.equal(destinationItems[0].name, "New");
 
             done();
             view.close();
