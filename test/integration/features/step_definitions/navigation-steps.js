@@ -268,17 +268,17 @@ this.Then(/^я отмечу в таблице "([^"]*)" строку под но
     };
 
     var success = function () {
-        var $table = window.configWindow.$('.pl-datagrid[data-pl-name="' + tableName + '"] .table');
-        var $row = $table.find('.pl-datagrid-row').eq(parseInt(rowIndex));
+        var $table = window.configWindow.$('.pl-datagrid[data-pl-name="' + tableName + '"] .pl-datagrid-table_body');
+        var $row = $table.find('.pl-datagrid-row_data').eq(parseInt(rowIndex));
 
         if ($row.length == 0) {
             next(new Error("Index out of range"));
             return;
         }
 
-        var $checkbox = $row.find('.pl-toggle-cell input:checkbox');
+        var $checkbox = $row.find('.pl-datagrid-toggle input:checkbox');
 
-        $checkbox.prop('checked', !$checkbox.prop('checked'));
+        $checkbox.click();
 
         next();
     };

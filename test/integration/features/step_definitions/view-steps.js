@@ -39,7 +39,7 @@ this.Then(/^система отобразит окно-сообщение "([^"]
         var text = $.trim($(messageBody).text());
 
         try {
-            chai.assert.equal(text, message);
+            chai.assert.equal(text, message.replace(/''/g, '"'));
             next();
         } catch (err) {
             next(err);
