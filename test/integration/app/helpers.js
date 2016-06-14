@@ -142,7 +142,7 @@ window.testHelpers = {
         var result = '';
 
         $cells.each(function (i, item) {
-            result += '|' + window.configWindow.$(item).text().trim().replace(/"/g, '\'');
+            result += '|' + window.configWindow.$(item).text().trim();
         });
 
         return result + '|';
