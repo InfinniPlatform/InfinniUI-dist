@@ -1,1 +1,1 @@
-call grunt build
+call npm run-script build-example

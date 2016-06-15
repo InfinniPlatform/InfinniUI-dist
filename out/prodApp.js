@@ -93,7 +93,11 @@ _.defaults( InfinniUI.config, {
     serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
     configId: 'PTA',
     configName: 'Хабинет'
-
+//devblockstart
+    ,editorService: {
+        url: 'http://localhost:5500/api/metadata'
+    }
+//devblockstop
 
 });
 var ActionOnLoseFocus = function ($el, action) {
@@ -19902,7 +19906,15 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 			args.parent.addChild(element);
 		}
 
-
+//devblockstart
+		element.onMouseDown( function(eventData) {
+			if( eventData.ctrlKey ){
+				args.metadata.isSelectedElement = true;
+				args.parentView.showSelectedElementMetadata();
+				eventData.nativeEventData.stopPropagation();
+			}
+		});
+//devblockstop
 
 		return element;
 	},
@@ -25710,7 +25722,17 @@ _.extend(View.prototype,
             return this.control.get('focusOnControl');
         }
 
+//devblockstart
+        ,showSelectedElementMetadata: function(){
+            if(this.handlers.onSelectedElementChange){
+                this.handlers.onSelectedElementChange();
+            }
+        }
 
+        ,onSelectedElementChange: function(handler) {
+            this.handlers.onSelectedElementChange = handler;
+        }
+//devblockstop
     }
 );
 /**
@@ -25728,7 +25750,34 @@ _.extend(ViewBuilder.prototype, {
         return new View(params.parent);
     },
 
+//devblockstart
+    _getSelectedElementPath: function(metadata) {
+        var result;
 
+        if( _.isArray(metadata) ){
+            for (var i = 0, ii =  metadata.length; i<ii; i++){
+                result = this._getSelectedElementPath(metadata[i]);
+                if(result !== false){
+                    return '['+ i + ']' + result;
+                }
+            }
+        } else if( _.isObject(metadata) ){
+            if('isSelectedElement' in metadata) {
+                delete metadata.isSelectedElement;
+                return '';
+            } else {
+                for (var key in metadata){
+                    result = this._getSelectedElementPath(metadata[key]);
+                    if(result !== false){
+                        return '.' + key + result;
+                    }
+                }
+            }
+        }
+
+        return false;
+    },
+//devblockstop
 
     applyMetadata: function (params) {
 
@@ -25743,7 +25792,15 @@ _.extend(ViewBuilder.prototype, {
             element = params.element,
             builder = params.builder;
 
+//devblockstart
+        element.onSelectedElementChange(function() {
+            var path = that._getSelectedElementPath(params.metadata);
 
+            InfinniUI.JsonEditor.setMetadata(params.metadata).always(function () {
+                InfinniUI.JsonEditor.setPath(path);
+            });
+        });
+//devblockstop
 
         var scripts = element.getScripts();
         var parameters = element.getParameters();
@@ -33778,4 +33835,68 @@ _.extend( Testt.prototype, {
         this.$el
             .append(this.itemTemplate(this.context, {index:0}).render());
     }
-});})();
+});
+InfinniUI.JsonEditor = (function () {
+    var childWindow;
+    var metadataForOpen;
+    var pathForOpen;
+
+    function updateContentOfChildWindow(){
+        if(metadataForOpen){
+            childWindow.setMetadata(JSON.stringify(metadataForOpen));
+            metadataForOpen = undefined;
+        }
+
+        if (pathForOpen) {
+            childWindow.setPath(pathForOpen);
+            pathForOpen = undefined;
+        }
+    }
+
+    return {
+        setMetadata: function (metadata) {
+            // TODO: Не универсально
+            var name = metadata.Namespace + '.' + metadata.Name;
+            return $.get(InfinniUI.config.editorService.url, {name: name})
+                .success(function (data) {
+                    metadataForOpen = data;
+
+                    if (!childWindow) {
+
+                        var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
+
+                        tempChildWindow.onload = function () {
+                            childWindow = tempChildWindow;
+
+                            childWindow.onSaveMetadata(function (metadata) {
+                                $.post(InfinniUI.config.editorService.url, {Json: JSON.stringify(metadata)})
+                                    .success(function () {
+                                        toastr.success('Metadata saved');
+                                    })
+                                    .error(function (error) {
+                                        alert(JSON.stringify(error));
+                                    });
+                            });
+
+                            updateContentOfChildWindow();
+                        };
+
+                        tempChildWindow.addEventListener('unload', function() {
+                            childWindow = undefined;
+                        });
+                    } else {
+                        updateContentOfChildWindow();
+                        childWindow.focus();
+                    }
+                });
+        },
+        setPath: function (path) {
+            pathForOpen = path;
+
+            if(childWindow){
+                updateContentOfChildWindow();
+            }
+        }
+    };
+})();
+})();

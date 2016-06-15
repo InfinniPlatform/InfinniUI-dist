@@ -2,7 +2,7 @@ function TestElementBuilder() {
     _.superClass(TestElementBuilder, this);
 }
 
-_.inherit(TestElementBuilder, ElementBuilder);
+_.inherit(TestElementBuilder, InfinniUI.ElementBuilder);
 
 _.extend(TestElementBuilder.prototype, {
         applyMetadata: function(params){
@@ -23,4 +23,4 @@ _.extend(TestElementBuilder.prototype, {
     }
 );
 
-ApplicationBuilder.addToRegisterQueue('TestElement', new TestElementBuilder());
+InfinniUI.ApplicationBuilder.addToRegisterQueue('TestElement', new TestElementBuilder());

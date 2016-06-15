@@ -2,7 +2,7 @@ var TestControl = function (viewMode) {
     _.superClass(TestControl, this, viewMode);
 };
 
-_.inherit(TestControl, Control);
+_.inherit(TestControl, InfinniUI.Control);
 
 _.extend(TestControl.prototype, {
 

@@ -22,6 +22,8 @@ window.InfinniUI.localizations = window.InfinniUI.localizations || {
         caption: 'English'
     }
 };
+
+window.InfinniUI.Providers = {};
 //####app/elements/_common/enums/colorStyle.js
 InfinniUI.ColorStyle = {
     transparent: "Transparent",
@@ -103,136 +105,12 @@ _.defaults( InfinniUI.config, {
     serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
     configId: 'PTA',
     configName: 'Хабинет'
-
-
-});
-//####app/utils/actionOnLoseFocus.js
-var ActionOnLoseFocus = function ($el, action) {
-    var that = this;
-    this.$el = $el;
-    this.action = action;
-    this.checkNeedToAction_binded = _.bind(this.checkNeedToAction, this);
-
-    $(document).on('mousedown', that.checkNeedToAction_binded);
-};
-
-ActionOnLoseFocus.prototype.checkNeedToAction = function (e) {
-    if ($(e.target).closest(this.$el).length == 0) {
-        this.action();
-        $(document).off('mousedown', this.checkNeedToAction_binded)
+//devblockstart
+    ,editorService: {
+        url: 'http://localhost:5500/api/metadata'
     }
-};
-//####app/utils/basePathOfProperty.js
-function BasePathOfProperty(basePathOfProperty, baseIndex, parentBasePath ) {
+//devblockstop
 
-
-    if(this.isRelativeProperty(basePathOfProperty)){
-        this.basePathOfProperty = parentBasePath.basePathOfProperty + this.excludeFirstChar(basePathOfProperty);
-    }else{
-        this.basePathOfProperty = basePathOfProperty;
-    }
-
-    if(!parentBasePath){
-        if(baseIndex !== undefined && baseIndex !== null){
-            this.indexesInParentLists = [baseIndex];
-            this.basePathOfProperty += baseIndex;
-        }
-
-    }else{
-        this.indexesInParentLists = parentBasePath.indexesInParentLists ? parentBasePath.indexesInParentLists.slice() : [];
-        this.indexesInParentLists.push(baseIndex);
-
-        this.parentBasePath = parentBasePath;
-    }
-
-}
-
-_.extend(BasePathOfProperty.prototype, {
-    /*���������� ������ ���� � �������� �������� � ���������*/
-    resolveProperty: function(property) {
-        if(property === undefined || property === null){
-            property = '';
-        }
-
-        if(this.isRelativeProperty(property)){
-            property = this.excludeFirstChar(property);
-            return stringUtils.formatProperty(this.basePathOfProperty + property, this.indexesInParentLists);
-        }else{
-            return stringUtils.formatProperty(property, this.indexesInParentLists);
-        }
-
-    },
-
-    /*���������� ������ ���� � �������� �������� � ��������� �� ��������� �������������� ����*/
-    resolveRelativeProperty: function(relativeProperty) {
-        var property;
-        if(this.basePathOfProperty != ''){
-            property = this.basePathOfProperty + '.' + relativeProperty;
-        }else{
-            property = relativeProperty;
-        }
-        return this.resolveProperty(property);
-    },
-
-    /*������� BasePathOfProperty ���������� ������*/
-    buildChild: function(basePathOfProperty, baseIndex){
-        return new BasePathOfProperty(basePathOfProperty, baseIndex, this);
-    },
-
-    /*������� BasePathOfProperty ���������� ������ � ������������� �����*/
-    buildRelativeChild: function(basePathOfProperty, baseIndex){
-        return new BasePathOfProperty(basePathOfProperty, baseIndex, this);
-    },
-
-    isRelativeProperty: function(property){
-        return property.substr(0,1) == '@';
-    },
-
-    excludeFirstChar: function(str){
-        return str.substr(1, str.length - 1);
-    }
-});
-//####app/utils/blobUtils.js
-/**
- * Набор утилит для работы с BlobData объектами
- **/
-
-
-window.InfinniUI.BlobUtils = (function () {
-
-    var blobUtils = {
-        isFileInfo: isFileInfo,
-        getContentId: getContentByName.bind(null, 'Id'),
-        getName: getContentByName.bind(null, 'Name'),
-        getSize: getContentByName.bind(null, 'Size'),
-        getTime: getContentByName.bind(null, 'Time'),
-        getType: getContentByName.bind(null, 'Type')
-    };
-
-    return blobUtils;
-
-    function isFileInfo (data) {
-        return data && blobUtils.getContentId(data);
-    }
-
-    function getContentByName(name, data, defaultValue) {
-        return _.isObject(data) ? data[name] : defaultValue;
-    }
-
-})();
-
-
-
-
-
-//####app/utils/clone.js
-_.mixin({
-    deepClone: function (value) {
-        if (value !== null && typeof value !== 'undefined') {
-            return JSON.parse(JSON.stringify(value));
-        }
-        return value;
-    }
 });
 //####app/utils/collection/collection.js
 /**
@@ -1332,6 +1210,134 @@ CollectionEventManager.prototype.onMove = function (oldItems, newItems, oldStart
 
 
 
+//####app/utils/actionOnLoseFocus.js
+var ActionOnLoseFocus = function ($el, action) {
+    var that = this;
+    this.$el = $el;
+    this.action = action;
+    this.checkNeedToAction_binded = _.bind(this.checkNeedToAction, this);
+
+    $(document).on('mousedown', that.checkNeedToAction_binded);
+};
+
+ActionOnLoseFocus.prototype.checkNeedToAction = function (e) {
+    if ($(e.target).closest(this.$el).length == 0) {
+        this.action();
+        $(document).off('mousedown', this.checkNeedToAction_binded)
+    }
+};
+//####app/utils/basePathOfProperty.js
+function BasePathOfProperty(basePathOfProperty, baseIndex, parentBasePath ) {
+
+
+    if(this.isRelativeProperty(basePathOfProperty)){
+        this.basePathOfProperty = parentBasePath.basePathOfProperty + this.excludeFirstChar(basePathOfProperty);
+    }else{
+        this.basePathOfProperty = basePathOfProperty;
+    }
+
+    if(!parentBasePath){
+        if(baseIndex !== undefined && baseIndex !== null){
+            this.indexesInParentLists = [baseIndex];
+            this.basePathOfProperty += baseIndex;
+        }
+
+    }else{
+        this.indexesInParentLists = parentBasePath.indexesInParentLists ? parentBasePath.indexesInParentLists.slice() : [];
+        this.indexesInParentLists.push(baseIndex);
+
+        this.parentBasePath = parentBasePath;
+    }
+
+}
+
+_.extend(BasePathOfProperty.prototype, {
+    /*���������� ������ ���� � �������� �������� � ���������*/
+    resolveProperty: function(property) {
+        if(property === undefined || property === null){
+            property = '';
+        }
+
+        if(this.isRelativeProperty(property)){
+            property = this.excludeFirstChar(property);
+            return stringUtils.formatProperty(this.basePathOfProperty + property, this.indexesInParentLists);
+        }else{
+            return stringUtils.formatProperty(property, this.indexesInParentLists);
+        }
+
+    },
+
+    /*���������� ������ ���� � �������� �������� � ��������� �� ��������� �������������� ����*/
+    resolveRelativeProperty: function(relativeProperty) {
+        var property;
+        if(this.basePathOfProperty != ''){
+            property = this.basePathOfProperty + '.' + relativeProperty;
+        }else{
+            property = relativeProperty;
+        }
+        return this.resolveProperty(property);
+    },
+
+    /*������� BasePathOfProperty ���������� ������*/
+    buildChild: function(basePathOfProperty, baseIndex){
+        return new BasePathOfProperty(basePathOfProperty, baseIndex, this);
+    },
+
+    /*������� BasePathOfProperty ���������� ������ � ������������� �����*/
+    buildRelativeChild: function(basePathOfProperty, baseIndex){
+        return new BasePathOfProperty(basePathOfProperty, baseIndex, this);
+    },
+
+    isRelativeProperty: function(property){
+        return property.substr(0,1) == '@';
+    },
+
+    excludeFirstChar: function(str){
+        return str.substr(1, str.length - 1);
+    }
+});
+//####app/utils/blobUtils.js
+/**
+ * Набор утилит для работы с BlobData объектами
+ **/
+
+
+window.InfinniUI.BlobUtils = (function () {
+
+    var blobUtils = {
+        isFileInfo: isFileInfo,
+        getContentId: getContentByName.bind(null, 'Id'),
+        getName: getContentByName.bind(null, 'Name'),
+        getSize: getContentByName.bind(null, 'Size'),
+        getTime: getContentByName.bind(null, 'Time'),
+        getType: getContentByName.bind(null, 'Type')
+    };
+
+    return blobUtils;
+
+    function isFileInfo (data) {
+        return data && blobUtils.getContentId(data);
+    }
+
+    function getContentByName(name, data, defaultValue) {
+        return _.isObject(data) ? data[name] : defaultValue;
+    }
+
+})();
+
+
+
+
+
+//####app/utils/clone.js
+_.mixin({
+    deepClone: function (value) {
+        if (value !== null && typeof value !== 'undefined') {
+            return JSON.parse(JSON.stringify(value));
+        }
+        return value;
+    }
+});
 //####app/utils/currentView.js
 var OpenedViewCollection = function () {
 
@@ -3272,6 +3278,7 @@ var layoutManager = {
     }
 };
 
+window.InfinniUI.LayoutManager = layoutManager;
 //####app/utils/logger.js
 var LOG_LEVEL = {
     debug: 1,
@@ -3465,6 +3472,8 @@ var stringUtils = {
         return result.join('&');
     }
 };
+
+window.InfinniUI.StringUtils = stringUtils;
 
 function guid() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -3937,6 +3946,8 @@ var urlManager = {
         };
     }
 };
+
+window.InfinniUI.UrlManager = urlManager;
 //####app/messaging/messageBus.js
 function MessageBus(view) {
     var subscriptions = {};
@@ -4630,25 +4641,7 @@ _.extend(Control.prototype, {
     }
 });
 
-_.mixin({
-    'inherit': function (child, parent) {
-        var f = new Function();
-        f.prototype = parent.prototype;
-
-        child.prototype = new f();
-        child.prototype.constructor = child;
-
-        child.superclass = parent.prototype;
-    },
-
-    'superClass': function (obj, context, values) {
-        var args = _.toArray(arguments);
-        args.splice(0, 2);
-
-        obj.superclass.constructor.apply(context, args);
-    }
-});
-
+InfinniUI.Control = Control;
 //####app/controls/_base/control/controlModel.js
 var ControlModel = Backbone.Model.extend({
     defaults: {
@@ -4705,6 +4698,7 @@ var ControlModel = Backbone.Model.extend({
 
 });
 
+InfinniUI.ControlModel = ControlModel;
 //####app/controls/_base/control/controlView.js
 /**
  * @class
@@ -5117,6 +5111,8 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
 });
 
 _.extend(ControlView.prototype, bindUIElementsMixin, eventHandlerMixin);
+
+InfinniUI.ControlView = ControlView;
 
 //####app/controls/_base/control/pdfViewerViewBase.js
 var PdfViewerViewBase = ControlView.extend({
@@ -6131,67 +6127,6 @@ var editorBaseViewMixin = {
     }
 };
 
-//####app/controls/_base/eventManager.js
-function EventManager() {
-    this.handlers = {};
-}
-
-EventManager.prototype.on = function (name, handler) {
-    if (typeof this.handlers[name] === 'undefined') {
-        this.handlers[name] = [];
-    }
-    this.handlers[name].push(handler);
-    return this;
-};
-
-EventManager.prototype.trigger = function (name, message, context) {
-    var eventHandlers = this.handlers[name];
-    var response = true;
-    if (Array.isArray(eventHandlers)) {
-        response = eventHandlers
-            .map(function (handler) {
-                return handler.call(context, message);
-            })
-            .every(function (result) {
-                return result !== false;
-            });
-    }
-    return response;
-};
-
-//####app/controls/_base/highlightMixin.js
-var highlightMixin = {
-
-    attributeName: '_highlight',
-
-    highlightClassName: 'active',
-
-    control: {
-
-        setHighlight: function (highlight) {
-            this.controlModel.set(highlightMixin.attributeName, highlight);
-        },
-
-        getHighlight: function () {
-            return this.controlModel.get(highlightMixin.attributeName);
-        }
-
-    },
-
-    controlView: {
-
-        initHighlightMixin: function () {
-            this.listenTo(this.model, 'change:' + highlightMixin.attributeName, function () {
-                var model = this.model;
-                this.$el.toggleClass(highlightMixin.highlightClassName, model.get(highlightMixin.attributeName));
-                this.$el.parent().toggleClass(highlightMixin.highlightClassName, model.get(highlightMixin.attributeName));
-            });
-        }
-
-    }
-};
-
-
 //####app/controls/_base/listEditorBase/listEditorBaseControl.js
 function ListEditorBaseControl(viewMode) {
     _.superClass(ListEditorBaseControl, this, viewMode);
@@ -6555,6 +6490,67 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
 }));
 
 _.extend(TextEditorBaseView.prototype, textEditorMixin); //Работа с масками ввода
+//####app/controls/_base/eventManager.js
+function EventManager() {
+    this.handlers = {};
+}
+
+EventManager.prototype.on = function (name, handler) {
+    if (typeof this.handlers[name] === 'undefined') {
+        this.handlers[name] = [];
+    }
+    this.handlers[name].push(handler);
+    return this;
+};
+
+EventManager.prototype.trigger = function (name, message, context) {
+    var eventHandlers = this.handlers[name];
+    var response = true;
+    if (Array.isArray(eventHandlers)) {
+        response = eventHandlers
+            .map(function (handler) {
+                return handler.call(context, message);
+            })
+            .every(function (result) {
+                return result !== false;
+            });
+    }
+    return response;
+};
+
+//####app/controls/_base/highlightMixin.js
+var highlightMixin = {
+
+    attributeName: '_highlight',
+
+    highlightClassName: 'active',
+
+    control: {
+
+        setHighlight: function (highlight) {
+            this.controlModel.set(highlightMixin.attributeName, highlight);
+        },
+
+        getHighlight: function () {
+            return this.controlModel.get(highlightMixin.attributeName);
+        }
+
+    },
+
+    controlView: {
+
+        initHighlightMixin: function () {
+            this.listenTo(this.model, 'change:' + highlightMixin.attributeName, function () {
+                var model = this.model;
+                this.$el.toggleClass(highlightMixin.highlightClassName, model.get(highlightMixin.attributeName));
+                this.$el.parent().toggleClass(highlightMixin.highlightClassName, model.get(highlightMixin.attributeName));
+            });
+        }
+
+    }
+};
+
+
 //####app/controls/textBox/textBoxControl.js
 /**
  *
@@ -8778,6 +8774,146 @@ var TimePickerView = DateTimePickerView .extend({
     className: "pl-datepicker pl-timepicker form-group"
 
 });
+//####app/controls/application/statusBar/statusBar.js
+var StatusBarControl = function () {
+    _.superClass(StatusBarControl, this);
+};
+_.inherit(StatusBarControl, Control);
+_.extend(StatusBarControl.prototype, {
+    createControlModel: function () {
+        return new StatusBarModel();
+    },
+    createControlView: function (model) {
+        return new StatusBarView({model: model});
+    }
+});
+
+var StatusBarModel = ControlModel.extend({
+    defaults: _.defaults({}, ControlModel.prototype.defaults, {
+        time: '',
+        date: '',
+        result: null
+    })
+});
+
+var StatusBarView = ControlView.extend({
+    className: 'pl-status-bar',
+
+    events: {
+        'click .signIn': 'signInHandler',
+        'click .signOut': 'signOutHandler',
+        'click .status-bar-menu': 'openMenuHandler'
+    },
+
+    template: InfinniUI.Template['controls/application/statusBar/template.tpl.html'],
+    loginTemplate: InfinniUI.Template['controls/application/statusBar/authentication/loginTemplate.tpl.html'],
+
+    enterTemplate: InfinniUI.Template['controls/application/statusBar/authentication/enterTemplate.tpl.html'],
+    successTemplate: InfinniUI.Template['controls/application/statusBar/authentication/successTemplate.tpl.html'],
+
+    initialize: function () {
+        var self = this;
+        self.model.set('time', moment().format('HH:mm'));
+        self.model.set('date', moment().format('D MMMM'));
+
+        window.setInterval(function () {
+            self.model.set('time', moment().format('HH:mm'));
+            self.model.set('date', moment().format('D MMMM'));
+            self.dateRender();
+        }, 10 * 1000);
+
+        getUserInfo(this);
+        this.listenTo(this.model, 'change:result', this.render);
+    },
+
+    dateRender: function () {
+        this.$el.find('.time').text(this.model.get('time'));
+        this.$el.find('.date').text(this.model.get('date'));
+    },
+
+    signInHandler: function () {
+        var self = this;
+        if (!this.$modal) {
+            this.$modal = $(this.loginTemplate({}));
+            this.$modal.appendTo('body');
+        }
+
+        this.$modal.modal('show');
+        this.$modal.on('hidden.bs.modal', function () {
+            $(this).find('#password, #userName').val('');
+            $(this).find('#remember').attr('checked', false);
+        });
+        this.$modal.find('.post').on('click', function () {
+            signInInternal(self);
+        })
+    },
+    openMenuHandler: function(){
+        var menu = $('.app-area').find('.pl-menu');
+        var area = menu.closest('.app-area');
+
+        if(menu.length && area.length) {
+            if($(area).is(':visible')) {
+                area.css({
+                    'display': 'none'
+                });
+            }else{
+                area.css({
+                    'position': 'absolute',
+                    'width': '100%',
+                    'display': 'block',
+                    'overflow': 'hidden'
+                });
+            }
+        }
+    },
+
+    signOutHandler: function () {
+        signOut(this);
+    },
+
+    render: function () {
+        var result = this.model.get('result');debugger;
+        var header = InfinniUI.config.configName;
+        var $wrap = $(this.template({header: header}));
+        var $loginTemplate,
+            self = this;
+
+        window.adjustLoginResult(result).then(function(r){
+            if (result) {
+                $loginTemplate = $(self.successTemplate({
+                    displayName: r.UserName,
+                    activeRole: r.ActiveRole,
+                    roles: _.pluck(result.Roles, 'DisplayName').join(', ')
+                }));
+            } else {
+                $loginTemplate = $(self.enterTemplate({}));
+            }
+
+            $wrap.find('.page-header-inner').prepend($loginTemplate);
+            self.$el
+                .empty()
+                .append($wrap);
+        });
+
+        this.$el.find('.calendar').datepicker({
+            todayHighlight: true,
+            language: 'ru'
+        });
+
+        //~fix DatePicker auto close
+        this.$el.find('.dropdown-toggle').on('click.bs.dropdown', function() {
+            var clicks = $(this).data('clicks');
+            if (clicks) {
+                $(this).parent('.dropdown').off('hide.bs.dropdown');
+            } else {
+                $(this).parent('.dropdown').on('hide.bs.dropdown', function () {return false;});
+            }
+            $(this).data("clicks", !clicks);
+        });
+
+        return this;
+    }
+});
 //####app/controls/application/statusBar/authentication/SignInSuccessView.js
 jQuery(document).ready(function () {
     InfinniUI.user = {
@@ -9277,199 +9413,6 @@ _.extend(AuthenticationProvider.prototype, {
 _.extend(AuthenticationProvider.prototype, ajaxRequestMixin);
 
 InfinniUI.global.session = new AuthenticationProvider(InfinniUI.config.serverUrl);
-//####app/controls/application/statusBar/statusBar.js
-var StatusBarControl = function () {
-    _.superClass(StatusBarControl, this);
-};
-_.inherit(StatusBarControl, Control);
-_.extend(StatusBarControl.prototype, {
-    createControlModel: function () {
-        return new StatusBarModel();
-    },
-    createControlView: function (model) {
-        return new StatusBarView({model: model});
-    }
-});
-
-var StatusBarModel = ControlModel.extend({
-    defaults: _.defaults({}, ControlModel.prototype.defaults, {
-        time: '',
-        date: '',
-        result: null
-    })
-});
-
-var StatusBarView = ControlView.extend({
-    className: 'pl-status-bar',
-
-    events: {
-        'click .signIn': 'signInHandler',
-        'click .signOut': 'signOutHandler',
-        'click .status-bar-menu': 'openMenuHandler'
-    },
-
-    template: InfinniUI.Template['controls/application/statusBar/template.tpl.html'],
-    loginTemplate: InfinniUI.Template['controls/application/statusBar/authentication/loginTemplate.tpl.html'],
-
-    enterTemplate: InfinniUI.Template['controls/application/statusBar/authentication/enterTemplate.tpl.html'],
-    successTemplate: InfinniUI.Template['controls/application/statusBar/authentication/successTemplate.tpl.html'],
-
-    initialize: function () {
-        var self = this;
-        self.model.set('time', moment().format('HH:mm'));
-        self.model.set('date', moment().format('D MMMM'));
-
-        window.setInterval(function () {
-            self.model.set('time', moment().format('HH:mm'));
-            self.model.set('date', moment().format('D MMMM'));
-            self.dateRender();
-        }, 10 * 1000);
-
-        getUserInfo(this);
-        this.listenTo(this.model, 'change:result', this.render);
-    },
-
-    dateRender: function () {
-        this.$el.find('.time').text(this.model.get('time'));
-        this.$el.find('.date').text(this.model.get('date'));
-    },
-
-    signInHandler: function () {
-        var self = this;
-        if (!this.$modal) {
-            this.$modal = $(this.loginTemplate({}));
-            this.$modal.appendTo('body');
-        }
-
-        this.$modal.modal('show');
-        this.$modal.on('hidden.bs.modal', function () {
-            $(this).find('#password, #userName').val('');
-            $(this).find('#remember').attr('checked', false);
-        });
-        this.$modal.find('.post').on('click', function () {
-            signInInternal(self);
-        })
-    },
-    openMenuHandler: function(){
-        var menu = $('.app-area').find('.pl-menu');
-        var area = menu.closest('.app-area');
-
-        if(menu.length && area.length) {
-            if($(area).is(':visible')) {
-                area.css({
-                    'display': 'none'
-                });
-            }else{
-                area.css({
-                    'position': 'absolute',
-                    'width': '100%',
-                    'display': 'block',
-                    'overflow': 'hidden'
-                });
-            }
-        }
-    },
-
-    signOutHandler: function () {
-        signOut(this);
-    },
-
-    render: function () {
-        var result = this.model.get('result');debugger;
-        var header = InfinniUI.config.configName;
-        var $wrap = $(this.template({header: header}));
-        var $loginTemplate,
-            self = this;
-
-        window.adjustLoginResult(result).then(function(r){
-            if (result) {
-                $loginTemplate = $(self.successTemplate({
-                    displayName: r.UserName,
-                    activeRole: r.ActiveRole,
-                    roles: _.pluck(result.Roles, 'DisplayName').join(', ')
-                }));
-            } else {
-                $loginTemplate = $(self.enterTemplate({}));
-            }
-
-            $wrap.find('.page-header-inner').prepend($loginTemplate);
-            self.$el
-                .empty()
-                .append($wrap);
-        });
-
-        this.$el.find('.calendar').datepicker({
-            todayHighlight: true,
-            language: 'ru'
-        });
-
-        //~fix DatePicker auto close
-        this.$el.find('.dropdown-toggle').on('click.bs.dropdown', function() {
-            var clicks = $(this).data('clicks');
-            if (clicks) {
-                $(this).parent('.dropdown').off('hide.bs.dropdown');
-            } else {
-                $(this).parent('.dropdown').on('hide.bs.dropdown', function () {return false;});
-            }
-            $(this).data("clicks", !clicks);
-        });
-
-        return this;
-    }
-});
-//####app/controls/button/buttonControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments Control
- */
-function ButtonControl(viewMode) {
-    _.superClass(ButtonControl, this, viewMode);
-}
-
-_.inherit(ButtonControl, Control);
-
-_.extend(
-    ButtonControl.prototype,
-    highlightMixin.control, {
-
-        createControlModel: function () {
-            return new ButtonModel();
-        },
-
-        createControlView: function (model, viewMode) {
-            if (!viewMode || !viewMode in window.InfinniUI.Button) {
-                viewMode = 'common';
-            }
-
-            var ViewClass = window.InfinniUI.Button.viewModes[viewMode];
-
-            return new ViewClass({model: model});
-        }
-
-    }, buttonControlMixin);
-
-
-//####app/controls/button/buttonModel.js
-/**
- * @class
- * @augments ControlModel
- */
-var ButtonModel = ControlModel.extend({
-
-    defaults: _.defaults({
-        content: null,
-        contentTemplate: null,
-        horizontalAlignment: 'Left'
-
-    }, ControlModel.prototype.defaults),
-
-    initialize: function () {
-        ControlModel.prototype.initialize.apply(this, arguments);
-    }
-
-});
 //####app/controls/button/commonView/buttonView.js
 /**
  * @class ButtonView
@@ -9657,6 +9600,59 @@ var LinkButtonView = CommonButtonView.extend({
 });
 
 InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Button.viewModes.link', LinkButtonView);
+//####app/controls/button/buttonControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments Control
+ */
+function ButtonControl(viewMode) {
+    _.superClass(ButtonControl, this, viewMode);
+}
+
+_.inherit(ButtonControl, Control);
+
+_.extend(
+    ButtonControl.prototype,
+    highlightMixin.control, {
+
+        createControlModel: function () {
+            return new ButtonModel();
+        },
+
+        createControlView: function (model, viewMode) {
+            if (!viewMode || !viewMode in window.InfinniUI.Button) {
+                viewMode = 'common';
+            }
+
+            var ViewClass = window.InfinniUI.Button.viewModes[viewMode];
+
+            return new ViewClass({model: model});
+        }
+
+    }, buttonControlMixin);
+
+
+//####app/controls/button/buttonModel.js
+/**
+ * @class
+ * @augments ControlModel
+ */
+var ButtonModel = ControlModel.extend({
+
+    defaults: _.defaults({
+        content: null,
+        contentTemplate: null,
+        horizontalAlignment: 'Left'
+
+    }, ControlModel.prototype.defaults),
+
+    initialize: function () {
+        ControlModel.prototype.initialize.apply(this, arguments);
+    }
+
+});
 //####app/controls/button/menuItemView/buttonView.js
 /**
  * @class ButtonView
@@ -9852,6 +9848,4148 @@ var ButtonEditView = TextBoxView.extend(/** @lends ButtonEditView.prototype */{
     }
 
 });
+//####app/controls/comboBox/dropdown/comboBoxDropdownView.js
+var ComboBoxDropdownView = Backbone.View.extend({
+
+    className: "pl-dropdown-container",
+    events: {
+        'click .backdrop': 'onClickBackdropHandler',
+        'keyup .pl-combobox-filter-text': 'onKeyUpHandler',
+        'keydown .pl-combobox-filter-text': 'onFilterKeyDownHandler'
+    },
+
+    UI: {
+        items: '.pl-combobox-items',
+        filter: '.pl-combobox-filter',
+        text: '.pl-combobox-filter-text',
+        noItems: '.pl-combobox-items-empty',
+        search: '.pl-combobox-items-empty > span'
+    },
+
+    initialize: function () {
+        var isGrouped = this.model.get('groupValueSelector') != null;
+
+        if (isGrouped) {
+            this.strategy = new ComboBoxGroupViewStrategy(this);
+        } else {
+            this.strategy = new ComboBoxPlainViewStrategy(this);
+        }
+
+        this.listenTo(this.model, 'change:dropdown', this.onChangeDropdownHandler);
+        this.listenTo(this.model, 'change:autocompleteValue', this.onChangeSearchHandler);
+        this.listenTo(this.model, 'change:autocomplete', this.updateAutocomplete);
+        this.listenTo(this.model, 'change:selectedItem', this.onChangeSelectedItem);
+        this.listenTo(this.strategy, 'click', this.onClickItemHandler);
+        this.listenTo(this.strategy, 'mouseenter', this.onMouseEnterItemHandler);
+        this.model.onValueChanged(this.onChangeValueHandler.bind(this));
+
+        var items = this.model.get('items');
+
+        var view = this;
+        items.onChange(function () {
+            view.renderItems();
+        });
+    },
+
+    updateProperties: function () {
+        this.updateAutocomplete();
+    },
+
+    render: function () {
+        var template = this.strategy.getTemplate();
+        this.$el.html(template({
+            multiSelect: this.model.get('multiSelect')
+        }));
+        this.bindUIElements();
+        this.updateProperties();
+        this.renderItems();
+        return this.$el;
+    },
+
+    renderItems: function () {
+        var $items = this.strategy.renderItems();
+        this.$items = $items;
+        var items = this.model.get('items');
+
+        var noItems = (items && items.length == 0);
+        this.ui.noItems.toggleClass('hidden', !noItems);
+
+        this.markSelectedItems();
+        this.markCheckedItems();
+    },
+
+    setItemsContent: function (content) {
+        var $items = this.ui.items;
+        $items.empty();
+        $items.append(content);
+    },
+
+    close: function () {
+        this.model.set('dropdown', false);
+    },
+
+    setSearchFocus: function () {
+        this.ui.text.focus();
+    },
+
+    onClickBackdropHandler: function () {
+        this.close();
+    },
+
+    onChangeValueHandler: function () {
+        this.markCheckedItems();
+    },
+
+    markSelectedItems: function () {
+        var model = this.model;
+        if (!Array.isArray(this.$items)) {
+            return;
+        }
+
+        var $container = this.ui.items;
+        var $items = this.$items;
+        var selectedItem = model.getSelectedItem();
+
+        $items.forEach(function ($item) {
+            var selected = selectedItem === $item.data('pl-data-item');
+            $item.toggleClass('pl-combobox-selected', selected);
+        });
+
+        this.ensureVisibleSelectedItem();
+
+    },
+
+    ensureVisibleSelectedItem: function () {
+        var model = this.model;
+        if (!Array.isArray(this.$items)) {
+            return;
+        }
+
+        var $container = this.ui.items;
+        var $items = this.$items;
+        var selectedItem = model.getSelectedItem();
+
+        $items.some(function ($item) {
+            var selected = selectedItem === $item.data('pl-data-item');
+            if (selected) {
+                ensureItem($container, $item);
+            }
+            return selected;
+        });
+
+        function ensureItem($container, $item) {
+            var newScrollTop;
+
+            var scrollTop = $container.scrollTop();
+            var itemTop = $item.position().top;
+            var itemHeight = $item.outerHeight();
+            var viewHeight = $container.innerHeight();
+            if (itemTop + itemHeight > viewHeight) {
+                newScrollTop = scrollTop + itemTop + itemHeight - viewHeight;
+            } else if (itemTop < 0) {
+                newScrollTop = scrollTop + itemTop;
+            }
+
+            if (typeof newScrollTop !== 'undefined') {
+                $container.scrollTop(newScrollTop);
+            }
+        }
+    },
+
+
+    markCheckedItems: function () {
+        var model = this.model;
+        var value = model.getValue();
+
+        if (!Array.isArray(this.$items)) {
+            return;
+        }
+
+        var $items = this.$items;
+        var isMultiSelect = !!model.get('multiSelect');
+        var items = [];
+
+        if (isMultiSelect && Array.isArray(value)) {
+            items = value.map(function (val) {
+                return model.itemByValue(val);
+            });
+        } else {
+            items = [model.itemByValue(value)];
+        }
+
+        $items.forEach(function ($item) {
+            var selected = items.indexOf($item.data('pl-data-item')) !== -1;
+            $item.toggleClass('pl-combobox-checked', selected);
+        });
+    },
+
+    onChangeDropdownHandler: function (model, dropdown) {
+        if (!dropdown) {
+            this.remove();
+        }
+    },
+
+    updateAutocomplete: function () {
+        var autocomplete = this.model.get('autocomplete');
+        this.ui.filter.toggleClass('hidden', !autocomplete);
+    },
+
+    onMouseEnterItemHandler: function (item) {
+        this.model.setSelectedItem(item);
+    },
+
+    onClickItemHandler: function (item) {
+        var isEnabled = !this.model.isDisabledItem(item);
+        if(isEnabled) {
+            this.model.toggleItem(item);
+            this.close();
+        }
+    },
+
+    onKeyUpHandler: function (event) {
+        //@TODO grow input
+        var text = this.ui.text.val();
+        this.trigger('search', text);
+    },
+
+    onKeyDownHandler: function (event) {
+        var model = this.model;
+        event.preventDefault();
+        this.onFilterKeyDownHandler(event);
+    },
+
+    onFilterKeyDownHandler: function (event) {
+        var model = this.model;
+        switch (event.which) {
+            case 36://Home;
+                model.selectFirstItem();
+                break;
+            case 35: //End
+                model.selectLastItem();
+                break;
+            case 38: //Up
+                model.selectPrevItem();
+                break;
+            case 40: //Down
+                model.selectNextItem();
+                break;
+            case 13:
+                this.onClickItemHandler(model.getSelectedItem());
+                break;
+            case 9:
+                this.close();
+                break;
+            case 27://Escape
+                this.close();
+                event.stopPropagation();
+                break;
+        }
+    },
+
+    onChangeSearchHandler: function (model, value) {
+        this.ui.search.text(value);
+    },
+
+    onChangeSelectedItem: function (model, value) {
+        this.markSelectedItems();
+    },
+
+    updatePosition: function (parentDOMElement) {
+        var direction = this.getDropdownDirection(parentDOMElement);
+        this.setPositionFor(parentDOMElement, direction );
+    },
+
+    setPositionFor: function (parentDOMElement, direction) {
+        clearInterval(this._intervalId);
+
+        this.applyStyle(parentDOMElement, direction);
+        this._intervalId = setInterval(this.applyStyle.bind(this, parentDOMElement, direction), 100);
+    },
+
+    remove: function () {
+        clearInterval(this._intervalId);
+        return Backbone.View.prototype.remove.apply(this, arguments);
+    },
+
+    getDropdownDirection: function (parentDOMElement) {
+
+        var windowHeight = $(window).height();
+        var rect = parentDOMElement.getBoundingClientRect();
+        var height = this.$el.height();
+
+        var direction = 'bottom';
+        if (rect.bottom + height + 30 > windowHeight && rect.bottom > windowHeight / 2) {
+            direction = 'top';
+        }
+
+        return direction;
+    },
+
+    applyStyle: function (parentDOMElement, direction) {
+        var rect = parentDOMElement.getBoundingClientRect();
+
+        //@TODO Вынести общие стили в css
+        var style = {
+            position: "absolute",
+            left: window.pageXOffset + rect.left,
+            width: Math.round(rect.width) - 1
+        };
+
+        if (direction === 'bottom') {
+            style.top = window.pageYOffset + rect.bottom;
+        } else {
+            style.top = rect.top - this.$el.height();
+        }
+
+        this.$el.css(style);
+    }
+
+});
+
+_.extend(ComboBoxDropdownView.prototype, bindUIElementsMixin);
+//####app/controls/comboBox/dropdown/viewBaseStrategy.js
+/**
+ * @abstract
+ * @param dropdownView
+ * @constructor
+ */
+function ComboBoxBaseViewStrategy(dropdownView) {
+    this.dropdownView = dropdownView;
+}
+
+/**
+ *
+ * @param {string} attributeName
+ * @returns {*}
+ */
+ComboBoxBaseViewStrategy.prototype.getModelAttribute = function (attributeName) {
+    var model = this.dropdownView.model;
+
+    return model.get(attributeName);
+};
+
+ComboBoxBaseViewStrategy.prototype.isEnabledItem = function (item) {
+    return !this.dropdownView.model.isDisabledItem(item);
+};
+
+/**
+ * @description Рендеринг элементов списка
+ * @abstract
+ * @returns {Array.<jQuery>} Элементы списка
+ */
+ComboBoxBaseViewStrategy.prototype.renderItems = function () {
+    throw new Error('Method renderItems not implemented');
+};
+
+/**
+ * @abstract
+ */
+ComboBoxBaseViewStrategy.prototype.getTemplate = function () {
+
+};
+
+/**
+ * Рендеринг заданных элементов списка
+ * @param {Array.<Object>} items
+ * @returns {Array.<jQuery>}
+ * @private
+ */
+ComboBoxBaseViewStrategy.prototype._renderItems = function (items) {
+    var
+        $items,
+        collection = this.getModelAttribute('items'),
+        itemTemplate = this.getModelAttribute('itemTemplate');
+
+    $items = items.map(function (item) {
+        var itemEl = itemTemplate(undefined, {
+            value: item,
+            index: collection.indexOf(item)
+        });
+        var $item = itemEl.render();
+
+        if (typeof item !== 'undefined') {
+            $item.data('pl-data-item', item);
+        }
+
+        this.addOnClickEventListener($item, item);
+        this.addOnHoverEventListener($item, item);
+
+        itemEl.setEnabled( this.isEnabledItem(item) );
+
+        return $item;
+    }, this);
+
+    return $items;
+};
+
+/**
+ *
+ * @param {jQuery} $el
+ */
+ComboBoxBaseViewStrategy.prototype.addOnClickEventListener = function ($el) {
+    var el = $el[0];
+    var params = Array.prototype.slice.call(arguments, 1);
+    var handler = this.trigger.bind(this, 'click');
+    el.addEventListener('click', function () {
+        handler.apply(this, params);
+    });
+};
+
+
+ComboBoxBaseViewStrategy.prototype.addOnHoverEventListener = function ($el) {
+    var el = $el[0];
+    var params = Array.prototype.slice.call(arguments, 1);
+    var handler = this.trigger.bind(this, 'mouseenter');
+    $el.on('mouseenter', function () {
+        handler.apply(this, params);
+    });
+};
+
+_.extend(ComboBoxBaseViewStrategy.prototype, Backbone.Events);
+//####app/controls/comboBox/dropdown/viewGroupStrategy.js
+/**
+ *
+ * @param {ComboBoxDropdownView} dropdownView
+ * @augments ComboBoxBaseViewStrategy
+ * @constructor
+ */
+function ComboBoxGroupViewStrategy(dropdownView) {
+    ComboBoxBaseViewStrategy.call(this, dropdownView);
+}
+
+ComboBoxGroupViewStrategy.prototype = Object.create(ComboBoxBaseViewStrategy.prototype);
+ComboBoxGroupViewStrategy.prototype.constructor = ComboBoxGroupViewStrategy;
+
+ComboBoxGroupViewStrategy.prototype.template = InfinniUI.Template["controls/comboBox/dropdown/template/group/template.tpl.html"];
+
+ComboBoxGroupViewStrategy.prototype.renderItems = function () {
+    var
+        collection = this.getModelAttribute('items'),
+        groupingFunction = this.getModelAttribute('groupValueSelector'),
+        groups = {},
+        $items;
+
+    collection.forEach(function (item, index) {
+        var groupKey = groupingFunction(undefined, {value: item, index: index});
+
+        if (!(groupKey in groups)) {
+            groups[groupKey] = [];
+        }
+
+        groups[groupKey].push(item);
+    });
+
+    $items = this.renderGroups(groups);
+    return $items;
+};
+
+/**
+ * @description Рендереинг группированных элементов
+ * @param {Array.<Object>} groups
+ * @returns {Array.<jQuery>} Элементы групп
+ */
+ComboBoxGroupViewStrategy.prototype.renderGroups = function (groups) {
+    var
+        groupItemTemplate = this.getModelAttribute('groupItemTemplate'),
+        collection = this.getModelAttribute('items'),
+        $items= [],
+        $groupItems,
+        $groups = [];
+
+    for (var name in groups) {
+        var items = groups[name];
+        //Шаблонизированный заголовок группы
+        var $header = groupItemTemplate(undefined, {
+                index: collection.indexOf(items[0]),
+                item: items[0]
+            }
+        );
+        //Шаблонизированные элементы группы
+        var $groupItems = this._renderItems(items);
+
+        var groupView = new ComboBoxGroupView({
+            header: $header.render(),
+            items: $groupItems
+        });
+
+        Array.prototype.push.apply($items, $groupItems);
+        $groups.push(groupView.render());
+    }
+
+    this.dropdownView.setItemsContent($groups);
+
+    return $items;
+};
+
+
+ComboBoxGroupViewStrategy.prototype.getTemplate = function () {
+    return this.template;
+};
+
+
+//####app/controls/comboBox/dropdown/viewPlainStrategy.js
+/**
+ *
+ * @param {ComboBoxDropdownView} dropdownView
+ * @augments ComboBoxBaseViewStrategy
+ * @constructor
+ */
+function ComboBoxPlainViewStrategy(dropdownView) {
+    ComboBoxBaseViewStrategy.call(this, dropdownView);
+}
+
+ComboBoxPlainViewStrategy.prototype = Object.create(ComboBoxBaseViewStrategy.prototype);
+ComboBoxPlainViewStrategy.prototype.constructor = ComboBoxPlainViewStrategy;
+
+ComboBoxPlainViewStrategy.prototype.renderItems = function () {
+    var
+        $items = [],
+        items = this.getModelAttribute('items');
+
+    if (items) {
+        $items = this._renderItems(items.toArray());
+    }
+
+    this.dropdownView.setItemsContent($items);
+
+    return $items;
+};
+
+ComboBoxPlainViewStrategy.prototype.template = InfinniUI.Template["controls/comboBox/dropdown/template/plain/template.tpl.html"];
+
+ComboBoxPlainViewStrategy.prototype.getTemplate = function () {
+    return this.template;
+};
+
+//####app/controls/comboBox/dropdown/group/groupView.js
+var ComboBoxGroupView = Backbone.View.extend({
+
+    template: InfinniUI.Template["controls/comboBox/dropdown/group/template/template.tpl.html"],
+
+    UI: {
+        header: '.pl-combobox-group__header',
+        items: '.pl-combobox-group__items'
+    },
+
+    initialize: function (options) {
+        this.options = {
+            header: options.header,
+            items: options.items
+        };
+
+    },
+
+    render: function () {
+        var options = this.options;
+        this.$el.html(this.template());
+        this.bindUIElements()
+        this.ui.header.append(options.header);
+        this.ui.items.append(options.items);
+
+        return this.$el;
+    }
+
+});
+
+_.extend(ComboBoxGroupView.prototype, bindUIElementsMixin);
+//####app/controls/comboBox/values/comboBoxValue.js
+var ComboBoxValueModel = Backbone.Model.extend({
+
+});
+
+var ComboBoxValue = Backbone.View.extend({
+
+    template: InfinniUI.Template["controls/comboBox/values/template/value.tpl.html"],
+
+    tagName: 'li',
+
+    className: 'pl-combobox-value',
+
+    events: {
+        "click .pl-combobox-value-remove": "onClickRemoveHandler"
+    },
+
+    UI: {
+        item: '.pl-combobox-value-item'
+    },
+
+    initialize: function (options) {
+        this.model = new ComboBoxValueModel(options);
+    },
+
+    render: function () {
+        this.$el.html(this.template());
+
+        this.bindUIElements();
+        var $value = this.model.get('$value');
+        this.ui.item.append($value);
+        return this.$el;
+    },
+
+    onClickRemoveHandler: function () {
+        var value = this.model.get('value');
+        this.trigger('remove', value);
+    }
+
+});
+
+_.extend(ComboBoxValue.prototype, bindUIElementsMixin);
+//####app/controls/comboBox/values/comboBoxValues.js
+var ComboBoxValuesModel = Backbone.Model.extend({
+    defaults: {
+        enabled: true
+    },
+
+    initialize: function () {
+        this.items = [];
+    }
+});
+
+var ComboBoxValues = Backbone.View.extend({
+
+    tagName: 'ul',
+
+    className: 'pl-combobox-values',
+
+    template: InfinniUI.Template["controls/comboBox/values/template/values.tpl.html"],
+
+    events: {
+        'keypress .pl-combobox-search-text': 'onKeyPressHandler',
+        'keydown .pl-combobox-search-text': 'onKeyDownHandler',
+        'keyup .pl-combobox-search-text': 'onKeyUpHandler',
+        'click': 'onClickHandler'
+    },
+
+    UI: {
+        search: ".pl-combobox-search",
+        text: ".pl-combobox-search-text"
+    },
+
+    initialize: function (options) {
+        this.model = new ComboBoxValuesModel(options);
+    },
+
+    render: function () {
+
+        this.$el.empty();
+
+        this.$el.html(this.template());
+        this.bindUIElements();
+
+        var model = this.model;
+        var $items =
+            model.get('items')
+                .map(function(item) {
+                    var view = new ComboBoxValue({
+                        "$value": item.$value,
+                        "value": item.value
+                    });
+
+                    this.listenTo(view, 'remove', this.onRemoveValueHandler);
+                    return view.render();
+                }, this);
+
+        this.ui.search.before($items);
+
+        return this.$el;
+    },
+
+    KeyCode: {
+        enter: 13,
+        backspace: 8,
+        left: 37,
+        right: 39,
+        home: 36,
+        end: 35,
+        tab: 9
+    },
+
+    setFocus: function () {
+        this.ui.text.focus();
+    },
+
+    onKeyPressHandler: function (event) {
+        var key = event.which;
+
+        if (key === this.KeyCode.enter) {
+
+        }
+
+        console.log('onKeyPressHandler', event.which, this.ui.text.val());
+    },
+
+    onKeyDownHandler: function (event) {
+        //handle left/right/tab/Shift-tab/backspace/end/home
+        var key = event.which;
+        if (key === this.KeyCode.left) {
+
+        } else {
+
+        }
+        console.log('onKeyDownHandler', event.which, this.ui.text.val());
+    },
+
+    onKeyUpHandler: function (event) {
+        //@TODO grow input
+        var text = this.ui.text.val();
+        this.trigger('search', text);
+    },
+
+    onRemoveValueHandler: function (value) {
+        this.trigger('remove', value);
+    },
+
+    onClickHandler: function (event) {
+        this.setFocus();
+    }
+
+});
+
+_.extend(ComboBoxValues.prototype, bindUIElementsMixin);
+//####app/controls/dataGrid/dataGridControl.js
+/**
+ *
+ * @constructor
+ * @augments ListEditorBaseControl
+ */
+function DataGridControl() {
+    _.superClass(DataGridControl, this);
+}
+
+_.inherit(DataGridControl, ListEditorBaseControl);
+
+_.extend(DataGridControl.prototype, {
+
+    createControlModel: function () {
+        return new DataGridModel();
+    },
+
+    createControlView: function (model) {
+        return new DataGridView({model: model});
+    },
+
+    onCheckAllChanged: function (handler) {
+        this.controlModel.onCheckAllChanged(handler);
+    }
+});
+
+
+//####app/controls/dataGrid/dataGridModel.js
+/**
+ * @constructor
+ * @augments ListEditorBaseModel
+ */
+var DataGridModel = ListEditorBaseModel.extend({
+    defaults: _.defaults({
+        showSelectors: true,
+        checkAllVisible: false,
+        checkAll: false,
+        focusable: false
+    }, ListEditorBaseModel.prototype.defaults),
+
+    initialize: function () {
+        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        this.initColumns();
+    },
+
+    toggleCheckAll: function () {
+        this.set('checkAll', !this.get('checkAll'));
+    },
+
+    onCheckAllChanged: function (handler) {
+        this.on('change:checkAll', function (model, checkAll) {
+            handler.call(null, {value: checkAll});
+        });
+    },
+
+    /**
+     * @protected
+     */
+    initColumns: function () {
+        this.set('columns', new Collection());
+    }
+});
+//####app/controls/dataGrid/dataGridView.js
+/**
+ * @constructor
+ * @augments ListEditorBaseView
+ */
+var DataGridView = ListEditorBaseView.extend({
+
+    template: {
+        "grid": InfinniUI.Template["controls/dataGrid/template/dataGrid.tpl.html"],
+        "gridStretched": InfinniUI.Template["controls/dataGrid/template/dataGridStretched.tpl.html"],
+        "headerCell": InfinniUI.Template["controls/dataGrid/template/headerCell.tpl.html"],
+        "sizeCell": InfinniUI.Template["controls/dataGrid/template/sizeCell.tpl.html"]
+    },
+
+    className: 'pl-datagrid',
+
+    events: _.extend({},
+        ListEditorBaseView.prototype.events,
+        {
+            "click .pl-datagrid-toggle_all": "onClickCheckAllHandler"
+        }
+    ),
+
+    UI: _.defaults({
+        body: ".pl-datagrid__body",
+        head: ".pl-datagrid__head",
+        headContainer: ".pl-datagrid-container_head",
+
+        header: '.pl-datagrid-row_header',
+        firstRows: '.pl-datagrid-row_first',
+        toggleCell: ".pl-toggle-cell",
+        checkAll: ".pl-datagrid-toggle__button",
+        items: 'tbody'
+    }, ListEditorBaseView.prototype.UI),
+
+    initialize: function (options) {
+        ListEditorBaseView.prototype.initialize.call(this, options);
+        this.rowElements = new HashMap();
+    },
+
+    initHandlersForProperties: function(){
+        ListEditorBaseView.prototype.initHandlersForProperties.call(this);
+
+        this.listenTo(this.model, 'change:showSelectors', this.updateShowSelectors);
+        this.listenTo(this.model, 'change:checkAllVisible', this.updateCheckAllVisible);
+        this.listenTo(this.model, 'change:checkAll', this.updateCheckAll);
+    },
+
+    updateProperties: function () {
+        ListEditorBaseView.prototype.updateProperties.call(this);
+        this.updateShowSelectors();
+        this.updateCheckAllVisible();
+        this.updateCheckAll();
+    },
+
+    updateShowSelectors: function () {
+        var showSelectors = this.model.get('showSelectors');
+        this.$el.toggleClass('pl-datagrid_selectors_show', showSelectors);
+        this.$el.toggleClass('pl-datagrid_selectors_hide', !showSelectors);
+    },
+
+    updateGrouping: function () {
+
+    },
+
+    updateVerticalAlignment: function () {
+        ListEditorBaseView.prototype.updateVerticalAlignment.call(this);
+        this.switchClass('verticalAlignment', this.model.get('verticalAlignment'), this.ui.body, false);
+    },
+
+    updateCheckAll: function () {
+        var checkAll = this.model.get('checkAll');
+        this.ui.checkAll.prop('checked', checkAll);
+    },
+
+    getHorizontalScrollBarWidth: function () {
+
+        if (typeof DataGridView.scrollbarWidth === 'undefined') {
+            var scrollDiv = document.createElement('div');
+            var body = document.body;
+
+            scrollDiv.className = 'modal-scrollbar-measure';
+            var style = {
+                position: "absolute",
+                top: "-9999px",
+                width: "50px",
+                height: "50px",
+                overflow: "scroll"
+            };
+
+            for(var name in style) {
+                scrollDiv.style[name] = style[name]
+            }
+
+            body.appendChild(scrollDiv);
+            DataGridView.scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+            body.removeChild(scrollDiv);
+        }
+
+        return DataGridView.scrollbarWidth;
+    },
+
+    updateCheckAllVisible: function () {
+        var checkAllVisible = this.model.get('checkAllVisible');
+        this.ui.checkAll.toggleClass('hidden', !checkAllVisible);
+    },
+
+    updateMultiSelect: function () {
+        ListEditorBaseView.prototype.updateMultiSelect.call(this);
+
+        var multiSelect = this.model.get('multiSelect');
+        this.$el.toggleClass('pl-datagrid_select_multi', multiSelect === true);
+        this.$el.toggleClass('pl-datagrid_select_single', multiSelect !== true);
+    },
+
+    updateValue: function () {
+        var
+            model = this.model,
+            value = model.get('value'),
+            indices = [],
+            items = model.get('items');
+
+        if(!model.get('multiSelect') && value !== undefined && value !== null){
+            value = [value];
+        }
+
+        if (Array.isArray(value)) {
+            indices = value.map(function (val) {
+                    return model.itemIndexByValue(val);
+                })
+                .filter(function (index) {
+                    return index !== -1;
+                });
+        }
+
+        this.rowElements.forEach(function (rowElement, item) {
+            var index = items.indexOf(item);
+            var toggle = indices.indexOf(index) !== -1;
+            rowElement.toggle(toggle);
+        });
+
+    },
+
+    updateSelectedItem: function () {
+        var
+            model = this.model,
+            selectedItem = model.get('selectedItem');
+
+        this.rowElements.forEach(function (rowElement, item) {
+            rowElement.setSelected(item === selectedItem);
+        });
+    },
+
+    updateDisabledItem: function () {
+        var
+            model = this.model,
+            disabledItemCondition = model.get('disabledItemCondition'),
+            isEnabled;
+
+        if(disabledItemCondition != null) {
+            this.rowElements.forEach(function (rowElement, item) {
+                isEnabled = !disabledItemCondition( undefined, {value: item} );
+                rowElement.setEnabled(isEnabled);
+            });
+        }
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        var verticalAlignment = this.model.get('verticalAlignment');
+        var template = (verticalAlignment === 'Stretch') ? this.template.gridStretched : this.template.grid;
+        this.$el.html(template());
+
+        this.bindUIElements();
+
+        this.renderHeaders();
+        this.renderItems();
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.applyColumnWidth();
+        this.syncBodyAndHead();
+        this.postrenderingActions();
+        return this;
+    },
+
+    applyColumnWidth: function () {
+        var columns = this.model.get('columns');
+        var fixedTableLayout = false;
+
+        this.ui.firstRows.children().each(function (i, el) {
+            var columnIndex = i % (columns.length + 1);
+
+            if (columnIndex === 0) {
+                //skip columns with checkbox/radiobutton
+                return;
+            }
+
+            var column = columns.getByIndex(columnIndex - 1);
+            var width = column && column.getWidth();
+
+            if (width) {
+                $(el).css('width', width);
+                fixedTableLayout = true;
+            }
+        });
+
+        this.$el.toggleClass('pl-datagrid_layout_fixed', fixedTableLayout);
+    },
+
+    syncBodyAndHead: function () {
+        //var $body = this.ui.body;
+        var $head = this.ui.head;
+
+        $head.css('padding-right', this.getHorizontalScrollBarWidth() + "px");
+
+        this.ui.body
+            .off('scroll')
+            .on('scroll', this.onScrollBodyHandler.bind(this));
+
+    },
+
+    onScrollBodyHandler: function () {
+        this.ui.headContainer.scrollLeft(this.ui.body.scrollLeft());
+    },
+
+    renderHeaders: function () {
+        var columns = this.model.get('columns');
+        var templateHeaderCell = this.template.headerCell;
+        var sizeCells = [];
+        var templateSizeCells = this.template.sizeCell;
+
+        var $headers = columns.toArray().map(function (column) {
+
+            sizeCells.push(templateSizeCells());
+            var $th = $(templateHeaderCell());
+
+            var headerTemplate = column.getHeaderTemplate();
+            var header = column.getHeader();
+
+            var headerElement;
+
+            if (headerTemplate) {
+                headerElement = headerTemplate(null, {value: header});
+                $th.append(headerElement.render());
+
+            } else {
+                $th.append(header);
+            }
+            return $th;
+        });
+
+        this.ui.header.append($headers);
+        this.ui.firstRows.append(sizeCells);
+    },
+
+    renderItems: function () {
+        var
+            model = this.model,
+            valueSelector = model.get('valueSelector'),
+            itemTemplate = model.get('itemTemplate'),
+            items = model.get('items'),
+            $items = this.ui.items;
+
+        this.removeRowElements();
+
+        items.forEach(function (item, index) {
+            var element = itemTemplate(undefined, {index: index, item: item});
+
+            element.onBeforeClick(function() {
+                model.set('selectedItem', item);
+            });
+            element.onToggle(function() {
+                var enabled = this.model.get('enabled');
+
+                if(enabled){
+                    model.toggleValue(valueSelector(undefined, {value:item}));
+                }
+            });
+            this.addRowElement(item, element);
+
+            var $element = element.render();
+            $items.append($element);
+        }, this);
+
+    },
+
+    updateFocusable: function () {
+        var focusable = this.model.get('focusable');
+
+        this.rowElements.values.forEach(function (element) {
+            if (focusable) {
+                element.control.controlView.$el.attr('tabindex', 0);
+            } else {
+                element.control.controlView.$el.removeAttr('tabindex');
+            }
+        })
+    },
+
+    addRowElement: function(item, element){
+        this.addChildElement(element);
+        this.rowElements.add(item, element);
+    },
+
+    removeRowElements: function () {
+        this.removeChildElements();
+        this.rowElements.clear();
+    },
+
+    onClickCheckAllHandler: function () {
+        this.model.toggleCheckAll();
+    }
+
+
+});
+
+
+
+//####app/controls/dataGrid/dataGridRow/dataGridRowControl.js
+/**
+ *
+ * @constructor
+ * @augments ListEditorBaseControl
+ */
+function DataGridRowControl() {
+    _.superClass(DataGridRowControl, this);
+}
+
+_.inherit(DataGridRowControl, Control);
+
+_.extend(DataGridRowControl.prototype, {
+
+    onToggle: function (handler) {
+        this.controlView.on('toggle', handler);
+    },
+
+    createControlModel: function () {
+        return new DataGridRowModel();
+    },
+
+    createControlView: function (model) {
+        return new DataGridRowView({model: model});
+    }
+});
+
+
+//####app/controls/dataGrid/dataGridRow/dataGridRowModel.js
+var DataGridRowModel = ControlModel.extend({
+
+});
+//####app/controls/dataGrid/dataGridRow/dataGridRowView.js
+var DataGridRowView = ControlView.extend({
+
+    className: 'pl-datagrid-row pl-datagrid-row_data',
+
+    classNameSelected: 'info',
+
+    tagName: 'tr',
+
+    events: {},
+
+    template: {
+        singleSelect: InfinniUI.Template["controls/dataGrid/dataGridRow/template/singleSelect.tpl.html"],
+        multiSelect: InfinniUI.Template["controls/dataGrid/dataGridRow/template/multiSelect.tpl.html"],
+        dataCell: InfinniUI.Template["controls/dataGrid/dataGridRow/template/dataCell.tpl.html"]
+    },
+
+    UI: {
+        toggleCell: '.pl-datagrid-row__cell_toggle',
+        toggle: '.pl-datagrid-toggle',
+        toggleControl: '.pl-datagrid-toggle input'
+    },
+
+    initialize: function () {
+        ControlView.prototype.initialize.call(this);
+        this.childElements = [];
+        this.on('render', function () {
+            this.ui.toggleCell.on('click', this.onToggleHandler.bind(this));
+        }, this);
+    },
+
+    initHandlersForProperties: function () {
+        ControlView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:toggle', this.updateToggle);
+        this.listenTo(this.model, 'change:selected', this.updateSelected);
+    },
+
+    updateProperties: function () {
+        ControlView.prototype.updateProperties.call(this);
+        this.updateToggle();
+        this.updateSelected();
+        this.updateShowSelectors();
+    },
+
+    updateVerticalAlignment: function () {
+        //Use Vertical alignment for DataGrid
+    },
+
+    render: function () {
+        this.prerenderingActions();
+        var $el = this.$el;
+        var row = this;
+
+        var templateName = this.model.get('multiSelect') ? 'multiSelect' : 'singleSelect';
+        var template = this.template[templateName];
+        $el.html(template());
+        this.bindUIElements();
+
+        var templates = this.model.get('cellTemplates');
+        var templateDataCell = this.template.dataCell;
+        if (Array.isArray(templates)) {
+            templates.forEach(function (template, index) {
+                var $cell = $(templateDataCell());
+                var cellElement = template();
+                $cell.append(cellElement.render());
+                $el.append($cell);
+                row.addChildElement(cellElement);
+            });
+        }
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+        return this;
+    },
+
+    updateShowSelectors: function () {
+        var showSelectors = this.model.get('showSelectors');
+        this.ui.toggleCell.toggleClass('hidden', !showSelectors);
+    },
+
+    updateToggle: function () {
+        var toggle = this.model.get('toggle');
+        this.ui.toggleControl.prop('checked', !!toggle);
+    },
+
+    updateSelected: function () {
+        var selected = this.model.get('selected');
+        this.$el.toggleClass(this.classNameSelected, !!selected);
+    },
+
+    updateEnabled: function () {
+        ControlView.prototype.updateEnabled.call(this);
+
+        var enabled = this.model.get('enabled');
+        this.ui.toggleControl.attr('disabled', enabled ? null : 'disabled');
+    },
+
+    onToggleHandler: function (event) {
+        this.trigger('toggle');
+    },
+
+    addChildElement: function (element) {
+        this.childElements.push(element);
+    },
+
+    removeChildElements: function () {
+        this.childElements.forEach(function (element) {
+            element.remove();
+        });
+
+        this.childElements.length = 0;
+    },
+
+    remove: function () {
+        this.removeChildElements();
+        ControlView.prototype.remove.call(this);
+    }
+
+
+});
+
+
+//####app/controls/dataNavigation/buttons/dataNavigationBaseButton.js
+var DataNavigationBaseButtonModel = Backbone.Model.extend({
+
+    initialize: function () {
+        this.on('change:parent', this.subscribeToParent, this);
+    },
+
+    subscribeToParent: function () {
+
+    }
+});
+
+var DataNavigationBaseButton = Backbone.View.extend({
+
+    tagName: 'li',
+
+    initialize: function (options) {
+        Backbone.View.prototype.initialize.call(this, options);
+        this.once('render', function () {
+            this.initHandlersForProperties()
+        }, this);
+    },
+
+    initHandlersForProperties: function () {
+
+    },
+
+    updateProperties: function () {
+
+    },
+
+    getData: function () {
+        return this.model.toJSON();
+    },
+
+    setParent: function (parent) {
+        this.model.set('parent', parent);
+        this.subscribeForParent(parent);
+    },
+
+    render: function () {
+        var template = this.template(this.getData());
+        this.$el.html(template);
+        this.trigger('render');
+        this.updateProperties();
+        return this;
+    },
+
+    subscribeForParent: function (parent) {
+
+    }
+
+});
+
+
+//####app/controls/dataNavigation/buttons/dataNavigationNextButton.js
+var DataNavigationNextButton = DataNavigationBaseButton.extend({
+
+    template: InfinniUI.Template["controls/dataNavigation/buttons/template/next.tpl.html"],
+
+    events: {
+        "click": "onClickHandler"
+    },
+
+    initialize: function (options) {
+        this.model = new DataNavigationBaseButtonModel();
+        DataNavigationBaseButton.prototype.initialize.call(this, options);
+    },
+
+    onClickHandler: function (event) {
+        this.trigger('command', "next");
+    }
+
+});
+
+//####app/controls/dataNavigation/buttons/dataNavigationPageButton.js
+var DataNavigationPageButton = DataNavigationBaseButton.extend({
+    template: InfinniUI.Template["controls/dataNavigation/buttons/template/page.tpl.html"],
+
+    events: {
+        "click": "onClickHandler"
+    },
+
+    initialize: function (options) {
+        this.model = new DataNavigationPageButtonModel();
+        DataNavigationBaseButton.prototype.initialize.call(this, options);
+        this.model.set('pageNumber', options.pageNumber);
+    },
+
+    initHandlersForProperties: function () {
+        DataNavigationBaseButton.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:isCurrent', this.updateIsCurrent);
+    },
+
+    updateProperties: function () {
+        DataNavigationBaseButton.prototype.updateProperties.call(this);
+        this.updateIsCurrent();
+    },
+
+    updateIsCurrent: function () {
+        this.$el.toggleClass('active', this.model.get('isCurrent'));
+    },
+
+    onClickHandler: function (event) {
+        this.trigger('command', "page", {pageNumber: this.model.get('pageNumber')});
+    }
+
+});
+
+
+var DataNavigationPageButtonModel = DataNavigationBaseButtonModel.extend({
+
+    defaults: {
+        isCurrent: false
+    },
+
+    subscribeToParent: function () {
+        DataNavigationBaseButtonModel.prototype.subscribeToParent.call(this);
+
+        var parent = this.get('parent');
+        this.listenTo(parent.model, 'change:pageNumber', function () {
+            this.updateIsCurrent();
+        });
+        this.updateIsCurrent();
+    },
+
+    updateIsCurrent: function () {
+        var parent = this.get('parent');
+        var isCurrent = parent.model.get('pageNumber') === this.get('pageNumber');
+        this.set("isCurrent", isCurrent);
+    }
+
+});
+//####app/controls/dataNavigation/buttons/dataNavigationPrevButton.js
+var DataNavigationPrevButton = DataNavigationBaseButton.extend({
+
+    template: InfinniUI.Template["controls/dataNavigation/buttons/template/prev.tpl.html"],
+
+    events: {
+        "click": "onClickHandler"
+    },
+
+    initialize: function (options) {
+        this.model = new DataNavigationBaseButtonModel();
+        DataNavigationBaseButton.prototype.initialize.call(this, options);
+    },
+
+    onClickHandler: function (event) {
+        this.trigger('command', "prev");
+    }
+
+});
+
+//####app/controls/dataNavigation/dataNavigationButtonFactory.js
+function DataNavigationButtonFactory (dataNavigation) {
+
+    this._dataNavigation = dataNavigation;
+}
+
+DataNavigationButtonFactory.prototype.buttons = {
+    "prev": DataNavigationPrevButton,
+    "page": DataNavigationPageButton,
+    "next": DataNavigationNextButton
+};
+
+DataNavigationButtonFactory.prototype.createButton = function (type, options) {
+
+    var buttonConstructor = this.buttons[type];
+    if (typeof buttonConstructor !== 'function') {
+        console.error('Wrong button type: ' + type);
+        return;
+    }
+
+    var button = new buttonConstructor(options);
+    button.setParent(this._dataNavigation);
+    return button;
+};
+//####app/controls/dataNavigation/dataNavigationControl.js
+function DataNavigationControl (parent) {
+    _.superClass(DataNavigationControl, this, parent);
+}
+
+_.inherit(DataNavigationControl, Control);
+
+_.extend(DataNavigationControl.prototype, {
+
+    createControlModel: function () {
+        return new DataNavigationModel();
+    },
+
+    createControlView: function (model) {
+        return new DataNavigationView({model: model});
+    },
+
+    onPageNumberChanged: function (handler) {
+        this.controlModel.onPageNumberChanged(handler);
+    },
+
+    onPageSizeChanged: function (handler) {
+        this.controlModel.onPageSizeChanged(handler);
+    }
+
+});
+//####app/controls/dataNavigation/dataNavigationModel.js
+var DataNavigationModel = ControlModel.extend({
+
+    defaults: _.defaults({
+            pageNumber: 0,
+            pageStart: 0,
+            _buttonsCount: 5,
+            _buttonsTemplate: ['prev', 'page', 'next'],
+            pageCount: null,
+            isDataReady: false
+        },
+        ControlModel.prototype.defaults
+    ),
+
+    initialize: function () {
+        ControlModel.prototype.initialize.apply(this, arguments);
+        this.set('availablePageSizes', new Collection());
+        this.on('change:pageNumber', this.updatePageStart, this);
+        this.on('change:pageSize', this.updatePageSize, this);
+    },
+
+    updatePageStart: function () {
+        var
+            pageNumber = this.get('pageNumber'),
+            pageStart = this.get('pageStart'),
+            buttonsCount = this.get('_buttonsCount');
+
+        if (pageNumber + 1 >= pageStart + buttonsCount) {
+            //Выбрана последняя страница по кнопкам навигации. переместить ее в центр
+            pageStart = pageStart + Math.floor(buttonsCount / 2);
+        } else if (pageNumber === pageStart) {
+            //Сдвинуть кнопки навигации вправо, чтобы выбранная страница была в центре
+            pageStart = Math.max(0, pageStart - Math.floor(buttonsCount / 2));
+        } else if (pageNumber + 1 < pageStart) {
+            pageStart = Math.max(0, pageNumber - 1);
+        }
+        this.set('pageStart', pageStart);
+    },
+
+    updatePageSize: function () {
+        //сьрос навигации
+        this.set('pageNumber', 0);
+    },
+
+    nextPage: function () {
+        var pageNumber = this.get('pageNumber');
+        this.set('pageNumber', pageNumber + 1);
+    },
+
+    prevPage: function () {
+        var pageNumber = this.get('pageNumber');
+        if (pageNumber > 0) {
+            this.set('pageNumber', pageNumber - 1);
+        }
+    },
+
+    onPageNumberChanged: function (handler) {
+        this.on('change:pageNumber', function (model, value) {
+            handler.call(null, {value: value});
+        });
+    },
+
+    onPageSizeChanged: function (handler) {
+        this.on('change:pageSize', function (model, value) {
+            handler.call(null, {value: value});
+        });
+    }
+
+});
+//####app/controls/dataNavigation/dataNavigationView.js
+var DataNavigationView = ControlView.extend({
+
+    template: InfinniUI.Template["controls/dataNavigation/template/dataNavigation.tpl.html"],
+
+    className: 'pl-data-navigation',
+
+    UI: {
+        buttons: 'ul',
+        sizes: '.pl-page-size'
+    },
+
+    initialize: function (options) {
+        ControlView.prototype.initialize.call(this, options);
+        this._childViews = [];
+        this.buttonsFactory = new DataNavigationButtonFactory(this);
+        this._pageSizes = new DataNavigationPageSizes();
+        this._pageSizes.setParent(this);
+    },
+
+    initHandlersForProperties: function() {
+        ControlView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:pageStart', this.updateButtons);
+        this.listenTo(this.model, 'change:pageCount', this.updateButtons);
+        this.listenTo(this.model, 'change:isDataReady', this.updateButtons);
+    },
+
+    updateProperties: function() {
+        ControlView.prototype.updateProperties.call(this);
+        this.updateButtons();
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.renderTemplate(this.template);
+        this.updateProperties();
+        this.trigger('render');
+        this.renderPageSizes();
+        this.postrenderingActions();
+        return this;
+    },
+
+    renderPageSizes: function () {
+        this.ui.sizes.append(this._pageSizes.render().$el);
+    },
+
+    renderButtons: function () {
+        var
+            template = this.model.get('_buttonsTemplate'),
+            buttonsCount = this.model.get('_buttonsCount'),
+            pageCount = this.model.get('pageCount'),
+            pageNumber = this.model.get('pageNumber'),
+            pageStart = this.model.get('pageStart'),
+            isDataReady = this.model.get('isDataReady'),
+            buttons,
+            nowManyElementsRemove;
+
+        this._removeChildViews();
+
+        if(!isDataReady){
+            return;
+        }
+
+        var
+            buttonsFactory = this.buttonsFactory,
+            model = this.model;
+
+        buttons = template.reduce(function (buttons, buttonType) {
+            if (buttonType === 'page') {
+                for (var i = 0; i < buttonsCount; i = i + 1) {
+                    var button = buttonsFactory.createButton(buttonType, {pageNumber: pageStart + i});
+                    buttons.push(button)
+                }
+            } else {
+                var button = buttonsFactory.createButton(buttonType);
+                buttons.push(button);
+            }
+
+            return buttons;
+        }, []);
+
+        if(typeof pageCount == 'number' && pageStart + buttonsCount >= pageCount){
+            nowManyElementsRemove = pageStart + buttonsCount - pageCount + 1;
+
+            if(pageCount == 0){
+                nowManyElementsRemove += 1;
+            }
+
+            buttons.splice(buttons.length - nowManyElementsRemove, 100);
+        }
+
+        var $buttons = buttons.map(function (button) {
+            this.listenTo(button, 'command', this.onCommandHandler);
+            this._appendChildView(button);
+            return button.render().$el;
+        }, this);
+
+        this.ui.buttons.append($buttons);
+    },
+
+    updateButtons: function () {
+        this.renderButtons()
+    },
+
+    onCommandHandler: function (name, options) {
+        switch (name) {
+            case "prev":
+                this.model.prevPage();
+                break;
+            case "next":
+                this.model.nextPage();
+                break;
+            case "page":
+                this.model.set('pageNumber', options.pageNumber);
+                break;
+        }
+    },
+
+    _removeChildViews: function () {
+        this._childViews.forEach(function (view) {
+            this.stopListening(view);
+            view.remove();
+        }, this);
+        this._childViews.length = 0;
+    },
+
+    _appendChildView: function (view) {
+        this._childViews.push(view);
+    }
+
+});
+
+//####app/controls/dataNavigation/pageSizes/dataNavigationPageSizes.js
+var DataNavigationPageSizes = Backbone.View.extend({
+
+    className: "btn-group",
+
+    template: InfinniUI.Template["controls/dataNavigation/pageSizes/template/pageSizes.tpl.html"],
+
+    events: {
+        "click button": "onClickButtonHandler"
+    },
+
+    setParent: function (parent) {
+        this.model = parent.model;
+        var collection = this.model.get('availablePageSizes');
+        collection.onChange(this.onAvailablePageSizesChanged.bind(this));
+        this.model.on('change:pageSize', this.renderButtons, this);
+    },
+
+    render: function () {
+        this.renderButtons();
+        return this;
+    },
+
+    renderButtons: function () {
+        var collection = this.model.get('availablePageSizes');
+        var pageSize = this.model.get('pageSize');
+
+        var html = collection.toArray().map(function (size) {
+            return this.template({size: size, active: pageSize === size});
+        }, this);
+
+        this.$el.html(html);
+    },
+
+    onAvailablePageSizesChanged: function () {
+        this.renderButtons();
+    },
+
+    onClickButtonHandler: function (event) {
+        var $el = $(event.target);
+
+        var pageSize = parseInt($el.attr('data-size'), 10);
+        this.model.set('pageSize', pageSize);
+    }
+
+});
+
+//####app/controls/label/commonView/labelView.js
+/**
+ * @class LabelView
+ * @augments ControlView
+ * @mixes editorBaseViewMixin
+ */
+var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @lends LabelView.prototype */{
+    className: 'pl-label',
+
+    template: InfinniUI.Template["controls/label/commonView/template/label.tpl.html"],
+
+    UI: _.extend({}, editorBaseViewMixin.UI, {
+        control: '.label-control'
+    }),
+
+    initialize: function () {
+        ControlView.prototype.initialize.apply(this);
+    },
+
+    initHandlersForProperties: function(){
+        ControlView.prototype.initHandlersForProperties.call(this);
+        editorBaseViewMixin.initHandlersForProperties.call(this);
+
+        this.listenTo(this.model, 'change:displayFormat', this.updateDisplayFormat);
+        this.listenTo(this.model, 'change:textWrapping', this.updateTextWrapping);
+        this.listenTo(this.model, 'change:textTrimming', this.updateTextTrimming);
+        this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
+    },
+
+    updateProperties: function(){
+        ControlView.prototype.updateProperties.call(this);
+        editorBaseViewMixin.updateProperties.call(this);
+
+        this.updateDisplayFormat();
+        this.updateTextWrapping();
+        this.updateTextTrimming();
+        this.updateLineCount();
+    },
+
+    updateFocusable: function () {
+        var focusable = this.model.get('focusable');
+
+        if (focusable) {
+            this.ui.control.attr('tabindex', 0);
+        } else {
+            this.ui.control.removeAttr('tabindex');
+        }
+    },
+
+    updateValue: function(){
+        var escapeHtml = this.model.get('escapeHtml');
+        var setContent = escapeHtml ? 'text' : 'html';
+        var textForLabel = this.getLabelText();
+        var $label = this.getLabelElement();
+
+        $label[setContent](textForLabel);
+        var title = String(textForLabel);
+        $label.attr('title', title.replace(/<\/?[^>]+>/g, '')); //strip html tags
+    },
+
+    updateDisplayFormat: function(){
+        this.updateValue();
+    },
+
+    updateTextWrapping: function(){
+        var textWrapping = this.model.get('textWrapping');
+        this.getLabelElement().toggleClass('pl-text-wrapping', textWrapping);
+    },
+
+    updateTextTrimming: function(){
+        var textTrimming = this.model.get('textTrimming');
+        this.getLabelElement().toggleClass('pl-text-trimming', textTrimming);
+    },
+
+    updateText: function () {
+        this.updateValue();
+    },
+
+    updateLineCount: function(){
+
+    },
+
+    getData: function () {
+        return _.extend(
+            {},
+            ControlView.prototype.getData.call(this),
+            editorBaseViewMixin.getData.call(this),
+            {
+                text: this.getLabelText() 
+            }
+        );
+    },
+
+    render: function () {
+        this.prerenderingActions();
+        this.renderTemplate(this.template);
+
+        this.updateProperties();
+
+        this.trigger('render');
+        this.postrenderingActions();
+        return this;
+    },
+
+    getLabelText: function () {
+        var model = this.model;
+        var value = model.get('value');
+        var text;
+        var format = model.get('displayFormat');
+
+        if (typeof value !== 'undefined' && value !== null) {
+            text = typeof format === 'function' ? format(null, {value: value}) : value;
+        }else{
+            text = this.model.get('text');
+            if (typeof text === 'undefined' || text == null) {
+                text = '';
+            }
+        }
+
+        return text;
+    },
+
+    getLabelElement: function(){
+        return this.ui.control;
+    }
+
+}));
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Label.viewModes.common', CommonLabelView);
+//####app/controls/label/label.js
+var LabelControl = function (viewMode) {
+    _.superClass(LabelControl, this, viewMode);
+    this.initialize_editorBaseControl();
+};
+
+_.inherit(LabelControl, Control);
+
+_.extend(LabelControl.prototype, {
+
+    createControlModel: function () {
+        return new LabelModel();
+    },
+
+    createControlView: function (model, viewMode) {
+        if(!viewMode || ! (viewMode in window.InfinniUI.Label)){
+            viewMode = 'simple';
+        }
+
+        var ViewClass = window.InfinniUI.Label.viewModes[viewMode];
+
+        return new ViewClass({model: model});
+    },
+    
+    getDisplayValue: function () {
+        return this.controlView.getLabelText();
+    }
+
+}, editorBaseControlMixin);
+//####app/controls/label/labelModel.js
+var LabelModel = ControlModel.extend(_.extend({
+
+    defaults: _.defaults({
+        horizontalTextAlignment: 'Left',
+        verticalAlignment: 'Top',
+        textWrapping: true,
+        textTrimming: true,
+        escapeHtml: true,
+        focusable: false
+    }, ControlModel.prototype.defaults),
+
+    initialize: function(){
+        ControlModel.prototype.initialize.apply(this, arguments);
+        this.initialize_editorBaseModel();
+    }
+}, editorBaseModelMixin));
+//####app/controls/label/simpleView/labelView.js
+/**
+ * @class SimpleLabelView
+ * @augments ControlView
+ * @mixes editorBaseViewMixin
+ */
+var SimpleLabelView = CommonLabelView.extend({
+    tagName: 'span',
+
+    template: function(){return '';},
+    UI: _.extend({}, editorBaseViewMixin.UI, {
+
+    }),
+
+    updateFocusable: function () {
+        var focusable = this.model.get('focusable');
+
+        if (focusable) {
+            this.$el.attr('tabindex', 0);
+        } else {
+            this.$el.removeAttr('tabindex');
+        }
+    },
+
+    getLabelElement: function(){
+        return this.$el;
+    }
+
+});
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Label.viewModes.simple', SimpleLabelView);
+//####app/controls/listBox/baseView/listBoxView.js
+var BaseListBoxView = ListEditorBaseView.extend({
+
+    template: {
+        plain: InfinniUI.Template["controls/listBox/baseView/template/listBox.tpl.html"],
+        grouped: InfinniUI.Template["controls/listBox/baseView/template/listBoxGrouped.tpl.html"]
+    },
+
+
+    className: 'pl-listbox',
+
+    events: {
+        'change .pl-listbox-input': 'onChangeHandler'
+    },
+
+    UI: _.defaults({
+        items: '.pl-listbox-i',
+        checkingInputs: '.pl-listbox-input input'
+    }, ListEditorBaseView.prototype.UI),
+
+    initialize: function (options) {
+        //@TODO Реализовать обработку значений по умолчанию!
+        ListEditorBaseView.prototype.initialize.call(this, options);
+    },
+
+    updateGrouping: function(){
+        var isGrouped = this.model.get('groupValueSelector') != null;
+
+        if(isGrouped){
+            this.strategy = new ListBoxViewGroupStrategy(this);
+        }else{
+            this.strategy = new ListBoxViewPlainStrategy(this);
+        }
+    },
+
+    updateValue: function(){
+        this.ui.items.removeClass('pl-listbox-i-chosen');
+        this.ui.checkingInputs.prop('checked', false);
+
+        var value = this.model.get('value'),
+            choosingItem, $choosingItem;
+
+        if(!this.isMultiselect() && value !== undefined && value !== null){
+            value = [value];
+        }
+
+        if($.isArray(value)){
+            for(var i= 0, ii=value.length; i < ii; i++){
+                choosingItem = this.model.itemByValue(value[i]);
+                $choosingItem = this._getElementByItem(choosingItem);
+
+                if($choosingItem){
+                    $choosingItem.addClass('pl-listbox-i-chosen');
+                    $choosingItem.find('.pl-listbox-input input').prop('checked', true);
+                }
+            }
+        }
+    },
+
+    updateSelectedItem: function(ignoreWasRendered){
+        if(!this.wasRendered && ignoreWasRendered != true){
+            return;
+        }
+
+        this.ui.items.removeClass('pl-listbox-i-selected');
+
+        var selectedItem = this.model.get('selectedItem'),
+            $selectedItem = this._getElementByItem(selectedItem);
+
+        if($selectedItem){
+            $selectedItem.addClass('pl-listbox-i-selected');
+        }
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        var preparedItems = this.strategy.prepareItemsForRendering();
+        var template = this.strategy.getTemplate();
+
+        this.removeChildElements();
+
+        this.$el.html(template(preparedItems));
+        this.bindUIElements();
+
+        this.strategy.appendItemsContent(preparedItems);
+
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+        return this;
+    },
+
+    getItems: function(){
+        return this.model.get('items');
+    },
+
+    getItemTemplate: function(){
+        return this.model.get('itemTemplate');
+    },
+
+    getGroupValueSelector: function(){
+        return this.model.get('groupValueSelector');
+    },
+
+    isMultiselect: function(){
+        return this.model.get('multiSelect');
+    },
+
+    isFocusable: function () {
+        return this.model.get('focusable');
+    },
+
+    getGroupItemTemplate: function(){
+        return this.model.get('groupItemTemplate');
+    },
+
+    onChangeHandler: function(){
+        var $checked = this.ui.checkingInputs.filter(':checked').parent().parent(),
+            valueForModel = null,
+            model = this.model,
+            val;
+
+        if(this.isMultiselect()){
+            valueForModel = [];
+
+            $checked.each(function(i, el){
+                val = $(el).data('pl-data-item');
+                valueForModel.push(model.valueByItem(val));
+            });
+
+        }else{
+            if($checked.length > 0){
+                valueForModel = model.valueByItem($checked.data('pl-data-item'));
+            }
+        }
+
+        this.model.set('value', valueForModel);
+    },
+
+    updateDisabledItem: function(){
+        var model = this.model,
+            disabledItemCondition = model.get('disabledItemCondition');
+
+        this.ui.items.removeClass('pl-disabled-list-item');
+        this.ui.checkingInputs.attr('disabled', null);
+
+        if( disabledItemCondition != null ){
+            this.ui.items.each(function (i, el) {
+                var $el = $(el),
+                    item = $el.data('pl-data-item'),
+                    isDisabled = disabledItemCondition( undefined, {value: item});
+
+                if(isDisabled){
+                    $el.toggleClass('pl-disabled-list-item', true);
+                    $el.find('.pl-listbox-input input').attr('disabled', 'disabled');
+                }
+            })
+        }
+    },
+
+    _getElementByItem: function(item){
+        var element = _.find(this.ui.items, function(listboxItem){
+            return $(listboxItem).data('pl-data-item') == item;
+        });
+
+        return $(element);
+    }
+});
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.base', BaseListBoxView);
+//####app/controls/listBox/baseView/viewGroupStrategy.js
+function ListBoxViewGroupStrategy(listbox) {
+    this.listbox = listbox;
+};
+
+_.extend(ListBoxViewGroupStrategy.prototype, {
+
+    prepareItemsForRendering: function(){
+        var items = this.listbox.getItems(),
+            inputName = 'listbox-' + guid(),
+            result = {
+                isMultiselect: this.listbox.isMultiselect(),
+                focusable: this.listbox.isFocusable(),
+                inputName: inputName,
+                groups: []
+            },
+            groups = {},
+            groupingFunction = this.listbox.getGroupValueSelector();
+
+        items.forEach(function(item, index){
+            var groupKey = groupingFunction(undefined, {value:item});
+
+            if(! (groupKey in groups)){
+                groups[groupKey] = [];
+            }
+
+            groups[groupKey].push({index: index, item: item});
+        });
+
+        for(var k in groups){
+            result.groups.push({
+                items: groups[k]
+            })
+        }
+
+        return result;
+    },
+
+    getTemplate: function(){
+        return this.listbox.template.grouped;
+    },
+
+    appendItemsContent: function(preparedItems){
+        var $listbox = this.listbox.$el,
+            itemTemplate = this.listbox.getItemTemplate(),
+            groupTitleTemplate = this.listbox.getGroupItemTemplate(),
+            groups = preparedItems.groups,
+            listbox = this.listbox,
+            item, itemEl, titleEl, $el, group;
+
+        $listbox.find('.pl-listbox-group-i').each(function(i, el){
+
+            group = groups[i];
+            titleEl = groupTitleTemplate(undefined, {index: group.items[0].index, item: group});
+            listbox.addChildElement(titleEl);
+
+            $el = $(el);
+            $el.find(".pl-listbox-group-title").append(titleEl.render());
+
+            $el.find(".pl-listbox-body").each(function(j, bodyEl){
+                item = group.items[j].item;
+                itemEl = itemTemplate(undefined, {index: group.items[j].index, item: item});
+
+                listbox.addChildElement(itemEl);
+
+                $(bodyEl).append(itemEl.render());
+                $(bodyEl).parent()
+                    .data('pl-data-item', item);
+            });
+
+        });
+    }
+});
+//####app/controls/listBox/baseView/viewPlainStrategy.js
+function ListBoxViewPlainStrategy(listbox) {
+    this.listbox = listbox;
+};
+
+_.extend(ListBoxViewPlainStrategy.prototype, {
+
+    prepareItemsForRendering: function(){
+        var items = this.listbox.getItems(),
+            inputName = 'listbox-' + guid(),
+            result = {
+                isMultiselect: this.listbox.isMultiselect(),
+                focusable: this.listbox.isFocusable(),
+                inputName: inputName,
+                items: items.toArray()
+            };
+
+        return result;
+    },
+
+    getTemplate: function(){
+        return this.listbox.template.plain;
+    },
+
+    appendItemsContent: function(preparedItems){
+        var $listbox = this.listbox.$el,
+            itemTemplate = this.listbox.getItemTemplate(),
+            items = preparedItems.items,
+            listbox = this.listbox,
+            itemEl, $el;
+
+        $listbox.find('.pl-listbox-body').each(function(i, el){
+            $el = $(el);
+            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
+            listbox.addChildElement(itemEl);
+            $el.append(itemEl.render());
+
+            $el.parent().data('pl-data-item', items[i]);
+        });
+    }
+});
+//####app/controls/listBox/listBoxControl.js
+function ListBoxControl(viewMode) {
+    _.superClass(ListBoxControl, this, viewMode);
+}
+
+_.inherit(ListBoxControl, ListEditorBaseControl);
+
+_.extend(ListBoxControl.prototype, {
+
+    createControlModel: function () {
+        return new ListBoxModel();
+    },
+
+    createControlView: function (model, viewMode) {
+        if(!viewMode || ! viewMode in window.InfinniUI.Listbox){
+            viewMode = 'common';
+        }
+
+        var ViewClass = window.InfinniUI.Listbox.viewModes[viewMode];
+
+        return new ViewClass({model: model});
+    }
+});
+
+
+//####app/controls/listBox/listBoxModel.js
+var ListBoxModel = ListEditorBaseModel.extend({
+    initialize: function () {
+        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    }
+});
+//####app/controls/listBox/checkingView/listBoxView.js
+var CheckingListBoxView = BaseListBoxView.extend({
+    className: 'pl-listbox',
+
+    template: {
+        plain: InfinniUI.Template["controls/listBox/checkingView/template/listBox.tpl.html"],
+        grouped: InfinniUI.Template["controls/listBox/checkingView/template/listBoxGrouped.tpl.html"]
+    },
+
+    events: _.extend( {
+
+    }, BaseListBoxView.prototype.events),
+
+    initialize: function (options) {
+        BaseListBoxView.prototype.initialize.call(this, options);
+        this.initDomHandlers();
+    },
+
+    updateEnabled: function () {
+        ListEditorBaseView.prototype.updateEnabled.call(this);
+
+        var enabled = this.model.get('enabled');
+
+        this.ui.checkingInputs.attr('disabled', !enabled);
+    },
+
+    initDomHandlers: function(){
+        var $listBox = this.$el,
+            that = this;
+
+        $listBox.get(0).addEventListener('click', function(e){
+            e = $.event.fix(e);
+            var $el = $(e.target),
+                $currentListItem, item, isDisabledItem;
+
+            if (!that.model.get('enabled')) {
+                return;
+            }
+
+            while($el.get(0) != $listBox.get(0)){
+                if($el.hasClass('pl-listbox-i')){
+                    $currentListItem = $el;
+                }
+
+                $el = $el.parent();
+            }
+
+            if($currentListItem && $currentListItem.length > 0){
+                item = $currentListItem.data('pl-data-item');
+                isDisabledItem = that.model.isDisabledItem(item);
+
+                if(!isDisabledItem) {
+                    that.model.toggleValue(item);
+                }
+
+                that.model.set('selectedItem', item);
+            }
+
+        }, true);
+    }
+});
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.checking', CheckingListBoxView);
+//####app/controls/listBox/commonView/listBoxView.js
+var CommonListBoxView = BaseListBoxView.extend({
+    className: 'pl-listbox pl-listbox-common-mode',
+
+    events: _.extend( {
+
+    }, BaseListBoxView.prototype.events),
+
+    initialize: function (options) {
+        BaseListBoxView.prototype.initialize.call(this, options);
+        this.initDomHandlers();
+    },
+
+    initDomHandlers: function(){
+        var $listBox = this.$el,
+            that = this;
+
+        $listBox.get(0).addEventListener('click', function(e){
+            e = $.event.fix(e);
+            var $el = $(e.target),
+                $currentListItem, item, isDisabledItem;
+
+            while($el.get(0) != $listBox.get(0)){
+                if($el.hasClass('pl-listbox-i')){
+                    $currentListItem = $el;
+                }
+
+                $el = $el.parent();
+            }
+
+            if($currentListItem.length > 0){
+                item = $currentListItem.data('pl-data-item');
+                isDisabledItem = that.model.isDisabledItem(item);
+
+                if(!isDisabledItem){
+                    that.model.toggleValue(item);
+                }
+
+                that.model.set('selectedItem', item);
+            }
+
+        }, true);
+    }
+});
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.common', CommonListBoxView);
+//####app/controls/popupButton/commonView/popupButtonView.js
+var CommonPopupButtonView = ContainerView.extend({
+
+    className: 'pl-popup-button',
+
+    template: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.tpl.html"],
+    dropdownTemplate: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.dropdown.tpl.html"],
+
+    events: {
+        'click .pl-popup-button__grip': 'onClickGripHandler',
+        'click .pl-popup-button__button': 'onClickHandler'
+    },
+
+    UI: {
+        button: '.pl-popup-button__button',
+        grip: '.pl-popup-button__grip'
+    },
+
+    updateProperties: function(){
+        ContainerView.prototype.updateProperties.call(this);
+
+        this.updateContent();
+    },
+
+    updateContent: CommonButtonView.prototype.updateContent,
+    updateText: CommonButtonView.prototype.updateText,
+
+    getButtonElement: function(){
+        return this.ui.button;
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        var items = this.model.get('items').toArray();
+        var template = this.template;
+
+        this.removeChildElements();
+
+        this.$el.html(template({items: items}));
+        this.bindUIElements();
+
+        this.$dropdown = this.renderDropdown();
+
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+
+        return this;
+    },
+
+    renderDropdown: function(){
+        var template = this.dropdownTemplate;
+        var items = this.model.get('items').toArray();
+        var $result = $(template({items: items}));
+
+        this.appendItemsContent($result, items);
+
+        return $result;
+    },
+
+    appendItemsContent: function($dropdown, items){
+        var that = this,
+            itemTemplate = this.model.get('itemTemplate'),
+            itemEl, $el;
+
+        $dropdown.find('.pl-popup-button__item').each(function(i, el){
+            $el = $(el);
+            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
+            that.addChildElement(itemEl);
+            $el.append(itemEl.render());
+        });
+    },
+
+    open: function(){
+        var that = this;
+
+        $('body').append(this.$dropdown);
+
+        this.$dropdown.addClass('open');
+        this.alignDropdown();
+
+        var $ignoredElements = this.$dropdown.add (this.ui.grip);
+        this.$dropdown.on('click', function () {
+            that.close();
+        });
+        //new ActionOnLoseFocus($ignoredElements, function(){
+        //    that.close();
+        //});
+    },
+
+    close: function(){
+        this.$dropdown.removeClass('open');
+        this.$dropdown.detach();
+    },
+
+    alignDropdown: function(){
+        var offset = this.$el.offset();
+        var top = offset.top + this.$el.height();
+        var left = offset.left;
+
+        this.$dropdown.offset({
+            top: top,
+            left: left
+        });
+    },
+
+    onClickGripHandler: function(){
+        if(!this.$dropdown.hasClass('open')){
+            this.open();
+        }else{
+            this.close();
+        }
+    },
+
+    updateGrouping: function(){}
+
+});
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'PopupButton.viewModes.common', CommonPopupButtonView);
+
+//####app/controls/popupButton/popupButtonControl.js
+function PopupButtonControl(viewMode) {
+    _.superClass(PopupButtonControl, this, viewMode);
+}
+
+_.inherit(PopupButtonControl, ContainerControl);
+
+_.extend(PopupButtonControl.prototype, /** @lends PopupButtonControl.prototype */ {
+
+    createControlModel: function () {
+        return new PopupButtonModel();
+    },
+
+    createControlView: function (model, viewMode) {
+        if(!viewMode || ! viewMode in window.InfinniUI.PopupButton){
+            viewMode = 'common';
+        }
+
+        var ViewClass = window.InfinniUI.PopupButton.viewModes[viewMode];
+
+        return new ViewClass({model: model});
+    }
+
+}, buttonControlMixin);
+
+
+//####app/controls/popupButton/popupButtonModel.js
+var PopupButtonModel = ContainerModel.extend({
+
+});
+//####app/controls/popupButton/forMenuView/popupButtonView.js
+var ForMenuPopupButtonView = CommonPopupButtonView.extend({
+
+    tagName: 'a',
+    className: 'pl-popup-button',
+    attributes: {
+        href: 'javascript:;'
+    },
+
+    template: InfinniUI.Template["controls/popupButton/forMenuView/template/popupButton.tpl.html"],
+    dropdownTemplate: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.dropdown.tpl.html"],
+
+    events: {
+        'click': 'onClickGripHandler'
+        //'click .pl-popup-button__button': 'onClickHandler'
+    },
+
+    UI: {
+        button: '.pl-popup-button__button',
+        grip: '.pl-popup-button__grip'
+    },
+
+    updateProperties: function(){
+        ContainerView.prototype.updateProperties.call(this);
+
+        this.updateContent();
+    },
+
+    updateContent: CommonButtonView.prototype.updateContent,
+    updateText: CommonButtonView.prototype.updateText,
+
+    updateHorizontalAlignment: function(){
+        var horizontalAlignment = this.model.get('horizontalAlignment');
+        var that = this;
+        var $el;
+
+        this.whenReady(
+            function(){
+                $el = that.$el.parent().parent();
+                return $el.length > 0;
+            },
+
+            function(){
+                if(horizontalAlignment == 'Right'){
+                    $el
+                        .addClass('pull-right');
+                }else{
+                    $el
+                        .removeClass('pull-right');
+                }
+            }
+        );
+
+    },
+
+    getButtonElement: function(){
+        return this.ui.button;
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        var items = this.model.get('items').toArray();
+        var template = this.template;
+
+        this.removeChildElements();
+
+        this.$el.html(template({items: items}));
+        this.bindUIElements();
+
+        this.$dropdown = this.renderDropdown();
+
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+
+        return this;
+    },
+
+    renderDropdown: function(){
+        var template = this.dropdownTemplate;
+        var items = this.model.get('items').toArray();
+        var $result = $(template({items: items}));
+
+        this.appendItemsContent($result, items);
+        $result.on('click', function () {
+            this.close();
+        }.bind(this));
+        return $result;
+    },
+
+    appendItemsContent: function($dropdown, items){
+        var that = this,
+            itemTemplate = this.model.get('itemTemplate'),
+            itemEl, $el;
+
+        $dropdown.find('.pl-popup-button__item').each(function(i, el){
+            $el = $(el);
+            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
+            that.addChildElement(itemEl);
+            $el.append(itemEl.render());
+        });
+    },
+
+    open: function(){
+        var that = this;
+        var $parent = this.$el.parent();
+
+        $('body').append(this.$dropdown);
+
+        this.$dropdown.addClass('open');
+        $parent.addClass('open');
+
+        this.alignDropdown();
+
+        var $ignoredElements = this.$dropdown.add (this.$el);
+        new ActionOnLoseFocus($ignoredElements, function(){
+            that.close();
+        });
+    },
+
+    close: function(){
+        this.$dropdown.removeClass('open');
+        this.$el.parent().removeClass('open');
+        this.$dropdown.detach();
+    },
+
+    alignDropdown: function(){
+        var horizontalAlignment = this.model.get('horizontalAlignment');
+        var $el = this.$el.parent();
+        var offset = $el.offset();
+        var top = offset.top + $el.height()- 2;
+        var $dropdownMenu = this.$dropdown.find('.dropdown-menu');
+        var left;
+
+        if(horizontalAlignment == "Right"){
+            left = offset.left - ($dropdownMenu.width() - $el.width());
+        }else{
+            left = offset.left;
+        }
+
+        this.$dropdown.offset({
+            top: top,
+            left: left
+        });
+    },
+
+    onClickGripHandler: function(){
+        if(!this.$dropdown.hasClass('open')){
+            this.open();
+        }else{
+            this.close();
+        }
+    },
+
+    updateGrouping: function(){},
+
+    whenReady: function(conditionFunction, onConditionFunction, n){
+        var that = this;
+
+        if(n === undefined){
+            n = 100;
+        }
+
+        if(!conditionFunction()){
+            if(n>0){
+                setTimeout( function(){
+                    that.whenReady(conditionFunction, onConditionFunction, n-1);
+                }, 10);
+            }
+        }else{
+            onConditionFunction();
+        }
+    }
+
+});
+
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'PopupButton.viewModes.forMenu', ForMenuPopupButtonView);
+
+//####app/controls/stackPanel/stackPanelControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function StackPanelControl(viewMode) {
+    _.superClass(StackPanelControl, this, viewMode);
+}
+
+_.inherit(StackPanelControl, ContainerControl);
+
+_.extend(StackPanelControl.prototype,
+    /** @lends StackPanelControl.prototype */
+    {
+        createControlModel: function () {
+            return new StackPanelModel();
+        },
+
+        createControlView: function (model, viewMode) {
+            var view = new StackPanelView({model: model});
+
+            view.viewMode = viewMode;
+
+            return view;
+        }
+    }
+);
+
+
+//####app/controls/stackPanel/stackPanelModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var StackPanelModel = ContainerModel.extend(
+    /** @lends StackPanelModel.prototype */
+    {
+        initialize: function () {
+            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        }
+    }
+);
+//####app/controls/stackPanel/baseView/stackPanelView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var StackPanelView = ContainerView.extend(
+    /** @lends StackPanelView.prototype */
+    {
+        tagName: 'ul',
+        className: 'pl-stack-panel pl-clearfix',
+
+        template: {
+            plain: InfinniUI.Template["controls/stackPanel/baseView/template/stackPanel.tpl.html"],
+            grouped: InfinniUI.Template["controls/stackPanel/baseView/template/stackPanelGrouped.tpl.html"]
+        },
+
+        UI: {
+            items: '.stackpanel-items'
+        },
+
+        initialize: function (options) {
+            ContainerView.prototype.initialize.call(this, options);
+
+            this.initOrientation();
+        },
+
+        updateGrouping: function(){
+            var isGrouped = this.model.get('groupValueSelector') != null;
+
+            if(isGrouped){
+                this.strategy = new StackPanelViewGroupStrategy(this);
+            }else{
+                this.strategy = new StackPanelViewPlainStrategy(this);
+            }
+        },
+
+        render: function () {
+            this.prerenderingActions();
+
+            this.removeChildElements();
+
+            var preparedItems = this.strategy.prepareItemsForRendering();
+            var template = this.strategy.getTemplate();
+
+            this.$el.html(template(preparedItems));
+
+            this.strategy.appendItemsContent(preparedItems);
+
+            this.bindUIElements();
+            this.updateProperties();
+
+            this.trigger('render');
+
+
+            this.postrenderingActions();
+            return this;
+        },
+
+        initOrientation: function () {
+            this.listenTo(this.model, 'change:orientation', this.updateOrientation);
+            this.updateOrientation();
+        },
+
+        updateOrientation: function () {
+            var orientation = this.model.get('orientation');
+            this.$el.toggleClass('horizontal-orientation', orientation == 'Horizontal');
+            this.$el.toggleClass('pl-stack-panel_horizontal', orientation == 'Horizontal');
+        },
+
+        getItems: function(){
+            return this.model.get('items');
+        },
+
+        getItemTemplate: function(){
+            return this.model.get('itemTemplate');
+        },
+
+        getGroupValueSelector: function(){
+            return this.model.get('groupValueSelector');
+        },
+
+        getGroupItemTemplate: function(){
+            return this.model.get('groupItemTemplate');
+        },
+    }
+);
+
+//####app/controls/stackPanel/baseView/viewGroupStrategy.js
+function StackPanelViewGroupStrategy(stackPanel) {
+    this.stackPanel = stackPanel;
+}
+
+_.extend(StackPanelViewGroupStrategy.prototype, {
+
+    groupTemplate: InfinniUI.Template["controls/stackPanel/baseView/template/stackPanelGroup.tpl.html"],
+
+    prepareItemsForRendering: function(){
+        var items = this.stackPanel.getItems(),
+            inputName = 'listbox-' + guid(),
+            result = {
+                inputName: inputName,
+                groups: []
+            },
+            groups = {},
+            groupingFunction = this.stackPanel.getGroupValueSelector();
+
+        items.forEach(function(item, index){
+            var groupKey = groupingFunction(undefined, {value:item});
+
+            if(! (groupKey in groups)){
+                groups[groupKey] = [];
+            }
+
+            groups[groupKey].push(item);
+        });
+
+        for(var k in groups){
+            if (!groups.hasOwnProperty(k)) {
+                continue;
+            }
+            result.groups.push({
+                items: groups[k],
+                indices: groups[k].map(function (item) {
+                    return items.indexOf(item);
+                })
+            });
+        }
+
+        return result;
+    },
+
+    getTemplate: function(){
+        return this.stackPanel.template.grouped;
+    },
+
+    /**
+     *
+     * @param {Object} preparedItems
+     * @param {Array} preparedItems.groups
+     */
+    appendItemsContent: function (preparedItems) {
+        var
+            stackPanel = this.stackPanel,
+            $stackPanel = stackPanel.$el,
+            groupTemplate = this.groupTemplate,
+            groupHeaderTemplate = this.stackPanel.getGroupItemTemplate(),
+            itemTemplate = this.stackPanel.getItemTemplate(),
+            $groups,
+            groups = preparedItems.groups;
+
+        $groups = groups.map(function (group, groupIndex) {
+
+            var $items,
+                items = group.items || [],
+                indices = group.indices || [],
+                $group = $(groupTemplate({items: items})),
+                groupHeader = groupHeaderTemplate(null, {
+                    index: indices[0],  //Индекс любого элемента в этой группе
+                    item: group
+                });
+
+            stackPanel.addChildElement(groupHeader);
+
+            $items = items.map(function (item, itemIndex) {
+                var element = itemTemplate(null, {index: indices[itemIndex], item: item});
+                stackPanel.addChildElement(element);
+                return element.render();
+            });
+
+            $('.pl-stack-panel-group__header', $group).append(groupHeader.render());
+
+            $('.pl-stack-panel-list__item', $group).each(function (i, el) {
+                $(el).append($items[i]);
+            });
+
+            return $group;
+
+        });
+
+        $stackPanel.append($groups);
+    }
+});
+//####app/controls/stackPanel/baseView/viewPlainStrategy.js
+function StackPanelViewPlainStrategy(stackPanel) {
+    this.stackPanel = stackPanel;
+};
+
+_.extend(StackPanelViewPlainStrategy.prototype, {
+
+    prepareItemsForRendering: function(){
+        var items = this.stackPanel.getItems(),
+            result = {
+                items: items.toArray()
+            };
+
+        return result;
+    },
+
+    getTemplate: function(){
+        return this.stackPanel.template.plain;
+    },
+
+    appendItemsContent: function(preparedItems){
+        var $stackPanel = this.stackPanel.$el,
+            itemTemplate = this.stackPanel.getItemTemplate(),
+            items = preparedItems.items,
+            stackPanel = this.stackPanel,
+            itemEl, $el;
+
+        $stackPanel.find('.pl-stack-panel-i').each(function(i, el){
+            $el = $(el);
+            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
+            stackPanel.addChildElement(itemEl);
+            $el.append(itemEl.render());
+
+            $el.parent().data('pl-data-item', items[i]);
+        });
+    }
+});
+//####app/controls/tablePanel/tablePanelControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function TablePanelControl(parent) {
+    _.superClass(TablePanelControl, this, parent);
+}
+
+_.inherit(TablePanelControl, ContainerControl);
+
+_.extend(TablePanelControl.prototype,
+    /** @lends TablePanelControl.prototype */
+    {
+        createControlModel: function () {
+            return new TablePanelModel();
+        },
+
+        createControlView: function (model) {
+            return new TablePanelView({model: model});
+        }
+    }
+);
+
+
+//####app/controls/tablePanel/tablePanelModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var TablePanelModel = ContainerModel.extend(
+    /** @lends TablePanelModel.prototype */
+    {
+        initialize: function () {
+            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        }
+    }
+);
+//####app/controls/tablePanel/tablePanelView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var TablePanelView = ContainerView.extend(
+    /** @lends TablePanelView.prototype */
+    {
+        className: 'pl-table-panel',
+
+        initialize: function (options) {
+            ContainerView.prototype.initialize.call(this, options);
+        },
+
+        render: function () {
+            this.prerenderingActions();
+
+            this.removeChildElements();
+
+            this.renderItemsContents();
+            this.updateProperties();
+            this.trigger('render');
+
+            this.postrenderingActions();
+            return this;
+        },
+
+        renderItemsContents: function(){
+            var items = this.model.get('items'),
+                itemTemplate = this.model.get('itemTemplate'),
+                that = this,
+                element, item;
+
+            items.forEach(function(item, i){
+                element = itemTemplate(undefined, {item: item, index: i});
+                that.addChildElement(element);
+                that.$el
+                    .append(element.render());
+            });
+        },
+
+        updateGrouping: function(){}
+    }
+);
+
+//####app/controls/tablePanel/cell/cellControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function CellControl(parent) {
+    _.superClass(CellControl, this, parent);
+}
+
+_.inherit(CellControl, ContainerControl);
+
+_.extend(CellControl.prototype,
+    /** @lends CellControl.prototype */
+    {
+        createControlModel: function () {
+            return new CellModel();
+        },
+
+        createControlView: function (model) {
+            return new CellView({model: model});
+        }
+    }
+);
+
+
+//####app/controls/tablePanel/cell/cellModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var CellModel = ContainerModel.extend(
+    /** @lends CellModel.prototype */
+    {
+        defaults: _.defaults({
+            columnSpan: 1
+        }, ContainerModel.prototype.defaults),
+
+        initialize: function () {
+            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        }
+    }
+);
+//####app/controls/tablePanel/cell/cellView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var CellView = ContainerView.extend(
+    /** @lends CellView.prototype */
+    {
+        className: 'pl-cell',
+
+        initialize: function (options) {
+            ContainerView.prototype.initialize.call(this, options);
+
+            this.initColumnSpan();
+        },
+
+        render: function () {
+            this.prerenderingActions();
+
+            this.removeChildElements();
+
+            this.renderItemsContents();
+
+            this.updateProperties();
+            this.trigger('render');
+
+            this.postrenderingActions();
+            return this;
+        },
+
+        renderItemsContents: function(){
+            var items = this.model.get('items'),
+                itemTemplate = this.model.get('itemTemplate'),
+                that = this,
+                element, item;
+
+            items.forEach(function(item, i){
+                element = itemTemplate(undefined, {item: item, index: i});
+                that.addChildElement(element);
+                that.$el
+                    .append(element.render());
+            });
+        },
+
+        initColumnSpan: function () {
+            this.listenTo(this.model, 'change:columnSpan', this.updateColumnSpan);
+            this.updateColumnSpan();
+        },
+
+        updateColumnSpan: function () {
+            var columnSpan = this.model.get('columnSpan'),
+                currentColumnSpan = this.columnSpan;
+
+            if(columnSpan != currentColumnSpan){
+
+                if(currentColumnSpan){
+                    this.$el
+                        .removeClass('col-xs-' + currentColumnSpan);
+                }
+
+                this.$el
+                    .addClass('col-xs-' + columnSpan);
+
+                this.columnSpan = columnSpan;
+            }
+
+        },
+
+        updateGrouping: function(){}
+    }
+);
+
+//####app/controls/tablePanel/row/rowControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function RowControl(parent) {
+    _.superClass(RowControl, this, parent);
+}
+
+_.inherit(RowControl, ContainerControl);
+
+_.extend(RowControl.prototype,
+    /** @lends RowControl.prototype */
+    {
+        createControlModel: function () {
+            return new RowModel();
+        },
+
+        createControlView: function (model) {
+            return new RowView({model: model});
+        }
+    }
+);
+
+
+//####app/controls/tablePanel/row/rowModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var RowModel = ContainerModel.extend(
+    /** @lends RowModel.prototype */
+    {
+        initialize: function () {
+            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        }
+    }
+);
+//####app/controls/tablePanel/row/rowView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var RowView = ContainerView.extend(
+    /** @lends RowView.prototype */
+    {
+        className: 'pl-row row',
+
+        initialize: function (options) {
+            ContainerView.prototype.initialize.call(this, options);
+        },
+
+        render: function () {
+            this.prerenderingActions();
+
+            this.removeChildElements();
+
+            this.renderItemsContents();
+
+            this.updateProperties();
+            this.trigger('render');
+
+            this.postrenderingActions();
+            return this;
+        },
+
+        renderItemsContents: function(){
+            var items = this.model.get('items'),
+                itemTemplate = this.model.get('itemTemplate'),
+                that = this,
+                element, item;
+
+            items.forEach(function(item, i){
+                element = itemTemplate(undefined, {item: item, index: i});
+                that.addChildElement(element);
+                that.$el
+                    .append(element.render());
+            });
+        },
+
+        updateGrouping: function(){}
+    }
+);
+
+//####app/controls/tabPanel/tabPanelControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function TabPanelControl(parent) {
+    _.superClass(TabPanelControl, this, parent);
+}
+
+_.inherit(TabPanelControl, ContainerControl);
+
+_.extend(TabPanelControl.prototype, /** @lends TabPanelControl.prototype */ {
+
+    setSelectedItem: function (value) {
+        /**
+         * @TODO Отрефакторить! Временное решение т.к. коллекция model.items содержит не экземпляры страниц а метаданные! см. templating в Container
+         */
+        var
+            selectedItem = null,
+            model = this.controlModel,
+            elements = this.controlView.childElements,
+            items = model.get('items');
+
+        if (value instanceof TabPage) {
+            model.set('selectedItem', value)
+        } else if (Array.isArray(elements)) {
+            var index = items.indexOf(value);
+            if (index !== -1) {
+                selectedItem = elements[index];
+            }
+            this.controlModel.set('selectedItem', selectedItem);
+        }
+    },
+
+    createControlModel: function () {
+        return new TabPanelModel();
+    },
+
+    createControlView: function (model) {
+        return new TabPanelView({model: model});
+    }
+
+});
+
+
+//####app/controls/tabPanel/tabPanelModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var TabPanelModel = ContainerModel.extend(/** @lends TabPanelModel.prototype */ {
+
+    initialize: function () {
+        ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    },
+
+    defaults: _.defaults(
+        {
+            headerLocation: InfinniUI.TabHeaderLocation.top,
+            headerOrientation: InfinniUI.TabHeaderOrientation.horizontal
+        },
+        ContainerModel.prototype.defaults
+    )
+
+});
+//####app/controls/tabPanel/tabPanelView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
+
+    className: 'pl-tabpanel',
+
+    template: {
+        top: InfinniUI.Template["controls/tabPanel/template/tabPanel.top.tpl.html"],
+        right: InfinniUI.Template["controls/tabPanel/template/tabPanel.right.tpl.html"],
+        bottom: InfinniUI.Template["controls/tabPanel/template/tabPanel.bottom.tpl.html"],
+        left: InfinniUI.Template["controls/tabPanel/template/tabPanel.left.tpl.html"],
+        none: InfinniUI.Template["controls/tabPanel/template/tabPanel.none.tpl.html"]
+    },
+
+    UI: {
+        header: '.pl-tabpanel-header',
+        content: '.pl-tabpanel-content'
+    },
+
+    initHandlersForProperties: function () {
+        ContainerView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:headerLocation', this.onChangeHeaderLocation);
+        this.listenTo(this.model, 'change:headerOrientation', this.updateHeaderOrientation);
+        this.listenTo(this.model, 'change:selectedItem', this.updateSelectedItem);
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.renderTemplate(this.getTemplate());
+
+        this.renderItemsContents();
+        this.checkSelectedItem();
+
+        this.postrenderingActions();
+
+        this.trigger('render');
+        this.updateProperties();
+        return this;
+    },
+
+    /**
+     * @protected
+     */
+    renderItemsContents: function () {
+        var items = this.model.get('items');
+
+        this.removeChildElements();
+        this.ui.content.empty();
+        this.model.set('selectedItemIndex', -1);
+
+        var data = [];
+        items.forEach(function (item, index) {
+            data.push({
+                tabElement: this.renderTabContent(item, index),
+                item: item,
+                index: index
+            });
+        }, this);
+
+        this.renderTabHeaders(data);
+    },
+
+    /**
+     * @protected
+     * @param {Array.<Object>} data
+     */
+    renderTabHeaders: function (data) {
+        var header,
+            model = this.model,
+            items = model.get('items'),
+            selectedItem = model.get('selectedItem');
+
+        if (Array.isArray(this.tabHeaders)) {
+            while (header = this.tabHeaders.pop()) {
+                this.stopListening(header);
+                header.remove();
+            }
+        }
+
+        this.tabHeaders = data.map(function (data) {
+            var selected = items.indexOf(data.item) !== -1;
+            var header = this.renderTabHeader(data.tabElement, selected);
+
+            this.listenTo(header, 'selected', function () {
+                model.set('selectedItem', data.tabElement);
+            });
+
+            this.listenTo(header, 'close', function () {
+                data.tabElement.close();
+            });
+
+            return header;
+        }, this);
+
+    },
+
+    /**
+     *
+     * @param {TabPage} tabPageElement
+     * @param {boolean} selected
+     * @returns {TabHeaderView}
+     */
+    renderTabHeader: function (tabPageElement, selected) {
+        var header = new TabHeaderView({
+            text: tabPageElement.getText(),
+            canClose: tabPageElement.getCanClose(),
+            selected: selected
+        });
+
+        tabPageElement.onPropertyChanged('text', function () {
+            header.setText(tabPageElement.getText());
+        });
+
+        tabPageElement.onPropertyChanged('canClose', function () {
+            header.setCanClose(tabPageElement.getCanClose());
+        });
+
+        this.ui.header.append(header.render().$el);
+        return header;
+    },
+
+    renderTabContent: function (item, index) {
+        var
+            itemTemplate = this.model.get('itemTemplate'),
+            element = itemTemplate(undefined, {item: item, index: index});
+
+        this.addChildElement(element);
+        this.ui.content.append(element.render());
+        return element;
+    },
+
+    /**
+     * @protected
+     * @returns {Function}
+     */
+    getTemplate: function () {
+        var
+            template,
+            headerLocation = this.model.get('headerLocation');
+
+        switch (headerLocation) {
+            case InfinniUI.TabHeaderLocation.top:
+                template = this.template.top;
+                break;
+            case InfinniUI.TabHeaderLocation.right:
+                template = this.template.right;
+                break;
+            case InfinniUI.TabHeaderLocation.bottom:
+                template = this.template.bottom;
+                break;
+            case InfinniUI.TabHeaderLocation.left:
+                template = this.template.left;
+                break;
+            case InfinniUI.TabHeaderLocation.none:
+            default:
+                template = this.template.none;
+                break;
+        }
+
+        return template;
+    },
+
+    /**
+     * @protected
+     */
+    updateProperties: function () {
+        ContainerView.prototype.updateProperties.call(this);
+        this.updateHeaderOrientation();
+        this.updateSelectedItem();
+    },
+
+    /**
+     * @protected
+     */
+    onChangeHeaderLocation: function () {
+        //При изменении положения вкладок меняется весь шаблон
+        this.rerender();
+    },
+
+    /**
+     * @protected
+     */
+    updateHeaderOrientation: function () {
+        //@TODO Реализовать TabPanel.updateHeaderOrientation()
+    },
+
+
+    /**
+     * @protected
+     * @description Проверяет чтобы одна из вкладок была активна
+     */
+    checkSelectedItem: function () {
+        var
+            model = this.model,
+            tabPages = this.childElements,
+            selectedItem = model.get('selectedItem');
+
+        if (!Array.isArray(tabPages)) {
+            model.set('selectedItem', null);
+        } else if (tabPages.length) {
+            if (tabPages.indexOf(selectedItem) === -1) {
+                model.set('selectedItem', tabPages[0]);
+            }
+        } else {
+            model.set('selectedItem', null);
+        }
+    },
+
+    /**
+     * @protected
+     */
+    updateSelectedItem: function () {
+        if (!this.wasRendered) {
+            return;
+        }
+
+        var
+            tabPages = this.childElements,
+            tabHeaders = this.tabHeaders,
+            selectedItem = this.model.get('selectedItem'),
+            selectedIndex = tabPages.indexOf(selectedItem);
+
+        //TabPage
+        if (Array.isArray(tabPages)) {
+            tabPages.forEach(function (tabPage) {
+                tabPage.setSelected(false);
+            });
+
+            if (selectedIndex !== -1) {
+                tabPages[selectedIndex].setSelected(true);
+            }
+        }
+
+        //TabHeader
+        if (Array.isArray(tabHeaders)) {
+            tabHeaders.forEach(function (tabHeader) {
+                tabHeader.setSelected(false);
+            });
+            if (selectedIndex !== -1) {
+                tabHeaders[selectedIndex].setSelected(true);
+            }
+        }
+
+    },
+
+
+
+    /**
+     * @protected
+     */
+    updateGrouping: function () {
+
+    }
+
+});
+//####app/controls/tabPanel/tabHeader/tabHeaderView.js
+var TabHeaderModel = Backbone.Model.extend({
+
+    defaults: {
+        text: '',
+        canClose: false
+    }
+});
+
+var TabHeaderView = Backbone.View.extend({
+
+    className: "pl-tabheader",
+
+    tagName: "li",
+
+    template: InfinniUI.Template["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"],
+
+    events: {
+        "click": "onClickHandler",
+        "click .pl-close": "onClickCloseHandler"
+    },
+
+    UI: {
+        label: '.pl-tabheader-text',
+        close: '.pl-close'
+    },
+
+    initialize: function (options) {
+        this.model = new TabHeaderModel(options);
+
+        this.on('rendered', this.onRenderedHandler);
+    },
+
+    render: function () {
+        this.$el.html(this.template);
+        this.bindUIElements();
+        this.trigger('rendered');
+        return this;
+    },
+
+    /**
+     *
+     * @param {string} value
+     */
+    setText: function (value) {
+        this.model.set('text', value);
+    },
+
+    /**
+     *
+     * @param {boolean} value
+     */
+    setCanClose: function (value) {
+        this.model.set('canClose', value);
+    },
+
+    /**
+     *
+     * @param {boolean} value
+     */
+    setSelected: function (value) {
+        this.model.set('selected', value);
+    },
+
+    /**
+     * @protected
+     */
+    updateProperties: function () {
+        this.updateTextHandler();
+        this.updateCanClose();
+        this.updateSelectedHandler();
+    },
+
+    /**
+     * @protected
+     */
+    onRenderedHandler: function () {
+        this.updateProperties();
+        this.listenTo(this.model, 'change:text', this.updateTextHandler);
+        this.listenTo(this.model, 'change:selected', this.updateSelectedHandler);
+        this.listenTo(this.model, 'cahnge:canClose', this.updateCanClose);
+    },
+
+    /**
+     * @protected
+     */
+    updateTextHandler: function () {
+        var text = this.model.get('text');
+        this.ui.label.text(text);
+    },
+
+    /**
+     * @protected
+     */
+    updateCanClose: function () {
+        var canClose = this.model.get('canClose');
+        this.ui.close.toggleClass('hidden', !canClose);
+    },
+
+    /**
+     * @protected
+     */
+    updateSelectedHandler: function () {
+        var selected = this.model.get('selected');
+        this.$el.toggleClass('pl-active active', selected);
+    },
+
+    onClickHandler: function (event) {
+        this.trigger('selected');
+    },
+
+    onClickCloseHandler: function (event) {
+        event.stopPropagation();
+        this.trigger('close');
+    }
+
+});
+
+_.extend(TabHeaderView.prototype, bindUIElementsMixin);
+//####app/controls/tabPanel/tabPage/tabPageControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function TabPageControl(parent) {
+    _.superClass(TabPageControl, this, parent);
+}
+
+_.inherit(TabPageControl, ContainerControl);
+
+_.extend(TabPageControl.prototype, /** @lends TabPageControl.prototype */ {
+
+
+    createControlModel: function () {
+        return new TabPageModel();
+    },
+
+    createControlView: function (model) {
+        return new TabPageView({model: model});
+    }
+
+
+});
+
+
+//####app/controls/tabPanel/tabPage/tabPageModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var TabPageModel = ContainerModel.extend(/** @lends TabPageModel.prototype */ {
+
+    initialize: function () {
+        ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    },
+
+    defaults: _.defaults(
+        {
+            canClose: false,
+            selected: false
+        },
+        ContainerModel.prototype.defaults
+    )
+
+});
+//####app/controls/tabPanel/tabPage/tabPageView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
+
+    className: 'pl-tabpage hidden',
+
+    template: InfinniUI.Template["controls/tabPanel/tabPage/template/tabPage.tpl.html"],
+
+    UI: {
+
+    },
+
+    initHandlersForProperties: function () {
+        ContainerView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:selected', this.updateSelected);
+    },
+
+    updateProperties: function () {
+        ContainerView.prototype.updateProperties.call(this);
+        this.updateSelected();
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.removeChildElements();
+
+        this.$el.html(this.template({
+            items: this.model.get('items')
+        }));
+        this.renderItemsContents();
+
+        this.bindUIElements();
+
+        this.postrenderingActions();
+
+        this.trigger('render');
+        this.updateProperties();
+        return this;
+    },
+
+    renderItemsContents: function () {
+        var $items = this.$el.find('.pl-tabpage-i'),
+            items = this.model.get('items'),
+            itemTemplate = this.model.get('itemTemplate'),
+            that = this,
+            element, item;
+
+        $items.each(function (i, el) {
+            item = items.getByIndex(i);
+            element = itemTemplate(undefined, {item: item, index: i});
+            that.addChildElement(element);
+            $(el)
+                .append(element.render());
+        });
+    },
+
+    updateSelected: function () {
+        var selected = this.model.get('selected');
+        this.$el.toggleClass('hidden', !selected);
+    },
+
+    /**
+     * @protected
+     */
+    updateGrouping: function () {
+
+    }
+
+});
+//####app/controls/treeView/treeViewControl.js
+function TreeViewControl() {
+    _.superClass(TreeViewControl, this);
+}
+
+_.inherit(TreeViewControl, ListEditorBaseControl);
+
+_.extend(TreeViewControl.prototype, {
+
+    createControlModel: function () {
+        return new TreeViewModel();
+    },
+
+    createControlView: function (model) {
+        return new TreeViewView({model: model});
+    }
+});
+
+
+//####app/controls/treeView/treeViewModel.js
+var TreeViewModel = ListEditorBaseModel.extend({
+
+    initialize: function () {
+        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    },
+
+    toggleItem: function (item, toggle) {
+        var value = this.valueByItem(item);
+        this.toggleValue(value, toggle);
+        this.trigger('toggle');
+    }
+});
+//####app/controls/treeView/treeViewView.js
+var TreeViewView = ListEditorBaseView.extend({
+
+    className: 'pl-treeview',
+    classNameMultiSelect: 'pl-treeview_multi-select',
+    classNameSingleSelect: 'pl-treeview_single-select',
+
+    template: InfinniUI.Template["controls/treeView/template/treeview.tpl.html"],
+
+    events: {},
+
+    UI: _.defaults({}, ListEditorBaseView.prototype.UI),
+
+    initialize: function (options) {
+        ListEditorBaseView.prototype.initialize.call(this, options);
+        this.ItemsMap = new HashMap();
+
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.renderTemplate(this.getTemplate());
+
+        this.renderItems();
+        this.updateProperties();
+
+        this.trigger('render');
+
+        this.postrenderingActions();
+        return this;
+    },
+
+    renderItems: function (parentId) {
+        var
+            view = this,
+            $nodes,
+            model = this.model,
+            collection = model.get('items'),
+            parentSelector = model.get('parentSelector'),
+            keySelector = model.get('keySelector'),
+            nodeConstructor = this.getNodeConstructor(),
+            itemTemplate = model.get('itemTemplate'),
+            itemsMap = this.ItemsMap;
+
+        itemsMap.clear();
+
+        $nodes = renderNodes();
+        this.$el.append($nodes);
+
+        function renderNodes (parentId) {
+            return collection.toArray()
+                .filter(function (item) {
+                    var parent = parentSelector(null, {value: item});
+                    return isEmpty(parentId) ? isEmpty(parent) : parent === parentId;
+                })
+                .map(function (item) {
+                    var node = new nodeConstructor().render();
+                    var $node = node.$el;
+                    var $item = itemTemplate(null, {
+                        value: item,
+                        index: collection.indexOf(item)
+                    }).render();
+
+                    $node.data('pl-data-item', item);
+
+                    node.listenTo(model, 'change:selectedItem', function (model, selectedItem) {
+                        node.setSelected(selectedItem === item);
+                    });
+
+                    node.listenTo(model, 'change:value', function (model, value) {
+                        var multiSelect = model.get('multiSelect');
+
+                        var checked;
+                        if (!multiSelect) {
+                            checked = isValueForItem(value);
+                        } else if (Array.isArray(value)) {
+                            checked = value.some(isValueForItem)
+                        } else {
+                            checked = false;
+                        }
+                        node.setChecked(checked);
+                    });
+
+                    view.listenTo(node, 'select', view.onSelectNodeHandler.bind(view, item, node));
+                    view.listenTo(node, 'check', view.onCheckNodeHandler.bind(view, item, node));
+
+                    node.setItemContent($item);
+                    var key = keySelector(null, {value: item}),
+                        $subitems = renderNodes(key);
+                    node.setItemsContent($subitems);
+
+                    itemsMap.add(key, item);
+
+                    return $node;
+
+                    function isValueForItem(value) {
+                        return model.itemByValue(value) === item;
+                    }
+                });
+        }
+
+        function isEmpty(value) {
+            return value === null || typeof value === 'undefined';
+        }
+    },
+
+    getNodeConstructor: function () {
+        var multiSelect = this.model.get('multiSelect');
+
+        return (multiSelect === true) ? TreeViewNodeCheckbox : TreeViewNodeRadio;
+    },
+
+    onSelectNodeHandler: function(item , index) {
+        var model = this.model;
+
+        var multiSelect = model.get('multiSelect');
+
+        model.set('selectedItem', item);
+        if (!multiSelect) {
+            //Клик по элементу одновременно переключает значение и делает элемент выделенным
+            this.tryToggleValue(item);
+        }
+    },
+
+    onCheckNodeHandler: function (item, index) {
+        var model = this.model;
+
+        var multiSelect = model.get('multiSelect');
+
+        this.tryToggleValue(item);
+
+        if (!multiSelect) {
+            //Клик по элементу одновременно переключает значение и делает элемент выделенным
+            model.set('selectedItem', item);
+        }
+    },
+
+    tryToggleValue: function(item){
+        var model = this.model;
+        var isDisabledItem = this.isDisabledItem(item);
+
+        if(!isDisabledItem){
+            var value = model.valueByItem(item);
+            model.toggleValue(value);
+        }
+    },
+
+    isDisabledItem: function(item){
+        if(item == null){
+            return false;
+        }
+
+       return this.model.isDisabledItem(item) || this.isDisabledItem(this.getParent(item));
+    },
+
+    getParent: function(item){
+        var parentSelector = this.model.get('parentSelector'),
+            parentId = parentSelector(null, {value: item});
+
+        return parentId && this.ItemsMap.get(parentId);
+    },
+
+    getTemplate: function () {
+        return this.template;
+    },
+
+    updateProperties: function () {
+        ListEditorBaseView.prototype.updateProperties.call(this);
+        this.updateMultiSelect();
+    },
+
+    updateMultiSelect: function () {
+        var multiSelect = this.model.get('multiSelect');
+        this.$el.toggleClass(this.classNameMultiSelect, !!multiSelect);
+        this.$el.toggleClass(this.classNameSingleSelect, !multiSelect);
+    },
+
+    updateEnabled: function () {
+        ListEditorBaseView.prototype.updateEnabled.call(this);
+
+        var enabled = this.model.get('enabled');
+
+    },
+
+    updateValue: function () {
+
+    },
+
+    updateSelectedItem: function () {
+
+    },
+
+    updateGrouping: function () {
+    },
+
+    updateDisabledItem: function() {
+        var model = this.model;
+        var disabledItemCondition = model.get('disabledItemCondition');
+        var nodes = this.$el.find('.pl-treeview-node');
+
+        nodes.removeClass('pl-disabled-list-item');
+
+        if( disabledItemCondition != null){
+            nodes.each(function(i, el){
+                var $el = $(el),
+                    item = $el.data('pl-data-item');
+
+                if(model.isDisabledItem(item)){
+                    $el.addClass('pl-disabled-list-item');
+                }
+            });
+        }
+    },
+
+    rerender: function () {
+
+    }
+
+
+});
+//####app/controls/treeView/node/treeViewNodeBase.js
+var TreeViewNodeBase = Backbone.View.extend({
+
+    className: 'pl-treeview-node',
+
+    classNameCheckerChecked: 'pl-treeview-item__checker_checked',
+    classNameContentSelected: 'pl-treeview-item__content_selected',
+    classNameItemsExpanded: 'pl-treeview-node__items_expanded',
+    classNameItemsCollapsed: 'pl-treeview-node__items_collapsed',
+    classNameButtonCollapse: 'pl-treeview-node__button_collapse',
+    classNameButtonExpand: 'pl-treeview-node__button_expand',
+
+    UI: {
+        checker: '.pl-treeview-item__checker',
+        content: '.pl-treeview-item__content',
+        items: '.pl-treeview-node__items',
+        button: '.pl-treeview-node__button'
+    },
+
+    initialize: function () {
+        var model = new Backbone.Model({collapsed: true});
+        this.model = model;
+        this.listenTo(model, 'change:selected', this.updateSelected);
+        this.listenTo(model, 'change:checked', this.updateChecked);
+        this.listenTo(model, 'change:collapsed', this.updateCollapsed);
+    },
+
+    updateChecked: function () {
+        var checked = this.model.get('checked');
+        this.ui.checker.toggleClass(this.classNameCheckerChecked, checked === true);
+    },
+
+    updateSelected: function () {
+        var selected = this.model.get('selected');
+        this.ui.content.toggleClass(this.classNameContentSelected, selected === true);
+    },
+
+    updateCollapsed: function () {
+        var collapsed = !!this.model.get('collapsed');
+        this.ui.items.toggleClass(this.classNameItemsExpanded, !collapsed);
+        this.ui.items.toggleClass(this.classNameItemsCollapsed, collapsed);
+        this.ui.button.toggleClass(this.classNameButtonCollapse, !collapsed);
+        this.ui.button.toggleClass(this.classNameButtonExpand, collapsed);
+    },
+
+    updateState: function () {
+        this.updateCollapsed();
+        this.updateSelected();
+        this.updateChecked();
+    },
+
+    render: function () {
+        this.$el.html(this.template);
+        this.bindUIElements();
+        this.updateState();
+        this.initDomEventsHandlers();
+        return this;
+    },
+
+    initDomEventsHandlers: function () {
+        this.ui.button.on('click', this.onClickEventHandler.bind(this));
+        this.ui.content[0].addEventListener('click', this.onClickItemHandler.bind(this), true);
+        this.ui.checker[0].addEventListener('click', this.onClickCheckHandler.bind(this), true);
+    },
+
+    onClickItemHandler: function (event) {
+        this.trigger('select');
+    },
+
+    onClickCheckHandler: function (event) {
+        this.trigger('check');
+    },
+
+    toggle: function () {
+        var model = this.model;
+        var collapsed = model.get('collapsed');
+
+        this.model.set('collapsed', !collapsed);
+    },
+
+    setItemContent: function ($itemContent) {
+        this.ui.content.empty();
+        this.ui.content.append($itemContent);
+    },
+
+    setItemsContent: function ($itemsContent) {
+        this.ui.items.empty();
+        this.ui.items.append($itemsContent);
+    },
+
+    onClickEventHandler: function (event) {
+        this.toggle();
+    },
+
+    setSelected: function (selected) {
+        this.model.set('selected', selected);
+    },
+
+    setChecked: function (checked) {
+        this.model.set('checked', checked);
+    }
+});
+
+_.extend(TreeViewNodeBase.prototype, bindUIElementsMixin);
+//####app/controls/treeView/node/treeViewNodeCheckbox.js
+var TreeViewNodeCheckbox = TreeViewNodeBase.extend({
+
+    template: InfinniUI.Template["controls/treeView/template/node-checkbox.tpl.html"]
+
+});
+//####app/controls/treeView/node/treeViewNodeRadio.js
+var TreeViewNodeRadio = TreeViewNodeBase.extend({
+
+    template: InfinniUI.Template["controls/treeView/template/node-radio.tpl.html"]
+
+});
+
 //####app/controls/checkBox/checkBoxControl.js
 function CheckBoxControl(parent) {
     _.superClass(CheckBoxControl, this, parent);
@@ -10392,704 +14530,6 @@ var ComboBoxView = ListEditorBaseView.extend({
     }
 
 });
-//####app/controls/comboBox/dropdown/comboBoxDropdownView.js
-var ComboBoxDropdownView = Backbone.View.extend({
-
-    className: "pl-dropdown-container",
-    events: {
-        'click .backdrop': 'onClickBackdropHandler',
-        'keyup .pl-combobox-filter-text': 'onKeyUpHandler',
-        'keydown .pl-combobox-filter-text': 'onFilterKeyDownHandler'
-    },
-
-    UI: {
-        items: '.pl-combobox-items',
-        filter: '.pl-combobox-filter',
-        text: '.pl-combobox-filter-text',
-        noItems: '.pl-combobox-items-empty',
-        search: '.pl-combobox-items-empty > span'
-    },
-
-    initialize: function () {
-        var isGrouped = this.model.get('groupValueSelector') != null;
-
-        if (isGrouped) {
-            this.strategy = new ComboBoxGroupViewStrategy(this);
-        } else {
-            this.strategy = new ComboBoxPlainViewStrategy(this);
-        }
-
-        this.listenTo(this.model, 'change:dropdown', this.onChangeDropdownHandler);
-        this.listenTo(this.model, 'change:autocompleteValue', this.onChangeSearchHandler);
-        this.listenTo(this.model, 'change:autocomplete', this.updateAutocomplete);
-        this.listenTo(this.model, 'change:selectedItem', this.onChangeSelectedItem);
-        this.listenTo(this.strategy, 'click', this.onClickItemHandler);
-        this.listenTo(this.strategy, 'mouseenter', this.onMouseEnterItemHandler);
-        this.model.onValueChanged(this.onChangeValueHandler.bind(this));
-
-        var items = this.model.get('items');
-
-        var view = this;
-        items.onChange(function () {
-            view.renderItems();
-        });
-    },
-
-    updateProperties: function () {
-        this.updateAutocomplete();
-    },
-
-    render: function () {
-        var template = this.strategy.getTemplate();
-        this.$el.html(template({
-            multiSelect: this.model.get('multiSelect')
-        }));
-        this.bindUIElements();
-        this.updateProperties();
-        this.renderItems();
-        return this.$el;
-    },
-
-    renderItems: function () {
-        var $items = this.strategy.renderItems();
-        this.$items = $items;
-        var items = this.model.get('items');
-
-        var noItems = (items && items.length == 0);
-        this.ui.noItems.toggleClass('hidden', !noItems);
-
-        this.markSelectedItems();
-        this.markCheckedItems();
-    },
-
-    setItemsContent: function (content) {
-        var $items = this.ui.items;
-        $items.empty();
-        $items.append(content);
-    },
-
-    close: function () {
-        this.model.set('dropdown', false);
-    },
-
-    setSearchFocus: function () {
-        this.ui.text.focus();
-    },
-
-    onClickBackdropHandler: function () {
-        this.close();
-    },
-
-    onChangeValueHandler: function () {
-        this.markCheckedItems();
-    },
-
-    markSelectedItems: function () {
-        var model = this.model;
-        if (!Array.isArray(this.$items)) {
-            return;
-        }
-
-        var $container = this.ui.items;
-        var $items = this.$items;
-        var selectedItem = model.getSelectedItem();
-
-        $items.forEach(function ($item) {
-            var selected = selectedItem === $item.data('pl-data-item');
-            $item.toggleClass('pl-combobox-selected', selected);
-        });
-
-        this.ensureVisibleSelectedItem();
-
-    },
-
-    ensureVisibleSelectedItem: function () {
-        var model = this.model;
-        if (!Array.isArray(this.$items)) {
-            return;
-        }
-
-        var $container = this.ui.items;
-        var $items = this.$items;
-        var selectedItem = model.getSelectedItem();
-
-        $items.some(function ($item) {
-            var selected = selectedItem === $item.data('pl-data-item');
-            if (selected) {
-                ensureItem($container, $item);
-            }
-            return selected;
-        });
-
-        function ensureItem($container, $item) {
-            var newScrollTop;
-
-            var scrollTop = $container.scrollTop();
-            var itemTop = $item.position().top;
-            var itemHeight = $item.outerHeight();
-            var viewHeight = $container.innerHeight();
-            if (itemTop + itemHeight > viewHeight) {
-                newScrollTop = scrollTop + itemTop + itemHeight - viewHeight;
-            } else if (itemTop < 0) {
-                newScrollTop = scrollTop + itemTop;
-            }
-
-            if (typeof newScrollTop !== 'undefined') {
-                $container.scrollTop(newScrollTop);
-            }
-        }
-    },
-
-
-    markCheckedItems: function () {
-        var model = this.model;
-        var value = model.getValue();
-
-        if (!Array.isArray(this.$items)) {
-            return;
-        }
-
-        var $items = this.$items;
-        var isMultiSelect = !!model.get('multiSelect');
-        var items = [];
-
-        if (isMultiSelect && Array.isArray(value)) {
-            items = value.map(function (val) {
-                return model.itemByValue(val);
-            });
-        } else {
-            items = [model.itemByValue(value)];
-        }
-
-        $items.forEach(function ($item) {
-            var selected = items.indexOf($item.data('pl-data-item')) !== -1;
-            $item.toggleClass('pl-combobox-checked', selected);
-        });
-    },
-
-    onChangeDropdownHandler: function (model, dropdown) {
-        if (!dropdown) {
-            this.remove();
-        }
-    },
-
-    updateAutocomplete: function () {
-        var autocomplete = this.model.get('autocomplete');
-        this.ui.filter.toggleClass('hidden', !autocomplete);
-    },
-
-    onMouseEnterItemHandler: function (item) {
-        this.model.setSelectedItem(item);
-    },
-
-    onClickItemHandler: function (item) {
-        var isEnabled = !this.model.isDisabledItem(item);
-        if(isEnabled) {
-            this.model.toggleItem(item);
-            this.close();
-        }
-    },
-
-    onKeyUpHandler: function (event) {
-        //@TODO grow input
-        var text = this.ui.text.val();
-        this.trigger('search', text);
-    },
-
-    onKeyDownHandler: function (event) {
-        var model = this.model;
-        event.preventDefault();
-        this.onFilterKeyDownHandler(event);
-    },
-
-    onFilterKeyDownHandler: function (event) {
-        var model = this.model;
-        switch (event.which) {
-            case 36://Home;
-                model.selectFirstItem();
-                break;
-            case 35: //End
-                model.selectLastItem();
-                break;
-            case 38: //Up
-                model.selectPrevItem();
-                break;
-            case 40: //Down
-                model.selectNextItem();
-                break;
-            case 13:
-                this.onClickItemHandler(model.getSelectedItem());
-                break;
-            case 9:
-                this.close();
-                break;
-            case 27://Escape
-                this.close();
-                event.stopPropagation();
-                break;
-        }
-    },
-
-    onChangeSearchHandler: function (model, value) {
-        this.ui.search.text(value);
-    },
-
-    onChangeSelectedItem: function (model, value) {
-        this.markSelectedItems();
-    },
-
-    updatePosition: function (parentDOMElement) {
-        var direction = this.getDropdownDirection(parentDOMElement);
-        this.setPositionFor(parentDOMElement, direction );
-    },
-
-    setPositionFor: function (parentDOMElement, direction) {
-        clearInterval(this._intervalId);
-
-        this.applyStyle(parentDOMElement, direction);
-        this._intervalId = setInterval(this.applyStyle.bind(this, parentDOMElement, direction), 100);
-    },
-
-    remove: function () {
-        clearInterval(this._intervalId);
-        return Backbone.View.prototype.remove.apply(this, arguments);
-    },
-
-    getDropdownDirection: function (parentDOMElement) {
-
-        var windowHeight = $(window).height();
-        var rect = parentDOMElement.getBoundingClientRect();
-        var height = this.$el.height();
-
-        var direction = 'bottom';
-        if (rect.bottom + height + 30 > windowHeight && rect.bottom > windowHeight / 2) {
-            direction = 'top';
-        }
-
-        return direction;
-    },
-
-    applyStyle: function (parentDOMElement, direction) {
-        var rect = parentDOMElement.getBoundingClientRect();
-
-        //@TODO Вынести общие стили в css
-        var style = {
-            position: "absolute",
-            left: window.pageXOffset + rect.left,
-            width: Math.round(rect.width) - 1
-        };
-
-        if (direction === 'bottom') {
-            style.top = window.pageYOffset + rect.bottom;
-        } else {
-            style.top = rect.top - this.$el.height();
-        }
-
-        this.$el.css(style);
-    }
-
-});
-
-_.extend(ComboBoxDropdownView.prototype, bindUIElementsMixin);
-//####app/controls/comboBox/dropdown/group/groupView.js
-var ComboBoxGroupView = Backbone.View.extend({
-
-    template: InfinniUI.Template["controls/comboBox/dropdown/group/template/template.tpl.html"],
-
-    UI: {
-        header: '.pl-combobox-group__header',
-        items: '.pl-combobox-group__items'
-    },
-
-    initialize: function (options) {
-        this.options = {
-            header: options.header,
-            items: options.items
-        };
-
-    },
-
-    render: function () {
-        var options = this.options;
-        this.$el.html(this.template());
-        this.bindUIElements()
-        this.ui.header.append(options.header);
-        this.ui.items.append(options.items);
-
-        return this.$el;
-    }
-
-});
-
-_.extend(ComboBoxGroupView.prototype, bindUIElementsMixin);
-//####app/controls/comboBox/dropdown/viewBaseStrategy.js
-/**
- * @abstract
- * @param dropdownView
- * @constructor
- */
-function ComboBoxBaseViewStrategy(dropdownView) {
-    this.dropdownView = dropdownView;
-}
-
-/**
- *
- * @param {string} attributeName
- * @returns {*}
- */
-ComboBoxBaseViewStrategy.prototype.getModelAttribute = function (attributeName) {
-    var model = this.dropdownView.model;
-
-    return model.get(attributeName);
-};
-
-ComboBoxBaseViewStrategy.prototype.isEnabledItem = function (item) {
-    return !this.dropdownView.model.isDisabledItem(item);
-};
-
-/**
- * @description Рендеринг элементов списка
- * @abstract
- * @returns {Array.<jQuery>} Элементы списка
- */
-ComboBoxBaseViewStrategy.prototype.renderItems = function () {
-    throw new Error('Method renderItems not implemented');
-};
-
-/**
- * @abstract
- */
-ComboBoxBaseViewStrategy.prototype.getTemplate = function () {
-
-};
-
-/**
- * Рендеринг заданных элементов списка
- * @param {Array.<Object>} items
- * @returns {Array.<jQuery>}
- * @private
- */
-ComboBoxBaseViewStrategy.prototype._renderItems = function (items) {
-    var
-        $items,
-        collection = this.getModelAttribute('items'),
-        itemTemplate = this.getModelAttribute('itemTemplate');
-
-    $items = items.map(function (item) {
-        var itemEl = itemTemplate(undefined, {
-            value: item,
-            index: collection.indexOf(item)
-        });
-        var $item = itemEl.render();
-
-        if (typeof item !== 'undefined') {
-            $item.data('pl-data-item', item);
-        }
-
-        this.addOnClickEventListener($item, item);
-        this.addOnHoverEventListener($item, item);
-
-        itemEl.setEnabled( this.isEnabledItem(item) );
-
-        return $item;
-    }, this);
-
-    return $items;
-};
-
-/**
- *
- * @param {jQuery} $el
- */
-ComboBoxBaseViewStrategy.prototype.addOnClickEventListener = function ($el) {
-    var el = $el[0];
-    var params = Array.prototype.slice.call(arguments, 1);
-    var handler = this.trigger.bind(this, 'click');
-    el.addEventListener('click', function () {
-        handler.apply(this, params);
-    });
-};
-
-
-ComboBoxBaseViewStrategy.prototype.addOnHoverEventListener = function ($el) {
-    var el = $el[0];
-    var params = Array.prototype.slice.call(arguments, 1);
-    var handler = this.trigger.bind(this, 'mouseenter');
-    $el.on('mouseenter', function () {
-        handler.apply(this, params);
-    });
-};
-
-_.extend(ComboBoxBaseViewStrategy.prototype, Backbone.Events);
-//####app/controls/comboBox/dropdown/viewGroupStrategy.js
-/**
- *
- * @param {ComboBoxDropdownView} dropdownView
- * @augments ComboBoxBaseViewStrategy
- * @constructor
- */
-function ComboBoxGroupViewStrategy(dropdownView) {
-    ComboBoxBaseViewStrategy.call(this, dropdownView);
-}
-
-ComboBoxGroupViewStrategy.prototype = Object.create(ComboBoxBaseViewStrategy.prototype);
-ComboBoxGroupViewStrategy.prototype.constructor = ComboBoxGroupViewStrategy;
-
-ComboBoxGroupViewStrategy.prototype.template = InfinniUI.Template["controls/comboBox/dropdown/template/group/template.tpl.html"];
-
-ComboBoxGroupViewStrategy.prototype.renderItems = function () {
-    var
-        collection = this.getModelAttribute('items'),
-        groupingFunction = this.getModelAttribute('groupValueSelector'),
-        groups = {},
-        $items;
-
-    collection.forEach(function (item, index) {
-        var groupKey = groupingFunction(undefined, {value: item, index: index});
-
-        if (!(groupKey in groups)) {
-            groups[groupKey] = [];
-        }
-
-        groups[groupKey].push(item);
-    });
-
-    $items = this.renderGroups(groups);
-    return $items;
-};
-
-/**
- * @description Рендереинг группированных элементов
- * @param {Array.<Object>} groups
- * @returns {Array.<jQuery>} Элементы групп
- */
-ComboBoxGroupViewStrategy.prototype.renderGroups = function (groups) {
-    var
-        groupItemTemplate = this.getModelAttribute('groupItemTemplate'),
-        collection = this.getModelAttribute('items'),
-        $items= [],
-        $groupItems,
-        $groups = [];
-
-    for (var name in groups) {
-        var items = groups[name];
-        //Шаблонизированный заголовок группы
-        var $header = groupItemTemplate(undefined, {
-                index: collection.indexOf(items[0]),
-                item: items[0]
-            }
-        );
-        //Шаблонизированные элементы группы
-        var $groupItems = this._renderItems(items);
-
-        var groupView = new ComboBoxGroupView({
-            header: $header.render(),
-            items: $groupItems
-        });
-
-        Array.prototype.push.apply($items, $groupItems);
-        $groups.push(groupView.render());
-    }
-
-    this.dropdownView.setItemsContent($groups);
-
-    return $items;
-};
-
-
-ComboBoxGroupViewStrategy.prototype.getTemplate = function () {
-    return this.template;
-};
-
-
-//####app/controls/comboBox/dropdown/viewPlainStrategy.js
-/**
- *
- * @param {ComboBoxDropdownView} dropdownView
- * @augments ComboBoxBaseViewStrategy
- * @constructor
- */
-function ComboBoxPlainViewStrategy(dropdownView) {
-    ComboBoxBaseViewStrategy.call(this, dropdownView);
-}
-
-ComboBoxPlainViewStrategy.prototype = Object.create(ComboBoxBaseViewStrategy.prototype);
-ComboBoxPlainViewStrategy.prototype.constructor = ComboBoxPlainViewStrategy;
-
-ComboBoxPlainViewStrategy.prototype.renderItems = function () {
-    var
-        $items = [],
-        items = this.getModelAttribute('items');
-
-    if (items) {
-        $items = this._renderItems(items.toArray());
-    }
-
-    this.dropdownView.setItemsContent($items);
-
-    return $items;
-};
-
-ComboBoxPlainViewStrategy.prototype.template = InfinniUI.Template["controls/comboBox/dropdown/template/plain/template.tpl.html"];
-
-ComboBoxPlainViewStrategy.prototype.getTemplate = function () {
-    return this.template;
-};
-
-//####app/controls/comboBox/values/comboBoxValue.js
-var ComboBoxValueModel = Backbone.Model.extend({
-
-});
-
-var ComboBoxValue = Backbone.View.extend({
-
-    template: InfinniUI.Template["controls/comboBox/values/template/value.tpl.html"],
-
-    tagName: 'li',
-
-    className: 'pl-combobox-value',
-
-    events: {
-        "click .pl-combobox-value-remove": "onClickRemoveHandler"
-    },
-
-    UI: {
-        item: '.pl-combobox-value-item'
-    },
-
-    initialize: function (options) {
-        this.model = new ComboBoxValueModel(options);
-    },
-
-    render: function () {
-        this.$el.html(this.template());
-
-        this.bindUIElements();
-        var $value = this.model.get('$value');
-        this.ui.item.append($value);
-        return this.$el;
-    },
-
-    onClickRemoveHandler: function () {
-        var value = this.model.get('value');
-        this.trigger('remove', value);
-    }
-
-});
-
-_.extend(ComboBoxValue.prototype, bindUIElementsMixin);
-//####app/controls/comboBox/values/comboBoxValues.js
-var ComboBoxValuesModel = Backbone.Model.extend({
-    defaults: {
-        enabled: true
-    },
-
-    initialize: function () {
-        this.items = [];
-    }
-});
-
-var ComboBoxValues = Backbone.View.extend({
-
-    tagName: 'ul',
-
-    className: 'pl-combobox-values',
-
-    template: InfinniUI.Template["controls/comboBox/values/template/values.tpl.html"],
-
-    events: {
-        'keypress .pl-combobox-search-text': 'onKeyPressHandler',
-        'keydown .pl-combobox-search-text': 'onKeyDownHandler',
-        'keyup .pl-combobox-search-text': 'onKeyUpHandler',
-        'click': 'onClickHandler'
-    },
-
-    UI: {
-        search: ".pl-combobox-search",
-        text: ".pl-combobox-search-text"
-    },
-
-    initialize: function (options) {
-        this.model = new ComboBoxValuesModel(options);
-    },
-
-    render: function () {
-
-        this.$el.empty();
-
-        this.$el.html(this.template());
-        this.bindUIElements();
-
-        var model = this.model;
-        var $items =
-            model.get('items')
-                .map(function(item) {
-                    var view = new ComboBoxValue({
-                        "$value": item.$value,
-                        "value": item.value
-                    });
-
-                    this.listenTo(view, 'remove', this.onRemoveValueHandler);
-                    return view.render();
-                }, this);
-
-        this.ui.search.before($items);
-
-        return this.$el;
-    },
-
-    KeyCode: {
-        enter: 13,
-        backspace: 8,
-        left: 37,
-        right: 39,
-        home: 36,
-        end: 35,
-        tab: 9
-    },
-
-    setFocus: function () {
-        this.ui.text.focus();
-    },
-
-    onKeyPressHandler: function (event) {
-        var key = event.which;
-
-        if (key === this.KeyCode.enter) {
-
-        }
-
-        console.log('onKeyPressHandler', event.which, this.ui.text.val());
-    },
-
-    onKeyDownHandler: function (event) {
-        //handle left/right/tab/Shift-tab/backspace/end/home
-        var key = event.which;
-        if (key === this.KeyCode.left) {
-
-        } else {
-
-        }
-        console.log('onKeyDownHandler', event.which, this.ui.text.val());
-    },
-
-    onKeyUpHandler: function (event) {
-        //@TODO grow input
-        var text = this.ui.text.val();
-        this.trigger('search', text);
-    },
-
-    onRemoveValueHandler: function (value) {
-        this.trigger('remove', value);
-    },
-
-    onClickHandler: function (event) {
-        this.setFocus();
-    }
-
-});
-
-_.extend(ComboBoxValues.prototype, bindUIElementsMixin);
 //####app/controls/contextMenu/contextMenuControl.js
 function ContextMenuControl() {
     _.superClass(ContextMenuControl, this);
@@ -11271,997 +14711,6 @@ var ContextMenuView = ContainerView.extend({
 			onConditionFunction();
 		}
 	}
-
-});
-
-//####app/controls/dataGrid/dataGridControl.js
-/**
- *
- * @constructor
- * @augments ListEditorBaseControl
- */
-function DataGridControl() {
-    _.superClass(DataGridControl, this);
-}
-
-_.inherit(DataGridControl, ListEditorBaseControl);
-
-_.extend(DataGridControl.prototype, {
-
-    createControlModel: function () {
-        return new DataGridModel();
-    },
-
-    createControlView: function (model) {
-        return new DataGridView({model: model});
-    },
-
-    onCheckAllChanged: function (handler) {
-        this.controlModel.onCheckAllChanged(handler);
-    }
-});
-
-
-//####app/controls/dataGrid/dataGridModel.js
-/**
- * @constructor
- * @augments ListEditorBaseModel
- */
-var DataGridModel = ListEditorBaseModel.extend({
-    defaults: _.defaults({
-        showSelectors: true,
-        checkAllVisible: false,
-        checkAll: false,
-        focusable: false
-    }, ListEditorBaseModel.prototype.defaults),
-
-    initialize: function () {
-        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        this.initColumns();
-    },
-
-    toggleCheckAll: function () {
-        this.set('checkAll', !this.get('checkAll'));
-    },
-
-    onCheckAllChanged: function (handler) {
-        this.on('change:checkAll', function (model, checkAll) {
-            handler.call(null, {value: checkAll});
-        });
-    },
-
-    /**
-     * @protected
-     */
-    initColumns: function () {
-        this.set('columns', new Collection());
-    }
-});
-//####app/controls/dataGrid/dataGridRow/dataGridRowControl.js
-/**
- *
- * @constructor
- * @augments ListEditorBaseControl
- */
-function DataGridRowControl() {
-    _.superClass(DataGridRowControl, this);
-}
-
-_.inherit(DataGridRowControl, Control);
-
-_.extend(DataGridRowControl.prototype, {
-
-    onToggle: function (handler) {
-        this.controlView.on('toggle', handler);
-    },
-
-    createControlModel: function () {
-        return new DataGridRowModel();
-    },
-
-    createControlView: function (model) {
-        return new DataGridRowView({model: model});
-    }
-});
-
-
-//####app/controls/dataGrid/dataGridRow/dataGridRowModel.js
-var DataGridRowModel = ControlModel.extend({
-
-});
-//####app/controls/dataGrid/dataGridRow/dataGridRowView.js
-var DataGridRowView = ControlView.extend({
-
-    className: 'pl-datagrid-row pl-datagrid-row_data',
-
-    classNameSelected: 'info',
-
-    tagName: 'tr',
-
-    events: {},
-
-    template: {
-        singleSelect: InfinniUI.Template["controls/dataGrid/dataGridRow/template/singleSelect.tpl.html"],
-        multiSelect: InfinniUI.Template["controls/dataGrid/dataGridRow/template/multiSelect.tpl.html"],
-        dataCell: InfinniUI.Template["controls/dataGrid/dataGridRow/template/dataCell.tpl.html"]
-    },
-
-    UI: {
-        toggleCell: '.pl-datagrid-row__cell_toggle',
-        toggle: '.pl-datagrid-toggle',
-        toggleControl: '.pl-datagrid-toggle input'
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.call(this);
-        this.childElements = [];
-        this.on('render', function () {
-            this.ui.toggleCell.on('click', this.onToggleHandler.bind(this));
-        }, this);
-    },
-
-    initHandlersForProperties: function () {
-        ControlView.prototype.initHandlersForProperties.call(this);
-        this.listenTo(this.model, 'change:toggle', this.updateToggle);
-        this.listenTo(this.model, 'change:selected', this.updateSelected);
-    },
-
-    updateProperties: function () {
-        ControlView.prototype.updateProperties.call(this);
-        this.updateToggle();
-        this.updateSelected();
-        this.updateShowSelectors();
-    },
-
-    updateVerticalAlignment: function () {
-        //Use Vertical alignment for DataGrid
-    },
-
-    render: function () {
-        this.prerenderingActions();
-        var $el = this.$el;
-        var row = this;
-
-        var templateName = this.model.get('multiSelect') ? 'multiSelect' : 'singleSelect';
-        var template = this.template[templateName];
-        $el.html(template());
-        this.bindUIElements();
-
-        var templates = this.model.get('cellTemplates');
-        var templateDataCell = this.template.dataCell;
-        if (Array.isArray(templates)) {
-            templates.forEach(function (template, index) {
-                var $cell = $(templateDataCell());
-                var cellElement = template();
-                $cell.append(cellElement.render());
-                $el.append($cell);
-                row.addChildElement(cellElement);
-            });
-        }
-        this.updateProperties();
-
-        this.trigger('render');
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    updateShowSelectors: function () {
-        var showSelectors = this.model.get('showSelectors');
-        this.ui.toggleCell.toggleClass('hidden', !showSelectors);
-    },
-
-    updateToggle: function () {
-        var toggle = this.model.get('toggle');
-        this.ui.toggleControl.prop('checked', !!toggle);
-    },
-
-    updateSelected: function () {
-        var selected = this.model.get('selected');
-        this.$el.toggleClass(this.classNameSelected, !!selected);
-    },
-
-    updateEnabled: function () {
-        ControlView.prototype.updateEnabled.call(this);
-
-        var enabled = this.model.get('enabled');
-        this.ui.toggleControl.attr('disabled', enabled ? null : 'disabled');
-    },
-
-    onToggleHandler: function (event) {
-        this.trigger('toggle');
-    },
-
-    addChildElement: function (element) {
-        this.childElements.push(element);
-    },
-
-    removeChildElements: function () {
-        this.childElements.forEach(function (element) {
-            element.remove();
-        });
-
-        this.childElements.length = 0;
-    },
-
-    remove: function () {
-        this.removeChildElements();
-        ControlView.prototype.remove.call(this);
-    }
-
-
-});
-
-
-//####app/controls/dataGrid/dataGridView.js
-/**
- * @constructor
- * @augments ListEditorBaseView
- */
-var DataGridView = ListEditorBaseView.extend({
-
-    template: {
-        "grid": InfinniUI.Template["controls/dataGrid/template/dataGrid.tpl.html"],
-        "gridStretched": InfinniUI.Template["controls/dataGrid/template/dataGridStretched.tpl.html"],
-        "headerCell": InfinniUI.Template["controls/dataGrid/template/headerCell.tpl.html"],
-        "sizeCell": InfinniUI.Template["controls/dataGrid/template/sizeCell.tpl.html"]
-    },
-
-    className: 'pl-datagrid',
-
-    events: _.extend({},
-        ListEditorBaseView.prototype.events,
-        {
-            "click .pl-datagrid-toggle_all": "onClickCheckAllHandler"
-        }
-    ),
-
-    UI: _.defaults({
-        body: ".pl-datagrid__body",
-        head: ".pl-datagrid__head",
-        headContainer: ".pl-datagrid-container_head",
-
-        header: '.pl-datagrid-row_header',
-        firstRows: '.pl-datagrid-row_first',
-        toggleCell: ".pl-toggle-cell",
-        checkAll: ".pl-datagrid-toggle__button",
-        items: 'tbody'
-    }, ListEditorBaseView.prototype.UI),
-
-    initialize: function (options) {
-        ListEditorBaseView.prototype.initialize.call(this, options);
-        this.rowElements = new HashMap();
-    },
-
-    initHandlersForProperties: function(){
-        ListEditorBaseView.prototype.initHandlersForProperties.call(this);
-
-        this.listenTo(this.model, 'change:showSelectors', this.updateShowSelectors);
-        this.listenTo(this.model, 'change:checkAllVisible', this.updateCheckAllVisible);
-        this.listenTo(this.model, 'change:checkAll', this.updateCheckAll);
-    },
-
-    updateProperties: function () {
-        ListEditorBaseView.prototype.updateProperties.call(this);
-        this.updateShowSelectors();
-        this.updateCheckAllVisible();
-        this.updateCheckAll();
-    },
-
-    updateShowSelectors: function () {
-        var showSelectors = this.model.get('showSelectors');
-        this.$el.toggleClass('pl-datagrid_selectors_show', showSelectors);
-        this.$el.toggleClass('pl-datagrid_selectors_hide', !showSelectors);
-    },
-
-    updateGrouping: function () {
-
-    },
-
-    updateVerticalAlignment: function () {
-        ListEditorBaseView.prototype.updateVerticalAlignment.call(this);
-        this.switchClass('verticalAlignment', this.model.get('verticalAlignment'), this.ui.body, false);
-    },
-
-    updateCheckAll: function () {
-        var checkAll = this.model.get('checkAll');
-        this.ui.checkAll.prop('checked', checkAll);
-    },
-
-    getHorizontalScrollBarWidth: function () {
-
-        if (typeof DataGridView.scrollbarWidth === 'undefined') {
-            var scrollDiv = document.createElement('div');
-            var body = document.body;
-
-            scrollDiv.className = 'modal-scrollbar-measure';
-            var style = {
-                position: "absolute",
-                top: "-9999px",
-                width: "50px",
-                height: "50px",
-                overflow: "scroll"
-            };
-
-            for(var name in style) {
-                scrollDiv.style[name] = style[name]
-            }
-
-            body.appendChild(scrollDiv);
-            DataGridView.scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
-            body.removeChild(scrollDiv);
-        }
-
-        return DataGridView.scrollbarWidth;
-    },
-
-    updateCheckAllVisible: function () {
-        var checkAllVisible = this.model.get('checkAllVisible');
-        this.ui.checkAll.toggleClass('hidden', !checkAllVisible);
-    },
-
-    updateMultiSelect: function () {
-        ListEditorBaseView.prototype.updateMultiSelect.call(this);
-
-        var multiSelect = this.model.get('multiSelect');
-        this.$el.toggleClass('pl-datagrid_select_multi', multiSelect === true);
-        this.$el.toggleClass('pl-datagrid_select_single', multiSelect !== true);
-    },
-
-    updateValue: function () {
-        var
-            model = this.model,
-            value = model.get('value'),
-            indices = [],
-            items = model.get('items');
-
-        if(!model.get('multiSelect') && value !== undefined && value !== null){
-            value = [value];
-        }
-
-        if (Array.isArray(value)) {
-            indices = value.map(function (val) {
-                    return model.itemIndexByValue(val);
-                })
-                .filter(function (index) {
-                    return index !== -1;
-                });
-        }
-
-        this.rowElements.forEach(function (rowElement, item) {
-            var index = items.indexOf(item);
-            var toggle = indices.indexOf(index) !== -1;
-            rowElement.toggle(toggle);
-        });
-
-    },
-
-    updateSelectedItem: function () {
-        var
-            model = this.model,
-            selectedItem = model.get('selectedItem');
-
-        this.rowElements.forEach(function (rowElement, item) {
-            rowElement.setSelected(item === selectedItem);
-        });
-    },
-
-    updateDisabledItem: function () {
-        var
-            model = this.model,
-            disabledItemCondition = model.get('disabledItemCondition'),
-            isEnabled;
-
-        if(disabledItemCondition != null) {
-            this.rowElements.forEach(function (rowElement, item) {
-                isEnabled = !disabledItemCondition( undefined, {value: item} );
-                rowElement.setEnabled(isEnabled);
-            });
-        }
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        var verticalAlignment = this.model.get('verticalAlignment');
-        var template = (verticalAlignment === 'Stretch') ? this.template.gridStretched : this.template.grid;
-        this.$el.html(template());
-
-        this.bindUIElements();
-
-        this.renderHeaders();
-        this.renderItems();
-        this.updateProperties();
-
-        this.trigger('render');
-
-        this.applyColumnWidth();
-        this.syncBodyAndHead();
-        this.postrenderingActions();
-        return this;
-    },
-
-    applyColumnWidth: function () {
-        var columns = this.model.get('columns');
-        var fixedTableLayout = false;
-
-        this.ui.firstRows.children().each(function (i, el) {
-            var columnIndex = i % (columns.length + 1);
-
-            if (columnIndex === 0) {
-                //skip columns with checkbox/radiobutton
-                return;
-            }
-
-            var column = columns.getByIndex(columnIndex - 1);
-            var width = column && column.getWidth();
-
-            if (width) {
-                $(el).css('width', width);
-                fixedTableLayout = true;
-            }
-        });
-
-        this.$el.toggleClass('pl-datagrid_layout_fixed', fixedTableLayout);
-    },
-
-    syncBodyAndHead: function () {
-        //var $body = this.ui.body;
-        var $head = this.ui.head;
-
-        $head.css('padding-right', this.getHorizontalScrollBarWidth() + "px");
-
-        this.ui.body
-            .off('scroll')
-            .on('scroll', this.onScrollBodyHandler.bind(this));
-
-    },
-
-    onScrollBodyHandler: function () {
-        this.ui.headContainer.scrollLeft(this.ui.body.scrollLeft());
-    },
-
-    renderHeaders: function () {
-        var columns = this.model.get('columns');
-        var templateHeaderCell = this.template.headerCell;
-        var sizeCells = [];
-        var templateSizeCells = this.template.sizeCell;
-
-        var $headers = columns.toArray().map(function (column) {
-
-            sizeCells.push(templateSizeCells());
-            var $th = $(templateHeaderCell());
-
-            var headerTemplate = column.getHeaderTemplate();
-            var header = column.getHeader();
-
-            var headerElement;
-
-            if (headerTemplate) {
-                headerElement = headerTemplate(null, {value: header});
-                $th.append(headerElement.render());
-
-            } else {
-                $th.append(header);
-            }
-            return $th;
-        });
-
-        this.ui.header.append($headers);
-        this.ui.firstRows.append(sizeCells);
-    },
-
-    renderItems: function () {
-        var
-            model = this.model,
-            valueSelector = model.get('valueSelector'),
-            itemTemplate = model.get('itemTemplate'),
-            items = model.get('items'),
-            $items = this.ui.items;
-
-        this.removeRowElements();
-
-        items.forEach(function (item, index) {
-            var element = itemTemplate(undefined, {index: index, item: item});
-
-            element.onBeforeClick(function() {
-                model.set('selectedItem', item);
-            });
-            element.onToggle(function() {
-                var enabled = this.model.get('enabled');
-
-                if(enabled){
-                    model.toggleValue(valueSelector(undefined, {value:item}));
-                }
-            });
-            this.addRowElement(item, element);
-
-            var $element = element.render();
-            $items.append($element);
-        }, this);
-
-    },
-
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        this.rowElements.values.forEach(function (element) {
-            if (focusable) {
-                element.control.controlView.$el.attr('tabindex', 0);
-            } else {
-                element.control.controlView.$el.removeAttr('tabindex');
-            }
-        })
-    },
-
-    addRowElement: function(item, element){
-        this.addChildElement(element);
-        this.rowElements.add(item, element);
-    },
-
-    removeRowElements: function () {
-        this.removeChildElements();
-        this.rowElements.clear();
-    },
-
-    onClickCheckAllHandler: function () {
-        this.model.toggleCheckAll();
-    }
-
-
-});
-
-
-
-//####app/controls/dataNavigation/buttons/dataNavigationBaseButton.js
-var DataNavigationBaseButtonModel = Backbone.Model.extend({
-
-    initialize: function () {
-        this.on('change:parent', this.subscribeToParent, this);
-    },
-
-    subscribeToParent: function () {
-
-    }
-});
-
-var DataNavigationBaseButton = Backbone.View.extend({
-
-    tagName: 'li',
-
-    initialize: function (options) {
-        Backbone.View.prototype.initialize.call(this, options);
-        this.once('render', function () {
-            this.initHandlersForProperties()
-        }, this);
-    },
-
-    initHandlersForProperties: function () {
-
-    },
-
-    updateProperties: function () {
-
-    },
-
-    getData: function () {
-        return this.model.toJSON();
-    },
-
-    setParent: function (parent) {
-        this.model.set('parent', parent);
-        this.subscribeForParent(parent);
-    },
-
-    render: function () {
-        var template = this.template(this.getData());
-        this.$el.html(template);
-        this.trigger('render');
-        this.updateProperties();
-        return this;
-    },
-
-    subscribeForParent: function (parent) {
-
-    }
-
-});
-
-
-//####app/controls/dataNavigation/buttons/dataNavigationNextButton.js
-var DataNavigationNextButton = DataNavigationBaseButton.extend({
-
-    template: InfinniUI.Template["controls/dataNavigation/buttons/template/next.tpl.html"],
-
-    events: {
-        "click": "onClickHandler"
-    },
-
-    initialize: function (options) {
-        this.model = new DataNavigationBaseButtonModel();
-        DataNavigationBaseButton.prototype.initialize.call(this, options);
-    },
-
-    onClickHandler: function (event) {
-        this.trigger('command', "next");
-    }
-
-});
-
-//####app/controls/dataNavigation/buttons/dataNavigationPageButton.js
-var DataNavigationPageButton = DataNavigationBaseButton.extend({
-    template: InfinniUI.Template["controls/dataNavigation/buttons/template/page.tpl.html"],
-
-    events: {
-        "click": "onClickHandler"
-    },
-
-    initialize: function (options) {
-        this.model = new DataNavigationPageButtonModel();
-        DataNavigationBaseButton.prototype.initialize.call(this, options);
-        this.model.set('pageNumber', options.pageNumber);
-    },
-
-    initHandlersForProperties: function () {
-        DataNavigationBaseButton.prototype.initHandlersForProperties.call(this);
-        this.listenTo(this.model, 'change:isCurrent', this.updateIsCurrent);
-    },
-
-    updateProperties: function () {
-        DataNavigationBaseButton.prototype.updateProperties.call(this);
-        this.updateIsCurrent();
-    },
-
-    updateIsCurrent: function () {
-        this.$el.toggleClass('active', this.model.get('isCurrent'));
-    },
-
-    onClickHandler: function (event) {
-        this.trigger('command', "page", {pageNumber: this.model.get('pageNumber')});
-    }
-
-});
-
-
-var DataNavigationPageButtonModel = DataNavigationBaseButtonModel.extend({
-
-    defaults: {
-        isCurrent: false
-    },
-
-    subscribeToParent: function () {
-        DataNavigationBaseButtonModel.prototype.subscribeToParent.call(this);
-
-        var parent = this.get('parent');
-        this.listenTo(parent.model, 'change:pageNumber', function () {
-            this.updateIsCurrent();
-        });
-        this.updateIsCurrent();
-    },
-
-    updateIsCurrent: function () {
-        var parent = this.get('parent');
-        var isCurrent = parent.model.get('pageNumber') === this.get('pageNumber');
-        this.set("isCurrent", isCurrent);
-    }
-
-});
-//####app/controls/dataNavigation/buttons/dataNavigationPrevButton.js
-var DataNavigationPrevButton = DataNavigationBaseButton.extend({
-
-    template: InfinniUI.Template["controls/dataNavigation/buttons/template/prev.tpl.html"],
-
-    events: {
-        "click": "onClickHandler"
-    },
-
-    initialize: function (options) {
-        this.model = new DataNavigationBaseButtonModel();
-        DataNavigationBaseButton.prototype.initialize.call(this, options);
-    },
-
-    onClickHandler: function (event) {
-        this.trigger('command', "prev");
-    }
-
-});
-
-//####app/controls/dataNavigation/dataNavigationButtonFactory.js
-function DataNavigationButtonFactory (dataNavigation) {
-
-    this._dataNavigation = dataNavigation;
-}
-
-DataNavigationButtonFactory.prototype.buttons = {
-    "prev": DataNavigationPrevButton,
-    "page": DataNavigationPageButton,
-    "next": DataNavigationNextButton
-};
-
-DataNavigationButtonFactory.prototype.createButton = function (type, options) {
-
-    var buttonConstructor = this.buttons[type];
-    if (typeof buttonConstructor !== 'function') {
-        console.error('Wrong button type: ' + type);
-        return;
-    }
-
-    var button = new buttonConstructor(options);
-    button.setParent(this._dataNavigation);
-    return button;
-};
-//####app/controls/dataNavigation/dataNavigationControl.js
-function DataNavigationControl (parent) {
-    _.superClass(DataNavigationControl, this, parent);
-}
-
-_.inherit(DataNavigationControl, Control);
-
-_.extend(DataNavigationControl.prototype, {
-
-    createControlModel: function () {
-        return new DataNavigationModel();
-    },
-
-    createControlView: function (model) {
-        return new DataNavigationView({model: model});
-    },
-
-    onPageNumberChanged: function (handler) {
-        this.controlModel.onPageNumberChanged(handler);
-    },
-
-    onPageSizeChanged: function (handler) {
-        this.controlModel.onPageSizeChanged(handler);
-    }
-
-});
-//####app/controls/dataNavigation/dataNavigationModel.js
-var DataNavigationModel = ControlModel.extend({
-
-    defaults: _.defaults({
-            pageNumber: 0,
-            pageStart: 0,
-            _buttonsCount: 5,
-            _buttonsTemplate: ['prev', 'page', 'next'],
-            pageCount: null,
-            isDataReady: false
-        },
-        ControlModel.prototype.defaults
-    ),
-
-    initialize: function () {
-        ControlModel.prototype.initialize.apply(this, arguments);
-        this.set('availablePageSizes', new Collection());
-        this.on('change:pageNumber', this.updatePageStart, this);
-        this.on('change:pageSize', this.updatePageSize, this);
-    },
-
-    updatePageStart: function () {
-        var
-            pageNumber = this.get('pageNumber'),
-            pageStart = this.get('pageStart'),
-            buttonsCount = this.get('_buttonsCount');
-
-        if (pageNumber + 1 >= pageStart + buttonsCount) {
-            //Выбрана последняя страница по кнопкам навигации. переместить ее в центр
-            pageStart = pageStart + Math.floor(buttonsCount / 2);
-        } else if (pageNumber === pageStart) {
-            //Сдвинуть кнопки навигации вправо, чтобы выбранная страница была в центре
-            pageStart = Math.max(0, pageStart - Math.floor(buttonsCount / 2));
-        } else if (pageNumber + 1 < pageStart) {
-            pageStart = Math.max(0, pageNumber - 1);
-        }
-        this.set('pageStart', pageStart);
-    },
-
-    updatePageSize: function () {
-        //сьрос навигации
-        this.set('pageNumber', 0);
-    },
-
-    nextPage: function () {
-        var pageNumber = this.get('pageNumber');
-        this.set('pageNumber', pageNumber + 1);
-    },
-
-    prevPage: function () {
-        var pageNumber = this.get('pageNumber');
-        if (pageNumber > 0) {
-            this.set('pageNumber', pageNumber - 1);
-        }
-    },
-
-    onPageNumberChanged: function (handler) {
-        this.on('change:pageNumber', function (model, value) {
-            handler.call(null, {value: value});
-        });
-    },
-
-    onPageSizeChanged: function (handler) {
-        this.on('change:pageSize', function (model, value) {
-            handler.call(null, {value: value});
-        });
-    }
-
-});
-//####app/controls/dataNavigation/dataNavigationView.js
-var DataNavigationView = ControlView.extend({
-
-    template: InfinniUI.Template["controls/dataNavigation/template/dataNavigation.tpl.html"],
-
-    className: 'pl-data-navigation',
-
-    UI: {
-        buttons: 'ul',
-        sizes: '.pl-page-size'
-    },
-
-    initialize: function (options) {
-        ControlView.prototype.initialize.call(this, options);
-        this._childViews = [];
-        this.buttonsFactory = new DataNavigationButtonFactory(this);
-        this._pageSizes = new DataNavigationPageSizes();
-        this._pageSizes.setParent(this);
-    },
-
-    initHandlersForProperties: function() {
-        ControlView.prototype.initHandlersForProperties.call(this);
-        this.listenTo(this.model, 'change:pageStart', this.updateButtons);
-        this.listenTo(this.model, 'change:pageCount', this.updateButtons);
-        this.listenTo(this.model, 'change:isDataReady', this.updateButtons);
-    },
-
-    updateProperties: function() {
-        ControlView.prototype.updateProperties.call(this);
-        this.updateButtons();
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.renderTemplate(this.template);
-        this.updateProperties();
-        this.trigger('render');
-        this.renderPageSizes();
-        this.postrenderingActions();
-        return this;
-    },
-
-    renderPageSizes: function () {
-        this.ui.sizes.append(this._pageSizes.render().$el);
-    },
-
-    renderButtons: function () {
-        var
-            template = this.model.get('_buttonsTemplate'),
-            buttonsCount = this.model.get('_buttonsCount'),
-            pageCount = this.model.get('pageCount'),
-            pageNumber = this.model.get('pageNumber'),
-            pageStart = this.model.get('pageStart'),
-            isDataReady = this.model.get('isDataReady'),
-            buttons,
-            nowManyElementsRemove;
-
-        this._removeChildViews();
-
-        if(!isDataReady){
-            return;
-        }
-
-        var
-            buttonsFactory = this.buttonsFactory,
-            model = this.model;
-
-        buttons = template.reduce(function (buttons, buttonType) {
-            if (buttonType === 'page') {
-                for (var i = 0; i < buttonsCount; i = i + 1) {
-                    var button = buttonsFactory.createButton(buttonType, {pageNumber: pageStart + i});
-                    buttons.push(button)
-                }
-            } else {
-                var button = buttonsFactory.createButton(buttonType);
-                buttons.push(button);
-            }
-
-            return buttons;
-        }, []);
-
-        if(typeof pageCount == 'number' && pageStart + buttonsCount >= pageCount){
-            nowManyElementsRemove = pageStart + buttonsCount - pageCount + 1;
-
-            if(pageCount == 0){
-                nowManyElementsRemove += 1;
-            }
-
-            buttons.splice(buttons.length - nowManyElementsRemove, 100);
-        }
-
-        var $buttons = buttons.map(function (button) {
-            this.listenTo(button, 'command', this.onCommandHandler);
-            this._appendChildView(button);
-            return button.render().$el;
-        }, this);
-
-        this.ui.buttons.append($buttons);
-    },
-
-    updateButtons: function () {
-        this.renderButtons()
-    },
-
-    onCommandHandler: function (name, options) {
-        switch (name) {
-            case "prev":
-                this.model.prevPage();
-                break;
-            case "next":
-                this.model.nextPage();
-                break;
-            case "page":
-                this.model.set('pageNumber', options.pageNumber);
-                break;
-        }
-    },
-
-    _removeChildViews: function () {
-        this._childViews.forEach(function (view) {
-            this.stopListening(view);
-            view.remove();
-        }, this);
-        this._childViews.length = 0;
-    },
-
-    _appendChildView: function (view) {
-        this._childViews.push(view);
-    }
-
-});
-
-//####app/controls/dataNavigation/pageSizes/dataNavigationPageSizes.js
-var DataNavigationPageSizes = Backbone.View.extend({
-
-    className: "btn-group",
-
-    template: InfinniUI.Template["controls/dataNavigation/pageSizes/template/pageSizes.tpl.html"],
-
-    events: {
-        "click button": "onClickButtonHandler"
-    },
-
-    setParent: function (parent) {
-        this.model = parent.model;
-        var collection = this.model.get('availablePageSizes');
-        collection.onChange(this.onAvailablePageSizesChanged.bind(this));
-        this.model.on('change:pageSize', this.renderButtons, this);
-    },
-
-    render: function () {
-        this.renderButtons();
-        return this;
-    },
-
-    renderButtons: function () {
-        var collection = this.model.get('availablePageSizes');
-        var pageSize = this.model.get('pageSize');
-
-        var html = collection.toArray().map(function (size) {
-            return this.template({size: size, active: pageSize === size});
-        }, this);
-
-        this.$el.html(html);
-    },
-
-    onAvailablePageSizesChanged: function () {
-        this.renderButtons();
-    },
-
-    onClickButtonHandler: function (event) {
-        var $el = $(event.target);
-
-        var pageSize = parseInt($el.attr('data-size'), 10);
-        this.model.set('pageSize', pageSize);
-    }
 
 });
 
@@ -13567,639 +16016,6 @@ var IndeterminateCheckboxView = ControlView.extend(/** @lends IndeterminateCheck
 	}
 }));
 
-//####app/controls/label/commonView/labelView.js
-/**
- * @class LabelView
- * @augments ControlView
- * @mixes editorBaseViewMixin
- */
-var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @lends LabelView.prototype */{
-    className: 'pl-label',
-
-    template: InfinniUI.Template["controls/label/commonView/template/label.tpl.html"],
-
-    UI: _.extend({}, editorBaseViewMixin.UI, {
-        control: '.label-control'
-    }),
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-    },
-
-    initHandlersForProperties: function(){
-        ControlView.prototype.initHandlersForProperties.call(this);
-        editorBaseViewMixin.initHandlersForProperties.call(this);
-
-        this.listenTo(this.model, 'change:displayFormat', this.updateDisplayFormat);
-        this.listenTo(this.model, 'change:textWrapping', this.updateTextWrapping);
-        this.listenTo(this.model, 'change:textTrimming', this.updateTextTrimming);
-        this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
-    },
-
-    updateProperties: function(){
-        ControlView.prototype.updateProperties.call(this);
-        editorBaseViewMixin.updateProperties.call(this);
-
-        this.updateDisplayFormat();
-        this.updateTextWrapping();
-        this.updateTextTrimming();
-        this.updateLineCount();
-    },
-
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        if (focusable) {
-            this.ui.control.attr('tabindex', 0);
-        } else {
-            this.ui.control.removeAttr('tabindex');
-        }
-    },
-
-    updateValue: function(){
-        var escapeHtml = this.model.get('escapeHtml');
-        var setContent = escapeHtml ? 'text' : 'html';
-        var textForLabel = this.getLabelText();
-        var $label = this.getLabelElement();
-
-        $label[setContent](textForLabel);
-        var title = String(textForLabel);
-        $label.attr('title', title.replace(/<\/?[^>]+>/g, '')); //strip html tags
-    },
-
-    updateDisplayFormat: function(){
-        this.updateValue();
-    },
-
-    updateTextWrapping: function(){
-        var textWrapping = this.model.get('textWrapping');
-        this.getLabelElement().toggleClass('pl-text-wrapping', textWrapping);
-    },
-
-    updateTextTrimming: function(){
-        var textTrimming = this.model.get('textTrimming');
-        this.getLabelElement().toggleClass('pl-text-trimming', textTrimming);
-    },
-
-    updateText: function () {
-        this.updateValue();
-    },
-
-    updateLineCount: function(){
-
-    },
-
-    getData: function () {
-        return _.extend(
-            {},
-            ControlView.prototype.getData.call(this),
-            editorBaseViewMixin.getData.call(this),
-            {
-                text: this.getLabelText() 
-            }
-        );
-    },
-
-    render: function () {
-        this.prerenderingActions();
-        this.renderTemplate(this.template);
-
-        this.updateProperties();
-
-        this.trigger('render');
-        this.postrenderingActions();
-        return this;
-    },
-
-    getLabelText: function () {
-        var model = this.model;
-        var value = model.get('value');
-        var text;
-        var format = model.get('displayFormat');
-
-        if (typeof value !== 'undefined' && value !== null) {
-            text = typeof format === 'function' ? format(null, {value: value}) : value;
-        }else{
-            text = this.model.get('text');
-            if (typeof text === 'undefined' || text == null) {
-                text = '';
-            }
-        }
-
-        return text;
-    },
-
-    getLabelElement: function(){
-        return this.ui.control;
-    }
-
-}));
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Label.viewModes.common', CommonLabelView);
-//####app/controls/label/label.js
-var LabelControl = function (viewMode) {
-    _.superClass(LabelControl, this, viewMode);
-    this.initialize_editorBaseControl();
-};
-
-_.inherit(LabelControl, Control);
-
-_.extend(LabelControl.prototype, {
-
-    createControlModel: function () {
-        return new LabelModel();
-    },
-
-    createControlView: function (model, viewMode) {
-        if(!viewMode || ! (viewMode in window.InfinniUI.Label)){
-            viewMode = 'simple';
-        }
-
-        var ViewClass = window.InfinniUI.Label.viewModes[viewMode];
-
-        return new ViewClass({model: model});
-    },
-    
-    getDisplayValue: function () {
-        return this.controlView.getLabelText();
-    }
-
-}, editorBaseControlMixin);
-//####app/controls/label/labelModel.js
-var LabelModel = ControlModel.extend(_.extend({
-
-    defaults: _.defaults({
-        horizontalTextAlignment: 'Left',
-        verticalAlignment: 'Top',
-        textWrapping: true,
-        textTrimming: true,
-        escapeHtml: true,
-        focusable: false
-    }, ControlModel.prototype.defaults),
-
-    initialize: function(){
-        ControlModel.prototype.initialize.apply(this, arguments);
-        this.initialize_editorBaseModel();
-    }
-}, editorBaseModelMixin));
-//####app/controls/label/simpleView/labelView.js
-/**
- * @class SimpleLabelView
- * @augments ControlView
- * @mixes editorBaseViewMixin
- */
-var SimpleLabelView = CommonLabelView.extend({
-    tagName: 'span',
-
-    template: function(){return '';},
-    UI: _.extend({}, editorBaseViewMixin.UI, {
-
-    }),
-
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        if (focusable) {
-            this.$el.attr('tabindex', 0);
-        } else {
-            this.$el.removeAttr('tabindex');
-        }
-    },
-
-    getLabelElement: function(){
-        return this.$el;
-    }
-
-});
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Label.viewModes.simple', SimpleLabelView);
-//####app/controls/listBox/baseView/listBoxView.js
-var BaseListBoxView = ListEditorBaseView.extend({
-
-    template: {
-        plain: InfinniUI.Template["controls/listBox/baseView/template/listBox.tpl.html"],
-        grouped: InfinniUI.Template["controls/listBox/baseView/template/listBoxGrouped.tpl.html"]
-    },
-
-
-    className: 'pl-listbox',
-
-    events: {
-        'change .pl-listbox-input': 'onChangeHandler'
-    },
-
-    UI: _.defaults({
-        items: '.pl-listbox-i',
-        checkingInputs: '.pl-listbox-input input'
-    }, ListEditorBaseView.prototype.UI),
-
-    initialize: function (options) {
-        //@TODO Реализовать обработку значений по умолчанию!
-        ListEditorBaseView.prototype.initialize.call(this, options);
-    },
-
-    updateGrouping: function(){
-        var isGrouped = this.model.get('groupValueSelector') != null;
-
-        if(isGrouped){
-            this.strategy = new ListBoxViewGroupStrategy(this);
-        }else{
-            this.strategy = new ListBoxViewPlainStrategy(this);
-        }
-    },
-
-    updateValue: function(){
-        this.ui.items.removeClass('pl-listbox-i-chosen');
-        this.ui.checkingInputs.prop('checked', false);
-
-        var value = this.model.get('value'),
-            choosingItem, $choosingItem;
-
-        if(!this.isMultiselect() && value !== undefined && value !== null){
-            value = [value];
-        }
-
-        if($.isArray(value)){
-            for(var i= 0, ii=value.length; i < ii; i++){
-                choosingItem = this.model.itemByValue(value[i]);
-                $choosingItem = this._getElementByItem(choosingItem);
-
-                if($choosingItem){
-                    $choosingItem.addClass('pl-listbox-i-chosen');
-                    $choosingItem.find('.pl-listbox-input input').prop('checked', true);
-                }
-            }
-        }
-    },
-
-    updateSelectedItem: function(ignoreWasRendered){
-        if(!this.wasRendered && ignoreWasRendered != true){
-            return;
-        }
-
-        this.ui.items.removeClass('pl-listbox-i-selected');
-
-        var selectedItem = this.model.get('selectedItem'),
-            $selectedItem = this._getElementByItem(selectedItem);
-
-        if($selectedItem){
-            $selectedItem.addClass('pl-listbox-i-selected');
-        }
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        var preparedItems = this.strategy.prepareItemsForRendering();
-        var template = this.strategy.getTemplate();
-
-        this.removeChildElements();
-
-        this.$el.html(template(preparedItems));
-        this.bindUIElements();
-
-        this.strategy.appendItemsContent(preparedItems);
-
-        this.updateProperties();
-
-        this.trigger('render');
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    getItems: function(){
-        return this.model.get('items');
-    },
-
-    getItemTemplate: function(){
-        return this.model.get('itemTemplate');
-    },
-
-    getGroupValueSelector: function(){
-        return this.model.get('groupValueSelector');
-    },
-
-    isMultiselect: function(){
-        return this.model.get('multiSelect');
-    },
-
-    isFocusable: function () {
-        return this.model.get('focusable');
-    },
-
-    getGroupItemTemplate: function(){
-        return this.model.get('groupItemTemplate');
-    },
-
-    onChangeHandler: function(){
-        var $checked = this.ui.checkingInputs.filter(':checked').parent().parent(),
-            valueForModel = null,
-            model = this.model,
-            val;
-
-        if(this.isMultiselect()){
-            valueForModel = [];
-
-            $checked.each(function(i, el){
-                val = $(el).data('pl-data-item');
-                valueForModel.push(model.valueByItem(val));
-            });
-
-        }else{
-            if($checked.length > 0){
-                valueForModel = model.valueByItem($checked.data('pl-data-item'));
-            }
-        }
-
-        this.model.set('value', valueForModel);
-    },
-
-    updateDisabledItem: function(){
-        var model = this.model,
-            disabledItemCondition = model.get('disabledItemCondition');
-
-        this.ui.items.removeClass('pl-disabled-list-item');
-        this.ui.checkingInputs.attr('disabled', null);
-
-        if( disabledItemCondition != null ){
-            this.ui.items.each(function (i, el) {
-                var $el = $(el),
-                    item = $el.data('pl-data-item'),
-                    isDisabled = disabledItemCondition( undefined, {value: item});
-
-                if(isDisabled){
-                    $el.toggleClass('pl-disabled-list-item', true);
-                    $el.find('.pl-listbox-input input').attr('disabled', 'disabled');
-                }
-            })
-        }
-    },
-
-    _getElementByItem: function(item){
-        var element = _.find(this.ui.items, function(listboxItem){
-            return $(listboxItem).data('pl-data-item') == item;
-        });
-
-        return $(element);
-    }
-});
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.base', BaseListBoxView);
-//####app/controls/listBox/baseView/viewGroupStrategy.js
-function ListBoxViewGroupStrategy(listbox) {
-    this.listbox = listbox;
-};
-
-_.extend(ListBoxViewGroupStrategy.prototype, {
-
-    prepareItemsForRendering: function(){
-        var items = this.listbox.getItems(),
-            inputName = 'listbox-' + guid(),
-            result = {
-                isMultiselect: this.listbox.isMultiselect(),
-                focusable: this.listbox.isFocusable(),
-                inputName: inputName,
-                groups: []
-            },
-            groups = {},
-            groupingFunction = this.listbox.getGroupValueSelector();
-
-        items.forEach(function(item, index){
-            var groupKey = groupingFunction(undefined, {value:item});
-
-            if(! (groupKey in groups)){
-                groups[groupKey] = [];
-            }
-
-            groups[groupKey].push({index: index, item: item});
-        });
-
-        for(var k in groups){
-            result.groups.push({
-                items: groups[k]
-            })
-        }
-
-        return result;
-    },
-
-    getTemplate: function(){
-        return this.listbox.template.grouped;
-    },
-
-    appendItemsContent: function(preparedItems){
-        var $listbox = this.listbox.$el,
-            itemTemplate = this.listbox.getItemTemplate(),
-            groupTitleTemplate = this.listbox.getGroupItemTemplate(),
-            groups = preparedItems.groups,
-            listbox = this.listbox,
-            item, itemEl, titleEl, $el, group;
-
-        $listbox.find('.pl-listbox-group-i').each(function(i, el){
-
-            group = groups[i];
-            titleEl = groupTitleTemplate(undefined, {index: group.items[0].index, item: group});
-            listbox.addChildElement(titleEl);
-
-            $el = $(el);
-            $el.find(".pl-listbox-group-title").append(titleEl.render());
-
-            $el.find(".pl-listbox-body").each(function(j, bodyEl){
-                item = group.items[j].item;
-                itemEl = itemTemplate(undefined, {index: group.items[j].index, item: item});
-
-                listbox.addChildElement(itemEl);
-
-                $(bodyEl).append(itemEl.render());
-                $(bodyEl).parent()
-                    .data('pl-data-item', item);
-            });
-
-        });
-    }
-});
-//####app/controls/listBox/baseView/viewPlainStrategy.js
-function ListBoxViewPlainStrategy(listbox) {
-    this.listbox = listbox;
-};
-
-_.extend(ListBoxViewPlainStrategy.prototype, {
-
-    prepareItemsForRendering: function(){
-        var items = this.listbox.getItems(),
-            inputName = 'listbox-' + guid(),
-            result = {
-                isMultiselect: this.listbox.isMultiselect(),
-                focusable: this.listbox.isFocusable(),
-                inputName: inputName,
-                items: items.toArray()
-            };
-
-        return result;
-    },
-
-    getTemplate: function(){
-        return this.listbox.template.plain;
-    },
-
-    appendItemsContent: function(preparedItems){
-        var $listbox = this.listbox.$el,
-            itemTemplate = this.listbox.getItemTemplate(),
-            items = preparedItems.items,
-            listbox = this.listbox,
-            itemEl, $el;
-
-        $listbox.find('.pl-listbox-body').each(function(i, el){
-            $el = $(el);
-            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
-            listbox.addChildElement(itemEl);
-            $el.append(itemEl.render());
-
-            $el.parent().data('pl-data-item', items[i]);
-        });
-    }
-});
-//####app/controls/listBox/checkingView/listBoxView.js
-var CheckingListBoxView = BaseListBoxView.extend({
-    className: 'pl-listbox',
-
-    template: {
-        plain: InfinniUI.Template["controls/listBox/checkingView/template/listBox.tpl.html"],
-        grouped: InfinniUI.Template["controls/listBox/checkingView/template/listBoxGrouped.tpl.html"]
-    },
-
-    events: _.extend( {
-
-    }, BaseListBoxView.prototype.events),
-
-    initialize: function (options) {
-        BaseListBoxView.prototype.initialize.call(this, options);
-        this.initDomHandlers();
-    },
-
-    updateEnabled: function () {
-        ListEditorBaseView.prototype.updateEnabled.call(this);
-
-        var enabled = this.model.get('enabled');
-
-        this.ui.checkingInputs.attr('disabled', !enabled);
-    },
-
-    initDomHandlers: function(){
-        var $listBox = this.$el,
-            that = this;
-
-        $listBox.get(0).addEventListener('click', function(e){
-            e = $.event.fix(e);
-            var $el = $(e.target),
-                $currentListItem, item, isDisabledItem;
-
-            if (!that.model.get('enabled')) {
-                return;
-            }
-
-            while($el.get(0) != $listBox.get(0)){
-                if($el.hasClass('pl-listbox-i')){
-                    $currentListItem = $el;
-                }
-
-                $el = $el.parent();
-            }
-
-            if($currentListItem && $currentListItem.length > 0){
-                item = $currentListItem.data('pl-data-item');
-                isDisabledItem = that.model.isDisabledItem(item);
-
-                if(!isDisabledItem) {
-                    that.model.toggleValue(item);
-                }
-
-                that.model.set('selectedItem', item);
-            }
-
-        }, true);
-    }
-});
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.checking', CheckingListBoxView);
-//####app/controls/listBox/commonView/listBoxView.js
-var CommonListBoxView = BaseListBoxView.extend({
-    className: 'pl-listbox pl-listbox-common-mode',
-
-    events: _.extend( {
-
-    }, BaseListBoxView.prototype.events),
-
-    initialize: function (options) {
-        BaseListBoxView.prototype.initialize.call(this, options);
-        this.initDomHandlers();
-    },
-
-    initDomHandlers: function(){
-        var $listBox = this.$el,
-            that = this;
-
-        $listBox.get(0).addEventListener('click', function(e){
-            e = $.event.fix(e);
-            var $el = $(e.target),
-                $currentListItem, item, isDisabledItem;
-
-            while($el.get(0) != $listBox.get(0)){
-                if($el.hasClass('pl-listbox-i')){
-                    $currentListItem = $el;
-                }
-
-                $el = $el.parent();
-            }
-
-            if($currentListItem.length > 0){
-                item = $currentListItem.data('pl-data-item');
-                isDisabledItem = that.model.isDisabledItem(item);
-
-                if(!isDisabledItem){
-                    that.model.toggleValue(item);
-                }
-
-                that.model.set('selectedItem', item);
-            }
-
-        }, true);
-    }
-});
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.common', CommonListBoxView);
-//####app/controls/listBox/listBoxControl.js
-function ListBoxControl(viewMode) {
-    _.superClass(ListBoxControl, this, viewMode);
-}
-
-_.inherit(ListBoxControl, ListEditorBaseControl);
-
-_.extend(ListBoxControl.prototype, {
-
-    createControlModel: function () {
-        return new ListBoxModel();
-    },
-
-    createControlView: function (model, viewMode) {
-        if(!viewMode || ! viewMode in window.InfinniUI.Listbox){
-            viewMode = 'common';
-        }
-
-        var ViewClass = window.InfinniUI.Listbox.viewModes[viewMode];
-
-        return new ViewClass({model: model});
-    }
-});
-
-
-//####app/controls/listBox/listBoxModel.js
-var ListBoxModel = ListEditorBaseModel.extend({
-    initialize: function () {
-        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    }
-});
 //####app/controls/loaderIndicator/loaderIndicator.js
 (function () {
     var template = InfinniUI.Template["controls/loaderIndicator/template.tpl.html"];
@@ -15019,340 +16835,6 @@ var PdfViewerView = PdfViewerViewBase.extend({
         this.listenTo(this.model, 'change:url', renderFrame);
     }
 });
-//####app/controls/popupButton/commonView/popupButtonView.js
-var CommonPopupButtonView = ContainerView.extend({
-
-    className: 'pl-popup-button',
-
-    template: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.tpl.html"],
-    dropdownTemplate: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.dropdown.tpl.html"],
-
-    events: {
-        'click .pl-popup-button__grip': 'onClickGripHandler',
-        'click .pl-popup-button__button': 'onClickHandler'
-    },
-
-    UI: {
-        button: '.pl-popup-button__button',
-        grip: '.pl-popup-button__grip'
-    },
-
-    updateProperties: function(){
-        ContainerView.prototype.updateProperties.call(this);
-
-        this.updateContent();
-    },
-
-    updateContent: CommonButtonView.prototype.updateContent,
-    updateText: CommonButtonView.prototype.updateText,
-
-    getButtonElement: function(){
-        return this.ui.button;
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        var items = this.model.get('items').toArray();
-        var template = this.template;
-
-        this.removeChildElements();
-
-        this.$el.html(template({items: items}));
-        this.bindUIElements();
-
-        this.$dropdown = this.renderDropdown();
-
-        this.updateProperties();
-
-        this.trigger('render');
-
-        this.postrenderingActions();
-
-        return this;
-    },
-
-    renderDropdown: function(){
-        var template = this.dropdownTemplate;
-        var items = this.model.get('items').toArray();
-        var $result = $(template({items: items}));
-
-        this.appendItemsContent($result, items);
-
-        return $result;
-    },
-
-    appendItemsContent: function($dropdown, items){
-        var that = this,
-            itemTemplate = this.model.get('itemTemplate'),
-            itemEl, $el;
-
-        $dropdown.find('.pl-popup-button__item').each(function(i, el){
-            $el = $(el);
-            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
-            that.addChildElement(itemEl);
-            $el.append(itemEl.render());
-        });
-    },
-
-    open: function(){
-        var that = this;
-
-        $('body').append(this.$dropdown);
-
-        this.$dropdown.addClass('open');
-        this.alignDropdown();
-
-        var $ignoredElements = this.$dropdown.add (this.ui.grip);
-        this.$dropdown.on('click', function () {
-            that.close();
-        });
-        //new ActionOnLoseFocus($ignoredElements, function(){
-        //    that.close();
-        //});
-    },
-
-    close: function(){
-        this.$dropdown.removeClass('open');
-        this.$dropdown.detach();
-    },
-
-    alignDropdown: function(){
-        var offset = this.$el.offset();
-        var top = offset.top + this.$el.height();
-        var left = offset.left;
-
-        this.$dropdown.offset({
-            top: top,
-            left: left
-        });
-    },
-
-    onClickGripHandler: function(){
-        if(!this.$dropdown.hasClass('open')){
-            this.open();
-        }else{
-            this.close();
-        }
-    },
-
-    updateGrouping: function(){}
-
-});
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'PopupButton.viewModes.common', CommonPopupButtonView);
-
-//####app/controls/popupButton/forMenuView/popupButtonView.js
-var ForMenuPopupButtonView = CommonPopupButtonView.extend({
-
-    tagName: 'a',
-    className: 'pl-popup-button',
-    attributes: {
-        href: 'javascript:;'
-    },
-
-    template: InfinniUI.Template["controls/popupButton/forMenuView/template/popupButton.tpl.html"],
-    dropdownTemplate: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.dropdown.tpl.html"],
-
-    events: {
-        'click': 'onClickGripHandler'
-        //'click .pl-popup-button__button': 'onClickHandler'
-    },
-
-    UI: {
-        button: '.pl-popup-button__button',
-        grip: '.pl-popup-button__grip'
-    },
-
-    updateProperties: function(){
-        ContainerView.prototype.updateProperties.call(this);
-
-        this.updateContent();
-    },
-
-    updateContent: CommonButtonView.prototype.updateContent,
-    updateText: CommonButtonView.prototype.updateText,
-
-    updateHorizontalAlignment: function(){
-        var horizontalAlignment = this.model.get('horizontalAlignment');
-        var that = this;
-        var $el;
-
-        this.whenReady(
-            function(){
-                $el = that.$el.parent().parent();
-                return $el.length > 0;
-            },
-
-            function(){
-                if(horizontalAlignment == 'Right'){
-                    $el
-                        .addClass('pull-right');
-                }else{
-                    $el
-                        .removeClass('pull-right');
-                }
-            }
-        );
-
-    },
-
-    getButtonElement: function(){
-        return this.ui.button;
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        var items = this.model.get('items').toArray();
-        var template = this.template;
-
-        this.removeChildElements();
-
-        this.$el.html(template({items: items}));
-        this.bindUIElements();
-
-        this.$dropdown = this.renderDropdown();
-
-        this.updateProperties();
-
-        this.trigger('render');
-
-        this.postrenderingActions();
-
-        return this;
-    },
-
-    renderDropdown: function(){
-        var template = this.dropdownTemplate;
-        var items = this.model.get('items').toArray();
-        var $result = $(template({items: items}));
-
-        this.appendItemsContent($result, items);
-        $result.on('click', function () {
-            this.close();
-        }.bind(this));
-        return $result;
-    },
-
-    appendItemsContent: function($dropdown, items){
-        var that = this,
-            itemTemplate = this.model.get('itemTemplate'),
-            itemEl, $el;
-
-        $dropdown.find('.pl-popup-button__item').each(function(i, el){
-            $el = $(el);
-            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
-            that.addChildElement(itemEl);
-            $el.append(itemEl.render());
-        });
-    },
-
-    open: function(){
-        var that = this;
-        var $parent = this.$el.parent();
-
-        $('body').append(this.$dropdown);
-
-        this.$dropdown.addClass('open');
-        $parent.addClass('open');
-
-        this.alignDropdown();
-
-        var $ignoredElements = this.$dropdown.add (this.$el);
-        new ActionOnLoseFocus($ignoredElements, function(){
-            that.close();
-        });
-    },
-
-    close: function(){
-        this.$dropdown.removeClass('open');
-        this.$el.parent().removeClass('open');
-        this.$dropdown.detach();
-    },
-
-    alignDropdown: function(){
-        var horizontalAlignment = this.model.get('horizontalAlignment');
-        var $el = this.$el.parent();
-        var offset = $el.offset();
-        var top = offset.top + $el.height()- 2;
-        var $dropdownMenu = this.$dropdown.find('.dropdown-menu');
-        var left;
-
-        if(horizontalAlignment == "Right"){
-            left = offset.left - ($dropdownMenu.width() - $el.width());
-        }else{
-            left = offset.left;
-        }
-
-        this.$dropdown.offset({
-            top: top,
-            left: left
-        });
-    },
-
-    onClickGripHandler: function(){
-        if(!this.$dropdown.hasClass('open')){
-            this.open();
-        }else{
-            this.close();
-        }
-    },
-
-    updateGrouping: function(){},
-
-    whenReady: function(conditionFunction, onConditionFunction, n){
-        var that = this;
-
-        if(n === undefined){
-            n = 100;
-        }
-
-        if(!conditionFunction()){
-            if(n>0){
-                setTimeout( function(){
-                    that.whenReady(conditionFunction, onConditionFunction, n-1);
-                }, 10);
-            }
-        }else{
-            onConditionFunction();
-        }
-    }
-
-});
-
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'PopupButton.viewModes.forMenu', ForMenuPopupButtonView);
-
-//####app/controls/popupButton/popupButtonControl.js
-function PopupButtonControl(viewMode) {
-    _.superClass(PopupButtonControl, this, viewMode);
-}
-
-_.inherit(PopupButtonControl, ContainerControl);
-
-_.extend(PopupButtonControl.prototype, /** @lends PopupButtonControl.prototype */ {
-
-    createControlModel: function () {
-        return new PopupButtonModel();
-    },
-
-    createControlView: function (model, viewMode) {
-        if(!viewMode || ! viewMode in window.InfinniUI.PopupButton){
-            viewMode = 'common';
-        }
-
-        var ViewClass = window.InfinniUI.PopupButton.viewModes[viewMode];
-
-        return new ViewClass({model: model});
-    }
-
-}, buttonControlMixin);
-
-
-//####app/controls/popupButton/popupButtonModel.js
-var PopupButtonModel = ContainerModel.extend({
-
-});
 //####app/controls/scrollPanel/scrollPanelControl.js
 /**
  *
@@ -15520,1122 +17002,6 @@ var ScrollPanelView = ContainerView.extend(/** @lends ScrollPanelView.prototype 
     }
 
 });
-
-//####app/controls/stackPanel/baseView/stackPanelView.js
-/**
- * @class
- * @augments ControlView
- */
-var StackPanelView = ContainerView.extend(
-    /** @lends StackPanelView.prototype */
-    {
-        tagName: 'ul',
-        className: 'pl-stack-panel pl-clearfix',
-
-        template: {
-            plain: InfinniUI.Template["controls/stackPanel/baseView/template/stackPanel.tpl.html"],
-            grouped: InfinniUI.Template["controls/stackPanel/baseView/template/stackPanelGrouped.tpl.html"]
-        },
-
-        UI: {
-            items: '.stackpanel-items'
-        },
-
-        initialize: function (options) {
-            ContainerView.prototype.initialize.call(this, options);
-
-            this.initOrientation();
-        },
-
-        updateGrouping: function(){
-            var isGrouped = this.model.get('groupValueSelector') != null;
-
-            if(isGrouped){
-                this.strategy = new StackPanelViewGroupStrategy(this);
-            }else{
-                this.strategy = new StackPanelViewPlainStrategy(this);
-            }
-        },
-
-        render: function () {
-            this.prerenderingActions();
-
-            this.removeChildElements();
-
-            var preparedItems = this.strategy.prepareItemsForRendering();
-            var template = this.strategy.getTemplate();
-
-            this.$el.html(template(preparedItems));
-
-            this.strategy.appendItemsContent(preparedItems);
-
-            this.bindUIElements();
-            this.updateProperties();
-
-            this.trigger('render');
-
-
-            this.postrenderingActions();
-            return this;
-        },
-
-        initOrientation: function () {
-            this.listenTo(this.model, 'change:orientation', this.updateOrientation);
-            this.updateOrientation();
-        },
-
-        updateOrientation: function () {
-            var orientation = this.model.get('orientation');
-            this.$el.toggleClass('horizontal-orientation', orientation == 'Horizontal');
-            this.$el.toggleClass('pl-stack-panel_horizontal', orientation == 'Horizontal');
-        },
-
-        getItems: function(){
-            return this.model.get('items');
-        },
-
-        getItemTemplate: function(){
-            return this.model.get('itemTemplate');
-        },
-
-        getGroupValueSelector: function(){
-            return this.model.get('groupValueSelector');
-        },
-
-        getGroupItemTemplate: function(){
-            return this.model.get('groupItemTemplate');
-        },
-    }
-);
-
-//####app/controls/stackPanel/baseView/viewGroupStrategy.js
-function StackPanelViewGroupStrategy(stackPanel) {
-    this.stackPanel = stackPanel;
-}
-
-_.extend(StackPanelViewGroupStrategy.prototype, {
-
-    groupTemplate: InfinniUI.Template["controls/stackPanel/baseView/template/stackPanelGroup.tpl.html"],
-
-    prepareItemsForRendering: function(){
-        var items = this.stackPanel.getItems(),
-            inputName = 'listbox-' + guid(),
-            result = {
-                inputName: inputName,
-                groups: []
-            },
-            groups = {},
-            groupingFunction = this.stackPanel.getGroupValueSelector();
-
-        items.forEach(function(item, index){
-            var groupKey = groupingFunction(undefined, {value:item});
-
-            if(! (groupKey in groups)){
-                groups[groupKey] = [];
-            }
-
-            groups[groupKey].push(item);
-        });
-
-        for(var k in groups){
-            if (!groups.hasOwnProperty(k)) {
-                continue;
-            }
-            result.groups.push({
-                items: groups[k],
-                indices: groups[k].map(function (item) {
-                    return items.indexOf(item);
-                })
-            });
-        }
-
-        return result;
-    },
-
-    getTemplate: function(){
-        return this.stackPanel.template.grouped;
-    },
-
-    /**
-     *
-     * @param {Object} preparedItems
-     * @param {Array} preparedItems.groups
-     */
-    appendItemsContent: function (preparedItems) {
-        var
-            stackPanel = this.stackPanel,
-            $stackPanel = stackPanel.$el,
-            groupTemplate = this.groupTemplate,
-            groupHeaderTemplate = this.stackPanel.getGroupItemTemplate(),
-            itemTemplate = this.stackPanel.getItemTemplate(),
-            $groups,
-            groups = preparedItems.groups;
-
-        $groups = groups.map(function (group, groupIndex) {
-
-            var $items,
-                items = group.items || [],
-                indices = group.indices || [],
-                $group = $(groupTemplate({items: items})),
-                groupHeader = groupHeaderTemplate(null, {
-                    index: indices[0],  //Индекс любого элемента в этой группе
-                    item: group
-                });
-
-            stackPanel.addChildElement(groupHeader);
-
-            $items = items.map(function (item, itemIndex) {
-                var element = itemTemplate(null, {index: indices[itemIndex], item: item});
-                stackPanel.addChildElement(element);
-                return element.render();
-            });
-
-            $('.pl-stack-panel-group__header', $group).append(groupHeader.render());
-
-            $('.pl-stack-panel-list__item', $group).each(function (i, el) {
-                $(el).append($items[i]);
-            });
-
-            return $group;
-
-        });
-
-        $stackPanel.append($groups);
-    }
-});
-//####app/controls/stackPanel/baseView/viewPlainStrategy.js
-function StackPanelViewPlainStrategy(stackPanel) {
-    this.stackPanel = stackPanel;
-};
-
-_.extend(StackPanelViewPlainStrategy.prototype, {
-
-    prepareItemsForRendering: function(){
-        var items = this.stackPanel.getItems(),
-            result = {
-                items: items.toArray()
-            };
-
-        return result;
-    },
-
-    getTemplate: function(){
-        return this.stackPanel.template.plain;
-    },
-
-    appendItemsContent: function(preparedItems){
-        var $stackPanel = this.stackPanel.$el,
-            itemTemplate = this.stackPanel.getItemTemplate(),
-            items = preparedItems.items,
-            stackPanel = this.stackPanel,
-            itemEl, $el;
-
-        $stackPanel.find('.pl-stack-panel-i').each(function(i, el){
-            $el = $(el);
-            itemEl = itemTemplate(undefined, {index: i, item: items[i]});
-            stackPanel.addChildElement(itemEl);
-            $el.append(itemEl.render());
-
-            $el.parent().data('pl-data-item', items[i]);
-        });
-    }
-});
-//####app/controls/stackPanel/stackPanelControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function StackPanelControl(viewMode) {
-    _.superClass(StackPanelControl, this, viewMode);
-}
-
-_.inherit(StackPanelControl, ContainerControl);
-
-_.extend(StackPanelControl.prototype,
-    /** @lends StackPanelControl.prototype */
-    {
-        createControlModel: function () {
-            return new StackPanelModel();
-        },
-
-        createControlView: function (model, viewMode) {
-            var view = new StackPanelView({model: model});
-
-            view.viewMode = viewMode;
-
-            return view;
-        }
-    }
-);
-
-
-//####app/controls/stackPanel/stackPanelModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var StackPanelModel = ContainerModel.extend(
-    /** @lends StackPanelModel.prototype */
-    {
-        initialize: function () {
-            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        }
-    }
-);
-//####app/controls/tabPanel/tabHeader/tabHeaderView.js
-var TabHeaderModel = Backbone.Model.extend({
-
-    defaults: {
-        text: '',
-        canClose: false
-    }
-});
-
-var TabHeaderView = Backbone.View.extend({
-
-    className: "pl-tabheader",
-
-    tagName: "li",
-
-    template: InfinniUI.Template["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"],
-
-    events: {
-        "click": "onClickHandler",
-        "click .pl-close": "onClickCloseHandler"
-    },
-
-    UI: {
-        label: '.pl-tabheader-text',
-        close: '.pl-close'
-    },
-
-    initialize: function (options) {
-        this.model = new TabHeaderModel(options);
-
-        this.on('rendered', this.onRenderedHandler);
-    },
-
-    render: function () {
-        this.$el.html(this.template);
-        this.bindUIElements();
-        this.trigger('rendered');
-        return this;
-    },
-
-    /**
-     *
-     * @param {string} value
-     */
-    setText: function (value) {
-        this.model.set('text', value);
-    },
-
-    /**
-     *
-     * @param {boolean} value
-     */
-    setCanClose: function (value) {
-        this.model.set('canClose', value);
-    },
-
-    /**
-     *
-     * @param {boolean} value
-     */
-    setSelected: function (value) {
-        this.model.set('selected', value);
-    },
-
-    /**
-     * @protected
-     */
-    updateProperties: function () {
-        this.updateTextHandler();
-        this.updateCanClose();
-        this.updateSelectedHandler();
-    },
-
-    /**
-     * @protected
-     */
-    onRenderedHandler: function () {
-        this.updateProperties();
-        this.listenTo(this.model, 'change:text', this.updateTextHandler);
-        this.listenTo(this.model, 'change:selected', this.updateSelectedHandler);
-        this.listenTo(this.model, 'cahnge:canClose', this.updateCanClose);
-    },
-
-    /**
-     * @protected
-     */
-    updateTextHandler: function () {
-        var text = this.model.get('text');
-        this.ui.label.text(text);
-    },
-
-    /**
-     * @protected
-     */
-    updateCanClose: function () {
-        var canClose = this.model.get('canClose');
-        this.ui.close.toggleClass('hidden', !canClose);
-    },
-
-    /**
-     * @protected
-     */
-    updateSelectedHandler: function () {
-        var selected = this.model.get('selected');
-        this.$el.toggleClass('pl-active active', selected);
-    },
-
-    onClickHandler: function (event) {
-        this.trigger('selected');
-    },
-
-    onClickCloseHandler: function (event) {
-        event.stopPropagation();
-        this.trigger('close');
-    }
-
-});
-
-_.extend(TabHeaderView.prototype, bindUIElementsMixin);
-//####app/controls/tabPanel/tabPage/tabPageControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function TabPageControl(parent) {
-    _.superClass(TabPageControl, this, parent);
-}
-
-_.inherit(TabPageControl, ContainerControl);
-
-_.extend(TabPageControl.prototype, /** @lends TabPageControl.prototype */ {
-
-
-    createControlModel: function () {
-        return new TabPageModel();
-    },
-
-    createControlView: function (model) {
-        return new TabPageView({model: model});
-    }
-
-
-});
-
-
-//####app/controls/tabPanel/tabPage/tabPageModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var TabPageModel = ContainerModel.extend(/** @lends TabPageModel.prototype */ {
-
-    initialize: function () {
-        ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    },
-
-    defaults: _.defaults(
-        {
-            canClose: false,
-            selected: false
-        },
-        ContainerModel.prototype.defaults
-    )
-
-});
-//####app/controls/tabPanel/tabPage/tabPageView.js
-/**
- * @class
- * @augments ControlView
- */
-var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
-
-    className: 'pl-tabpage hidden',
-
-    template: InfinniUI.Template["controls/tabPanel/tabPage/template/tabPage.tpl.html"],
-
-    UI: {
-
-    },
-
-    initHandlersForProperties: function () {
-        ContainerView.prototype.initHandlersForProperties.call(this);
-        this.listenTo(this.model, 'change:selected', this.updateSelected);
-    },
-
-    updateProperties: function () {
-        ContainerView.prototype.updateProperties.call(this);
-        this.updateSelected();
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.removeChildElements();
-
-        this.$el.html(this.template({
-            items: this.model.get('items')
-        }));
-        this.renderItemsContents();
-
-        this.bindUIElements();
-
-        this.postrenderingActions();
-
-        this.trigger('render');
-        this.updateProperties();
-        return this;
-    },
-
-    renderItemsContents: function () {
-        var $items = this.$el.find('.pl-tabpage-i'),
-            items = this.model.get('items'),
-            itemTemplate = this.model.get('itemTemplate'),
-            that = this,
-            element, item;
-
-        $items.each(function (i, el) {
-            item = items.getByIndex(i);
-            element = itemTemplate(undefined, {item: item, index: i});
-            that.addChildElement(element);
-            $(el)
-                .append(element.render());
-        });
-    },
-
-    updateSelected: function () {
-        var selected = this.model.get('selected');
-        this.$el.toggleClass('hidden', !selected);
-    },
-
-    /**
-     * @protected
-     */
-    updateGrouping: function () {
-
-    }
-
-});
-//####app/controls/tabPanel/tabPanelControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function TabPanelControl(parent) {
-    _.superClass(TabPanelControl, this, parent);
-}
-
-_.inherit(TabPanelControl, ContainerControl);
-
-_.extend(TabPanelControl.prototype, /** @lends TabPanelControl.prototype */ {
-
-    setSelectedItem: function (value) {
-        /**
-         * @TODO Отрефакторить! Временное решение т.к. коллекция model.items содержит не экземпляры страниц а метаданные! см. templating в Container
-         */
-        var
-            selectedItem = null,
-            model = this.controlModel,
-            elements = this.controlView.childElements,
-            items = model.get('items');
-
-        if (value instanceof TabPage) {
-            model.set('selectedItem', value)
-        } else if (Array.isArray(elements)) {
-            var index = items.indexOf(value);
-            if (index !== -1) {
-                selectedItem = elements[index];
-            }
-            this.controlModel.set('selectedItem', selectedItem);
-        }
-    },
-
-    createControlModel: function () {
-        return new TabPanelModel();
-    },
-
-    createControlView: function (model) {
-        return new TabPanelView({model: model});
-    }
-
-});
-
-
-//####app/controls/tabPanel/tabPanelModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var TabPanelModel = ContainerModel.extend(/** @lends TabPanelModel.prototype */ {
-
-    initialize: function () {
-        ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    },
-
-    defaults: _.defaults(
-        {
-            headerLocation: InfinniUI.TabHeaderLocation.top,
-            headerOrientation: InfinniUI.TabHeaderOrientation.horizontal
-        },
-        ContainerModel.prototype.defaults
-    )
-
-});
-//####app/controls/tabPanel/tabPanelView.js
-/**
- * @class
- * @augments ControlView
- */
-var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
-
-    className: 'pl-tabpanel',
-
-    template: {
-        top: InfinniUI.Template["controls/tabPanel/template/tabPanel.top.tpl.html"],
-        right: InfinniUI.Template["controls/tabPanel/template/tabPanel.right.tpl.html"],
-        bottom: InfinniUI.Template["controls/tabPanel/template/tabPanel.bottom.tpl.html"],
-        left: InfinniUI.Template["controls/tabPanel/template/tabPanel.left.tpl.html"],
-        none: InfinniUI.Template["controls/tabPanel/template/tabPanel.none.tpl.html"]
-    },
-
-    UI: {
-        header: '.pl-tabpanel-header',
-        content: '.pl-tabpanel-content'
-    },
-
-    initHandlersForProperties: function () {
-        ContainerView.prototype.initHandlersForProperties.call(this);
-        this.listenTo(this.model, 'change:headerLocation', this.onChangeHeaderLocation);
-        this.listenTo(this.model, 'change:headerOrientation', this.updateHeaderOrientation);
-        this.listenTo(this.model, 'change:selectedItem', this.updateSelectedItem);
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.renderTemplate(this.getTemplate());
-
-        this.renderItemsContents();
-        this.checkSelectedItem();
-
-        this.postrenderingActions();
-
-        this.trigger('render');
-        this.updateProperties();
-        return this;
-    },
-
-    /**
-     * @protected
-     */
-    renderItemsContents: function () {
-        var items = this.model.get('items');
-
-        this.removeChildElements();
-        this.ui.content.empty();
-        this.model.set('selectedItemIndex', -1);
-
-        var data = [];
-        items.forEach(function (item, index) {
-            data.push({
-                tabElement: this.renderTabContent(item, index),
-                item: item,
-                index: index
-            });
-        }, this);
-
-        this.renderTabHeaders(data);
-    },
-
-    /**
-     * @protected
-     * @param {Array.<Object>} data
-     */
-    renderTabHeaders: function (data) {
-        var header,
-            model = this.model,
-            items = model.get('items'),
-            selectedItem = model.get('selectedItem');
-
-        if (Array.isArray(this.tabHeaders)) {
-            while (header = this.tabHeaders.pop()) {
-                this.stopListening(header);
-                header.remove();
-            }
-        }
-
-        this.tabHeaders = data.map(function (data) {
-            var selected = items.indexOf(data.item) !== -1;
-            var header = this.renderTabHeader(data.tabElement, selected);
-
-            this.listenTo(header, 'selected', function () {
-                model.set('selectedItem', data.tabElement);
-            });
-
-            this.listenTo(header, 'close', function () {
-                data.tabElement.close();
-            });
-
-            return header;
-        }, this);
-
-    },
-
-    /**
-     *
-     * @param {TabPage} tabPageElement
-     * @param {boolean} selected
-     * @returns {TabHeaderView}
-     */
-    renderTabHeader: function (tabPageElement, selected) {
-        var header = new TabHeaderView({
-            text: tabPageElement.getText(),
-            canClose: tabPageElement.getCanClose(),
-            selected: selected
-        });
-
-        tabPageElement.onPropertyChanged('text', function () {
-            header.setText(tabPageElement.getText());
-        });
-
-        tabPageElement.onPropertyChanged('canClose', function () {
-            header.setCanClose(tabPageElement.getCanClose());
-        });
-
-        this.ui.header.append(header.render().$el);
-        return header;
-    },
-
-    renderTabContent: function (item, index) {
-        var
-            itemTemplate = this.model.get('itemTemplate'),
-            element = itemTemplate(undefined, {item: item, index: index});
-
-        this.addChildElement(element);
-        this.ui.content.append(element.render());
-        return element;
-    },
-
-    /**
-     * @protected
-     * @returns {Function}
-     */
-    getTemplate: function () {
-        var
-            template,
-            headerLocation = this.model.get('headerLocation');
-
-        switch (headerLocation) {
-            case InfinniUI.TabHeaderLocation.top:
-                template = this.template.top;
-                break;
-            case InfinniUI.TabHeaderLocation.right:
-                template = this.template.right;
-                break;
-            case InfinniUI.TabHeaderLocation.bottom:
-                template = this.template.bottom;
-                break;
-            case InfinniUI.TabHeaderLocation.left:
-                template = this.template.left;
-                break;
-            case InfinniUI.TabHeaderLocation.none:
-            default:
-                template = this.template.none;
-                break;
-        }
-
-        return template;
-    },
-
-    /**
-     * @protected
-     */
-    updateProperties: function () {
-        ContainerView.prototype.updateProperties.call(this);
-        this.updateHeaderOrientation();
-        this.updateSelectedItem();
-    },
-
-    /**
-     * @protected
-     */
-    onChangeHeaderLocation: function () {
-        //При изменении положения вкладок меняется весь шаблон
-        this.rerender();
-    },
-
-    /**
-     * @protected
-     */
-    updateHeaderOrientation: function () {
-        //@TODO Реализовать TabPanel.updateHeaderOrientation()
-    },
-
-
-    /**
-     * @protected
-     * @description Проверяет чтобы одна из вкладок была активна
-     */
-    checkSelectedItem: function () {
-        var
-            model = this.model,
-            tabPages = this.childElements,
-            selectedItem = model.get('selectedItem');
-
-        if (!Array.isArray(tabPages)) {
-            model.set('selectedItem', null);
-        } else if (tabPages.length) {
-            if (tabPages.indexOf(selectedItem) === -1) {
-                model.set('selectedItem', tabPages[0]);
-            }
-        } else {
-            model.set('selectedItem', null);
-        }
-    },
-
-    /**
-     * @protected
-     */
-    updateSelectedItem: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-
-        var
-            tabPages = this.childElements,
-            tabHeaders = this.tabHeaders,
-            selectedItem = this.model.get('selectedItem'),
-            selectedIndex = tabPages.indexOf(selectedItem);
-
-        //TabPage
-        if (Array.isArray(tabPages)) {
-            tabPages.forEach(function (tabPage) {
-                tabPage.setSelected(false);
-            });
-
-            if (selectedIndex !== -1) {
-                tabPages[selectedIndex].setSelected(true);
-            }
-        }
-
-        //TabHeader
-        if (Array.isArray(tabHeaders)) {
-            tabHeaders.forEach(function (tabHeader) {
-                tabHeader.setSelected(false);
-            });
-            if (selectedIndex !== -1) {
-                tabHeaders[selectedIndex].setSelected(true);
-            }
-        }
-
-    },
-
-
-
-    /**
-     * @protected
-     */
-    updateGrouping: function () {
-
-    }
-
-});
-//####app/controls/tablePanel/cell/cellControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function CellControl(parent) {
-    _.superClass(CellControl, this, parent);
-}
-
-_.inherit(CellControl, ContainerControl);
-
-_.extend(CellControl.prototype,
-    /** @lends CellControl.prototype */
-    {
-        createControlModel: function () {
-            return new CellModel();
-        },
-
-        createControlView: function (model) {
-            return new CellView({model: model});
-        }
-    }
-);
-
-
-//####app/controls/tablePanel/cell/cellModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var CellModel = ContainerModel.extend(
-    /** @lends CellModel.prototype */
-    {
-        defaults: _.defaults({
-            columnSpan: 1
-        }, ContainerModel.prototype.defaults),
-
-        initialize: function () {
-            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        }
-    }
-);
-//####app/controls/tablePanel/cell/cellView.js
-/**
- * @class
- * @augments ControlView
- */
-var CellView = ContainerView.extend(
-    /** @lends CellView.prototype */
-    {
-        className: 'pl-cell',
-
-        initialize: function (options) {
-            ContainerView.prototype.initialize.call(this, options);
-
-            this.initColumnSpan();
-        },
-
-        render: function () {
-            this.prerenderingActions();
-
-            this.removeChildElements();
-
-            this.renderItemsContents();
-
-            this.updateProperties();
-            this.trigger('render');
-
-            this.postrenderingActions();
-            return this;
-        },
-
-        renderItemsContents: function(){
-            var items = this.model.get('items'),
-                itemTemplate = this.model.get('itemTemplate'),
-                that = this,
-                element, item;
-
-            items.forEach(function(item, i){
-                element = itemTemplate(undefined, {item: item, index: i});
-                that.addChildElement(element);
-                that.$el
-                    .append(element.render());
-            });
-        },
-
-        initColumnSpan: function () {
-            this.listenTo(this.model, 'change:columnSpan', this.updateColumnSpan);
-            this.updateColumnSpan();
-        },
-
-        updateColumnSpan: function () {
-            var columnSpan = this.model.get('columnSpan'),
-                currentColumnSpan = this.columnSpan;
-
-            if(columnSpan != currentColumnSpan){
-
-                if(currentColumnSpan){
-                    this.$el
-                        .removeClass('col-xs-' + currentColumnSpan);
-                }
-
-                this.$el
-                    .addClass('col-xs-' + columnSpan);
-
-                this.columnSpan = columnSpan;
-            }
-
-        },
-
-        updateGrouping: function(){}
-    }
-);
-
-//####app/controls/tablePanel/row/rowControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function RowControl(parent) {
-    _.superClass(RowControl, this, parent);
-}
-
-_.inherit(RowControl, ContainerControl);
-
-_.extend(RowControl.prototype,
-    /** @lends RowControl.prototype */
-    {
-        createControlModel: function () {
-            return new RowModel();
-        },
-
-        createControlView: function (model) {
-            return new RowView({model: model});
-        }
-    }
-);
-
-
-//####app/controls/tablePanel/row/rowModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var RowModel = ContainerModel.extend(
-    /** @lends RowModel.prototype */
-    {
-        initialize: function () {
-            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        }
-    }
-);
-//####app/controls/tablePanel/row/rowView.js
-/**
- * @class
- * @augments ControlView
- */
-var RowView = ContainerView.extend(
-    /** @lends RowView.prototype */
-    {
-        className: 'pl-row row',
-
-        initialize: function (options) {
-            ContainerView.prototype.initialize.call(this, options);
-        },
-
-        render: function () {
-            this.prerenderingActions();
-
-            this.removeChildElements();
-
-            this.renderItemsContents();
-
-            this.updateProperties();
-            this.trigger('render');
-
-            this.postrenderingActions();
-            return this;
-        },
-
-        renderItemsContents: function(){
-            var items = this.model.get('items'),
-                itemTemplate = this.model.get('itemTemplate'),
-                that = this,
-                element, item;
-
-            items.forEach(function(item, i){
-                element = itemTemplate(undefined, {item: item, index: i});
-                that.addChildElement(element);
-                that.$el
-                    .append(element.render());
-            });
-        },
-
-        updateGrouping: function(){}
-    }
-);
-
-//####app/controls/tablePanel/tablePanelControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function TablePanelControl(parent) {
-    _.superClass(TablePanelControl, this, parent);
-}
-
-_.inherit(TablePanelControl, ContainerControl);
-
-_.extend(TablePanelControl.prototype,
-    /** @lends TablePanelControl.prototype */
-    {
-        createControlModel: function () {
-            return new TablePanelModel();
-        },
-
-        createControlView: function (model) {
-            return new TablePanelView({model: model});
-        }
-    }
-);
-
-
-//####app/controls/tablePanel/tablePanelModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var TablePanelModel = ContainerModel.extend(
-    /** @lends TablePanelModel.prototype */
-    {
-        initialize: function () {
-            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        }
-    }
-);
-//####app/controls/tablePanel/tablePanelView.js
-/**
- * @class
- * @augments ControlView
- */
-var TablePanelView = ContainerView.extend(
-    /** @lends TablePanelView.prototype */
-    {
-        className: 'pl-table-panel',
-
-        initialize: function (options) {
-            ContainerView.prototype.initialize.call(this, options);
-        },
-
-        render: function () {
-            this.prerenderingActions();
-
-            this.removeChildElements();
-
-            this.renderItemsContents();
-            this.updateProperties();
-            this.trigger('render');
-
-            this.postrenderingActions();
-            return this;
-        },
-
-        renderItemsContents: function(){
-            var items = this.model.get('items'),
-                itemTemplate = this.model.get('itemTemplate'),
-                that = this,
-                element, item;
-
-            items.forEach(function(item, i){
-                element = itemTemplate(undefined, {item: item, index: i});
-                that.addChildElement(element);
-                that.$el
-                    .append(element.render());
-            });
-        },
-
-        updateGrouping: function(){}
-    }
-);
 
 //####app/controls/toggleButton/toggleButtonControl.js
 function ToggleButtonControl(parent) {
@@ -16856,376 +17222,6 @@ var ToolBarView = ContainerView.extend({
     updateGrouping: function(){}
 });
 
-//####app/controls/treeView/node/treeViewNodeBase.js
-var TreeViewNodeBase = Backbone.View.extend({
-
-    className: 'pl-treeview-node',
-
-    classNameCheckerChecked: 'pl-treeview-item__checker_checked',
-    classNameContentSelected: 'pl-treeview-item__content_selected',
-    classNameItemsExpanded: 'pl-treeview-node__items_expanded',
-    classNameItemsCollapsed: 'pl-treeview-node__items_collapsed',
-    classNameButtonCollapse: 'pl-treeview-node__button_collapse',
-    classNameButtonExpand: 'pl-treeview-node__button_expand',
-
-    UI: {
-        checker: '.pl-treeview-item__checker',
-        content: '.pl-treeview-item__content',
-        items: '.pl-treeview-node__items',
-        button: '.pl-treeview-node__button'
-    },
-
-    initialize: function () {
-        var model = new Backbone.Model({collapsed: true});
-        this.model = model;
-        this.listenTo(model, 'change:selected', this.updateSelected);
-        this.listenTo(model, 'change:checked', this.updateChecked);
-        this.listenTo(model, 'change:collapsed', this.updateCollapsed);
-    },
-
-    updateChecked: function () {
-        var checked = this.model.get('checked');
-        this.ui.checker.toggleClass(this.classNameCheckerChecked, checked === true);
-    },
-
-    updateSelected: function () {
-        var selected = this.model.get('selected');
-        this.ui.content.toggleClass(this.classNameContentSelected, selected === true);
-    },
-
-    updateCollapsed: function () {
-        var collapsed = !!this.model.get('collapsed');
-        this.ui.items.toggleClass(this.classNameItemsExpanded, !collapsed);
-        this.ui.items.toggleClass(this.classNameItemsCollapsed, collapsed);
-        this.ui.button.toggleClass(this.classNameButtonCollapse, !collapsed);
-        this.ui.button.toggleClass(this.classNameButtonExpand, collapsed);
-    },
-
-    updateState: function () {
-        this.updateCollapsed();
-        this.updateSelected();
-        this.updateChecked();
-    },
-
-    render: function () {
-        this.$el.html(this.template);
-        this.bindUIElements();
-        this.updateState();
-        this.initDomEventsHandlers();
-        return this;
-    },
-
-    initDomEventsHandlers: function () {
-        this.ui.button.on('click', this.onClickEventHandler.bind(this));
-        this.ui.content[0].addEventListener('click', this.onClickItemHandler.bind(this), true);
-        this.ui.checker[0].addEventListener('click', this.onClickCheckHandler.bind(this), true);
-    },
-
-    onClickItemHandler: function (event) {
-        this.trigger('select');
-    },
-
-    onClickCheckHandler: function (event) {
-        this.trigger('check');
-    },
-
-    toggle: function () {
-        var model = this.model;
-        var collapsed = model.get('collapsed');
-
-        this.model.set('collapsed', !collapsed);
-    },
-
-    setItemContent: function ($itemContent) {
-        this.ui.content.empty();
-        this.ui.content.append($itemContent);
-    },
-
-    setItemsContent: function ($itemsContent) {
-        this.ui.items.empty();
-        this.ui.items.append($itemsContent);
-    },
-
-    onClickEventHandler: function (event) {
-        this.toggle();
-    },
-
-    setSelected: function (selected) {
-        this.model.set('selected', selected);
-    },
-
-    setChecked: function (checked) {
-        this.model.set('checked', checked);
-    }
-});
-
-_.extend(TreeViewNodeBase.prototype, bindUIElementsMixin);
-//####app/controls/treeView/node/treeViewNodeCheckbox.js
-var TreeViewNodeCheckbox = TreeViewNodeBase.extend({
-
-    template: InfinniUI.Template["controls/treeView/template/node-checkbox.tpl.html"]
-
-});
-//####app/controls/treeView/node/treeViewNodeRadio.js
-var TreeViewNodeRadio = TreeViewNodeBase.extend({
-
-    template: InfinniUI.Template["controls/treeView/template/node-radio.tpl.html"]
-
-});
-
-//####app/controls/treeView/treeViewControl.js
-function TreeViewControl() {
-    _.superClass(TreeViewControl, this);
-}
-
-_.inherit(TreeViewControl, ListEditorBaseControl);
-
-_.extend(TreeViewControl.prototype, {
-
-    createControlModel: function () {
-        return new TreeViewModel();
-    },
-
-    createControlView: function (model) {
-        return new TreeViewView({model: model});
-    }
-});
-
-
-//####app/controls/treeView/treeViewModel.js
-var TreeViewModel = ListEditorBaseModel.extend({
-
-    initialize: function () {
-        ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    },
-
-    toggleItem: function (item, toggle) {
-        var value = this.valueByItem(item);
-        this.toggleValue(value, toggle);
-        this.trigger('toggle');
-    }
-});
-//####app/controls/treeView/treeViewView.js
-var TreeViewView = ListEditorBaseView.extend({
-
-    className: 'pl-treeview',
-    classNameMultiSelect: 'pl-treeview_multi-select',
-    classNameSingleSelect: 'pl-treeview_single-select',
-
-    template: InfinniUI.Template["controls/treeView/template/treeview.tpl.html"],
-
-    events: {},
-
-    UI: _.defaults({}, ListEditorBaseView.prototype.UI),
-
-    initialize: function (options) {
-        ListEditorBaseView.prototype.initialize.call(this, options);
-        this.ItemsMap = new HashMap();
-
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.renderTemplate(this.getTemplate());
-
-        this.renderItems();
-        this.updateProperties();
-
-        this.trigger('render');
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    renderItems: function (parentId) {
-        var
-            view = this,
-            $nodes,
-            model = this.model,
-            collection = model.get('items'),
-            parentSelector = model.get('parentSelector'),
-            keySelector = model.get('keySelector'),
-            nodeConstructor = this.getNodeConstructor(),
-            itemTemplate = model.get('itemTemplate'),
-            itemsMap = this.ItemsMap;
-
-        itemsMap.clear();
-
-        $nodes = renderNodes();
-        this.$el.append($nodes);
-
-        function renderNodes (parentId) {
-            return collection.toArray()
-                .filter(function (item) {
-                    var parent = parentSelector(null, {value: item});
-                    return isEmpty(parentId) ? isEmpty(parent) : parent === parentId;
-                })
-                .map(function (item) {
-                    var node = new nodeConstructor().render();
-                    var $node = node.$el;
-                    var $item = itemTemplate(null, {
-                        value: item,
-                        index: collection.indexOf(item)
-                    }).render();
-
-                    $node.data('pl-data-item', item);
-
-                    node.listenTo(model, 'change:selectedItem', function (model, selectedItem) {
-                        node.setSelected(selectedItem === item);
-                    });
-
-                    node.listenTo(model, 'change:value', function (model, value) {
-                        var multiSelect = model.get('multiSelect');
-
-                        var checked;
-                        if (!multiSelect) {
-                            checked = isValueForItem(value);
-                        } else if (Array.isArray(value)) {
-                            checked = value.some(isValueForItem)
-                        } else {
-                            checked = false;
-                        }
-                        node.setChecked(checked);
-                    });
-
-                    view.listenTo(node, 'select', view.onSelectNodeHandler.bind(view, item, node));
-                    view.listenTo(node, 'check', view.onCheckNodeHandler.bind(view, item, node));
-
-                    node.setItemContent($item);
-                    var key = keySelector(null, {value: item}),
-                        $subitems = renderNodes(key);
-                    node.setItemsContent($subitems);
-
-                    itemsMap.add(key, item);
-
-                    return $node;
-
-                    function isValueForItem(value) {
-                        return model.itemByValue(value) === item;
-                    }
-                });
-        }
-
-        function isEmpty(value) {
-            return value === null || typeof value === 'undefined';
-        }
-    },
-
-    getNodeConstructor: function () {
-        var multiSelect = this.model.get('multiSelect');
-
-        return (multiSelect === true) ? TreeViewNodeCheckbox : TreeViewNodeRadio;
-    },
-
-    onSelectNodeHandler: function(item , index) {
-        var model = this.model;
-
-        var multiSelect = model.get('multiSelect');
-
-        model.set('selectedItem', item);
-        if (!multiSelect) {
-            //Клик по элементу одновременно переключает значение и делает элемент выделенным
-            this.tryToggleValue(item);
-        }
-    },
-
-    onCheckNodeHandler: function (item, index) {
-        var model = this.model;
-
-        var multiSelect = model.get('multiSelect');
-
-        this.tryToggleValue(item);
-
-        if (!multiSelect) {
-            //Клик по элементу одновременно переключает значение и делает элемент выделенным
-            model.set('selectedItem', item);
-        }
-    },
-
-    tryToggleValue: function(item){
-        var model = this.model;
-        var isDisabledItem = this.isDisabledItem(item);
-
-        if(!isDisabledItem){
-            var value = model.valueByItem(item);
-            model.toggleValue(value);
-        }
-    },
-
-    isDisabledItem: function(item){
-        if(item == null){
-            return false;
-        }
-
-       return this.model.isDisabledItem(item) || this.isDisabledItem(this.getParent(item));
-    },
-
-    getParent: function(item){
-        var parentSelector = this.model.get('parentSelector'),
-            parentId = parentSelector(null, {value: item});
-
-        return parentId && this.ItemsMap.get(parentId);
-    },
-
-    getTemplate: function () {
-        return this.template;
-    },
-
-    updateProperties: function () {
-        ListEditorBaseView.prototype.updateProperties.call(this);
-        this.updateMultiSelect();
-    },
-
-    updateMultiSelect: function () {
-        var multiSelect = this.model.get('multiSelect');
-        this.$el.toggleClass(this.classNameMultiSelect, !!multiSelect);
-        this.$el.toggleClass(this.classNameSingleSelect, !multiSelect);
-    },
-
-    updateEnabled: function () {
-        ListEditorBaseView.prototype.updateEnabled.call(this);
-
-        var enabled = this.model.get('enabled');
-
-    },
-
-    updateValue: function () {
-
-    },
-
-    updateSelectedItem: function () {
-
-    },
-
-    updateGrouping: function () {
-    },
-
-    updateDisabledItem: function() {
-        var model = this.model;
-        var disabledItemCondition = model.get('disabledItemCondition');
-        var nodes = this.$el.find('.pl-treeview-node');
-
-        nodes.removeClass('pl-disabled-list-item');
-
-        if( disabledItemCondition != null){
-            nodes.each(function(i, el){
-                var $el = $(el),
-                    item = $el.data('pl-data-item');
-
-                if(model.isDisabledItem(item)){
-                    $el.addClass('pl-disabled-list-item');
-                }
-            });
-        }
-    },
-
-    rerender: function () {
-
-    }
-
-
-});
 //####app/controls/view/viewControl.js
 /**
  *
@@ -18660,6 +18656,8 @@ BaseDataSource.identifyingStrategy = {
 };
 
 _.extend(BaseDataSource.prototype, dataSourceFileProviderMixin);
+
+InfinniUI.BaseDataSource = BaseDataSource;
 //####app/data/dataSource/restDataSource.js
 var RestDataSource = BaseDataSource.extend({
 
@@ -18702,7 +18700,7 @@ var RestDataSource = BaseDataSource.extend({
     },
 
     initDataProvider: function(){
-        var dataProvider = window.providerRegister.build('RestDataSource');
+        var dataProvider = window.InfinniUI.providerRegister.build('RestDataSource');
         this.set('dataProvider', dataProvider);
     },
 
@@ -18949,6 +18947,8 @@ var RestDataSource = BaseDataSource.extend({
     }
 
 });
+
+InfinniUI.RestDataSource = RestDataSource;
 //####app/data/dataSource/documentDataSource.js
 var DocumentDataSource = RestDataSource.extend({
     defaults: _.defaults({
@@ -19072,7 +19072,7 @@ var DocumentDataSource = RestDataSource.extend({
     },
 
     initDataProvider: function(){
-        var dataProvider = window.providerRegister.build('DocumentDataSource');
+        var dataProvider = window.InfinniUI.providerRegister.build('DocumentDataSource');
 
         this.set('dataProvider', dataProvider);
     },
@@ -19347,6 +19347,7 @@ _.extend(BaseDataSourceBuilder.prototype, DataSourceValidationNotifierMixin);
 
 _.extend(BaseDataSourceBuilder.prototype, DataSourceBuilderFileProviderMixin);
 
+InfinniUI.BaseDataSourceBuilder = BaseDataSourceBuilder;
 //####app/data/dataSource/restDataSourceBuilder.js
 var RestDataSourceBuilder = function() {
     _.superClass(RestDataSourceBuilder, this);
@@ -19447,6 +19448,8 @@ _.extend(RestDataSourceBuilder.prototype, {
         }
     }
 });
+
+InfinniUI.RestDataSourceBuilder = RestDataSourceBuilder;
 //####app/data/dataSource/documentDataSourceBuilder.js
 var DocumentDataSourceBuilder = function() {
     _.superClass(DocumentDataSourceBuilder, this);
@@ -20130,6 +20133,7 @@ _.extend(Element.prototype, {
     }
 });
 
+InfinniUI.Element = Element;
 //####app/elements/_base/element/elementBuilder.js
 /**
  *
@@ -20155,7 +20159,15 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 			args.parent.addChild(element);
 		}
 
-
+//devblockstart
+		element.onMouseDown( function(eventData) {
+			if( eventData.ctrlKey ){
+				args.metadata.isSelectedElement = true;
+				args.parentView.showSelectedElementMetadata();
+				eventData.nativeEventData.stopPropagation();
+			}
+		});
+//devblockstop
 
 		return element;
 	},
@@ -20396,6 +20408,7 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 
 });
 
+InfinniUI.ElementBuilder = ElementBuilder;
 //####app/elements/_base/_mixins/builderValuePropertyMixin.js
 var builderValuePropertyMixin = {
 
@@ -21909,6 +21922,130 @@ TimePickerBuilder.prototype.applyMaxValue = function (element, maxValue) {
         element.setMaxValue(date);
     }
 };
+//####app/elements/dataElement/documentViewer/documentViewer.js
+function DocumentViewer(parentView) {
+    _.superClass(DocumentViewer, this, parentView);
+}
+
+_.inherit(DocumentViewer, Element);
+
+_.extend(DocumentViewer.prototype, {
+
+    createControl: function () {
+        return new DocumentViewerControl();
+    },
+
+    setView: function (view) {
+        return this.control.set('view', view);
+    },
+
+    setPrintViewId: function(viewId) {
+        return this.control.set('viewId', viewId);
+    },
+
+    getPrintViewId: function() {
+        return this.control.get('viewId');
+    },
+
+    setSource: function (dataSource) {
+        return this.control.set('dataSource', dataSource);
+    },
+
+    getSource: function () {
+        return this.control.get('dataSource');
+    },
+
+    build: function (){
+        this.control.renderDocument();
+    }
+
+}, valuePropertyMixin);
+//####app/elements/dataElement/documentViewer/documentViewerBuilder.js
+function DocumentViewerBuilder() {
+}
+
+_.inherit(DocumentViewerBuilder, ElementBuilder);
+
+_.extend(DocumentViewerBuilder.prototype, {
+
+    applyMetadata: function (params) {
+        ElementBuilder.prototype.applyMetadata.call(this, params);
+
+        this.initScriptsHandlers(params);
+
+        params.element.setView(params.parentView);
+        params.element.setParent(params.parent);
+
+        params.element.setPrintViewId(params.metadata.PrintViewId);
+        params.element.setSource(params.metadata.Source.Source);
+    },
+
+    createElement: function (params) {
+        return new DocumentViewer(params.view);
+    },
+
+    initScriptsHandlers: function(params){
+        var metadata = params.metadata;
+
+        //Скриптовые обработчики на события
+        if (params.view && metadata.OnLoaded){
+            params.element.onLoaded(function() {
+                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name || metadata.OnLoaded);
+            });
+        }
+    }
+}, builderValuePropertyMixin);
+
+//####app/elements/dataElement/pdfViewer/pdfViewer.js
+function PdfViewer(parentView) {
+    _.superClass(PdfViewer, this, parentView);
+}
+
+_.inherit(PdfViewer, Element);
+
+_.extend(PdfViewer.prototype, {
+
+    createControl: function () {
+        return new PdfViewerControl();
+    },
+
+    setUrl: function (url) {
+        return this.control.set('url', url);
+    }
+
+}, valuePropertyMixin);
+//####app/elements/dataElement/pdfViewer/pdfViewerBuilder.js
+function PdfViewerBuilder() {
+}
+
+_.inherit(PdfViewerBuilder, ElementBuilder);
+
+_.extend(PdfViewerBuilder.prototype, {
+
+    applyMetadata: function (params) {
+        ElementBuilder.prototype.applyMetadata.call(this, params);
+
+        this.initScriptsHandlers(params);
+
+        params.element.setUrl(params.metadata.Value);
+    },
+
+    createElement: function (params) {
+
+    return new PdfViewer(params.parentView);
+},
+    initScriptsHandlers: function(params){
+        var metadata = params.metadata;
+
+        //Скриптовые обработчики на события
+        if (params.view && metadata.OnLoaded){
+            params.element.onLoaded(function() {
+                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
+            });
+        }
+    }
+}, builderValuePropertyMixin);
+
 //####app/elements/button/button.js
 /**
  * @param parent
@@ -22411,130 +22548,6 @@ _.extend(ContextMenuBuilder.prototype, /** @lends ContextMenuBuilder.prototype *
 	}
 
 });
-
-//####app/elements/dataElement/documentViewer/documentViewer.js
-function DocumentViewer(parentView) {
-    _.superClass(DocumentViewer, this, parentView);
-}
-
-_.inherit(DocumentViewer, Element);
-
-_.extend(DocumentViewer.prototype, {
-
-    createControl: function () {
-        return new DocumentViewerControl();
-    },
-
-    setView: function (view) {
-        return this.control.set('view', view);
-    },
-
-    setPrintViewId: function(viewId) {
-        return this.control.set('viewId', viewId);
-    },
-
-    getPrintViewId: function() {
-        return this.control.get('viewId');
-    },
-
-    setSource: function (dataSource) {
-        return this.control.set('dataSource', dataSource);
-    },
-
-    getSource: function () {
-        return this.control.get('dataSource');
-    },
-
-    build: function (){
-        this.control.renderDocument();
-    }
-
-}, valuePropertyMixin);
-//####app/elements/dataElement/documentViewer/documentViewerBuilder.js
-function DocumentViewerBuilder() {
-}
-
-_.inherit(DocumentViewerBuilder, ElementBuilder);
-
-_.extend(DocumentViewerBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        this.initScriptsHandlers(params);
-
-        params.element.setView(params.parentView);
-        params.element.setParent(params.parent);
-
-        params.element.setPrintViewId(params.metadata.PrintViewId);
-        params.element.setSource(params.metadata.Source.Source);
-    },
-
-    createElement: function (params) {
-        return new DocumentViewer(params.view);
-    },
-
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name || metadata.OnLoaded);
-            });
-        }
-    }
-}, builderValuePropertyMixin);
-
-//####app/elements/dataElement/pdfViewer/pdfViewer.js
-function PdfViewer(parentView) {
-    _.superClass(PdfViewer, this, parentView);
-}
-
-_.inherit(PdfViewer, Element);
-
-_.extend(PdfViewer.prototype, {
-
-    createControl: function () {
-        return new PdfViewerControl();
-    },
-
-    setUrl: function (url) {
-        return this.control.set('url', url);
-    }
-
-}, valuePropertyMixin);
-//####app/elements/dataElement/pdfViewer/pdfViewerBuilder.js
-function PdfViewerBuilder() {
-}
-
-_.inherit(PdfViewerBuilder, ElementBuilder);
-
-_.extend(PdfViewerBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        this.initScriptsHandlers(params);
-
-        params.element.setUrl(params.metadata.Value);
-    },
-
-    createElement: function (params) {
-
-    return new PdfViewer(params.parentView);
-},
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
-            });
-        }
-    }
-}, builderValuePropertyMixin);
 
 //####app/elements/dataGrid/dataGrid.js
 function DataGrid(parent) {
@@ -23052,112 +23065,6 @@ DataGridColumnBuilder.prototype.buildHeaderTemplateByDefault = function (params)
     };
 
 };
-
-//####app/elements/dataGrid/dataGridRow/dataGridRow.js
-function DataGridRow() {
-    _.superClass(DataGridRow, this);
-
-    this._transformRowProperties({
-        rowBackground: 'background',
-        rowForeground: 'foreground',
-        rowTextStyle: 'textStyle',
-        rowStyle: 'style'
-    });
-}
-
-_.inherit(DataGridRow, Element);
-
-
-_.extend(DataGridRow.prototype, {
-
-    createControl: function () {
-        return new DataGridRowControl()
-    },
-
-    setCellTemplates: function (cellTemplates) {
-        this.control.set('cellTemplates', cellTemplates);
-    },
-
-    toggle: function (toggle) {
-        this.control.set('toggle', toggle);
-    },
-
-    setSelected: function (selected) {
-        this.control.set('selected', selected);
-    },
-
-    setMultiSelect: function (multiSelect) {
-        this.control.set('multiSelect', multiSelect);
-    },
-
-    setShowSelectors: function (showSelectors) {
-        this.control.set('showSelectors', showSelectors);
-    },
-
-    onToggle: function (handler) {
-        this.control.onToggle(handler);
-    },
-
-    /** RowBackground **/
-    setRowBackground: function (value) {
-        this.control.set('rowBackground', value);
-    },
-
-    getRowBackground: function () {
-        return this.control.get('rowBackground');
-    },
-
-    /** RowForeground **/
-    setRowForeground: function (value) {
-        this.control.set('rowForeground', value);
-    },
-
-    getRowForeground: function () {
-        return this.control.get('rowForeground');
-    },
-
-    /** RowTextStyle */
-    setRowTextStyle: function (value) {
-        this.control.set('rowTextStyle', value);
-    },
-
-    getRowTextStyle: function () {
-        return this.control.get('rowTextStyle');
-    },
-
-    /** RowStyle */
-    setRowStyle: function (value) {
-        this.control.set('rowStyle', value);
-    },
-
-    getRowStyle: function () {
-        return this.control.get('rowStyle');
-    },
-
-    setGrid: function (grid) {
-        this.control.set('grid', grid);
-    },
-
-    _transformRowProperties: function (properties) {
-
-        for(var name in properties) {
-            if (!properties.hasOwnProperty(name)) {
-                continue;
-            }
-
-            this.setProperty(properties[name], this.getProperty(name));
-
-            this.onPropertyChanged(name, (function (row, prop) {
-                return function (context, args) {
-                    row.setProperty(prop, args.newValue);
-                }
-            })(this, properties[name]));
-        }
-
-    }
-
-});
-
 
 //####app/elements/dataNavigation/dataNavigation.js
 function DataNavigation (parent) {
@@ -24097,153 +24004,6 @@ _.extend(LabelBuilder.prototype, {
     //builderForegroundMixin,
     //builderTextStyleMixin
 );
-//####app/elements/layoutPanel/extensionPanel/extensionPanel.js
-function ExtensionPanel(parentView) {
-    _.superClass(ExtensionPanel, this, parentView);
-}
-
-_.inherit(ExtensionPanel, Container);
-
-_.extend(ExtensionPanel.prototype, {
-    createControl: function () {
-        var control = new ExtensionPanelControl();
-        return control;
-    },
-
-    setExtensionName: function (extensionName) {
-        return this.control.set('extensionName', extensionName);
-    },
-
-    setParameters: function (parameters) {
-        return this.control.set('parameters', parameters);
-    },
-
-    getParameters: function () {
-        return this.control.get('parameters');
-    },
-
-    setContext: function (context) {
-        this.control.set('context', context);
-    }
-});
-//####app/elements/layoutPanel/extensionPanel/extensionPanelBuilder.js
-function ExtensionPanelBuilder() {
-}
-
-_.inherit(ExtensionPanelBuilder, ContainerBuilder);
-
-_.extend(ExtensionPanelBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        var metadata = params.metadata;
-        var element = params.element;
-        var parentView = params.parentView;
-        var builder = params.builder;
-
-        ContainerBuilder.prototype.applyMetadata.call(this, params);
-
-        element.setExtensionName(metadata['ExtensionName']);
-
-        var parameters = {};
-        _.each(metadata.Parameters, function (parameterMetadata) {
-            var param = builder.buildType('Parameter', parameterMetadata, {parentView: parentView});
-            parameters[param.getName()] = param;
-        });
-
-        element.setParameters(parameters);
-        element.setContext(parentView.getContext());
-    },
-
-    createElement: function (params) {
-        var element = new ExtensionPanel(params.parent);
-
-        return element;
-    }
-
-});
-
-//####app/elements/layoutPanel/viewPanel/viewPanel.js
-function ViewPanel(parentView) {
-    _.superClass(ViewPanel, this, parentView);
-}
-
-_.inherit(ViewPanel, Element);
-
-_.extend(ViewPanel.prototype, {
-
-    setLayout: function (layout) {
-        var oldLayout = this.getLayout();
-
-        if(oldLayout) {
-            oldLayout.close();
-        }
-
-        this.control.set('layout', layout);
-    },
-
-    getLayout: function () {
-        return this.control.get('layout');
-    },
-
-    createControl: function () {
-        return new ViewPanelControl();
-    }
-
-});
-//####app/elements/layoutPanel/viewPanel/viewPanelBuilder.js
-function ViewPanelBuilder() {
-}
-
-_.inherit(ViewPanelBuilder, ElementBuilder);
-
-_.extend(ViewPanelBuilder.prototype, {
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        var builder = params.builder;
-        var panel = params.element;
-        var metadata = params.metadata;
-        var parentView = params.parentView;
-
-        /* Помощь для обработки OpenMode = Inline */
-        if (_.isEmpty(metadata.Name)) {
-            metadata.Name = guid();
-            panel.setName(metadata.Name);
-        }
-
-        InfinniUI.global.containers[metadata.Name] = panel;
-
-        if ('LinkView' in metadata) {
-            //var linkView = builder.build(params.view, metadata.View);
-            var linkView = builder.build(metadata['LinkView'], {
-                parentView: params.parentView,
-                parent: params.element
-            });
-
-            linkView.setOpenMode('Container');
-            linkView.setContainer(metadata.Name);
-
-            linkView.createView(function (view) {
-                view.open();
-            });
-        }
-
-    },
-
-    createElement: function (params) {
-        return new ViewPanel(params.parent);
-    },
-
-    registerLayoutPanel: function (params) {
-        var exchange = window.InfinniUI.global.messageBus;
-        exchange.send(messageTypes.onCreateLayoutPanel, {source: params.view, value: params.element});
-    }
-}
-);
-
-
-InfinniUI.global.containers = {};
-
 //####app/elements/menuBar/menuBar.js
 /**
  * @param parent
@@ -24258,7 +24018,6 @@ _.inherit(MenuBar, Container);
 
 _.extend(MenuBar.prototype, {
     createControl: function (viewMode) {
-        window.ololo = this;
         return new MenuBarControl(viewMode);
     },
 
@@ -24985,183 +24744,6 @@ _.extend(StackPanelBuilder.prototype,
 
     });
 
-//####app/elements/tabPanel/tabPage/tabPage.js
-/**
- * @param parent
- * @constructor
- * @augments Container
- */
-function TabPage(parent) {
-    _.superClass(TabPage, this, parent);
-    this.events = new EventsManager();
-    var element = this;
-
-    this.control.on('close', function () {
-        element.close();
-    });
-}
-
-_.inherit(TabPage, Container);
-
-/**
- * @description Возвращает изображение заголовка страницы
- * @returns {string}
- */
-TabPage.prototype.getIcon = function () {
-    return this.control.get('icon');
-};
-
-/**
- * @description Устанавливает изображение заголовка страницы
- * @param {string} value
- */
-TabPage.prototype.setIcon = function (value) {
-    this.control.set('icon', value);
-};
-
-/**
- * @description Возвращает значение, определяющее, разрешено ли закрытие страницы
- * @returns {boolean}
- */
-TabPage.prototype.getCanClose = function () {
-    return this.control.get('canClose');
-};
-
-/**
- * @description Устанавливает значение, определяющее, разрешено ли закрытие страницы
- * @param {boolean} value
- */
-TabPage.prototype.setCanClose = function (value) {
-    this.control.set('canClose', value);
-};
-
-/**
- * @description Закрывает страницу
- * @param {Function} [success] Необязательный. Обработчик события о том, что страница была закрыта
- * @param {Function} [error] Необязательный. Обработчик события о том, что при закрытии произошла ошибка
- */
-TabPage.prototype.close = function (success, error) {
-    var
-        canClose = this.getCanClose(),
-        element = this,
-        events = this.events;
-
-    if (canClose) {
-        this.events.trigger('closing')
-            .done(function () {
-                //@TODO Закрыть представление
-                if (element.parent) {
-                    element.parent.closeTab(element);
-                }
-                typeof success === 'function' && success();
-                events.trigger('closed');
-            })
-            .fail(function () {
-                typeof error === 'function' && error();
-            });
-    }
-};
-
-/**
- * @description Устанавливает обработчик события о том, что страница закрывается
- * @param handler
- */
-TabPage.prototype.onClosing = function (handler) {
-    this.events.on('closing', handler)
-};
-
-/**
- * @description Устанавливает обработчик события о том, что страница была закрыта
- * @param handler
- */
-TabPage.prototype.onClosed = function (handler) {
-    this.events.on('closed', handler)
-};
-
-/**
- * @description Возвращает значение, определябщее что данная вкладка выбрана
- * @returns {boolean}
- */
-TabPage.prototype.getSelected = function () {
-    return this.control.get('selected');
-};
-
-TabPage.prototype.setSelected = function (value) {
-    this.control.set('selected', value);
-};
-
-/**
- * @protected
- * @returns {PanelControl}
- */
-TabPage.prototype.createControl = function () {
-    return new TabPageControl();
-};
-
-
-//####app/elements/tabPanel/tabPage/tabPageBuilder.js
-/**
- * @constructor
- * @augments ContainerBuilder
- */
-function TabPageBuilder() {
-    _.superClass(TabPageBuilder, this);
-}
-
-_.inherit(TabPageBuilder, ContainerBuilder);
-
-_.extend(TabPageBuilder.prototype, /** @lends TabPageBuilder.prototype*/ {
-
-    createElement: function (params) {
-        return new TabPage(params.parent);
-    },
-
-    /**
-     * @param {Object} params
-     * @param {Panel} params.element
-     * @param {Object} params.metadata
-     */
-    applyMetadata: function (params) {
-        var
-            metadata = params.metadata,
-            element = params.element;
-
-        var data = ContainerBuilder.prototype.applyMetadata.call(this, params);
-
-        element.setIcon(metadata.Icon);
-        element.setCanClose(metadata.CanClose);
-
-        this.initScriptHandlers(params);
-
-        return data;
-    },
-
-    /**
-     * @protected
-     * @param params
-     */
-    initScriptHandlers: function (params) {
-        var
-            metadata = params.metadata,
-            element = params.element;
-
-        if (metadata.OnClosing) {
-            element.onClosing(function () {
-                return new ScriptExecutor(params.parentView).executeScript(metadata.OnClosing.Name || metadata.OnClosing, {});
-            });
-        }
-
-        if (metadata.OnClosed) {
-            element.onClosed(function () {
-                return new ScriptExecutor(params.parentView).executeScript(metadata.OnClosed.Name || metadata.OnClosed, {});
-            });
-        }
-    }
-
-
-
-});
-
 //####app/elements/tabPanel/tabPanel.js
 /**
  * @param parent
@@ -25330,116 +24912,6 @@ _.extend(TabPanelBuilder.prototype, /** @lends TabPanelBuilder.prototype*/ {
 
 
 });
-
-//####app/elements/tablePanel/cell/cell.js
-/**
- * @param parent
- * @constructor
- * @augments Container
- */
-function Cell(parent) {
-    _.superClass(Cell, this, parent);
-}
-
-_.inherit(Cell, Container);
-
-_.extend(Cell.prototype, {
-    createControl: function () {
-        return new CellControl();
-    },
-
-    getColumnSpan: function(){
-        return this.control.get('columnSpan');
-    },
-
-    setColumnSpan: function(newColumnSpan){
-        this.control.set('columnSpan', newColumnSpan);
-    }
-});
-//####app/elements/tablePanel/cell/cellBuilder.js
-/**
- * @constructor
- * @augments ContainerBuilder
- */
-function CellBuilder() {
-    _.superClass(CellBuilder, this);
-}
-
-_.inherit(CellBuilder, ContainerBuilder);
-
-_.extend(CellBuilder.prototype,
-    /** @lends CellBuilder.prototype*/
-    {
-        createElement: function (params) {
-            return new Cell(params.parent);
-        },
-
-        /**
-         * @param {Object} params
-         * @param {CellBuilder} params.element
-         * @param {Object} params.metadata
-         */
-        applyMetadata: function (params) {
-            var
-                metadata = params.metadata,
-                element = params.element;
-
-            ContainerBuilder.prototype.applyMetadata.call(this, params);
-
-            params.element.setColumnSpan(metadata.ColumnSpan);
-        }
-
-    });
-
-//####app/elements/tablePanel/row/row.js
-/**
- * @param parent
- * @constructor
- * @augments Container
- */
-function Row(parent) {
-    _.superClass(Row, this, parent);
-}
-
-_.inherit(Row, Container);
-
-_.extend(Row.prototype, {
-    createControl: function () {
-        return new RowControl();
-    }
-});
-//####app/elements/tablePanel/row/rowBuilder.js
-/**
- * @constructor
- * @augments ContainerBuilder
- */
-function RowBuilder() {
-    _.superClass(RowBuilder, this);
-}
-
-_.inherit(RowBuilder, ContainerBuilder);
-
-_.extend(RowBuilder.prototype,
-    /** @lends RowBuilder.prototype*/
-    {
-        createElement: function (params) {
-            return new Row(params.parent);
-        },
-
-        /**
-         * @param {Object} params
-         * @param {RowBuilder} params.element
-         * @param {Object} params.metadata
-         */
-        applyMetadata: function (params) {
-            var
-                metadata = params.metadata,
-                element = params.element;
-
-            ContainerBuilder.prototype.applyMetadata.call(this, params);
-        }
-
-    });
 
 //####app/elements/tablePanel/tablePanel.js
 /**
@@ -26063,7 +25535,17 @@ _.extend(View.prototype,
             return this.control.get('focusOnControl');
         }
 
+//devblockstart
+        ,showSelectedElementMetadata: function(){
+            if(this.handlers.onSelectedElementChange){
+                this.handlers.onSelectedElementChange();
+            }
+        }
 
+        ,onSelectedElementChange: function(handler) {
+            this.handlers.onSelectedElementChange = handler;
+        }
+//devblockstop
     }
 );
 //####app/elements/view/viewBuilder.js
@@ -26082,7 +25564,34 @@ _.extend(ViewBuilder.prototype, {
         return new View(params.parent);
     },
 
+//devblockstart
+    _getSelectedElementPath: function(metadata) {
+        var result;
 
+        if( _.isArray(metadata) ){
+            for (var i = 0, ii =  metadata.length; i<ii; i++){
+                result = this._getSelectedElementPath(metadata[i]);
+                if(result !== false){
+                    return '['+ i + ']' + result;
+                }
+            }
+        } else if( _.isObject(metadata) ){
+            if('isSelectedElement' in metadata) {
+                delete metadata.isSelectedElement;
+                return '';
+            } else {
+                for (var key in metadata){
+                    result = this._getSelectedElementPath(metadata[key]);
+                    if(result !== false){
+                        return '.' + key + result;
+                    }
+                }
+            }
+        }
+
+        return false;
+    },
+//devblockstop
 
     applyMetadata: function (params) {
 
@@ -26097,7 +25606,15 @@ _.extend(ViewBuilder.prototype, {
             element = params.element,
             builder = params.builder;
 
+//devblockstart
+        element.onSelectedElementChange(function() {
+            var path = that._getSelectedElementPath(params.metadata);
 
+            InfinniUI.JsonEditor.setMetadata(params.metadata).always(function () {
+                InfinniUI.JsonEditor.setPath(path);
+            });
+        });
+//devblockstop
 
         var scripts = element.getScripts();
         var parameters = element.getParameters();
@@ -26245,6 +25762,546 @@ _.extend(ViewBuilder.prototype, {
 },
     viewBuilderHeaderTemplateMixin
 );
+//####app/elements/dataGrid/dataGridRow/dataGridRow.js
+function DataGridRow() {
+    _.superClass(DataGridRow, this);
+
+    this._transformRowProperties({
+        rowBackground: 'background',
+        rowForeground: 'foreground',
+        rowTextStyle: 'textStyle',
+        rowStyle: 'style'
+    });
+}
+
+_.inherit(DataGridRow, Element);
+
+
+_.extend(DataGridRow.prototype, {
+
+    createControl: function () {
+        return new DataGridRowControl()
+    },
+
+    setCellTemplates: function (cellTemplates) {
+        this.control.set('cellTemplates', cellTemplates);
+    },
+
+    toggle: function (toggle) {
+        this.control.set('toggle', toggle);
+    },
+
+    setSelected: function (selected) {
+        this.control.set('selected', selected);
+    },
+
+    setMultiSelect: function (multiSelect) {
+        this.control.set('multiSelect', multiSelect);
+    },
+
+    setShowSelectors: function (showSelectors) {
+        this.control.set('showSelectors', showSelectors);
+    },
+
+    onToggle: function (handler) {
+        this.control.onToggle(handler);
+    },
+
+    /** RowBackground **/
+    setRowBackground: function (value) {
+        this.control.set('rowBackground', value);
+    },
+
+    getRowBackground: function () {
+        return this.control.get('rowBackground');
+    },
+
+    /** RowForeground **/
+    setRowForeground: function (value) {
+        this.control.set('rowForeground', value);
+    },
+
+    getRowForeground: function () {
+        return this.control.get('rowForeground');
+    },
+
+    /** RowTextStyle */
+    setRowTextStyle: function (value) {
+        this.control.set('rowTextStyle', value);
+    },
+
+    getRowTextStyle: function () {
+        return this.control.get('rowTextStyle');
+    },
+
+    /** RowStyle */
+    setRowStyle: function (value) {
+        this.control.set('rowStyle', value);
+    },
+
+    getRowStyle: function () {
+        return this.control.get('rowStyle');
+    },
+
+    setGrid: function (grid) {
+        this.control.set('grid', grid);
+    },
+
+    _transformRowProperties: function (properties) {
+
+        for(var name in properties) {
+            if (!properties.hasOwnProperty(name)) {
+                continue;
+            }
+
+            this.setProperty(properties[name], this.getProperty(name));
+
+            this.onPropertyChanged(name, (function (row, prop) {
+                return function (context, args) {
+                    row.setProperty(prop, args.newValue);
+                }
+            })(this, properties[name]));
+        }
+
+    }
+
+});
+
+
+//####app/elements/layoutPanel/extensionPanel/extensionPanel.js
+function ExtensionPanel(parentView) {
+    _.superClass(ExtensionPanel, this, parentView);
+}
+
+_.inherit(ExtensionPanel, Container);
+
+_.extend(ExtensionPanel.prototype, {
+    createControl: function () {
+        var control = new ExtensionPanelControl();
+        return control;
+    },
+
+    setExtensionName: function (extensionName) {
+        return this.control.set('extensionName', extensionName);
+    },
+
+    setParameters: function (parameters) {
+        return this.control.set('parameters', parameters);
+    },
+
+    getParameters: function () {
+        return this.control.get('parameters');
+    },
+
+    setContext: function (context) {
+        this.control.set('context', context);
+    }
+});
+//####app/elements/layoutPanel/extensionPanel/extensionPanelBuilder.js
+function ExtensionPanelBuilder() {
+}
+
+_.inherit(ExtensionPanelBuilder, ContainerBuilder);
+
+_.extend(ExtensionPanelBuilder.prototype, {
+
+    applyMetadata: function (params) {
+        var metadata = params.metadata;
+        var element = params.element;
+        var parentView = params.parentView;
+        var builder = params.builder;
+
+        ContainerBuilder.prototype.applyMetadata.call(this, params);
+
+        element.setExtensionName(metadata['ExtensionName']);
+
+        var parameters = {};
+        _.each(metadata.Parameters, function (parameterMetadata) {
+            var param = builder.buildType('Parameter', parameterMetadata, {parentView: parentView});
+            parameters[param.getName()] = param;
+        });
+
+        element.setParameters(parameters);
+        element.setContext(parentView.getContext());
+    },
+
+    createElement: function (params) {
+        var element = new ExtensionPanel(params.parent);
+
+        return element;
+    }
+
+});
+
+//####app/elements/layoutPanel/viewPanel/viewPanel.js
+function ViewPanel(parentView) {
+    _.superClass(ViewPanel, this, parentView);
+}
+
+_.inherit(ViewPanel, Element);
+
+_.extend(ViewPanel.prototype, {
+
+    setLayout: function (layout) {
+        var oldLayout = this.getLayout();
+
+        if(oldLayout) {
+            oldLayout.close();
+        }
+
+        this.control.set('layout', layout);
+    },
+
+    getLayout: function () {
+        return this.control.get('layout');
+    },
+
+    createControl: function () {
+        return new ViewPanelControl();
+    }
+
+});
+//####app/elements/layoutPanel/viewPanel/viewPanelBuilder.js
+function ViewPanelBuilder() {
+}
+
+_.inherit(ViewPanelBuilder, ElementBuilder);
+
+_.extend(ViewPanelBuilder.prototype, {
+    applyMetadata: function (params) {
+        ElementBuilder.prototype.applyMetadata.call(this, params);
+
+        var builder = params.builder;
+        var panel = params.element;
+        var metadata = params.metadata;
+        var parentView = params.parentView;
+
+        /* Помощь для обработки OpenMode = Inline */
+        if (_.isEmpty(metadata.Name)) {
+            metadata.Name = guid();
+            panel.setName(metadata.Name);
+        }
+
+        InfinniUI.global.containers[metadata.Name] = panel;
+
+        if ('LinkView' in metadata) {
+            //var linkView = builder.build(params.view, metadata.View);
+            var linkView = builder.build(metadata['LinkView'], {
+                parentView: params.parentView,
+                parent: params.element
+            });
+
+            linkView.setOpenMode('Container');
+            linkView.setContainer(metadata.Name);
+
+            linkView.createView(function (view) {
+                view.open();
+            });
+        }
+
+    },
+
+    createElement: function (params) {
+        return new ViewPanel(params.parent);
+    },
+
+    registerLayoutPanel: function (params) {
+        var exchange = window.InfinniUI.global.messageBus;
+        exchange.send(messageTypes.onCreateLayoutPanel, {source: params.view, value: params.element});
+    }
+}
+);
+
+
+InfinniUI.global.containers = {};
+
+//####app/elements/tabPanel/tabPage/tabPage.js
+/**
+ * @param parent
+ * @constructor
+ * @augments Container
+ */
+function TabPage(parent) {
+    _.superClass(TabPage, this, parent);
+    this.events = new EventsManager();
+    var element = this;
+
+    this.control.on('close', function () {
+        element.close();
+    });
+}
+
+_.inherit(TabPage, Container);
+
+/**
+ * @description Возвращает изображение заголовка страницы
+ * @returns {string}
+ */
+TabPage.prototype.getIcon = function () {
+    return this.control.get('icon');
+};
+
+/**
+ * @description Устанавливает изображение заголовка страницы
+ * @param {string} value
+ */
+TabPage.prototype.setIcon = function (value) {
+    this.control.set('icon', value);
+};
+
+/**
+ * @description Возвращает значение, определяющее, разрешено ли закрытие страницы
+ * @returns {boolean}
+ */
+TabPage.prototype.getCanClose = function () {
+    return this.control.get('canClose');
+};
+
+/**
+ * @description Устанавливает значение, определяющее, разрешено ли закрытие страницы
+ * @param {boolean} value
+ */
+TabPage.prototype.setCanClose = function (value) {
+    this.control.set('canClose', value);
+};
+
+/**
+ * @description Закрывает страницу
+ * @param {Function} [success] Необязательный. Обработчик события о том, что страница была закрыта
+ * @param {Function} [error] Необязательный. Обработчик события о том, что при закрытии произошла ошибка
+ */
+TabPage.prototype.close = function (success, error) {
+    var
+        canClose = this.getCanClose(),
+        element = this,
+        events = this.events;
+
+    if (canClose) {
+        this.events.trigger('closing')
+            .done(function () {
+                //@TODO Закрыть представление
+                if (element.parent) {
+                    element.parent.closeTab(element);
+                }
+                typeof success === 'function' && success();
+                events.trigger('closed');
+            })
+            .fail(function () {
+                typeof error === 'function' && error();
+            });
+    }
+};
+
+/**
+ * @description Устанавливает обработчик события о том, что страница закрывается
+ * @param handler
+ */
+TabPage.prototype.onClosing = function (handler) {
+    this.events.on('closing', handler)
+};
+
+/**
+ * @description Устанавливает обработчик события о том, что страница была закрыта
+ * @param handler
+ */
+TabPage.prototype.onClosed = function (handler) {
+    this.events.on('closed', handler)
+};
+
+/**
+ * @description Возвращает значение, определябщее что данная вкладка выбрана
+ * @returns {boolean}
+ */
+TabPage.prototype.getSelected = function () {
+    return this.control.get('selected');
+};
+
+TabPage.prototype.setSelected = function (value) {
+    this.control.set('selected', value);
+};
+
+/**
+ * @protected
+ * @returns {PanelControl}
+ */
+TabPage.prototype.createControl = function () {
+    return new TabPageControl();
+};
+
+
+//####app/elements/tabPanel/tabPage/tabPageBuilder.js
+/**
+ * @constructor
+ * @augments ContainerBuilder
+ */
+function TabPageBuilder() {
+    _.superClass(TabPageBuilder, this);
+}
+
+_.inherit(TabPageBuilder, ContainerBuilder);
+
+_.extend(TabPageBuilder.prototype, /** @lends TabPageBuilder.prototype*/ {
+
+    createElement: function (params) {
+        return new TabPage(params.parent);
+    },
+
+    /**
+     * @param {Object} params
+     * @param {Panel} params.element
+     * @param {Object} params.metadata
+     */
+    applyMetadata: function (params) {
+        var
+            metadata = params.metadata,
+            element = params.element;
+
+        var data = ContainerBuilder.prototype.applyMetadata.call(this, params);
+
+        element.setIcon(metadata.Icon);
+        element.setCanClose(metadata.CanClose);
+
+        this.initScriptHandlers(params);
+
+        return data;
+    },
+
+    /**
+     * @protected
+     * @param params
+     */
+    initScriptHandlers: function (params) {
+        var
+            metadata = params.metadata,
+            element = params.element;
+
+        if (metadata.OnClosing) {
+            element.onClosing(function () {
+                return new ScriptExecutor(params.parentView).executeScript(metadata.OnClosing.Name || metadata.OnClosing, {});
+            });
+        }
+
+        if (metadata.OnClosed) {
+            element.onClosed(function () {
+                return new ScriptExecutor(params.parentView).executeScript(metadata.OnClosed.Name || metadata.OnClosed, {});
+            });
+        }
+    }
+
+
+
+});
+
+//####app/elements/tablePanel/cell/cell.js
+/**
+ * @param parent
+ * @constructor
+ * @augments Container
+ */
+function Cell(parent) {
+    _.superClass(Cell, this, parent);
+}
+
+_.inherit(Cell, Container);
+
+_.extend(Cell.prototype, {
+    createControl: function () {
+        return new CellControl();
+    },
+
+    getColumnSpan: function(){
+        return this.control.get('columnSpan');
+    },
+
+    setColumnSpan: function(newColumnSpan){
+        this.control.set('columnSpan', newColumnSpan);
+    }
+});
+//####app/elements/tablePanel/cell/cellBuilder.js
+/**
+ * @constructor
+ * @augments ContainerBuilder
+ */
+function CellBuilder() {
+    _.superClass(CellBuilder, this);
+}
+
+_.inherit(CellBuilder, ContainerBuilder);
+
+_.extend(CellBuilder.prototype,
+    /** @lends CellBuilder.prototype*/
+    {
+        createElement: function (params) {
+            return new Cell(params.parent);
+        },
+
+        /**
+         * @param {Object} params
+         * @param {CellBuilder} params.element
+         * @param {Object} params.metadata
+         */
+        applyMetadata: function (params) {
+            var
+                metadata = params.metadata,
+                element = params.element;
+
+            ContainerBuilder.prototype.applyMetadata.call(this, params);
+
+            params.element.setColumnSpan(metadata.ColumnSpan);
+        }
+
+    });
+
+//####app/elements/tablePanel/row/row.js
+/**
+ * @param parent
+ * @constructor
+ * @augments Container
+ */
+function Row(parent) {
+    _.superClass(Row, this, parent);
+}
+
+_.inherit(Row, Container);
+
+_.extend(Row.prototype, {
+    createControl: function () {
+        return new RowControl();
+    }
+});
+//####app/elements/tablePanel/row/rowBuilder.js
+/**
+ * @constructor
+ * @augments ContainerBuilder
+ */
+function RowBuilder() {
+    _.superClass(RowBuilder, this);
+}
+
+_.inherit(RowBuilder, ContainerBuilder);
+
+_.extend(RowBuilder.prototype,
+    /** @lends RowBuilder.prototype*/
+    {
+        createElement: function (params) {
+            return new Row(params.parent);
+        },
+
+        /**
+         * @param {Object} params
+         * @param {RowBuilder} params.element
+         * @param {Object} params.metadata
+         */
+        applyMetadata: function (params) {
+            var
+                metadata = params.metadata,
+                element = params.element;
+
+            ContainerBuilder.prototype.applyMetadata.call(this, params);
+        }
+
+    });
+
 //####app/actions/baseAction.js
 function BaseAction(parentView){
     this.parentView = parentView;
@@ -27168,7 +27225,7 @@ DownloadExecutor.prototype.waitResponse = function (beforeStart) {
 function ServerAction(parentView) {
     _.superClass(ServerAction, this, parentView);
 
-    this.provider = window.providerRegister.build('ServerActionProvider');
+    this.provider = window.InfinniUI.providerRegister.build('ServerActionProvider');
 
     this.updateContentTypeStrategy();
     this.on('change:contentType', this.updateContentTypeStrategy);
@@ -27489,6 +27546,8 @@ ApplicationBuilder.addToRegisterQueue = function(name, builder){
         builder: builder
     });
 };
+
+window.InfinniUI.ApplicationBuilder = ApplicationBuilder;
 
 //####app/builders/builder.js
 function Builder() {
@@ -27904,6 +27963,8 @@ function MetadataDataSourceProvider(urlConstructor, successCallback, failCallbac
     };
 }
 
+window.InfinniUI.Providers.MetadataDataSourceProvider = MetadataDataSourceProvider;
+
 //####app/data/dataProviders/REST/metadataProviderREST.js
 function MetadataProviderREST(metadataUrlConstructor, successCallback, failCallback) {
 
@@ -27937,6 +27998,8 @@ function MetadataProviderREST(metadataUrlConstructor, successCallback, failCallb
         this.cache = cache;
     }
 }
+
+window.InfinniUI.Providers.MetadataProviderREST = MetadataProviderREST;
 //####app/data/dataProviders/REST/queryConstructorMetadata.js
 function QueryConstructorMetadata(host,metadata){
 
@@ -28001,6 +28064,8 @@ function QueryConstructorMetadata(host,metadata){
     };
 
 }
+
+window.InfinniUI.Providers.QueryConstructorMetadata = QueryConstructorMetadata;
 //####app/data/dataProviders/REST/queryConstructorMetadataDataSource.js
 function QueryConstructorMetadataDataSource(host, metadata) {
 
@@ -28049,6 +28114,8 @@ function QueryConstructorMetadataDataSource(host, metadata) {
 
 
 }
+
+window.InfinniUI.Providers.QueryConstructorMetadataDataSource = QueryConstructorMetadataDataSource;
 //####app/data/dataProviders/REST/queryConstructorStandard.js
 /**
  *
@@ -28382,7 +28449,7 @@ function DataProviderRegister() {
 }
 
 
-window.providerRegister = new DataProviderRegister();
+window.InfinniUI.providerRegister = new DataProviderRegister();
 
 //####app/data/dataProviders/file/dataProviderUpload.js
 var DataProviderUpload = function (urlConstructor, successCallback, failCallback) {
@@ -28399,6 +28466,91 @@ DataProviderUpload.prototype.uploadFile = function (fieldName, instanceId, file,
 DataProviderUpload.prototype.getFileUrl = function (fieldName, instanceId) {
     return this.urlConstructor.getFileUrl(fieldName, instanceId);
 };
+//####app/data/dataProviders/file/queryConstructorUpload.js
+/**
+ * @class QueryConstructorUpload
+ * @param host
+ * @param metadata
+ * @constructor
+ */
+var QueryConstructorUpload = function (host, metadata) {
+    this.host = host;
+    this.metadata = metadata;
+};
+
+/**
+ * @public
+ * @memberOf QueryConstructorUpload.prototype
+ * @param fieldName
+ * @param instanceId
+ * @param file
+ * @returns {{requestUrl: {String}, args: (FormData|*)}}
+ */
+QueryConstructorUpload.prototype.constructUploadFileRequest = function (fieldName, instanceId, file) {
+    return {
+        requestUrl: this.getUploadUrl(instanceId, fieldName),
+        args: this.getUploadParams(file)
+    };
+};
+
+/**
+ * @public
+ * @description Возвращает ссылкц на загруженный ранее файл
+ * @memberOf QueryConstructorUpload.prototype
+ * @param instanceId
+ * @param fieldName
+ * @returns {String}
+ */
+QueryConstructorUpload.prototype.getFileUrl = function (fieldName, instanceId) {
+
+    if (typeof instanceId === 'undefined' || instanceId === null) {
+        return null;
+    }
+
+    var data = {
+        "Configuration": this.metadata.ConfigId,
+        "Metadata": this.metadata.DocumentId,
+        "DocumentId": instanceId,
+        "FieldName": fieldName
+    };
+    var urlTemplate = '{0}/RestfulApi/UrlEncodedData/configuration/downloadbinarycontent/?Form={1}';
+
+    return stringUtils.format(urlTemplate, [this.host, JSON.stringify(data)]);
+};
+
+/**
+ * @protected
+ * @memberOf QueryConstructorUpload.prototype
+ * @param instanceId
+ * @param fieldName
+ * @returns {String}
+ */
+QueryConstructorUpload.prototype.getUploadUrl = function (instanceId, fieldName) {
+    var data = {
+        "Configuration": this.metadata.ConfigId,
+        "Metadata": this.metadata.DocumentId,
+        "DocumentId": instanceId,
+        "FieldName": fieldName
+    };
+    var urlTemplate = '{0}/RestfulApi/Upload/configuration/uploadbinarycontent/?linkedData={1}';
+
+    return stringUtils.format(urlTemplate, [this.host, JSON.stringify(data)]);
+};
+
+
+/**
+ * @protected
+ * @memberOf QueryConstructorUpload.prototype
+ * @param file
+ * @returns {FormData}
+ */
+QueryConstructorUpload.prototype.getUploadParams = function (file) {
+    var data = new FormData();
+    data.append('file', file);
+    return data;
+};
+
+
 //####app/data/dataProviders/file/document/documentFileProvider.js
 /**
  *
@@ -28549,91 +28701,6 @@ DocumentUploadQueryConstructor.prototype.getUploadParams = function (file) {
 };
 
 
-//####app/data/dataProviders/file/queryConstructorUpload.js
-/**
- * @class QueryConstructorUpload
- * @param host
- * @param metadata
- * @constructor
- */
-var QueryConstructorUpload = function (host, metadata) {
-    this.host = host;
-    this.metadata = metadata;
-};
-
-/**
- * @public
- * @memberOf QueryConstructorUpload.prototype
- * @param fieldName
- * @param instanceId
- * @param file
- * @returns {{requestUrl: {String}, args: (FormData|*)}}
- */
-QueryConstructorUpload.prototype.constructUploadFileRequest = function (fieldName, instanceId, file) {
-    return {
-        requestUrl: this.getUploadUrl(instanceId, fieldName),
-        args: this.getUploadParams(file)
-    };
-};
-
-/**
- * @public
- * @description Возвращает ссылкц на загруженный ранее файл
- * @memberOf QueryConstructorUpload.prototype
- * @param instanceId
- * @param fieldName
- * @returns {String}
- */
-QueryConstructorUpload.prototype.getFileUrl = function (fieldName, instanceId) {
-
-    if (typeof instanceId === 'undefined' || instanceId === null) {
-        return null;
-    }
-
-    var data = {
-        "Configuration": this.metadata.ConfigId,
-        "Metadata": this.metadata.DocumentId,
-        "DocumentId": instanceId,
-        "FieldName": fieldName
-    };
-    var urlTemplate = '{0}/RestfulApi/UrlEncodedData/configuration/downloadbinarycontent/?Form={1}';
-
-    return stringUtils.format(urlTemplate, [this.host, JSON.stringify(data)]);
-};
-
-/**
- * @protected
- * @memberOf QueryConstructorUpload.prototype
- * @param instanceId
- * @param fieldName
- * @returns {String}
- */
-QueryConstructorUpload.prototype.getUploadUrl = function (instanceId, fieldName) {
-    var data = {
-        "Configuration": this.metadata.ConfigId,
-        "Metadata": this.metadata.DocumentId,
-        "DocumentId": instanceId,
-        "FieldName": fieldName
-    };
-    var urlTemplate = '{0}/RestfulApi/Upload/configuration/uploadbinarycontent/?linkedData={1}';
-
-    return stringUtils.format(urlTemplate, [this.host, JSON.stringify(data)]);
-};
-
-
-/**
- * @protected
- * @memberOf QueryConstructorUpload.prototype
- * @param file
- * @returns {FormData}
- */
-QueryConstructorUpload.prototype.getUploadParams = function (file) {
-    var data = new FormData();
-    data.append('file', file);
-    return data;
-};
-
-
 //####app/data/dataProviders/objectDataProvider.js
 var ObjectDataProvider = function (items, idProperty) {
     this.items = items || [];
@@ -28715,6 +28782,7 @@ _.extend(ObjectDataProvider.prototype, {
     }
 });
 
+window.InfinniUI.Providers.ObjectDataProvider = ObjectDataProvider;
 //####app/data/dataProviders/restDataProvider.js
 var RestDataProvider = function(){
 
@@ -28939,6 +29007,8 @@ _.extend(RestDataProvider.prototype, {
 
 
 });
+
+window.InfinniUI.Providers.RestDataProvider = RestDataProvider;
 //####app/data/dataProviders/serverAction/serverActionProvider.js
 var ServerActionProvider = function () {
 };
@@ -28981,7 +29051,7 @@ ServerActionProvider.prototype.download = function (requestData, resultCallback)
         .run(requestData);
 };
 
-
+window.InfinniUI.Providers.ServerActionProvider = ServerActionProvider;
 //####app/data/dataSource/dataProviderReplaceItemQueue.js
 /**
  * @description Организация очереди запросов на создание/изменение документа.
@@ -29062,7 +29132,7 @@ var DataProviderReplaceItemQueue = function (attributes) {
 var ObjectDataSource = BaseDataSource.extend({
 
     initDataProvider: function(){
-        var dataProvider = window.providerRegister.build('ObjectDataSource');
+        var dataProvider = window.InfinniUI.providerRegister.build('ObjectDataSource');
         this.set('dataProvider', dataProvider);
     },
 
@@ -29072,6 +29142,8 @@ var ObjectDataSource = BaseDataSource.extend({
     }
 
 });
+
+InfinniUI.ObjectDataSource = ObjectDataSource;
 //####app/data/dataSource/objectDataSourceBuilder.js
 function ObjectDataSourceBuilder() {
 }
@@ -29120,6 +29192,8 @@ _.extend(ObjectDataSourceBuilder.prototype, {
     //    dataSource.setFileProvider(fileProvider);
     //}
 });
+
+InfinniUI.ObjectDataSourceBuilder = ObjectDataSourceBuilder;
 //####app/data/parameter/parameter.js
 /**
  * @constructor
@@ -31702,641 +31776,6 @@ function DateTimeEditMaskBuilder () {
         return editMask;
     }
 }
-//####app/formats/editMask/number/numberEditMask.js
-function NumberEditMask () {
-    this.mask = null;
-    this.format = null;
-    //@TODO Получать культуру из контекста!
-    this.culture = new Culture(InfinniUI.config.lang);
-}
-
-_.extend(NumberEditMask.prototype, editMaskMixin);
-
-
-_.extend(NumberEditMask.prototype, {
-
-    placeholder: '_',
-
-    /**
-     * Получение десятичного разделителя для текущего формата
-     * @returns {String}
-     */
-    getDecimalSeparator: function () {
-        var itemTemplate = this.getItemTemplate();
-        var item = itemTemplate.item;
-        var regexp = /^[npc]/i;
-        var matches = item.mask.match(regexp);
-        var separator;
-        if (matches && matches.length > 0) {
-            switch (matches[0]) {
-                case 'n':
-                case 'N':
-                    separator = this.culture.numberFormatInfo.numberDecimalSeparator;
-                    break;
-                case 'p':
-                case 'P':
-                    separator = this.culture.numberFormatInfo.percentDecimalSeparator;
-                    break;
-                case 'c':
-                case 'C':
-                    separator = this.culture.numberFormatInfo.currencyDecimalSeparator;
-                    break;
-            }
-        }
-
-        return separator;
-    },
-
-    getDecimalDigits: function () {
-        var itemTemplate = this.getItemTemplate();
-        var item = itemTemplate.item;
-        var regexp = /^([npc])(\d*)$/i;
-        var matches = item.mask.match(regexp);
-        var decimalDigits = 0;
-        if (matches && matches.length > 0) {
-
-            if (matches[2] !== '') {
-                decimalDigits = +matches[2];
-            } else {
-                switch (matches[0]) {
-                    case 'n':
-                    case 'N':
-                        decimalDigits = this.culture.numberFormatInfo.numberDecimalDigits;
-                        break;
-                    case 'p':
-                    case 'P':
-                        decimalDigits = this.culture.numberFormatInfo.percentDecimalDigits;
-                        break;
-                    case 'c':
-                    case 'C':
-                        decimalDigits = this.culture.numberFormatInfo.currencyDecimalDigits;
-                        break;
-                }
-            }
-        }
-        return decimalDigits;
-    },
-
-    /**
-     * Установка начального значения
-     * @param value
-     */
-    reset: function (value) {
-        this.value = null;
-
-        if (typeof value !== 'undefined' && value !== null && value !== '') {
-            value = +value;
-            if (isNaN(value)) {
-                value = null;
-            }
-            this.value = value;
-        }
-
-        this.template = this.buildTemplate(value);
-    },
-
-    buildTemplate: function (value) {
-        var r = /([npc])(\d*)/i;
-
-        var mask = this.mask;
-
-        var template = [];
-
-        var that = this;
-
-        mask.replace(r, function (mask, name, precision, position, text) {
-            //Часть перед шаблоном
-            template.push(text.slice(0, position));
-            //Шаблон
-            template.push({
-                mask: mask,
-                text: (value === null) ? "" : that.formatMask(value, mask),
-                value: value
-            });
-            //Часть после шаблона
-            template.push(text.substring(position + mask.length));
-        });
-
-        return template;
-    },
-
-    getText: function () {
-        var result = [];
-        var item;
-
-        if (!Array.isArray(this.template)) {
-            return;
-        }
-
-        for (var i = 0, ln = this.template.length; i < ln; i = i + 1) {
-            item = this.template[i];
-            if (typeof item === 'string') {
-                result.push(item);
-            } else {
-                if (typeof item.value === 'undefined' || item.value === null) {
-                    //Отдаем маску ввода
-                    result.push(this.formatMask(0, item.mask).replace(/0/g, this.placeholder));
-                } else {
-                    //Отдаем форматированное значени
-                    result.push(this.formatMask(item.value, item.mask));
-                }
-            }
-        }
-
-        return result.join('');
-    },
-
-    formatMask: function (value, mask) {
-        return (value === null || typeof value === 'undefined') ? '' : this.format.format(value, undefined, mask);
-    },
-
-    /**
-     * Переход к предыдущему символу в строке ввода
-     * @param {number} position
-     * @returns {number}
-     */
-    moveToPrevChar: function (position) {
-        position = (position > 0) ? position - 1 : 0;
-        var itemTemplate = this.getItemTemplate();
-        var item = itemTemplate.item;
-        var text = item.text;
-        var index;
-        var start;
-
-        if (position < itemTemplate.left) {
-            index = text.search(/\d/);
-            position = (index === -1) ?  itemTemplate.left : itemTemplate.left + index;
-        } else {
-            start = position - itemTemplate.left + 1;
-            //Переход к первой цифре слева от позиции
-            var txt = text.substring(0, start);
-            if (/\d/.test(txt)) {   //Слева есть цифры
-                index = txt.length - txt.split('').reverse().join('').search(/\d/);
-                if (index === start) {
-                    index--;
-                }
-            } else {    //
-                index = Math.max(0, text.search(/\d/));
-            }
-
-            position = itemTemplate.left + index;
-        }
-
-        return position;
-    },
-
-    /**
-     * Переход к следущему символу в строке ввода
-     * @param {number} position
-     * @returns {number}
-     */
-    moveToNextChar: function (position) {
-        position = (position < 0) ? 0 : position + 1;
-
-        var itemTemplate = this.getItemTemplate();
-        var item = itemTemplate.item;
-        var text = item.text + " ";
-        var start = Math.max(0, position - itemTemplate.left);
-        var index;
-
-
-        //Переход к первой цифре справа от позиции
-
-        var r = /\d/;
-        var last = 0;
-        var char;
-        for (var i = 0, ln = text.length; i < ln; i = i + 1) {
-            if (r.test(text[i]) === false) {
-                char =  text[i-1];
-                if (typeof char !== 'undefined' && !r.test(char)) {
-                    continue;
-                }
-            }
-            if (i < start) {
-                last = i;
-            } else {
-                index = i;
-                break;
-            }
-        }
-        if (typeof index === 'undefined') {
-            index = last;
-        }
-
-        position = itemTemplate.left + index;
-        return position;
-    },
-
-    /**
-     * Обработка нажатия символа в указанной позиции
-     * @param char
-     * @param position
-     */
-    setCharAt: function (char, position) {
-        var itemTemplate = this.getItemTemplate();
-        var left = itemTemplate.left;
-        var item = itemTemplate.item;
-        var text = item.text;
-        var decimalSeparator = this.getDecimalSeparator();
-        var index;
-
-        if (char === '-' && item.value !== null) {  //Смена знака
-            item.value = -item.value;
-            item.text = this.formatMask(item.value, item.mask);
-            position += item.text.length - text.length;
-        } else if (position >= itemTemplate.left && position <= itemTemplate.left + text.length) {
-            //Позиция попадает в маску ввода
-            index = position - left;
-
-            if (char == decimalSeparator) { //Нажат разделитель
-                if (item.value === null){
-                    item.value = 0;
-                    item.text = this.formatMask(item.value, item.mask);
-                }
-                //Переход на первую цифру дробной части
-                if (item.text.indexOf(decimalSeparator) !== -1) {
-                    position = left + item.text.indexOf(decimalSeparator) + decimalSeparator.length;
-                }
-
-            } else if (/\d/.test(char)) {  //Нажата цифра
-                var fractional;
-
-                fractional = text.indexOf(decimalSeparator) > -1 && index > text.indexOf(decimalSeparator);
-                item.value = this.parseText([text.slice(0, index), char, text.slice(index)].join(''), item.value);
-                item.text = this.formatMask(item.value, item.mask);
-
-                if (text === '') {
-                    position = this.moveToNextChar(left);
-                } else {
-                    position = (fractional) ?  position + 1: position + item.text.length - text.length;
-                    position = Math.min(position, left + this.getIndexOfEndDigit(item.text));
-                }
-            }
-        }
-
-        return position;
-    },
-
-    /**
-     * @private
-     * @description увеличивает или уменьшает на 1 значение цифры слева от каретки.
-     * @param position
-     * @param delta
-     * @returns {*}
-     */
-    updateDigitValue: function (position, delta) {
-        var itemTemplate = this.getItemTemplate();
-        var left = itemTemplate.left;
-        var item = itemTemplate.item;
-        var text = item.text;
-        var index;
-
-
-        if (position < itemTemplate.left || position > itemTemplate.left + text.length) {
-            //Позиция не попадает в маску ввода
-            return this.moveToNextChar(position);
-        }
-
-        index = position - left;
-
-        if (index > 0) {
-            var digit = text.substr(index - 1, 1);
-            if (/\d/.test(digit)) {
-                digit = parseInt(digit,10) + delta;
-                if (digit > 9) digit = 9;
-                if (digit < 0) digit = 0;
-                item.value = this.parseText([text.slice(0, index - 1), digit, text.slice(index)].join(''), item.value);
-                item.text = this.formatMask(item.value, item.mask);
-            }
-
-        }
-        return position;
-    },
-
-    setNextValue: function (position) {
-       return this.updateDigitValue(position, 1);
-    },
-
-    setPrevValue: function (position) {
-        return this.updateDigitValue(position, -1);
-    },
-
-    /**
-     * Удаление выделенного текста
-     * @param position
-     * @param len
-     * @param char
-     * @returns {*}
-     */
-    deleteSelectedText: function(position, len, char){
-        var itemTemplate = this.getItemTemplate();
-        var item = itemTemplate.item;
-        var text = item.text;
-        var val = item.value.toString();
-        var endLength = len + position;
-        if(!char)char = "";
-
-        var preventPosition = text.slice(0, position);
-        var preventLength = text.slice(0, endLength);
-
-        var spacePreventPosition = (preventPosition.split(" ").length - 1);
-        var spacePreventLength = (preventLength.split(" ").length - 1);
-
-        position = position - spacePreventPosition;
-        endLength = endLength - spacePreventLength;
-
-        var res = val.slice(0, position) + char + val.slice(endLength, val.length);
-        var masktext = this.formatMask(res, item.mask);
-
-        if(char){
-            position += char.length+spacePreventPosition;
-            position += formatSpace(masktext, position);
-        }else{
-            position += formatSpace(masktext, position);
-        }
-
-        function formatSpace(text, position){
-            return text.slice(0, position).split(" ").length - 1;
-        }
-
-        if(_.isEmpty(res)){
-            res = null;
-        }
-
-        return {result: res, position: position};
-    },
-
-    /**
-     * Удаление символов справа от позиции курсора
-     * @param position
-     * @param len
-     * @returns {*}
-     */
-    deleteCharRight: function (position, len) {
-        var itemTemplate = this.getItemTemplate();
-        var left = itemTemplate.left;
-        var item = itemTemplate.item;
-        var text = item.text;
-        var decimalSeparator = this.getDecimalSeparator();
-        var index;
-
-        if (position < itemTemplate.left || position > itemTemplate.left + text.length) {
-            //Не попадаем в маску
-            return this.moveToNextChar(0);
-        }
-
-        if (text.length === len) {
-            return this.clearValue(item);
-        }
-        //Позиция попадает в маску ввода
-        index = position - left;
-
-        var decimalSeparatorIndex = text.indexOf(decimalSeparator);
-
-        var i = text.substr(index).search(/\d/);
-        if (item.value === 0) {
-            item.value = null;
-            item.text = this.formatMask(item.value, item.mask);
-            position = left;
-        } else if (i > -1){
-            i += index;
-            var parts = text.split(decimalSeparator);
-            if (index === parts[0].length) { //Находимся в целой части, на границе с дробно - удаляем всю дробную
-                item.value = this.parseText(parts[0], item.value);
-            } else {
-                item.value = this.parseText([text.substr(0, i), text.substr(i + 1)].join(''), item.value);
-            }
-
-            //item.value = this.parseText([text.substr(0, i), text.substr(i + 1)].join(''), item.value);
-            item.text = this.formatMask(item.value, item.mask);
-            if (i < decimalSeparatorIndex) {
-                //Находились в целой части, должны в ней и остаться
-                //position = left + Math.min(i, item.text.indexOf(decimalSeparator));
-                position = left + Math.min(i - (text.length - 1 - item.text.length ), item.text.indexOf(decimalSeparator));
-            }
-        }
-
-        return position;
-    },
-
-    clearValue: function (item) {
-        item.value = null;
-        item.text = this.formatMask(item.value, item.mask);
-
-        return 0;
-    },
-
-    deleteCharLeft: function (position, len) {
-        var itemTemplate = this.getItemTemplate();
-        var left = itemTemplate.left;
-        var item = itemTemplate.item;
-        var text = item.text;
-        var decimalSeparator = this.getDecimalSeparator();
-        var decimalSeparatorIndex = text.indexOf(decimalSeparator);
-        var index;
-        if (position < itemTemplate.left || position > itemTemplate.left + text.length) {
-            //Не попадаем в маску
-            return this.moveToNextChar(0);
-        }
-        //Позиция попадает в маску ввода
-        var decimalDigits = this.getDecimalDigits();
-        index = position - left;
-
-        if (text.length === len) {
-            return this.clearValue(item);
-        }
-
-        var fractional = false;
-        if (index <= 0) {
-            return position;
-        }
-
-        if (decimalSeparatorIndex > -1) {
-            fractional = index > decimalSeparatorIndex;
-            if ((index === text.length - decimalDigits)) {
-                //Позиция сразу справа от разделителя - переносим ее в целую часть
-                index -= decimalSeparator.length;
-                position -= decimalSeparator.length;
-            }
-        }
-
-        var txt = text.slice(0, index);
-
-        var i = (/\d/.test(txt)) ? txt.length - txt.split('').reverse().join('').search(/\d/) - 1 : 0;
-        
-        item.value = this.parseText(text.slice(0, i) + text.slice(i + 1), item.value);
-        item.text = this.formatMask(item.value, item.mask);
-
-        position = fractional ? position - 1 : position + item.text.length - text.length;
-
-        if (item.value === 0 && position <= 1) {
-            item.value = null;
-            item.text = this.formatMask(item.value, item.mask);
-            position = left;
-        }
-
-        return position;
-    },
-
-    getValue: function () {
-        var value;
-        var itemTemplate = this.getItemTemplate();
-
-        if (itemTemplate) {
-            value = itemTemplate.item.value;
-        }
-        return value;
-    },
-
-    /**
-     * Возвращает позицию указывающую за последнюю цифку м строке
-     * @param text
-     * @returns {Number}
-     */
-    getIndexOfEndDigit: function (text) {
-        var index = text.split('').reverse().join('').search(/\d/);
-        return (index === -1) ? index : text.length - index;
-    },
-
-    /**
-     * Переводит форматированное представление в числовое
-     * @param text
-     * @param {number} oldValue
-     * @returns {number}
-     */
-    parseText: function (text, oldValue) {
-        var itemTemplate = this.getItemTemplate();
-        var item = itemTemplate.item;
-        var mask = item.mask;
-
-        var decimalSeparator = this.getDecimalSeparator();
-        var decimalDigits = this.getDecimalDigits();
-        var parts = text.split(decimalSeparator);
-        var value;
-
-        parts = parts.map(function (item, index) {
-            var txt = item.replace(/[^\d]/g, '');
-            return (index === 1) ? txt.substr(0, decimalDigits) : txt;
-        });
-
-
-        text = parts.join('.');
-
-        if (text === '') {
-            value = null;
-        } else {
-            value = +text;
-
-            if (oldValue < 0) {
-                value = -value;
-            }
-
-            if (/^p/.test(mask)) {
-                value = value / 100;
-            }
-        }
-        return value;
-    },
-
-    /**
-     * Возвращает часть шаблона для ввода значения
-     * @returns {*}
-     */
-    getItemTemplate: function () {
-        var template = this.template;
-        var item;
-        var left = 0;
-        var result = null;
-
-        if (!Array.isArray(template)) {
-            return null;
-        }
-        for (var i = 0, ln = template.length; i < ln; i = i + 1) {
-            item = template[i];
-            if (typeof item === 'string') {
-                left += item.length;
-            } else {
-                result = {
-                    item: item,
-                    left: left
-                };
-                break;
-            }
-        }
-
-        return result;
-    },
-
-    /**
-     * Проверка что маска была полностью заполнена
-     */
-    getIsComplete: function () {
-
-        return true;
-    }
-});
-
-
-//####app/formats/editMask/number/numberEditMaskBuilder.js
-/**
- * Билдер NumberEditMask
- * @constructor
- */
-function NumberEditMaskBuilder () {
-    this.build = function (context, args) {
-
-        var editMask = new NumberEditMask();
-
-        editMask.mask = args.metadata.Mask;
-
-        editMask.format = args.builder.buildType('NumberFormat', {Format: args.metadata.Mask}, {parentView: args.parentView});
-
-        return editMask;
-    }
-}
-//####app/formats/editMask/regex/regexEditMask.js
-function RegexEditMask () {
-    this.mask = null;
-}
-
-_.extend(RegexEditMask.prototype, editMaskMixin);
-
-_.extend(RegexEditMask.prototype, {
-
-    /**
-     * Проверка что маска была полностью заполнена
-     */
-    getIsComplete: function (value) {
-        var regExp;
-        this.value = value;
-        if (this.mask !== null) {
-            regExp = new RegExp(this.mask);
-            return regExp.test(value);
-        }
-        return false;
-    }
-
-
-});
-
-
-//####app/formats/editMask/regex/regexEditMaskBuilder.js
-/**
- * Билдер RegexEditMask
- * @constructor
- */
-function RegexEditMaskBuilder () {
-
-    this.build = function (context, args) {
-
-        var editMask = new RegexEditMask();
-
-        editMask.mask = args.metadata.Mask;
-
-        return editMask;
-    }
-
-}
 //####app/formats/editMask/template/_base/templateEditMaskPart.js
 var TemplateMaskPartStrategy = (function () {
 
@@ -33113,6 +32552,674 @@ function TemplateEditMaskBuilder () {
         return editMask;
     }
 }
+//####app/formats/editMask/number/numberEditMask.js
+function NumberEditMask () {
+    this.mask = null;
+    this.format = null;
+    //@TODO Получать культуру из контекста!
+    this.culture = new Culture(InfinniUI.config.lang);
+}
+
+_.extend(NumberEditMask.prototype, editMaskMixin);
+
+
+_.extend(NumberEditMask.prototype, {
+
+    placeholder: '_',
+
+    /**
+     * Получение десятичного разделителя для текущего формата
+     * @returns {String}
+     */
+    getDecimalSeparator: function () {
+        var itemTemplate = this.getItemTemplate();
+        var item = itemTemplate.item;
+        var regexp = /^[npc]/i;
+        var matches = item.mask.match(regexp);
+        var separator;
+        if (matches && matches.length > 0) {
+            switch (matches[0]) {
+                case 'n':
+                case 'N':
+                    separator = this.culture.numberFormatInfo.numberDecimalSeparator;
+                    break;
+                case 'p':
+                case 'P':
+                    separator = this.culture.numberFormatInfo.percentDecimalSeparator;
+                    break;
+                case 'c':
+                case 'C':
+                    separator = this.culture.numberFormatInfo.currencyDecimalSeparator;
+                    break;
+            }
+        }
+
+        return separator;
+    },
+
+    getDecimalDigits: function () {
+        var itemTemplate = this.getItemTemplate();
+        var item = itemTemplate.item;
+        var regexp = /^([npc])(\d*)$/i;
+        var matches = item.mask.match(regexp);
+        var decimalDigits = 0;
+        if (matches && matches.length > 0) {
+
+            if (matches[2] !== '') {
+                decimalDigits = +matches[2];
+            } else {
+                switch (matches[0]) {
+                    case 'n':
+                    case 'N':
+                        decimalDigits = this.culture.numberFormatInfo.numberDecimalDigits;
+                        break;
+                    case 'p':
+                    case 'P':
+                        decimalDigits = this.culture.numberFormatInfo.percentDecimalDigits;
+                        break;
+                    case 'c':
+                    case 'C':
+                        decimalDigits = this.culture.numberFormatInfo.currencyDecimalDigits;
+                        break;
+                }
+            }
+        }
+        return decimalDigits;
+    },
+
+    /**
+     * Установка начального значения
+     * @param value
+     */
+    reset: function (value) {
+        this.value = null;
+
+        if (typeof value !== 'undefined' && value !== null && value !== '') {
+            value = +value;
+            if (isNaN(value)) {
+                value = null;
+            }
+            this.value = value;
+        }
+
+        this.template = this.buildTemplate(value);
+    },
+
+    buildTemplate: function (value) {
+        var r = /([npc])(\d*)/i;
+
+        var mask = this.mask;
+
+        var template = [];
+
+        var that = this;
+
+        mask.replace(r, function (mask, name, precision, position, text) {
+            //Часть перед шаблоном
+            template.push(text.slice(0, position));
+            //Шаблон
+            template.push({
+                mask: mask,
+                text: (value === null) ? "" : that.formatMask(value, mask),
+                value: value
+            });
+            //Часть после шаблона
+            template.push(text.substring(position + mask.length));
+        });
+
+        return template;
+    },
+
+    getText: function () {
+        var result = [];
+        var item;
+
+        if (!Array.isArray(this.template)) {
+            return;
+        }
+
+        for (var i = 0, ln = this.template.length; i < ln; i = i + 1) {
+            item = this.template[i];
+            if (typeof item === 'string') {
+                result.push(item);
+            } else {
+                if (typeof item.value === 'undefined' || item.value === null) {
+                    //Отдаем маску ввода
+                    result.push(this.formatMask(0, item.mask).replace(/0/g, this.placeholder));
+                } else {
+                    //Отдаем форматированное значени
+                    result.push(this.formatMask(item.value, item.mask));
+                }
+            }
+        }
+
+        return result.join('');
+    },
+
+    formatMask: function (value, mask) {
+        return (value === null || typeof value === 'undefined') ? '' : this.format.format(value, undefined, mask);
+    },
+
+    /**
+     * Переход к предыдущему символу в строке ввода
+     * @param {number} position
+     * @returns {number}
+     */
+    moveToPrevChar: function (position) {
+        position = (position > 0) ? position - 1 : 0;
+        var itemTemplate = this.getItemTemplate();
+        var item = itemTemplate.item;
+        var text = item.text;
+        var index;
+        var start;
+
+        if (position < itemTemplate.left) {
+            index = text.search(/\d/);
+            position = (index === -1) ?  itemTemplate.left : itemTemplate.left + index;
+        } else {
+            start = position - itemTemplate.left + 1;
+            //Переход к первой цифре слева от позиции
+            var txt = text.substring(0, start);
+            if (/\d/.test(txt)) {   //Слева есть цифры
+                index = txt.length - txt.split('').reverse().join('').search(/\d/);
+                if (index === start) {
+                    index--;
+                }
+            } else {    //
+                index = Math.max(0, text.search(/\d/));
+            }
+
+            position = itemTemplate.left + index;
+        }
+
+        return position;
+    },
+
+    /**
+     * Переход к следущему символу в строке ввода
+     * @param {number} position
+     * @returns {number}
+     */
+    moveToNextChar: function (position) {
+        position = (position < 0) ? 0 : position + 1;
+
+        var itemTemplate = this.getItemTemplate();
+        var item = itemTemplate.item;
+        var text = item.text + " ";
+        var start = Math.max(0, position - itemTemplate.left);
+        var index;
+
+
+        //Переход к первой цифре справа от позиции
+
+        var r = /\d/;
+        var last = 0;
+        var char;
+        for (var i = 0, ln = text.length; i < ln; i = i + 1) {
+            if (r.test(text[i]) === false) {
+                char =  text[i-1];
+                if (typeof char !== 'undefined' && !r.test(char)) {
+                    continue;
+                }
+            }
+            if (i < start) {
+                last = i;
+            } else {
+                index = i;
+                break;
+            }
+        }
+        if (typeof index === 'undefined') {
+            index = last;
+        }
+
+        position = itemTemplate.left + index;
+        return position;
+    },
+
+    /**
+     * Обработка нажатия символа в указанной позиции
+     * @param char
+     * @param position
+     */
+    setCharAt: function (char, position) {
+        var itemTemplate = this.getItemTemplate();
+        var left = itemTemplate.left;
+        var item = itemTemplate.item;
+        var text = item.text;
+        var decimalSeparator = this.getDecimalSeparator();
+        var index;
+
+        if (char === '-' && item.value !== null) {  //Смена знака
+            item.value = -item.value;
+            item.text = this.formatMask(item.value, item.mask);
+            position += item.text.length - text.length;
+        } else if (position >= itemTemplate.left && position <= itemTemplate.left + text.length) {
+            //Позиция попадает в маску ввода
+            index = position - left;
+
+            if (char == decimalSeparator) { //Нажат разделитель
+                if (item.value === null){
+                    item.value = 0;
+                    item.text = this.formatMask(item.value, item.mask);
+                }
+                //Переход на первую цифру дробной части
+                if (item.text.indexOf(decimalSeparator) !== -1) {
+                    position = left + item.text.indexOf(decimalSeparator) + decimalSeparator.length;
+                }
+
+            } else if (/\d/.test(char)) {  //Нажата цифра
+                var fractional;
+
+                fractional = text.indexOf(decimalSeparator) > -1 && index > text.indexOf(decimalSeparator);
+                item.value = this.parseText([text.slice(0, index), char, text.slice(index)].join(''), item.value);
+                item.text = this.formatMask(item.value, item.mask);
+
+                if (text === '') {
+                    position = this.moveToNextChar(left);
+                } else {
+                    position = (fractional) ?  position + 1: position + item.text.length - text.length;
+                    position = Math.min(position, left + this.getIndexOfEndDigit(item.text));
+                }
+            }
+        }
+
+        return position;
+    },
+
+    /**
+     * @private
+     * @description увеличивает или уменьшает на 1 значение цифры слева от каретки.
+     * @param position
+     * @param delta
+     * @returns {*}
+     */
+    updateDigitValue: function (position, delta) {
+        var itemTemplate = this.getItemTemplate();
+        var left = itemTemplate.left;
+        var item = itemTemplate.item;
+        var text = item.text;
+        var index;
+
+
+        if (position < itemTemplate.left || position > itemTemplate.left + text.length) {
+            //Позиция не попадает в маску ввода
+            return this.moveToNextChar(position);
+        }
+
+        index = position - left;
+
+        if (index > 0) {
+            var digit = text.substr(index - 1, 1);
+            if (/\d/.test(digit)) {
+                digit = parseInt(digit,10) + delta;
+                if (digit > 9) digit = 9;
+                if (digit < 0) digit = 0;
+                item.value = this.parseText([text.slice(0, index - 1), digit, text.slice(index)].join(''), item.value);
+                item.text = this.formatMask(item.value, item.mask);
+            }
+
+        }
+        return position;
+    },
+
+    setNextValue: function (position) {
+       return this.updateDigitValue(position, 1);
+    },
+
+    setPrevValue: function (position) {
+        return this.updateDigitValue(position, -1);
+    },
+
+    /**
+     * Удаление выделенного текста
+     * @param position
+     * @param len
+     * @param char
+     * @returns {*}
+     */
+    deleteSelectedText: function(position, len, char){
+        var itemTemplate = this.getItemTemplate();
+        var item = itemTemplate.item;
+        var text = item.text;
+        var val = item.value.toString();
+        var endLength = len + position;
+        if(!char)char = "";
+
+        var preventPosition = text.slice(0, position);
+        var preventLength = text.slice(0, endLength);
+
+        var spacePreventPosition = (preventPosition.split(" ").length - 1);
+        var spacePreventLength = (preventLength.split(" ").length - 1);
+
+        position = position - spacePreventPosition;
+        endLength = endLength - spacePreventLength;
+
+        var res = val.slice(0, position) + char + val.slice(endLength, val.length);
+        var masktext = this.formatMask(res, item.mask);
+
+        if(char){
+            position += char.length+spacePreventPosition;
+            position += formatSpace(masktext, position);
+        }else{
+            position += formatSpace(masktext, position);
+        }
+
+        function formatSpace(text, position){
+            return text.slice(0, position).split(" ").length - 1;
+        }
+
+        if(_.isEmpty(res)){
+            res = null;
+        }
+
+        return {result: res, position: position};
+    },
+
+    /**
+     * Удаление символов справа от позиции курсора
+     * @param position
+     * @param len
+     * @returns {*}
+     */
+    deleteCharRight: function (position, len) {
+        var itemTemplate = this.getItemTemplate();
+        var left = itemTemplate.left;
+        var item = itemTemplate.item;
+        var text = item.text;
+        var decimalSeparator = this.getDecimalSeparator();
+        var index;
+
+        if (position < itemTemplate.left || position > itemTemplate.left + text.length) {
+            //Не попадаем в маску
+            return this.moveToNextChar(0);
+        }
+
+        if (text.length === len) {
+            return this.clearValue(item);
+        }
+        //Позиция попадает в маску ввода
+        index = position - left;
+
+        var decimalSeparatorIndex = text.indexOf(decimalSeparator);
+
+        var i = text.substr(index).search(/\d/);
+        if (item.value === 0) {
+            item.value = null;
+            item.text = this.formatMask(item.value, item.mask);
+            position = left;
+        } else if (i > -1){
+            i += index;
+            var parts = text.split(decimalSeparator);
+            if (index === parts[0].length) { //Находимся в целой части, на границе с дробно - удаляем всю дробную
+                item.value = this.parseText(parts[0], item.value);
+            } else {
+                item.value = this.parseText([text.substr(0, i), text.substr(i + 1)].join(''), item.value);
+            }
+
+            //item.value = this.parseText([text.substr(0, i), text.substr(i + 1)].join(''), item.value);
+            item.text = this.formatMask(item.value, item.mask);
+            if (i < decimalSeparatorIndex) {
+                //Находились в целой части, должны в ней и остаться
+                //position = left + Math.min(i, item.text.indexOf(decimalSeparator));
+                position = left + Math.min(i - (text.length - 1 - item.text.length ), item.text.indexOf(decimalSeparator));
+            }
+        }
+
+        return position;
+    },
+
+    clearValue: function (item) {
+        item.value = null;
+        item.text = this.formatMask(item.value, item.mask);
+
+        return 0;
+    },
+
+    deleteCharLeft: function (position, len) {
+        var itemTemplate = this.getItemTemplate();
+        var left = itemTemplate.left;
+        var item = itemTemplate.item;
+        var text = item.text;
+        var decimalSeparator = this.getDecimalSeparator();
+        var decimalSeparatorIndex = text.indexOf(decimalSeparator);
+        var index;
+        if (position < itemTemplate.left || position > itemTemplate.left + text.length) {
+            //Не попадаем в маску
+            return this.moveToNextChar(0);
+        }
+        //Позиция попадает в маску ввода
+        var decimalDigits = this.getDecimalDigits();
+        index = position - left;
+
+        if (text.length === len) {
+            return this.clearValue(item);
+        }
+
+        var fractional = false;
+        if (index <= 0) {
+            return position;
+        }
+
+        if (decimalSeparatorIndex > -1) {
+            fractional = index > decimalSeparatorIndex;
+            if ((index === text.length - decimalDigits)) {
+                //Позиция сразу справа от разделителя - переносим ее в целую часть
+                index -= decimalSeparator.length;
+                position -= decimalSeparator.length;
+            }
+        }
+
+        var txt = text.slice(0, index);
+
+        var i = (/\d/.test(txt)) ? txt.length - txt.split('').reverse().join('').search(/\d/) - 1 : 0;
+        
+        item.value = this.parseText(text.slice(0, i) + text.slice(i + 1), item.value);
+        item.text = this.formatMask(item.value, item.mask);
+
+        position = fractional ? position - 1 : position + item.text.length - text.length;
+
+        if (item.value === 0 && position <= 1) {
+            item.value = null;
+            item.text = this.formatMask(item.value, item.mask);
+            position = left;
+        }
+
+        return position;
+    },
+
+    getValue: function () {
+        var value;
+        var itemTemplate = this.getItemTemplate();
+
+        if (itemTemplate) {
+            value = itemTemplate.item.value;
+        }
+        return value;
+    },
+
+    /**
+     * Возвращает позицию указывающую за последнюю цифку м строке
+     * @param text
+     * @returns {Number}
+     */
+    getIndexOfEndDigit: function (text) {
+        var index = text.split('').reverse().join('').search(/\d/);
+        return (index === -1) ? index : text.length - index;
+    },
+
+    /**
+     * Переводит форматированное представление в числовое
+     * @param text
+     * @param {number} oldValue
+     * @returns {number}
+     */
+    parseText: function (text, oldValue) {
+        var itemTemplate = this.getItemTemplate();
+        var item = itemTemplate.item;
+        var mask = item.mask;
+
+        var decimalSeparator = this.getDecimalSeparator();
+        var decimalDigits = this.getDecimalDigits();
+        var parts = text.split(decimalSeparator);
+        var value;
+
+        parts = parts.map(function (item, index) {
+            var txt = item.replace(/[^\d]/g, '');
+            return (index === 1) ? txt.substr(0, decimalDigits) : txt;
+        });
+
+
+        text = parts.join('.');
+
+        if (text === '') {
+            value = null;
+        } else {
+            value = +text;
+
+            if (oldValue < 0) {
+                value = -value;
+            }
+
+            if (/^p/.test(mask)) {
+                value = value / 100;
+            }
+        }
+        return value;
+    },
+
+    /**
+     * Возвращает часть шаблона для ввода значения
+     * @returns {*}
+     */
+    getItemTemplate: function () {
+        var template = this.template;
+        var item;
+        var left = 0;
+        var result = null;
+
+        if (!Array.isArray(template)) {
+            return null;
+        }
+        for (var i = 0, ln = template.length; i < ln; i = i + 1) {
+            item = template[i];
+            if (typeof item === 'string') {
+                left += item.length;
+            } else {
+                result = {
+                    item: item,
+                    left: left
+                };
+                break;
+            }
+        }
+
+        return result;
+    },
+
+    /**
+     * Проверка что маска была полностью заполнена
+     */
+    getIsComplete: function () {
+
+        return true;
+    }
+});
+
+
+//####app/formats/editMask/number/numberEditMaskBuilder.js
+/**
+ * Билдер NumberEditMask
+ * @constructor
+ */
+function NumberEditMaskBuilder () {
+    this.build = function (context, args) {
+
+        var editMask = new NumberEditMask();
+
+        editMask.mask = args.metadata.Mask;
+
+        editMask.format = args.builder.buildType('NumberFormat', {Format: args.metadata.Mask}, {parentView: args.parentView});
+
+        return editMask;
+    }
+}
+//####app/formats/editMask/regex/regexEditMask.js
+function RegexEditMask () {
+    this.mask = null;
+}
+
+_.extend(RegexEditMask.prototype, editMaskMixin);
+
+_.extend(RegexEditMask.prototype, {
+
+    /**
+     * Проверка что маска была полностью заполнена
+     */
+    getIsComplete: function (value) {
+        var regExp;
+        this.value = value;
+        if (this.mask !== null) {
+            regExp = new RegExp(this.mask);
+            return regExp.test(value);
+        }
+        return false;
+    }
+
+
+});
+
+
+//####app/formats/editMask/regex/regexEditMaskBuilder.js
+/**
+ * Билдер RegexEditMask
+ * @constructor
+ */
+function RegexEditMaskBuilder () {
+
+    this.build = function (context, args) {
+
+        var editMask = new RegexEditMask();
+
+        editMask.mask = args.metadata.Mask;
+
+        return editMask;
+    }
+
+}
+//####app/linkView/openMode/strategy/_mixins/openModeAutoFocusMixin.js
+var openModeAutoFocusMixin = {
+
+    applyAutoFocus: function () {
+        var view = this.view;
+        var focusOnControl = view && view.getFocusOnControl();
+
+        if (!focusOnControl) {
+            return;
+        }
+
+        var focusInterval = setInterval(function () {
+            var elements = view.findAllChildrenByName(focusOnControl);
+            if (Array.isArray(elements) && elements.length > 0) {
+                var element = elements[0];
+                if (!jQuery.contains(document, element.control.controlView.el)) {
+                    return;
+                }
+
+                element.setFocus && element.setFocus();
+                clearFocusInterval();
+            }
+        }, 1000 / 3);
+
+        setTimeout(clearFocusInterval, 3000);
+
+        function clearFocusInterval() {
+            clearInterval(focusInterval);
+        }
+
+    }
+
+};
 //####app/linkView/inlineViewBuilder.js
 function InlineViewBuilder() {
     this.build = function (context, args){
@@ -33318,7 +33425,7 @@ _.extend(MetadataViewBuilder.prototype, {
         var that = this;
 
         return function (onViewReadyHandler) {
-            var metadataProvider = window.providerRegister.build('MetadataDataSource', metadata);
+            var metadataProvider = window.InfinniUI.providerRegister.build('MetadataDataSource', metadata);
 
             metadataProvider.getViewMetadata(function (viewMetadata) {
                 that.buildViewByMetadata(params, viewMetadata, parentView, onReady);
@@ -33379,39 +33486,6 @@ _.extend(MetadataViewBuilder.prototype, {
         return params.parentView;
     }
 });
-//####app/linkView/openMode/strategy/_mixins/openModeAutoFocusMixin.js
-var openModeAutoFocusMixin = {
-
-    applyAutoFocus: function () {
-        var view = this.view;
-        var focusOnControl = view && view.getFocusOnControl();
-
-        if (!focusOnControl) {
-            return;
-        }
-
-        var focusInterval = setInterval(function () {
-            var elements = view.findAllChildrenByName(focusOnControl);
-            if (Array.isArray(elements) && elements.length > 0) {
-                var element = elements[0];
-                if (!jQuery.contains(document, element.control.controlView.el)) {
-                    return;
-                }
-
-                element.setFocus && element.setFocus();
-                clearFocusInterval();
-            }
-        }, 1000 / 3);
-
-        setTimeout(clearFocusInterval, 3000);
-
-        function clearFocusInterval() {
-            clearInterval(focusInterval);
-        }
-
-    }
-
-};
 //####app/linkView/openMode/strategy/openModeContainerStrategy.js
 var OpenModeContainerStrategy = function () {
 };
@@ -33778,6 +33852,100 @@ ScriptExecutor.prototype.buildScriptByBody = function(scriptBody){
     var scriptBuilder = new ScriptBuilder();
     return scriptBuilder.build(context, args);
 };
+//####app/services/autoHeightService.js
+/**
+ * @description При изменении размеров окна пересчитывает высоту элементов представления
+ */
+InfinniUI.AutoHeightService = (function () {
+    var TIMEOUT = 40;
+    var WAIT = 50;
+    var resizeTimeout;
+
+    $(window).resize(function () {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(_.debounce(onWindowResize, WAIT), TIMEOUT);
+    });
+
+    function onWindowResize() {
+        layoutManager.init();
+    }
+
+})();
+//####app/services/modalWindowService.js
+InfinniUI.ModalWindowService = (function () {
+    var modalQueue = [];
+
+    return {
+        modalWasOpened: function (obj) {
+            if (modalQueue.length != 0) {
+                var previous = modalQueue[modalQueue.length - 1];
+
+                previous.modal.hide();
+                previous.background.hide();
+            }
+
+            modalQueue.push(obj);
+        },
+
+        modalWasClosed: function (modal) {
+            for (var i = 0, length = modalQueue.length; i < length; i++) {
+                if (modalQueue[i].modal == modal) {
+                    // Если последний
+                    if (i == length - 1 && i != 0) {
+                        var previous = modalQueue[i - 1];
+
+                        previous.modal.show();
+                        previous.background.show();
+                        notifyLayoutChange();
+                    }
+
+                    modalQueue.splice(i, 1);
+                    break;
+                }
+            }
+
+        }
+    };
+
+    function notifyLayoutChange () {
+        var exchange = window.InfinniUI.global.messageBus;
+        exchange.send('OnChangeLayout', {});
+    }
+})();
+
+//####app/services/notifyService.js
+/**
+ * @description Отображает всплывающие сообщения на событие onNotifyUser.
+ * Используется плдагин http://codeseven.github.io/toastr/
+ */
+InfinniUI.NotifyService = (function () {
+
+    var exchange = window.InfinniUI.global.messageBus;
+
+    exchange.subscribe(messageTypes.onNotifyUser, function (context, args) {
+        var
+            messageText = args.value.messageText,
+            messageType = args.value.messageType || 'info';
+
+        var type;
+
+        switch (messageType) {
+            case 'success':
+            case 'error':
+            case 'warning':
+            case 'info':
+                type = messageType;
+                break;
+            default:
+                type = 'info';
+        }
+
+        if (typeof toastr !== 'undefined') {
+            toastr[type](messageText);
+        }
+
+    });
+})();
 //####app/services/ajaxLoaderIndicator/ajaxLoaderIndicator.js
 var AjaxLoaderIndicator = function ($target, config) {
     var defaults = {
@@ -33856,25 +34024,6 @@ var AjaxLoaderIndicatorView = Backbone.View.extend({
     }
 
 });
-//####app/services/autoHeightService.js
-/**
- * @description При изменении размеров окна пересчитывает высоту элементов представления
- */
-InfinniUI.AutoHeightService = (function () {
-    var TIMEOUT = 40;
-    var WAIT = 50;
-    var resizeTimeout;
-
-    $(window).resize(function () {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(_.debounce(onWindowResize, WAIT), TIMEOUT);
-    });
-
-    function onWindowResize() {
-        layoutManager.init();
-    }
-
-})();
 //####app/services/contextMenuService/contextMenuService.js
 InfinniUI.ContextMenuService = (function () {
 
@@ -34026,6 +34175,8 @@ var MessageBox = Backbone.View.extend({
 
 _.extend(MessageBox.prototype, bindUIElementsMixin);
 
+InfinniUI.MessageBox = MessageBox;
+
 /*new MessageBox({
     type: 'error',
     text:'asdasd',
@@ -34045,81 +34196,6 @@ _.extend(MessageBox.prototype, bindUIElementsMixin);
         }
     ]
 });*/
-//####app/services/modalWindowService.js
-InfinniUI.ModalWindowService = (function () {
-    var modalQueue = [];
-
-    return {
-        modalWasOpened: function (obj) {
-            if (modalQueue.length != 0) {
-                var previous = modalQueue[modalQueue.length - 1];
-
-                previous.modal.hide();
-                previous.background.hide();
-            }
-
-            modalQueue.push(obj);
-        },
-
-        modalWasClosed: function (modal) {
-            for (var i = 0, length = modalQueue.length; i < length; i++) {
-                if (modalQueue[i].modal == modal) {
-                    // Если последний
-                    if (i == length - 1 && i != 0) {
-                        var previous = modalQueue[i - 1];
-
-                        previous.modal.show();
-                        previous.background.show();
-                        notifyLayoutChange();
-                    }
-
-                    modalQueue.splice(i, 1);
-                    break;
-                }
-            }
-
-        }
-    };
-
-    function notifyLayoutChange () {
-        var exchange = window.InfinniUI.global.messageBus;
-        exchange.send('OnChangeLayout', {});
-    }
-})();
-
-//####app/services/notifyService.js
-/**
- * @description Отображает всплывающие сообщения на событие onNotifyUser.
- * Используется плдагин http://codeseven.github.io/toastr/
- */
-InfinniUI.NotifyService = (function () {
-
-    var exchange = window.InfinniUI.global.messageBus;
-
-    exchange.subscribe(messageTypes.onNotifyUser, function (context, args) {
-        var
-            messageText = args.value.messageText,
-            messageType = args.value.messageType || 'info';
-
-        var type;
-
-        switch (messageType) {
-            case 'success':
-            case 'error':
-            case 'warning':
-            case 'info':
-                type = messageType;
-                break;
-            default:
-                type = 'info';
-        }
-
-        if (typeof toastr !== 'undefined') {
-            toastr[type](messageText);
-        }
-
-    });
-})();
 //####app/services/toolTipService/toolTipService.js
 InfinniUI.ToolTipService = (function () {
 
@@ -34230,3 +34306,67 @@ _.extend( Testt.prototype, {
             .append(this.itemTemplate(this.context, {index:0}).render());
     }
 });
+//####developer/jsonEditor/jsonEditor.js
+InfinniUI.JsonEditor = (function () {
+    var childWindow;
+    var metadataForOpen;
+    var pathForOpen;
+
+    function updateContentOfChildWindow(){
+        if(metadataForOpen){
+            childWindow.setMetadata(JSON.stringify(metadataForOpen));
+            metadataForOpen = undefined;
+        }
+
+        if (pathForOpen) {
+            childWindow.setPath(pathForOpen);
+            pathForOpen = undefined;
+        }
+    }
+
+    return {
+        setMetadata: function (metadata) {
+            // TODO: Не универсально
+            var name = metadata.Namespace + '.' + metadata.Name;
+            return $.get(InfinniUI.config.editorService.url, {name: name})
+                .success(function (data) {
+                    metadataForOpen = data;
+
+                    if (!childWindow) {
+
+                        var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
+
+                        tempChildWindow.onload = function () {
+                            childWindow = tempChildWindow;
+
+                            childWindow.onSaveMetadata(function (metadata) {
+                                $.post(InfinniUI.config.editorService.url, {Json: JSON.stringify(metadata)})
+                                    .success(function () {
+                                        toastr.success('Metadata saved');
+                                    })
+                                    .error(function (error) {
+                                        alert(JSON.stringify(error));
+                                    });
+                            });
+
+                            updateContentOfChildWindow();
+                        };
+
+                        tempChildWindow.addEventListener('unload', function() {
+                            childWindow = undefined;
+                        });
+                    } else {
+                        updateContentOfChildWindow();
+                        childWindow.focus();
+                    }
+                });
+        },
+        setPath: function (path) {
+            pathForOpen = path;
+
+            if(childWindow){
+                updateContentOfChildWindow();
+            }
+        }
+    };
+})();

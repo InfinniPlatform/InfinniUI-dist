@@ -1,4 +1,4 @@
-var TestView = ControlView.extend({
+var TestView = InfinniUI.ControlView.extend({
     tagName: 'div',
     className: 'pl-test-view',
 
@@ -10,17 +10,17 @@ var TestView = ControlView.extend({
 
 
     initialize: function () {
-        ControlView.prototype.initialize.apply(this);
+        InfinniUI.ControlView.prototype.initialize.apply(this);
     },
 
     initHandlersForProperties: function(){
-        ControlView.prototype.initHandlersForProperties.call(this);
+        InfinniUI.ControlView.prototype.initHandlersForProperties.call(this);
 
         this.listenTo(this.model, 'change:testProperty', this.updateTestProperty);
     },
 
     updateProperties: function(){
-        ControlView.prototype.updateProperties.call(this);
+        InfinniUI.ControlView.prototype.updateProperties.call(this);
 
         this.updateTestProperty();
     },

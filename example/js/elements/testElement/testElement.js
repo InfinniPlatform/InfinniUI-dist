@@ -2,7 +2,7 @@ function TestElement(parent, viewMode) {
     _.superClass(TestElement, this, parent, viewMode);
 }
 
-_.inherit(TestElement, Element);
+_.inherit(TestElement, InfinniUI.Element);
 
 
 _.extend(TestElement.prototype, {
