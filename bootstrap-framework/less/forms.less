@@ -214,8 +214,7 @@ input[type="search"] {
 // Indent the labels to position radios/checkboxes as hanging controls.
 
 .radio,
-.checkbox,
-.indeterminateCheckbox {
+.checkbox {
   position: relative;
   display: block;
   margin-top: 10px;
@@ -232,7 +231,6 @@ input[type="search"] {
 .radio input[type="radio"],
 .radio-inline input[type="radio"],
 .checkbox input[type="checkbox"],
-.indeterminateCheckbox input[type="checkbox"],
 .checkbox-inline input[type="checkbox"] {
   position: absolute;
   margin-left: -20px;
@@ -283,8 +281,7 @@ input[type="checkbox"] {
 }
 // These classes are used on elements with <label> descendants
 .radio,
-.checkbox,
-.indeterminateCheckbox {
+.checkbox {
   &.disabled,
   fieldset[disabled] & {
     label {
@@ -515,8 +512,7 @@ input[type="checkbox"] {
     // Remove default margin on radios/checkboxes that were used for stacking, and
     // then undo the floating of radios and checkboxes to match.
     .radio,
-    .checkbox,
-    .indeterminateCheckbox {
+    .checkbox {
       display: inline-block;
       margin-top: 0;
       margin-bottom: 0;
@@ -527,8 +523,7 @@ input[type="checkbox"] {
       }
     }
     .radio input[type="radio"],
-    .checkbox input[type="checkbox"],
-    .indeterminateCheckbox input[type="checkbox"] {
+    .checkbox input[type="checkbox"] {
       position: relative;
       margin-left: 0;
     }
@@ -553,7 +548,6 @@ input[type="checkbox"] {
   // Labels also get some reset styles, but that is scoped to a media query below.
   .radio,
   .checkbox,
-  .indeterminateCheckbox,
   .radio-inline,
   .checkbox-inline {
     margin-top: 0;
@@ -563,8 +557,7 @@ input[type="checkbox"] {
   // Account for padding we're adding to ensure the alignment and of help text
   // and other content below items
   .radio,
-  .checkbox,
-  .indeterminateCheckbox {
+  .checkbox {
     min-height: (@line-height-computed + (@padding-base-vertical + 1));
   }
 

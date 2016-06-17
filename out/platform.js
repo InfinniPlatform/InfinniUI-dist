@@ -3709,10 +3709,6 @@ _.extend(TreeModel.prototype, {
         return true;
     },
 
-    simulateSetProperty: function(propertyName, oldValue){
-        this._notifyAboutPropertyChanged(propertyName, oldValue);
-    },
-
     onPropertyChanged: function(propertyName, handler, params){
         var handlersNode;
         var bindId = this.counter + '-bindId';
@@ -3998,6 +3994,9 @@ function MessageBus(view) {
 window.InfinniUI.global.messageBus = new MessageBus();
 //####app/messaging/messageTypes.js
 window.messageTypes = {
+
+    onViewBuildError: {name: 'onViewBuildError'},
+    onViewCreated: {name: 'onViewCreated'},
     onViewOpened: { name: 'onViewOpened' },
     onViewClosed: { name: 'onViewClosed' },
     onViewClosing: {name: 'onViewClosing'},
@@ -4029,9 +4028,7 @@ window.messageTypes = {
     onOpenContextMenu: {name: 'onOpenContextMenu'},
 
     onDataLoading: {name: 'onDataLoading'},
-    onDataLoaded: {name: 'onDataLoaded'},
-
-    onViewCreated: {name: 'onViewCreated'}
+    onDataLoaded: {name: 'onDataLoaded'}
 
     //onOpenViewInContainer: {name: 'onOpenViewInContainer'}
 
@@ -15895,7 +15892,7 @@ function IndeterminateCheckboxControl(parent) {
 	this.initialize_editorBaseControl();
 }
 
-_.inherit(IndeterminateCheckboxControl, Control);
+_.inherit(IndeterminateCheckboxControl, CheckBoxControl);
 
 _.extend(IndeterminateCheckboxControl.prototype, {
 
@@ -15911,18 +15908,13 @@ _.extend(IndeterminateCheckboxControl.prototype, {
 
 
 //####app/controls/indeterminateCheckbox/indeterminateCheckboxModel.js
-var IndeterminateCheckboxModel = ControlModel.extend( _.extend({
+var IndeterminateCheckboxModel = CheckBoxModel.extend({
 
 	defaults: _.defaults({
 		value: 'unchecked'
-	}, ControlModel.prototype.defaults),
+	}, CheckBoxModel.prototype.defaults)
 
-	initialize: function () {
-		ControlModel.prototype.initialize.apply(this, arguments);
-		this.initialize_editorBaseModel();
-	}
-
-}, editorBaseModelMixin));
+});
 
 //####app/controls/indeterminateCheckbox/indeterminateCheckboxView.js
 /**
@@ -15930,60 +15922,9 @@ var IndeterminateCheckboxModel = ControlModel.extend( _.extend({
  * @augments ControlView
  * @mixes editorBaseViewMixin
  */
-var IndeterminateCheckboxView = ControlView.extend(/** @lends IndeterminateCheckboxView.prototype */ _.extend({}, editorBaseViewMixin, {
+var IndeterminateCheckboxView = CheckBoxView.extend({
 
-	template: InfinniUI.Template["controls/indeterminateCheckbox/template/indeterminateCheckbox.tpl.html"],
-
-	UI: _.extend({}, editorBaseViewMixin.UI, {
-		text: '.indeterminateCheckbox-label',
-		input: 'input'
-	}),
-
-	events: {
-		'click input': 'onClickHandler'
-	},
-
-	initHandlersForProperties: function(){
-		ControlView.prototype.initHandlersForProperties.call(this);
-		editorBaseViewMixin.initHandlersForProperties.call(this);
-	},
-
-	updateProperties: function(){
-		ControlView.prototype.updateProperties.call(this);
-		editorBaseViewMixin.updateProperties.call(this);
-	},
-
-	updateFocusable: function () {
-		var focusable = this.model.get('focusable');
-
-		if (!focusable) {
-			this.ui.input.attr('tabindex', -1);
-		} else {
-			this.ui.input.removeAttr('tabindex');
-		}
-	},
-
-	updateText: function () {
-		var text = this.model.get('text');
-
-		this.ui.text.text(text ? text : '');
-	},
-
-	updateEnabled: function () {
-		ControlView.prototype.updateEnabled.call(this);
-		var enabled = this.model.get('enabled');
-		this.ui.input.prop('disabled', !enabled);
-	},
-
-	render: function () {
-		this.prerenderingActions();
-		this.renderTemplate(this.template);
-		this.updateProperties();
-
-		this.trigger('render');
-		this.postrenderingActions();
-		return this;
-	},
+	className: 'pl-indeterminate-checkbox',
 
 	onClickHandler: function () {
 		var model = this.model;
@@ -16009,12 +15950,8 @@ var IndeterminateCheckboxView = ControlView.extend(/** @lends IndeterminateCheck
 			this.ui.input.prop('indeterminate', true);
 		}
 
-	},
-
-	setFocus: function () {
-		this.ui.input.focus();
 	}
-}));
+});
 
 //####app/controls/loaderIndicator/loaderIndicator.js
 (function () {
@@ -17931,21 +17868,27 @@ var BaseDataSource = Backbone.Model.extend({
     },
 
     _changeItem: function(index, value){
-        var item = this.get('model').getProperty('items.'+index);
-        var oldValue = {};
+        var item = this.get('model').getProperty('items.'+index),
+            isSelectedItem = (item == this.getSelectedItem()),
+            idProperty = this.get('idProperty'),
+            indexedItemsById = this.get('itemsById');
 
         if(value == item){
             return;
         }
 
         this._excludeItemFromModifiedSet(item);
+        delete indexedItemsById[item[idProperty]];
 
-        this._replaceAllProperties(oldValue, item);
-        this._replaceAllProperties(item, value);
+        this.get('model').setProperty('items.'+index, value);
 
-        this.get('model').simulateSetProperty('items.'+index, oldValue);
+        this._includeItemToModifiedSet(value);
+        indexedItemsById[value[idProperty]] = value;
+        this.set('itemsById', indexedItemsById);
 
-        this._includeItemToModifiedSet(item);
+        if(isSelectedItem) {
+            this.get('model').setProperty('selectedItem', value);
+        }
     },
 
     tryInitData: function(){
@@ -18451,16 +18394,6 @@ var BaseDataSource = Backbone.Model.extend({
 
     getResolvePriority: function(){
         return this.get('resolvePriority');
-    },
-
-    _replaceAllProperties: function (currentObject, newPropertiesSet) {
-        for (var property in currentObject) {
-            delete(currentObject[property]);
-        }
-
-        for (var property in newPropertiesSet) {
-            currentObject[property] = newPropertiesSet[property];
-        }
     },
 
     _copyObject: function (currentObject) {
@@ -23797,7 +23730,7 @@ ImageBoxValueConverter.prototype.toElement = function (context, args) {
     }
     return url;
 };
-//####app/elements/indeterminateCheckbox/IndeterminateCheckbox.js
+//####app/elements/indeterminateCheckbox/indeterminateCheckbox.js
 /**
  *
  * @param parent
@@ -23809,7 +23742,7 @@ function IndeterminateCheckbox(parent) {
 	this.initialize_editorBase();
 }
 
-_.inherit(IndeterminateCheckbox, Element);
+_.inherit(IndeterminateCheckbox, CheckBox);
 
 
 _.extend(IndeterminateCheckbox.prototype, {
@@ -23820,7 +23753,7 @@ _.extend(IndeterminateCheckbox.prototype, {
 
 }, editorBaseMixin);
 
-//####app/elements/indeterminateCheckbox/IndeterminateCheckboxBuilder.js
+//####app/elements/indeterminateCheckbox/indeterminateCheckboxBuilder.js
 /**
  *
  * @constructor
@@ -23831,20 +23764,14 @@ function IndeterminateCheckboxBuilder() {
 	this.initialize_editorBaseBuilder();
 }
 
-_.inherit(IndeterminateCheckboxBuilder, ElementBuilder);
+_.inherit(IndeterminateCheckboxBuilder, CheckBoxBuilder);
 
 
 _.extend(IndeterminateCheckboxBuilder.prototype, {
 	createElement: function (params) {
 		return new IndeterminateCheckbox(params.parent);
-	},
-
-	applyMetadata: function (params) {
-		ElementBuilder.prototype.applyMetadata.call(this, params);
-		this.applyMetadata_editorBaseBuilder(params);
 	}
-
-}, editorBaseBuilderMixin);
+});
 
 
 //####app/elements/label/label.js
@@ -26522,120 +26449,6 @@ function CancelActionBuilder() {
         return new CancelAction(args.parentView);
     }
 }
-//####app/actions/deleteAction/deleteAction.js
-function DeleteAction(parentView){
-    _.superClass(DeleteAction, this, parentView);
-}
-
-_.inherit(DeleteAction, BaseAction);
-
-
-_.extend(DeleteAction.prototype, {
-    execute: function(callback){
-        var accept = this.getProperty('accept'),
-            that = this,
-            dataSource = this.getProperty('destinationSource'),
-            property = this.getProperty('destinationProperty');
-
-        if( dataSource.getProperty(property) ) {
-            if(accept){
-                new MessageBox({
-                    text: 'Вы уверены, что хотите удалить?',
-                    buttons: [
-                        {
-                            name: 'Да',
-                            type: 'action',
-                            onClick: function() {
-                                that.remove(callback);
-                            }
-                        },
-                        {
-                            name: 'Нет'
-                        }
-                    ]
-                });
-            } else {
-                this.remove(callback);
-            }
-        } else {
-            new MessageBox({
-                text: 'Вы не выбрали элемент который необходимо удалить',
-                buttons: [
-                    {
-                        name: 'Закрыть'
-                    }
-                ]
-            });
-        }
-    },
-
-    remove: function (callback) {
-        var dataSource = this.getProperty('destinationSource'),
-            property = this.getProperty('destinationProperty');
-
-        if( this._isDocument(property) ) {
-            this._deleteDocument(dataSource, property, callback);
-        } else {
-            this._deleteItem(dataSource, property, callback);
-        }
-    },
-
-    _deleteDocument: function(dataSource, property, callback){
-        var onSuccessDelete = function () {
-            dataSource.updateItems();
-
-            if (_.isFunction(callback)) {
-                callback();
-            }
-        };
-
-        var selectedItem = dataSource.getProperty(property);
-        dataSource.deleteItem(selectedItem, onSuccessDelete);
-    },
-
-    _deleteItem: function(dataSource, property, callback){
-        var propertyPathList = property.split("."),
-            index = propertyPathList.pop(),
-            parentProperty = propertyPathList.join("."),
-            items = dataSource.getProperty(parentProperty);
-
-        items = _.clone( items );
-        items.splice(index, 1);
-        dataSource.setProperty(parentProperty, items);
-
-        if (_.isFunction(callback)) {
-            callback();
-        }
-    },
-
-    _isDocument: function(propertyName){
-        return propertyName == '$' || _.isFinite(propertyName);
-    }
-});
-
-//####app/actions/deleteAction/deleteActionBuilder.js
-function DeleteActionBuilder(){
-    this.build = function(context, args){
-        var metadata = args.metadata,
-            parentView = args.parentView,
-            sourceName = metadata.DestinationValue.Source,
-            propertyName = metadata.DestinationValue.Property || '$';
-
-        var action = new DeleteAction(parentView);
-
-        var accept = (metadata['Accept'] !== false),
-            dataSource = parentView.getContext().dataSources[sourceName],
-            destinationProperty = (args.basePathOfProperty != null) ?
-                                    args.basePathOfProperty.resolveProperty( propertyName ) :
-                                    propertyName;
-
-        action.setProperty('accept', accept);
-        action.setProperty('destinationSource', dataSource);
-        action.setProperty('destinationProperty', destinationProperty);
-
-        return action;
-    }
-}
 //####app/actions/editAction/editAction.js
 function EditAction(parentView){
     _.superClass(EditAction, this, parentView);
@@ -26746,6 +26559,120 @@ function EditActionBuilder(){
         action.setProperty('destinationSource', metadata.DestinationValue.Source);
 
         action.setProperty('destinationProperty', destinationProperty || '$');
+
+        return action;
+    }
+}
+//####app/actions/deleteAction/deleteAction.js
+function DeleteAction(parentView){
+    _.superClass(DeleteAction, this, parentView);
+}
+
+_.inherit(DeleteAction, BaseAction);
+
+
+_.extend(DeleteAction.prototype, {
+    execute: function(callback){
+        var accept = this.getProperty('accept'),
+            that = this,
+            dataSource = this.getProperty('destinationSource'),
+            property = this.getProperty('destinationProperty');
+
+        if( dataSource.getProperty(property) ) {
+            if(accept){
+                new MessageBox({
+                    text: 'Вы уверены, что хотите удалить?',
+                    buttons: [
+                        {
+                            name: 'Да',
+                            type: 'action',
+                            onClick: function() {
+                                that.remove(callback);
+                            }
+                        },
+                        {
+                            name: 'Нет'
+                        }
+                    ]
+                });
+            } else {
+                this.remove(callback);
+            }
+        } else {
+            new MessageBox({
+                text: 'Вы не выбрали элемент который необходимо удалить',
+                buttons: [
+                    {
+                        name: 'Закрыть'
+                    }
+                ]
+            });
+        }
+    },
+
+    remove: function (callback) {
+        var dataSource = this.getProperty('destinationSource'),
+            property = this.getProperty('destinationProperty');
+
+        if( this._isDocument(property) ) {
+            this._deleteDocument(dataSource, property, callback);
+        } else {
+            this._deleteItem(dataSource, property, callback);
+        }
+    },
+
+    _deleteDocument: function(dataSource, property, callback){
+        var onSuccessDelete = function () {
+            dataSource.updateItems();
+
+            if (_.isFunction(callback)) {
+                callback();
+            }
+        };
+
+        var selectedItem = dataSource.getProperty(property);
+        dataSource.deleteItem(selectedItem, onSuccessDelete);
+    },
+
+    _deleteItem: function(dataSource, property, callback){
+        var propertyPathList = property.split("."),
+            index = propertyPathList.pop(),
+            parentProperty = propertyPathList.join("."),
+            items = dataSource.getProperty(parentProperty);
+
+        items = _.clone( items );
+        items.splice(index, 1);
+        dataSource.setProperty(parentProperty, items);
+
+        if (_.isFunction(callback)) {
+            callback();
+        }
+    },
+
+    _isDocument: function(propertyName){
+        return propertyName == '$' || _.isFinite(propertyName);
+    }
+});
+
+//####app/actions/deleteAction/deleteActionBuilder.js
+function DeleteActionBuilder(){
+    this.build = function(context, args){
+        var metadata = args.metadata,
+            parentView = args.parentView,
+            sourceName = metadata.DestinationValue.Source,
+            propertyName = metadata.DestinationValue.Property || '$';
+
+        var action = new DeleteAction(parentView);
+
+        var accept = (metadata['Accept'] !== false),
+            dataSource = parentView.getContext().dataSources[sourceName],
+            destinationProperty = (args.basePathOfProperty != null) ?
+                                    args.basePathOfProperty.resolveProperty( propertyName ) :
+                                    propertyName;
+
+        action.setProperty('accept', accept);
+        action.setProperty('destinationSource', dataSource);
+        action.setProperty('destinationProperty', destinationProperty);
 
         return action;
     }
@@ -28001,68 +27928,16 @@ function MetadataProviderREST(metadataUrlConstructor, successCallback, failCallb
 
 window.InfinniUI.Providers.MetadataProviderREST = MetadataProviderREST;
 //####app/data/dataProviders/REST/queryConstructorMetadata.js
-function QueryConstructorMetadata(host,metadata){
+function QueryConstructorMetadata(host, metadata) {
 
-    var viewMetadataUrlTemplate = '{0}/systemconfig/StandardApi/metadata/getmanagedmetadata';
+    var viewMetadataUrlTemplate = '{0}/content/metadata/Views/{1}/{2}.json';
 
-    var metadataUrlTemplate = '{0}/RestfulApi/StandardApi/configuration/getconfigmetadata';
-
-    var metadataConfigListUrlTemplate = '{0}/RestfulApi/StandardApi/configuration/getconfigmetadatalist';
-
-    var makeGetViewMetadataRequestParams = function() {
+    this.constructViewMetadataRequest = function () {
         return {
-            "id": null,
-            "changesObject": {
-                "Configuration": metadata.ConfigId,
-                "MetadataObject": metadata.DocumentId,
-                "MetadataType": metadata.ViewType,
-                "MetadataName": metadata.MetadataName,
-                "Parameters": metadata.Parameters
-            },
-            "replace": false
-        }
-    };
-
-    var makeGetConfigMetadataRequestParams = function() {
-        return {
-            "id": null,
-            "changesObject":null,
-            "replace":false
-        }
-    };
-
-    var makeGetMenuMetadataRequestParams = function() {
-        return {
-            "id": null,
-            "changesObject":{
-                "Configuration":metadata.ConfigId,
-                "MetadataType":'Menu'
-             },
-            "replace":false
-        }
-    };
-
-    this.constructConfigMetadataRequest = function(){
-        return {
-            "requestUrl" : stringUtils.format(metadataConfigListUrlTemplate,[host]),
-            "args" : makeGetConfigMetadataRequestParams()
+            "requestUrl": stringUtils.format(viewMetadataUrlTemplate, [host, metadata.DocumentId, metadata.MetadataName]),
+            "method": "GET"
         };
     };
-
-    this.constructViewMetadataRequest = function(){
-        return {
-            "requestUrl" : stringUtils.format(viewMetadataUrlTemplate,[host]),
-            "args" : makeGetViewMetadataRequestParams()
-        };
-    };
-
-    this.constructMenuMetadataRequest = function(){
-        return {
-            "requestUrl" : stringUtils.format(metadataConfigListUrlTemplate,[host]),
-            "args" : makeGetMenuMetadataRequestParams()
-        };
-    };
-
 }
 
 window.InfinniUI.Providers.QueryConstructorMetadata = QueryConstructorMetadata;
@@ -28116,204 +27991,6 @@ function QueryConstructorMetadataDataSource(host, metadata) {
 }
 
 window.InfinniUI.Providers.QueryConstructorMetadataDataSource = QueryConstructorMetadataDataSource;
-//####app/data/dataProviders/REST/queryConstructorStandard.js
-/**
- *
- * @param {string} host
- * @param {Object} metadata
- * @param {string} metadata.ConfigId
- * @param {string} metadata.DocumentId
- * @param {string} [metadata.CreateAction = 'CreateDocument']
- * @param {string} [metadata.ReadAction = 'GetDocument']
- * @param {string} [metadata.UpdateAction = 'SetDocument']
- * @param {string} [metadata.DeleteAction = 'DeleteDocument']
- * @constructor
- */
-function QueryConstructorStandard(host) {
-
-    this._host = host;
-
-    //this._configId = metadata.ConfigId;
-    //this._documentId = metadata.DocumentId;
-
-    this._actions = {
-        CreateAction: 'CreateDocument',
-        ReadAction: 'GetDocument',
-        UpdateAction: 'SetDocument',
-        DeleteAction: 'DeleteDocument'
-    };
-
-    this.isCustom = false;
-    //this.setCreateAction(metadata.CreateAction);
-    //this.setReadAction(metadata.ReadAction);
-    //this.setUpdateAction(metadata.UpdateAction);
-    //this.setDeleteAction(metadata.DeleteAction);
-}
-
-_.extend(QueryConstructorStandard.prototype, /** @lends QueryConstructorStandard.prototype */{
-
-    urlTemplate: _.template('<%=host%>/<%=api%>/StandardApi/<%=document%>/<%=action%>'),
-
-    setCreateAction: function (value) {
-        if (value && this._actions.CreateAction != value) {
-            this._actions.CreateAction = value;
-            this.isCustom = true;
-        }
-    },
-
-    getCreateAction: function () {
-        return this._actions.CreateAction;
-    },
-
-    setReadAction: function (value) {
-        if (value && this._actions.ReadAction != value) {
-            this._actions.ReadAction = value;
-            this.isCustom = true;
-        }
-    },
-
-    getReadAction: function () {
-        return this._actions.ReadAction;
-    },
-
-    setUpdateAction: function (value) {
-        if (value && this._actions.UpdateAction != value) {
-            this._actions.UpdateAction = value;
-            this.isCustom = true;
-        }
-    },
-
-    getUpdateAction: function () {
-        return this._actions.UpdateAction;
-    },
-
-    setDeleteAction: function (value) {
-        if (value && this._actions.DeleteAction != value) {
-            this._actions.DeleteAction = value;
-            this.isCustom = true;
-        }
-    },
-
-    getDeleteAction: function () {
-        return this._actions.DeleteAction;
-    },
-
-    setConfigId: function(configId){
-        this._configId = configId;
-    },
-
-    setDocumentId: function(documentId){
-        this._documentId = documentId;
-    },
-
-    constructCreateDocumentRequest: function () {
-        return {
-            requestUrl: this._constructUrl('CreateAction'),
-            args: this._makeCreateDocumentRequestParams()
-        };
-    },
-
-    constructReadDocumentRequest: function (filter, pageNumber, pageSize, sorting) {
-        return {
-            requestUrl: this._constructUrl('ReadAction'),
-            args: this._makeReadDocumentRequestParams(filter, pageNumber, pageSize, sorting)
-        };
-    },
-
-    constructUpdateDocumentRequest: function (document, warnings) {
-        return {
-            requestUrl: this._constructUrl('UpdateAction'),
-            args: this._makeUpdateDocumentRequestParams(document, warnings)
-        };
-    },
-
-    constructDeleteDocumentRequest: function (instanceId) {
-        return {
-            requestUrl: this._constructUrl('DeleteAction'),
-            args: this._makeDeleteDocumentRequestParams(instanceId)
-        };
-    },
-
-    _constructUrl: function (action) {
-        return this.urlTemplate({
-            host: this._host,
-            api: this.isCustom ? this._configId : 'RestfulApi', //this._configId,
-            document: this.isCustom ? this._documentId : 'configuration', //this._documentId,
-            action: this._actions[action]
-        });
-        //var urlTemplate = '{0}/{1}/StandardApi/{2}/{3}',
-        //    document = 'configuration',
-        //    api = 'RestfulApi';
-        //
-        //if (_.contains(['CreateDocument', 'GetDocument', 'SetDocument', 'DeleteDocument', 'GetDocumentCrossConfig'], action) == false) {
-        //    document = documentId;
-        //    api = configId;
-        //}
-
-        //return stringUtils.format(urlTemplate, [host, api, document, action]);
-    },
-
-    _makeCreateDocumentRequestParams: function () {
-        return {
-            id: null,
-            changesObject: {
-                Configuration: this._configId,
-                Metadata: this._documentId
-            },
-            replace: false
-        };
-    },
-
-    _makeReadDocumentRequestParams: function (filter, pageNumber, pageSize, sorting) {
-        var params;
-
-        params = {
-            id: null,
-            changesObject: {
-                Configuration: this._configId,
-                Metadata: this._documentId,
-                Filter: filter,
-                PageNumber: pageNumber,
-                PageSize: pageSize
-            },
-            replace: false
-        };
-
-        if (typeof sorting !== 'undefined' && sorting !== null && sorting.length > 0) {
-            params.changesObject.Sorting = sorting;
-        }
-
-        return params;
-    },
-
-    _makeUpdateDocumentRequestParams: function (document, warnings) {
-        var ignoreWarnings = warnings ? warnings : false;
-        return {
-            id: null,
-            changesObject: {
-                Configuration: this._configId,
-                Metadata: this._documentId,
-                Document: document,
-                IgnoreWarnings: ignoreWarnings
-            },
-            replace: false
-        };
-    },
-
-    _makeDeleteDocumentRequestParams: function (instanceId) {
-        return {
-            id: null,
-            changesObject: {
-                Configuration: this._configId,
-                Metadata: this._documentId,
-                Id: instanceId
-            },
-            replace: false
-        };
-    }
-
-});
-
 //####app/data/dataProviders/REST/requestExecutor.js
 var RequestExecutorDataStrategy = function (type) {
     if (typeof this.strategies[type] === 'undefined') {
@@ -33428,33 +33105,35 @@ _.extend(MetadataViewBuilder.prototype, {
             var metadataProvider = window.InfinniUI.providerRegister.build('MetadataDataSource', metadata);
 
             metadataProvider.getViewMetadata(function (viewMetadata) {
-                that.buildViewByMetadata(params, viewMetadata, parentView, onReady);
-                function onReady() {
+
+                if (viewMetadata == null) {
+                    InfinniUI.global.logger.error('view metadata not found');
+                    InfinniUI.global.messageBus.send(messageTypes.onViewBuildError, {error: 'metadata not found', metadata: metadata});
+                    return;
+                }
+
+                var onReady = function() {
                     var args = Array.prototype.slice.call(arguments);
                     onViewReadyHandler.apply(null, args);
-                }
+                };
+
+                that.buildViewByMetadata(params, viewMetadata, parentView, onReady);
             });
         };
     },
 
     buildViewByMetadata: function (params, viewMetadata, parentView, onViewReadyHandler) {
         var builder = params.builder;
-        var logger = InfinniUI.global.logger;
         var parameters = this.buildParameters(params);
 
-        if (viewMetadata !== null) {
+        var view = builder.buildType("View", viewMetadata, {
+            parentView: parentView,
+            parent: parentView,
+            params: parameters,
+            suspended: params.suspended
+        });
 
-            var view = builder.buildType("View", viewMetadata, {
-                parentView: parentView,
-                parent: parentView,
-                params: parameters,
-                suspended: params.suspended
-            });
-
-            onViewReadyHandler(view);
-        } else {
-            logger.error('view metadata for ' + metadata + ' not found.');
-        }
+        onViewReadyHandler(view);
     },
 
     buildParameters: function (params) {

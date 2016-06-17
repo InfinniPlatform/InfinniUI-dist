@@ -117,6 +117,10 @@
 // Dropdowns
 // --------------------------------------------------
 
+.dropdown-menu > li > a {
+  width: 100%;
+}
+
 .dropdown-menu > li > a:hover,
 .dropdown-menu > li > a:focus {
   //#gradient > .vertical(@start-color: @dropdown-link-hover-bg; @end-color: darken(@dropdown-link-hover-bg, 5%));
@@ -260,6 +264,26 @@
   .badge {
     text-shadow: none;
   }
+}
+
+
+//
+// Input groups
+// --------------------------------------------------
+
+.input-group-addon {
+  cursor: pointer;
+}
+
+
+.indeterminateCheckbox {
+  .checkbox;
+}
+
+.indeterminateCheckbox input[type=checkbox] {
+  position: absolute;
+  margin-left: -20px;
+  margin-top: 4px \9;
 }
 
 
