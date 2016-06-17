@@ -5452,47 +5452,6 @@ describe('TreeModel', function () {
             jsonOfVal = JSON.stringify(treeModel.getProperty(''));
             assert.equal(jsonOfVal, '{"p1":{"p11":8},"p2":{"p11":6}}', 'full data tree is right');
         });
-
-        it('Simulate set property', function () {
-            // Given
-            var treeModel = new TreeModel('context');
-            var result = '';
-            var jsonOfVal;
-
-            treeModel.onPropertyChanged('p1.p11', function(context, args){
-                result = result + '1';
-
-                assert.isTrue(args.oldValue == undefined || args.oldValue == 4, 'old value is right');
-                assert.isTrue(args.newValue == 1 || args.newValue == 4, 'new value is right');
-
-                assert.isTrue(treeModel.getProperty('p1.p11') == 1, 'value was saved before handling');
-            });
-
-            treeModel.onPropertyChanged('p1', function(context, args){
-                result = result + '2';
-
-                assert.equal(context, 'context', 'passed context argument is right');
-
-                jsonOfVal = JSON.stringify(args.oldValue);
-                assert.equal(jsonOfVal, '{"p11":4}','old value is right');
-                jsonOfVal = JSON.stringify(args.newValue);
-                assert.equal(jsonOfVal, '{"p11":1}', 'new value is right');
-
-                assert.equal(treeModel.getProperty('p1').p11, 1, 'value not changing on simulate handling');
-            });
-
-            //When
-            treeModel.setProperty('p1.p11', 1);
-            treeModel.simulateSetProperty('p1', {p11: 4});
-            treeModel.setProperty('p2', 2);
-            treeModel.simulateSetProperty('p2', 3);
-
-            // Then
-            assert.equal(result, '121', 'Handler was triggered');
-
-            jsonOfVal = JSON.stringify(treeModel.getProperty(''));
-            assert.equal(jsonOfVal, '{"p1":{"p11":1},"p2":2}', 'full data tree is right');
-        });
     })
 });
 function FakeMetadataProvider() {
@@ -6075,9 +6034,9 @@ describe('RestDataSource', function () {
                 assert.equal(dataSource.getProperty('$').FirstName, 'Иванидзе', 'return property value by property after change property');
                 assert.equal(dataSource.getProperty('LastName'), 'Ивнв', 'return property value by property after change property 2');
                 assert.equal(dataSource.getProperty('2').FirstName, 'Иванидзе-дзе', 'return property value by property after change property by id');
-                assert.equal(dataSource.getProperty('3'), item3, 'on set full item, link on item is not changed');
-                assert.equal(dataSource.getProperty('3.FirstName'), item3.FirstName, 'return property value by property after change property 3');
-                assert.equal(dataSource.getProperty('3._id'), item3._id, 'return property value by property after change property 4');
+                assert.equal(dataSource.getProperty('3.LastName'), "Пе2");
+                assert.equal(dataSource.getProperty('3.FirstName'), "П22");
+                assert.equal(dataSource.getProperty('3._id'), '55');
                 done();
             }
         });
@@ -9353,6 +9312,88 @@ describe('LabelBuilder', function () {
             // Then
             assert.isNotNull(element);
             assert.isObject(element);
+        });
+
+        it('dataBinding should update display value', function () {
+            // Given
+
+            var metadata = {
+                "DataSources": [
+                    {
+                        "ObjectDataSource": {
+                            "Name": "ObjectDataSource",
+                            "IsLazy": false,
+                            "Items": []
+                        }
+                    }
+                ],
+                "Items": [{
+                    Label: {
+                        Name: "Label1",
+                        DisplayFormat: "некоторый текст {property}",
+                        Value: {
+                            Source: "ObjectDataSource",
+                            Property: "$"
+                        }
+                    }
+                }]
+            };
+
+            testHelper.applyViewMetadata(metadata, function(view){
+                var label = view.context.controls["Label1"];
+                var ds = view.context.dataSources["ObjectDataSource"];
+
+                ds.createItem();
+
+                var item = ds.getSelectedItem();
+                item.property = "123";
+                ds.setProperty("$", { property: "123" });
+
+                assert.equal(label.getDisplayValue(), "некоторый текст 123");
+                assert.equal(label.control.controlView.$el.html(), "некоторый текст 123");
+
+                view.close();
+            });
+        });
+
+        it('dataBinding should update display value - 2', function () {
+            // Given
+
+            var metadata = {
+                "DataSources": [
+                    {
+                        "ObjectDataSource": {
+                            "Name": "ObjectDataSource",
+                            "IsLazy": false,
+                            "Items": [{
+                                property: "old"
+                            }]
+                        }
+                    }
+                ],
+                "Items": [{
+                    Label: {
+                        Name: "Label1",
+                        DisplayFormat: "некоторый текст {property}",
+                        Value: {
+                            Source: "ObjectDataSource",
+                            Property: "$"
+                        }
+                    }
+                }]
+            };
+
+            testHelper.applyViewMetadata(metadata, function(view){
+                var label = view.context.controls["Label1"];
+                var ds = view.context.dataSources["ObjectDataSource"];
+
+                ds.setProperty("$", { property: "new" });
+
+                assert.equal(label.getDisplayValue(), "некоторый текст new");
+                assert.equal(label.control.controlView.$el.html(), "некоторый текст new");
+
+                view.close();
+            });
         });
     });
 });

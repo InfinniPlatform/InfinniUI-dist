@@ -6918,15 +6918,20 @@ body {
   border: 1px solid #FF0000;
 }
 .pl-file-box .pl-filebox-file-upload,
-.pl-file-box .pl-filebox-file-empty {
+.pl-file-box .pl-filebox-file-empty,
+.pl-file-box .pl-filebox-file-download-url {
   overflow: hidden;
-  white-space: nowrap;
+  line-height: 21px;
 }
 .pl-file-box .pl-filebox-file-upload {
   color: #777777;
 }
 .pl-file-box .pl-filebox-file-empty {
   color: #777777;
+}
+.pl-file-box .pl-filebox-file-download-url {
+  display: block;
+  height: 100%;
 }
 .pl-stack-panel {
   list-style: none;

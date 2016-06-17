@@ -3704,10 +3704,6 @@ _.extend(TreeModel.prototype, {
         return true;
     },
 
-    simulateSetProperty: function(propertyName, oldValue){
-        this._notifyAboutPropertyChanged(propertyName, oldValue);
-    },
-
     onPropertyChanged: function(propertyName, handler, params){
         var handlersNode;
         var bindId = this.counter + '-bindId';
@@ -17939,21 +17935,27 @@ var BaseDataSource = Backbone.Model.extend({
     },
 
     _changeItem: function(index, value){
-        var item = this.get('model').getProperty('items.'+index);
-        var oldValue = {};
+        var item = this.get('model').getProperty('items.'+index),
+            isSelectedItem = (item == this.getSelectedItem()),
+            idProperty = this.get('idProperty'),
+            indexedItemsById = this.get('itemsById');
 
         if(value == item){
             return;
         }
 
         this._excludeItemFromModifiedSet(item);
+        delete indexedItemsById[item[idProperty]];
 
-        this._replaceAllProperties(oldValue, item);
-        this._replaceAllProperties(item, value);
+        this.get('model').setProperty('items.'+index, value);
 
-        this.get('model').simulateSetProperty('items.'+index, oldValue);
+        this._includeItemToModifiedSet(value);
+        indexedItemsById[value[idProperty]] = value;
+        this.set('itemsById', indexedItemsById);
 
-        this._includeItemToModifiedSet(item);
+        if(isSelectedItem) {
+            this.get('model').setProperty('selectedItem', value);
+        }
     },
 
     tryInitData: function(){
@@ -18459,16 +18461,6 @@ var BaseDataSource = Backbone.Model.extend({
 
     getResolvePriority: function(){
         return this.get('resolvePriority');
-    },
-
-    _replaceAllProperties: function (currentObject, newPropertiesSet) {
-        for (var property in currentObject) {
-            delete(currentObject[property]);
-        }
-
-        for (var property in newPropertiesSet) {
-            currentObject[property] = newPropertiesSet[property];
-        }
     },
 
     _copyObject: function (currentObject) {
