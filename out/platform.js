@@ -6559,7 +6559,8 @@ var TextBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototype 
         {},
         TextEditorBaseModel.prototype.defaults,
         {
-            multiline: false
+            multiline: false,
+            type: 'text'
         }
     ),
 
@@ -6599,12 +6600,14 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
 
         this.listenTo(this.model, 'change:multiline', this.updateMultiline);
         this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
+        this.listenTo(this.model, 'change:type', this.updateType);
     },
 
     updateProperties: function(){
         TextEditorBaseView.prototype.updateProperties.call(this);
 
         this.updateLineCount();
+        this.updateType();
     },
 
     updateMultiline: function(){
@@ -6615,6 +6618,12 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
         var lineCount = this.model.get('lineCount');
         this.ui.control.attr('rows', lineCount);
         this.ui.editor.attr('rows', lineCount);
+    },
+
+    updateType: function () {
+        var type = this.model.get('type');
+        this.ui.control.attr('type', type);
+        this.ui.editor.find('.pl-control-editor').attr('type', type);
     },
 
     updateFocusable: function () {
@@ -21537,25 +21546,35 @@ function TextBox(parent) {
 
 _.inherit(TextBox, TextEditorBase);
 
-TextBox.prototype.createControl = function (parent) {
-    return new TextBoxControl(parent);
-};
+_.extend(TextBox.prototype, {
+    createControl: function (parent) {
+        return new TextBoxControl(parent);
+    },
 
-TextBox.prototype.getMultiline = function () {
-    return this.control.get('multiline');
-};
+    getMultiline: function () {
+        return this.control.get('multiline');
+    },
 
-TextBox.prototype.setMultiline = function (value) {
-    this.control.set('multiline', value);
-};
+    setMultiline: function (value) {
+        this.control.set('multiline', value);
+    },
 
-TextBox.prototype.getLineCount = function () {
-    return this.control.get('lineCount');
-};
+    getLineCount: function () {
+        return this.control.get('lineCount');
+    },
 
-TextBox.prototype.setLineCount = function (value) {
-    this.control.set('lineCount', value);
-};
+    setLineCount: function (value) {
+        this.control.set('lineCount', value);
+    },
+
+    getType: function () {
+        return this.control.get('type');
+    },
+
+    setType: function (type) {
+        this.control.set('type', type);
+    }
+});
 
 
 
@@ -21581,11 +21600,16 @@ TextBoxBuilder.prototype.applyMetadata = function (params) {
     var element = params.element;
     var metadata = params.metadata;
     var lineCount = metadata.LineCount;
+    var type = metadata.Type;
     element.setMultiline(metadata.Multiline);
     if (metadata.Multiline && lineCount === null || typeof lineCount === 'undefined') {
         lineCount = 2;
     }
     element.setLineCount(lineCount);
+
+    if (type) {
+        element.setType(type);
+    }
 };
 
 
