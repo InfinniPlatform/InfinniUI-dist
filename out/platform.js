@@ -3997,30 +3997,8 @@ window.messageTypes = {
 
     onViewBuildError: {name: 'onViewBuildError'},
     onViewCreated: {name: 'onViewCreated'},
-    onViewOpened: { name: 'onViewOpened' },
-    onViewClosed: { name: 'onViewClosed' },
-    onViewClosing: {name: 'onViewClosing'},
-    onViewTextChange: {name: 'onViewTextChange'},
 
-    onLoaded: { name: 'onLoaded' },
-    onLoading: { name: 'onLoading' },   //Вызывается, когда выполнен рендеринг формы
-    onSetSelectedItem: { name: 'onSetSelectedItem' },
-    onSetTextFilter: { name: 'onSetTextFilter' },
-    onSetPropertyFilters: { name: 'onSetPropertyFilters' },
-    onSetPageSize: { name: 'onSetPageSize' },
-    onSetPageNumber: { name: 'onSetPageNumber' },
-
-    onShowView: {name: 'onShowView'},
-    onRequestSwitchView: {name: 'onRequestSwitchView'},
-
-    onSelectedItemChanged: {name: 'onSelectedItemChanged'},
-
-    onValidate: {name: 'onValidate'},
-
-    onKeyDown: {name: 'onKeyDown'},
-
-    onCreateLayoutPanel: {name: 'onCreateLayoutPanel'},
-    onRemoveLayoutPanel: {name: 'onRemoveLayoutPanel'},
+    onChangeLayout: {name: 'OnChangeLayout'},
     onNotifyUser: {name: 'onNotifyUser'},
     onToolTip: {name: 'onToolTip'},
 
@@ -4029,8 +4007,6 @@ window.messageTypes = {
 
     onDataLoading: {name: 'onDataLoading'},
     onDataLoaded: {name: 'onDataLoaded'}
-
-    //onOpenViewInContainer: {name: 'onOpenViewInContainer'}
 
 };
 
@@ -9524,7 +9500,7 @@ var CommonButtonView = ControlView.extend({
 _.extend(CommonButtonView.prototype, highlightMixin.controlView);
 
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Button.viewModes.common', CommonButtonView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Button.common', CommonButtonView);
 
 //####app/controls/button/linkView/buttonView.js
 /**
@@ -9596,7 +9572,7 @@ var LinkButtonView = CommonButtonView.extend({
 
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Button.viewModes.link', LinkButtonView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Button.link', LinkButtonView);
 //####app/controls/button/buttonControl.js
 /**
  *
@@ -9619,11 +9595,11 @@ _.extend(
         },
 
         createControlView: function (model, viewMode) {
-            if (!viewMode || !viewMode in window.InfinniUI.Button) {
+            if (!viewMode || !viewMode in window.InfinniUI.viewModes.Button) {
                 viewMode = 'common';
             }
 
-            var ViewClass = window.InfinniUI.Button.viewModes[viewMode];
+            var ViewClass = window.InfinniUI.viewModes.Button[viewMode];
 
             return new ViewClass({model: model});
         }
@@ -9701,7 +9677,7 @@ var MenuItemButtonView = LinkButtonView.extend({
 
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Button.viewModes.menuItem', MenuItemButtonView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Button.menuItem', MenuItemButtonView);
 //####app/controls/buttonEdit/buttonEditControl.js
 /**
  *
@@ -11662,7 +11638,7 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
 
 }));
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Label.viewModes.common', CommonLabelView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Label.common', CommonLabelView);
 //####app/controls/label/label.js
 var LabelControl = function (viewMode) {
     _.superClass(LabelControl, this, viewMode);
@@ -11678,11 +11654,11 @@ _.extend(LabelControl.prototype, {
     },
 
     createControlView: function (model, viewMode) {
-        if(!viewMode || ! (viewMode in window.InfinniUI.Label)){
+        if(!viewMode || ! (viewMode in window.InfinniUI.viewModes.Label)){
             viewMode = 'simple';
         }
 
-        var ViewClass = window.InfinniUI.Label.viewModes[viewMode];
+        var ViewClass = window.InfinniUI.viewModes.Label[viewMode];
 
         return new ViewClass({model: model});
     },
@@ -11692,6 +11668,7 @@ _.extend(LabelControl.prototype, {
     }
 
 }, editorBaseControlMixin);
+
 //####app/controls/label/labelModel.js
 var LabelModel = ControlModel.extend(_.extend({
 
@@ -11739,7 +11716,7 @@ var SimpleLabelView = CommonLabelView.extend({
 
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Label.viewModes.simple', SimpleLabelView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Label.simple', SimpleLabelView);
 //####app/controls/listBox/baseView/listBoxView.js
 var BaseListBoxView = ListEditorBaseView.extend({
 
@@ -11912,7 +11889,7 @@ var BaseListBoxView = ListEditorBaseView.extend({
     }
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.base', BaseListBoxView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.ListBox.base', BaseListBoxView);
 //####app/controls/listBox/baseView/viewGroupStrategy.js
 function ListBoxViewGroupStrategy(listbox) {
     this.listbox = listbox;
@@ -12041,11 +12018,11 @@ _.extend(ListBoxControl.prototype, {
     },
 
     createControlView: function (model, viewMode) {
-        if(!viewMode || ! viewMode in window.InfinniUI.Listbox){
+        if(!viewMode || ! viewMode in window.InfinniUI.viewModes.ListBox){
             viewMode = 'common';
         }
 
-        var ViewClass = window.InfinniUI.Listbox.viewModes[viewMode];
+        var ViewClass = window.InfinniUI.viewModes.ListBox[viewMode];
 
         return new ViewClass({model: model});
     }
@@ -12120,7 +12097,7 @@ var CheckingListBoxView = BaseListBoxView.extend({
     }
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.checking', CheckingListBoxView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.ListBox.checking', CheckingListBoxView);
 //####app/controls/listBox/commonView/listBoxView.js
 var CommonListBoxView = BaseListBoxView.extend({
     className: 'pl-listbox pl-listbox-common-mode',
@@ -12166,7 +12143,7 @@ var CommonListBoxView = BaseListBoxView.extend({
     }
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'Listbox.viewModes.common', CommonListBoxView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.ListBox.common', CommonListBoxView);
 //####app/controls/popupButton/commonView/popupButtonView.js
 var CommonPopupButtonView = ContainerView.extend({
 
@@ -12288,7 +12265,7 @@ var CommonPopupButtonView = ContainerView.extend({
 
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'PopupButton.viewModes.common', CommonPopupButtonView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.PopupButton.common', CommonPopupButtonView);
 
 //####app/controls/popupButton/popupButtonControl.js
 function PopupButtonControl(viewMode) {
@@ -12304,11 +12281,11 @@ _.extend(PopupButtonControl.prototype, /** @lends PopupButtonControl.prototype *
     },
 
     createControlView: function (model, viewMode) {
-        if(!viewMode || ! viewMode in window.InfinniUI.PopupButton){
+        if(!viewMode || ! viewMode in window.InfinniUI.viewModes.PopupButton){
             viewMode = 'common';
         }
 
-        var ViewClass = window.InfinniUI.PopupButton.viewModes[viewMode];
+        var ViewClass = window.InfinniUI.viewModes.PopupButton[viewMode];
 
         return new ViewClass({model: model});
     }
@@ -12499,7 +12476,7 @@ var ForMenuPopupButtonView = CommonPopupButtonView.extend({
 
 });
 
-InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'PopupButton.viewModes.forMenu', ForMenuPopupButtonView);
+InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.PopupButton.forMenu', ForMenuPopupButtonView);
 
 //####app/controls/stackPanel/stackPanelControl.js
 /**
@@ -14905,9 +14882,10 @@ var ExtensionPanelView = ContainerView.extend({
             context = this.model.get('context'),
             itemTemplate = this.model.get('itemTemplate'),
             parameters = this.model.get('parameters'),
-            items = this.model.get('items');
+            items = this.model.get('items'),
+            builder = this.model.get('builder');
 
-        this.extensionObject = new window[extensionName](context, {$el: this.$el, parameters: parameters, itemTemplate: itemTemplate, items: items});
+        this.extensionObject = new window[extensionName](context, {$el: this.$el, parameters: parameters, itemTemplate: itemTemplate, items: items, builder: builder});
     }
 });
 //####app/controls/fileBox/fileBoxControl.js
@@ -16121,25 +16099,13 @@ _.extend(NumericBoxControl.prototype, {
  * @augments TextEditorBaseModel
  */
 var NumericBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototype */{
-    defaults: _.extend(
-        {},
-        TextEditorBaseModel.prototype.defaults,
+    defaults: _.defaults(
         {
-            increment: 1
-        }
+            increment: 1,
+            inputType: 'number'
+        },
+        TextEditorBaseModel.prototype.defaults
     ),
-
-    transformValue: function (value) {
-        var result = value;
-
-        if (typeof value !== 'undefined' && value !== null) {
-            var result = +value;
-            if (isNaN(result) || !isFinite(result)) {
-                result = null;
-            }
-        }
-        return result;
-    },
 
     incValue: function () {
         var delta = this.get('increment');
@@ -25822,6 +25788,10 @@ _.extend(ExtensionPanel.prototype, {
 
     setContext: function (context) {
         this.control.set('context', context);
+    },
+
+    setBuilder: function (builder) {
+        this.control.set('builder', builder);
     }
 });
 //####app/elements/layoutPanel/extensionPanel/extensionPanelBuilder.js
@@ -25850,6 +25820,7 @@ _.extend(ExtensionPanelBuilder.prototype, {
 
         element.setParameters(parameters);
         element.setContext(parentView.getContext());
+        element.setBuilder(builder);
     },
 
     createElement: function (params) {
@@ -25857,7 +25828,6 @@ _.extend(ExtensionPanelBuilder.prototype, {
 
         return element;
     }
-
 });
 
 //####app/elements/layoutPanel/viewPanel/viewPanel.js
@@ -25930,11 +25900,6 @@ _.extend(ViewPanelBuilder.prototype, {
 
     createElement: function (params) {
         return new ViewPanel(params.parent);
-    },
-
-    registerLayoutPanel: function (params) {
-        var exchange = window.InfinniUI.global.messageBus;
-        exchange.send(messageTypes.onCreateLayoutPanel, {source: params.view, value: params.element});
     }
 }
 );
@@ -26449,120 +26414,6 @@ function CancelActionBuilder() {
         return new CancelAction(args.parentView);
     }
 }
-//####app/actions/editAction/editAction.js
-function EditAction(parentView){
-    _.superClass(EditAction, this, parentView);
-}
-
-_.inherit(EditAction, BaseEditAction);
-
-
-_.extend(EditAction.prototype, {
-    setSelectedItem: function(){
-        var editDataSource = this.getProperty('editDataSource'),
-            destinationDataSource = this.getProperty('destinationDataSource'),
-            destinationProperty = this.getProperty('destinationProperty');
-
-        var selectedItem = destinationDataSource.getProperty(destinationProperty);
-
-        if( selectedItem == null ){
-
-            // if selectedItem is empty and it is must be document
-            // return error
-            if( this._isDocumentPath(destinationProperty) ){
-                var logger = window.InfinniUI.global.logger;
-                var message = stringUtils.format('EditAction: edit item has not been found. {0} does not have item by path "{1}"', [destinationDataSource.getName(), destinationProperty]);
-                logger.error(message);
-
-                return false;
-            }
-
-            // but if selectedItem is property of document
-            // it will be created
-            selectedItem = selectedItem || {};
-        }
-
-        if( this._isObjectDataSource(editDataSource) ) {
-            this._setItem(editDataSource, selectedItem);
-        } else {
-            this._setDocument(editDataSource, selectedItem);
-        }
-
-        return true;
-    },
-
-    _resumeUpdateEditDataSource: function () {
-        var editDataSource = this.getProperty('editDataSource');
-        editDataSource.resumeUpdate('EditAction');
-    },
-
-    _setDocument: function (editDataSource, selectedItem){
-        var selectedItemId = editDataSource.idOfItem( selectedItem );
-        editDataSource.setIdFilter(selectedItemId);
-        editDataSource.tryInitData();
-        this._resumeUpdateEditDataSource();
-    },
-
-    _setItem: function(editDataSource, selectedItem){
-        var item = _.clone( selectedItem );
-
-        if(item === undefined || item === null){
-            item = {};
-        }
-        this._resumeUpdateEditDataSource();
-        editDataSource.setItems( [item] );
-        editDataSource.setSelectedItem( item );
-    },
-
-    save: function(){
-        var editDataSource = this.getProperty('editDataSource'),
-            destinationDataSource = this.getProperty('destinationDataSource'),
-            destinationProperty = this.getProperty('destinationProperty');
-
-        if( this._isObjectDataSource(editDataSource) ) {
-            var item = editDataSource.getSelectedItem();
-            destinationDataSource.setProperty(destinationProperty, item);
-        } else {
-            destinationDataSource.updateItems();
-        }
-    },
-
-    _isDocumentPath: function(path){
-        return !path.includes('.');
-    }
-});
-//####app/actions/editAction/editActionBuilder.js
-function EditActionBuilder(){
-    this.build = function(context, args){
-        var metadata = args.metadata,
-            parentView = args.parentView,
-            builder = args.builder;
-
-        var destinationProperty = (args.basePathOfProperty != null) ?
-            args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
-            metadata.DestinationValue.Property;
-
-        var action = new EditAction(parentView);
-
-        var suspended = {};
-        suspended[metadata.DestinationValue.Source] = 'EditAction';
-
-        var linkView = builder.build(metadata['LinkView'], {
-            parent: args.parent,
-            parentView: parentView,
-            basePathOfProperty: args.basePathOfProperty,
-            suspended: suspended
-        });
-        action.setProperty('linkView', linkView);
-
-        action.setProperty('sourceSource', metadata.SourceValue.Source);
-        action.setProperty('destinationSource', metadata.DestinationValue.Source);
-
-        action.setProperty('destinationProperty', destinationProperty || '$');
-
-        return action;
-    }
-}
 //####app/actions/deleteAction/deleteAction.js
 function DeleteAction(parentView){
     _.superClass(DeleteAction, this, parentView);
@@ -26673,6 +26524,120 @@ function DeleteActionBuilder(){
         action.setProperty('accept', accept);
         action.setProperty('destinationSource', dataSource);
         action.setProperty('destinationProperty', destinationProperty);
+
+        return action;
+    }
+}
+//####app/actions/editAction/editAction.js
+function EditAction(parentView){
+    _.superClass(EditAction, this, parentView);
+}
+
+_.inherit(EditAction, BaseEditAction);
+
+
+_.extend(EditAction.prototype, {
+    setSelectedItem: function(){
+        var editDataSource = this.getProperty('editDataSource'),
+            destinationDataSource = this.getProperty('destinationDataSource'),
+            destinationProperty = this.getProperty('destinationProperty');
+
+        var selectedItem = destinationDataSource.getProperty(destinationProperty);
+
+        if( selectedItem == null ){
+
+            // if selectedItem is empty and it is must be document
+            // return error
+            if( this._isDocumentPath(destinationProperty) ){
+                var logger = window.InfinniUI.global.logger;
+                var message = stringUtils.format('EditAction: edit item has not been found. {0} does not have item by path "{1}"', [destinationDataSource.getName(), destinationProperty]);
+                logger.error(message);
+
+                return false;
+            }
+
+            // but if selectedItem is property of document
+            // it will be created
+            selectedItem = selectedItem || {};
+        }
+
+        if( this._isObjectDataSource(editDataSource) ) {
+            this._setItem(editDataSource, selectedItem);
+        } else {
+            this._setDocument(editDataSource, selectedItem);
+        }
+
+        return true;
+    },
+
+    _resumeUpdateEditDataSource: function () {
+        var editDataSource = this.getProperty('editDataSource');
+        editDataSource.resumeUpdate('EditAction');
+    },
+
+    _setDocument: function (editDataSource, selectedItem){
+        var selectedItemId = editDataSource.idOfItem( selectedItem );
+        editDataSource.setIdFilter(selectedItemId);
+        editDataSource.tryInitData();
+        this._resumeUpdateEditDataSource();
+    },
+
+    _setItem: function(editDataSource, selectedItem){
+        var item = _.clone( selectedItem );
+
+        if(item === undefined || item === null){
+            item = {};
+        }
+        this._resumeUpdateEditDataSource();
+        editDataSource.setItems( [item] );
+        editDataSource.setSelectedItem( item );
+    },
+
+    save: function(){
+        var editDataSource = this.getProperty('editDataSource'),
+            destinationDataSource = this.getProperty('destinationDataSource'),
+            destinationProperty = this.getProperty('destinationProperty');
+
+        if( this._isObjectDataSource(editDataSource) ) {
+            var item = editDataSource.getSelectedItem();
+            destinationDataSource.setProperty(destinationProperty, item);
+        } else {
+            destinationDataSource.updateItems();
+        }
+    },
+
+    _isDocumentPath: function(path){
+        return !path.includes('.');
+    }
+});
+//####app/actions/editAction/editActionBuilder.js
+function EditActionBuilder(){
+    this.build = function(context, args){
+        var metadata = args.metadata,
+            parentView = args.parentView,
+            builder = args.builder;
+
+        var destinationProperty = (args.basePathOfProperty != null) ?
+            args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
+            metadata.DestinationValue.Property;
+
+        var action = new EditAction(parentView);
+
+        var suspended = {};
+        suspended[metadata.DestinationValue.Source] = 'EditAction';
+
+        var linkView = builder.build(metadata['LinkView'], {
+            parent: args.parent,
+            parentView: parentView,
+            basePathOfProperty: args.basePathOfProperty,
+            suspended: suspended
+        });
+        action.setProperty('linkView', linkView);
+
+        action.setProperty('sourceSource', metadata.SourceValue.Source);
+        action.setProperty('destinationSource', metadata.DestinationValue.Source);
+
+        action.setProperty('destinationProperty', destinationProperty || '$');
 
         return action;
     }
@@ -33687,7 +33652,6 @@ var AjaxLoaderIndicatorView = Backbone.View.extend({
     hiddenClassName: 'hidden',
 
     initialize: function () {
-        var exchange = window.InfinniUI.global.messageBus;
         this.listenTo(this.model, 'change:progress', this.updateProgress);
     },
 
