@@ -1651,6 +1651,28 @@ window.InfinniUI.DateUtils = (function () {
     }
 
 })();
+//####app/utils/domHelper.js
+var domHelper = {
+
+    whenReady: function(conditionFunction, onConditionFunction, n){
+        var that = this;
+
+        if(n === undefined){
+            n = 100;
+        }
+
+        if(!conditionFunction()){
+            if(n>0){
+                setTimeout( function(){
+                    that.whenReady(conditionFunction, onConditionFunction, n-1);
+                }, 10);
+            }
+        }else{
+            onConditionFunction();
+        }
+    }
+
+};
 //####app/utils/dot.js
 /**
  * Синглтон для работы с путями построенными по dot-notation
@@ -2971,6 +2993,56 @@ _.mixin({
 
 })();
 
+//####app/utils/keycodes.js
+window.InfinniUI.Keyboard = {
+    KeyCode: {
+        ESCAPE: 27,
+        HOME: 36,
+        LEFT_ARROW: 37,
+        RIGHT_ARROW: 39,
+        END: 35,
+        UP_ARROW: 38,
+        DOWN_ARROW: 40,
+        DELETE: 46,
+        BACKSPACE: 8,
+        TAB: 9,
+        SPACE: 32,
+        NUMPAD_0: 96,
+        NUMPAD_1: 97,
+        NUMPAD_2: 98,
+        NUMPAD_3: 99,
+        NUMPAD_4: 100,
+        NUMPAD_5: 101,
+        NUMPAD_6: 102,
+        NUMPAD_7: 103,
+        NUMPAD_8: 104,
+        NUMPAD_9: 105,
+        0: 48,
+        1: 49,
+        2: 50,
+        3: 51,
+        4: 52,
+        5: 53,
+        6: 54,
+        7: 55,
+        8: 56,
+        9: 57
+    },
+
+    getCharByKeyCode: function (keyCode) {
+        var char;
+
+        if (keyCode < 32) {
+            //Спецсимвол
+            char = null;
+        } else {
+            char = String.fromCharCode(
+                (this.KeyCode.NUMPAD_0 <= keyCode && keyCode <= this.KeyCode.NUMPAD_9) ? keyCode-this.KeyCode['0'] : keyCode
+            );
+        }
+        return char;
+    }
+};
 //####app/utils/layoutManager.js
 var layoutManager = {
     windowHeight: 0,
@@ -4293,176 +4365,6 @@ var lineCountPropertyMixin = {
 
 };
 
-//####app/controls/_base/_mixins/textEditorMixin.js
-/**
- * Миксин для контрола с использованием масок ввода.
- *
- * Для использования редактора маски ввода в контроле необходимо:
- *  - создать редактор методом {@see textEditorMixin.renderEditor} c указанием необходимых параметров
- *  - реализовать метод onEditorValidate(value) для проверки на допустимость введенного значения
- *
- * Для обработки дополнительной логике при показе/скрытии редактора масок
- * можно использовать события editor:show и editor:hide.
- *
- * @mixin textEditorMixin
- */
-var textEditorMixin = {
-
-    /**
-     *
-     * options.el Контейнер для редактора
-     * options.validate Коллбек для проверки введеного в редакторе значения
-     * options.done Коллбек для применения введеного в редакторе значения
-     * options.show Функция для отображения поля ввода
-     * options.hide Функция для скрытия поля ввода
-     *
-     * @param options
-     */
-    renderEditor: function (options) {
-
-        var convert = function (value) {
-            if (this.onEditorConvertValue) {
-                return this.onEditorConvertValue(value);
-            }
-            return value;
-        }.bind(this);
-
-        var editor = new TextEditor({
-            parent: this,
-            el: options.el,
-            validate: this.onEditorValidate.bind(this),
-            convert: convert,
-            done: this.onEditorDone.bind(this),
-            editMask: this.model.get('editMask'),
-            multiline: options.multiline,
-            lineCount: options.lineCount,
-            inputType: options.inputType
-        });
-
-        this.editor = editor;
-
-        this.listenTo(editor, 'editor:show', function () {
-            //При показе поля редактирование - скрытить поле ввода элемента
-            this.onEditorHideControl();
-            //Проброс события от редактора маски к контролу
-            this.trigger('editor:show');
-
-            if(this.ui.editorWrap){
-                this.ui.editorWrap.show();
-            }
-        });
-
-        this.listenTo(editor, 'editor:hide', function () {
-            //При скрытии поля редактирование - показать поле ввода элемента
-            this.onEditorShowControl();
-            //Проброс события от редактора маски к контролу
-            this.trigger('editor:hide');
-
-            if(this.ui.editorWrap){
-                this.ui.editorWrap.hide();
-            }
-        });
-
-        this.listenTo(editor, 'onKeyDown', function (data) {
-            //Проброс события от редактора маски к контролу
-            this.trigger('onKeyDown', data);
-        });
-
-        this.listenTo(this.model, 'change:value', function (model, value) {
-            editor.trigger('editor:update', value);
-        });
-
-        //Метод для показа поля редактирования
-        //Обычно необходимо вызывать при получении фокуса полем ввод а элемента управления
-        this.showEditor = function (value, skipRefocus) {
-            editor.trigger('editor:show', value, skipRefocus);
-        };
-
-
-    },
-
-
-    /**
-     * Обработчик получения фокуса ввода полем ввода элемента.
-     * Показывает поле редактирования с маской ввода и скрывает исходное поле
-     * @param event
-     */
-    onFocusControlHandler: function (event) {
-        if(this.model.get('enabled')) {
-            this.showEditor(this.model.get('value'), false);
-            this.onEditorHideControl();
-        }
-    },
-
-    onMouseenterControlHandler: function (event) {
-        //TODO: при ховере показывается маска (UI-854: убрал) по просьбе TeamLead'a
-        //При ховере Editor нужен, чтобы при клике по полю, курсор выставлялся в указаннкю позицию
-        var enabled = this.model.get('enabled'),
-            value = this.model.get('value'),
-            isEmpty = value === '' || value === null || typeof value === 'undefined';
-
-        if(enabled && !isEmpty) {
-            this.showEditor(this.model.get('value'), true);
-            this.onEditorHideControl();
-        }
-    },
-
-    /**
-     * Обработчик проверки значения из поля ввода с маской
-     * @param value
-     * @returns {boolean}
-     */
-    onEditorValidate: function (value) {
-        return true;
-    },
-
-    /**
-     * Обработчик применения значения из поля ввода с маской
-     * @param value
-     */
-    onEditorDone: function (value) {
-        if(typeof value === 'undefined' || value === null || !value.toString().length) {
-            value = null;
-        }
-        this.model.set('value', value);
-    },
-
-    /**
-     * Метод для восстановления видимости поля ввода элемента
-     */
-    onEditorShowControl: function () {
-        this.ui.control.show();
-        this.ui.control.scrollTop(0);
-
-        if(this.ui.controlWrap){
-            this.ui.controlWrap.show();
-        }
-    },
-
-    /**
-     * Метод для скрытия поля ввода элемента
-     */
-    onEditorHideControl: function () {
-        this.ui.control.hide();
-
-        if(this.ui.controlWrap){
-            this.ui.controlWrap.hide();
-        }
-    }
-
-    /**
-     * Метод выполняющий синхронизацию значения из эдитора в элемент
-     */
-    //synchValueHandler: function () {
-    //    if(this.editor.isInFocus()){
-    //        var val = this.editor.getValue();
-    //        this.model.set('value', val);
-    //    }
-    //}
-
-
-};
-
 //####app/controls/_base/_mixins/textStylePropertyMixin.js
 var textStylePropertyMixin = {
 
@@ -4803,7 +4705,7 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
 
 
     onFocusHandler: function (event) {
-        console.log('onFocus');
+        //console.log('onFocus');
     },
 
 
@@ -5263,616 +5165,6 @@ var ContainerView = ControlView.extend(
         }
     }
 );
-//####app/controls/_base/editor/textEditor.js
-/**
- * Редактор значений, используемый при вводе текста с использованием масок ввода данных
- *
- * Активизируется при получении фокуса ввода элементом {@see textEditorMixin.onFocusControlHandler},
- * скрывая поле ввода элемента и отображая собственное поле редактирование с заданной маской ввода.
- *
- * Подключается к элементу ввода посредством миксина {@see textEditorMixin}.
- */
-var TextEditor = Backbone.View.extend({
-
-    templateTextBox: InfinniUI.Template["controls/_base/editor/template/editorTextBox.tpl.html"],
-    templateTextArea: InfinniUI.Template["controls/_base/editor/template/editorTextArea.tpl.html"],
-
-    UI: {
-        editor: ".pl-control-editor",
-        icon: "i"
-    },
-
-    events: {
-        'blur .pl-control-editor': 'onBlurEditorHandler',
-        'keydown .pl-control-editor': 'onKeyDownEditorHandler',
-        'keypress .pl-control-editor': 'onKeyPressEditorHandler',
-        'keyup .pl-control-editor': 'onKeyUpEditorHandler',
-        'click .pl-control-editor': 'onClickEditorHandler',
-        'focus .pl-control-editor': 'onFocusEditorHandler',
-        'paste .pl-control-editor': 'onPasteEditorHandler',
-        //'contextmenu .pl-control-editor': 'onContextMenuEditorHandler',
-        'mousewheel .pl-control-editor': 'onMouseWheelEditorHandler',
-        'mouseleave .pl-control-editor': 'onMouseLeaveEditorHandler',
-        'input .pl-control-editor': 'onInputHandler'
-    },
-
-    /**
-     * options.parent {Backbone.View} ролительский элемент управления
-     * options.el Элемент в который рендерить редактор
-     * options.validate Коллбек для проверки введенного значения
-     * options.done Коллбек для установки значения в контроле
-     * @param options
-     */
-    initialize: function (options) {
-        //Сразу скрываем редактор
-        this.$el.hide();
-        this.options = options;
-        this.inFocus = false;
-        this.on('editor:show', this.onShowEditorHandler);
-        this.on('editor:hide', this.onHideEditorHandler);
-        this.on('editor:update', this.onUpdateEditorHandler);
-        this.isValid = true;
-
-        return this.render();
-    },
-
-    render: function () {
-        this.$el.find('.pl-control-editor').remove();
-
-        if (this.options.multiline) {
-            this.$el.prepend(this.templateTextArea({lineCount: this.options.lineCount}));
-        } else {
-            this.$el.prepend(this.templateTextBox({inputType: this.options.inputType}));
-        }
-        this.bindUIElements();
-
-        return this;
-    },
-
-    setIsValid: function (isValid) {
-        if (isValid === this.isValid) return;
-        this.isValid = isValid;
-        this.toggleValidateState(isValid);
-    },
-
-    toggleValidateState: function (isValid) {
-        var error;
-        this.$el.toggleClass('input-icon right has-error', isValid !== true);
-        this.ui.icon.toggle(isValid !== true);
-    },
-
-    setValue: function (value) {
-        var editMask = this.getOptions('editMask');
-        var displayValue;
-        //Если указана маска ввода - форматируем значение, иначе выводим как есть.
-        if (typeof editMask === 'undefined' || editMask === null) {
-            displayValue = value;
-        } else {
-            editMask.reset(value);
-            displayValue = editMask.getText();
-        }
-        if (this.ui.editor.val() !== displayValue) {
-            this.ui.editor.val(displayValue);
-        }
-
-        this.setIsValid(true);//По умолчанию считаем переданное значение валидно
-    },
-
-    getValue: function () {
-        var editMask = this.getOptions('editMask');
-        var convert = this.getOptions('convert');
-        if (editMask) {
-            return editMask.getValue();
-        } else {
-            return convert(this.ui.editor.val());
-        }
-    },
-
-    isInFocus: function () {
-        return this.inFocus;
-    },
-
-    /**
-     * @description Обработчик события установки значения поля редактирования
-     * @param {*} value
-     */
-    onUpdateEditorHandler: function (value) {
-        this.setValue(value);
-    },
-
-    /**
-     * Обработчик сообщения на отображение поля ввода
-     * Показать поле редактирование и установить на нем фокус ввода
-     * @param value
-     */
-    onShowEditorHandler: function (value, skipRefocus) {
-        this.cancelled = false;
-        this.setValue(value);
-        this.$el.show();
-        if (!skipRefocus) {
-            this.ui.editor.focus();
-        }
-
-        this.ui.editor.scrollTop(0);
-        this.checkCurrentPosition();
-        this.inFocus = true;
-    },
-
-    onHideEditorHandler: function () {
-        this.$el.hide();
-    },
-    onKeyDownEditorHandler: function (event) {
-
-        if (event.ctrlKey || event.altKey) {
-            return;
-        }
-
-        if (event.which === 27) {    //Escape
-            //Отменить изменения и выйти из режима редактирования
-            this.cancelled = true;
-            this.trigger('editor:hide');
-        }
-
-        var maskEdit = this.getOptions('editMask');
-        if (typeof maskEdit === 'undefined' || maskEdit === null) {
-            return;
-        }
-        var editor = this.ui.editor;
-        var elem = editor.get(0);
-        var position;
-
-        switch (event.which) {
-            case 36:    //Home
-                if(event.shiftKey) {
-                    elem.selectionEnd = parseInt(elem.selectionEnd, 10);
-                }else {
-                    position = maskEdit.moveToPrevChar(0);
-                    if (position !== false) {
-                        this.setCaretPosition(position);
-                        event.preventDefault();
-                    }
-                }
-                break;
-            case 37:    //Left arrow
-                if(event.shiftKey) {
-                    elem.selectionEnd = parseInt(elem.selectionEnd, 10);
-                }else {
-                    if (this.getSelectionLength() > 0){
-                        event.preventDefault();
-                        this.setCaretPosition(parseInt(elem.selectionStart, 10));
-                    }else {
-                        position = maskEdit.moveToPrevChar(this.getCaretPosition());
-                        if (position !== false) {
-                            this.setCaretPosition(position);
-                            event.preventDefault();
-                        }
-                    }
-                }
-                break;
-            case 39:    //Right arrow
-                if(event.shiftKey) {
-                    elem.selectionEnd = parseInt(elem.selectionEnd, 10);
-                }else {
-                    if (this.getSelectionLength() > 0){
-                        event.preventDefault();
-                        this.setCaretPosition(parseInt(elem.selectionEnd, 10));
-                    }else {
-                        position = maskEdit.moveToNextChar(this.getCaretPosition());
-                        if (position !== false) {
-                            this.setCaretPosition(position);
-                            event.preventDefault();
-                        }
-                    }
-                }
-                break;
-            case 35:    //End
-                position = maskEdit.moveToNextChar(editor.val().length);
-                if (position !== false) {
-                    this.setCaretPosition(position);
-                    event.preventDefault();
-                }
-                break;
-            case 38:    //Up arrow
-                if(event.shiftKey) {
-                    elem.selectionEnd = parseInt(elem.selectionEnd, 10);
-                }else {
-                    if (this.getSelectionLength() > 0){
-                        event.preventDefault();
-                        this.setCaretPosition(parseInt(elem.selectionStart, 10));
-                    }else {
-                        position = maskEdit.setNextValue(this.getCaretPosition());
-                        if (position !== false) {
-                            event.preventDefault();
-                            editor.val(maskEdit.getText());
-                            this.setCaretPosition(position);
-                        }
-                    }
-                }
-                break;
-            case 40:    //Down arrow
-                if(event.shiftKey) {
-                    elem.selectionEnd = parseInt(elem.selectionEnd, 10);
-                }else {
-                    if (this.getSelectionLength() > 0){
-                        event.preventDefault();
-                        this.setCaretPosition(parseInt(elem.selectionEnd, 10));
-                    }else {
-                        position = maskEdit.setPrevValue(this.getCaretPosition());
-                        if (position !== false) {
-                            event.preventDefault();
-                            editor.val(maskEdit.getText());
-                            this.setCaretPosition(position);
-                        }
-                    }
-                }
-                break;
-            case 46:    //Delete
-                // @TODO Если выделена вся строка - очистить поле редактирования
-                //TODO: доделать SelectionLength
-                if (this.getSelectionLength() > 0 && !(maskEdit.value instanceof Date)) {
-                    event.preventDefault();
-                    this.removeSelection(maskEdit);
-                } else {
-                    position = maskEdit.deleteCharRight(this.getCaretPosition(), this.getSelectionLength());
-                    if (position !== false) {
-                        event.preventDefault();
-                        editor.val(maskEdit.getText());
-                        this.setCaretPosition(position);
-                    }
-                }
-                break;
-            case 8:    //Backspace
-                // @TODO Если выделена вся строка - очистить поле редактирования
-                //TODO: доделать SelectionLength
-                if (this.getSelectionLength() > 0 && !(maskEdit.value instanceof Date)) {
-                    event.preventDefault();
-                    this.removeSelection(maskEdit);
-                } else {
-                    position = maskEdit.deleteCharLeft(this.getCaretPosition(), this.getSelectionLength());
-                    if (position !== false) {
-                        event.preventDefault();
-                        editor.val(maskEdit.getText());
-                        this.setCaretPosition(position);
-                    }
-                }
-                break;
-            case 32:    //Space
-                if (this.getSelectionLength() > 0 && !(maskEdit.value instanceof Date)) {
-                    event.preventDefault();
-                    this.removeSelection(maskEdit);
-                }else {
-                    position = maskEdit.getNextItemMask(this.getCaretPosition());
-                    if (position !== false) {
-                        event.preventDefault();
-                        this.setCaretPosition(position);
-                    }
-                }
-                break;
-
-            default:
-                //TODO: не работает для DateTimeFormat
-                //TODO: доделать SelectionLength замена выделенного текста, по нажатию
-
-                if((event.keyCode >= 96 && event.keyCode <= 105)){
-                    event.keyCode = event.keyCode - 48; //hotfix for numpad keys
-                }
-
-                var inp = String.fromCharCode(event.keyCode);
-                if (!isNaN(parseFloat(inp)) && isFinite(inp)){
-                    if (this.getSelectionLength() > 0 && !(maskEdit.value instanceof Date)) {
-                        event.preventDefault();
-                        //Data
-                        this.removeSelection(maskEdit, String.fromCharCode(event.keyCode));
-                    }
-                }
-                break;
-        }
-    },
-
-    removeSelection: function(mask, char){
-        var res = mask.deleteSelectedText(this.getCaretPosition(), this.getSelectionLength(), char);
-        mask.reset(res.result);
-
-        this.ui.editor.val(mask.getText());
-
-        if(!res.result){
-            this.setCaretPosition(0);
-        }else{
-            this.setCaretPosition(res.position);
-        }
-    },
-
-    checkCurrentPosition: function () {
-        var maskEdit = this.getOptions('editMask');
-        if (typeof maskEdit === 'undefined' || maskEdit === null) {
-            return;
-        }
-        var currentPosition = this.getCaretPosition();
-        var position = currentPosition === 0 ? maskEdit.moveToPrevChar(0) : maskEdit.moveToNextChar(currentPosition - 1);
-        if (position !== currentPosition) {
-            this.setCaretPosition(position);
-        }
-
-    },
-
-    onClickEditorHandler: function (event) {
-        this.checkCurrentPosition();
-        event.preventDefault();
-    },
-
-    onFocusEditorHandler: function () {
-        var maskEdit = this.getOptions('editMask');
-        if (typeof maskEdit === 'undefined' || maskEdit === null) {
-            return;
-        }
-        var position = maskEdit.moveToPrevChar(0);
-        this.setCaretPosition(position);
-        this.inFocus = true;
-    },
-
-    onKeyUpEditorHandler: function (event) {
-        this.trigger('onKeyDown', {
-            keyCode: event.which,
-            value: this.parseInputValue()
-        });
-    },
-
-    onKeyPressEditorHandler: function (event) {
-        if (event.altKey || event.ctrlKey) {
-            return;
-        }
-
-        var maskEdit = this.getOptions('editMask');
-        if (typeof maskEdit === 'undefined' || maskEdit === null) {
-            return;
-        }
-
-        var editor = this.ui.editor;
-        var char = this.getCharFromKeypressEvent(event);
-        var position;
-
-        if (char === null) {
-            return;
-        }
-
-
-        position = maskEdit.setCharAt(char, this.getCaretPosition(), this.getSelectionLength());
-        if (position !== false) {
-            event.preventDefault();
-            editor.val(maskEdit.getText());
-            this.setCaretPosition(position);
-        }
-    },
-
-    onPasteEditorHandler: function (event) {
-        var maskEdit = this.getOptions('editMask');
-        var editor = this.ui.editor;
-
-        if (typeof maskEdit === 'undefined' || maskEdit === null) {
-            return;
-        }
-
-        var text = (event.originalEvent || event).clipboardData.getData('text/plain') || prompt('Paste something..');
-        var chars = text.split('');
-
-        for (var i = 0, position = this.getCaretPosition(); i < chars.length; i = i + 1) {
-            position = maskEdit.setCharAt(chars[i], position);
-        }
-        //maskEdit.pasteStringToMask(text, this.getCaretPosition());
-
-        event.preventDefault();
-        editor.val(maskEdit.getText());
-        //@TODO Реализовать обработку вставки значения из буфера обмена
-    },
-
-    onContextMenuEditorHandler: function (event) {
-        event.preventDefault();
-        this.checkCurrentPosition();
-    },
-
-    onMouseWheelEditorHandler: function (event) {
-        var maskEdit = this.getOptions('editMask');
-        if (typeof maskEdit === 'undefined' || maskEdit === null) {
-            return;
-        }
-
-        event.preventDefault();
-        //@TODO Реализовать изменение значений при прокретке колеса
-    },
-
-    onMouseLeaveEditorHandler: function (event) {
-        var inFocus = event.currentTarget == document.activeElement;
-        if (!inFocus && this.isValid) {
-            //this.$el.hide();
-            this.onBlurEditorHandler();
-        }
-    },
-
-    onInputHandler: function(event){
-        this.options.parent.model.set('value', this.ui.editor.val());
-    },
-
-    /**
-     * @private
-     * Получение нажатого символа в событии keypress
-     * @see {@link http://learn.javascript.ru/keyboard-events#получение-символа-в-keypress}
-     * @param event
-     * @returns {String}
-     */
-    getCharFromKeypressEvent: function (event) {
-        if (event.which == null) {  // IE
-            if (event.keyCode < 32) return null; // спец. символ
-            return String.fromCharCode(event.keyCode)
-        }
-
-        if (event.which != 0 && event.charCode != 0) { // все кроме IE
-            if (event.which < 32) return null; // спец. символ
-            return String.fromCharCode(event.which); // остальные
-        }
-
-        return null; // спец. символ
-    },
-
-    /**
-     * @private
-     * Получение позиции курсора в поле редактирования
-     * @see {@link http://stackoverflow.com/questions/2897155/get-cursor-position-in-characters-within-a-text-input-field}
-     * @returns {number}
-     */
-    getCaretPosition: function () {
-        var elem = this.ui.editor.get(0);
-        // Initialize
-        var position = 0;
-
-        // IE Support
-        if (document.selection) {
-
-            // Set focus on the element
-            elem.focus();
-
-            // To get cursor position, get empty selection range
-            var selection = document.selection.createRange();
-
-            // Move selection start to 0 position
-            selection.moveStart('character', -elem.value.length);
-
-            // The caret position is selection length
-            position = selection.text.length;
-        }
-
-        // Firefox support
-        else if (elem.selectionStart || elem.selectionStart == '0')
-            position = elem.selectionStart;
-
-        return position;
-    },
-
-    getSelectionLength: function () {
-        var elem = this.ui.editor.get(0);
-        var len = 0;
-        var startPos = parseInt(elem.selectionStart, 10);
-        var endPos = parseInt(elem.selectionEnd, 10);
-
-
-        if (!isNaN(startPos) && !isNaN(endPos)) {
-            len = endPos - startPos;
-        }
-
-        return len;
-    },
-
-    /**
-     * @private
-     * Установка позиции курсора в поле редактирования
-     * @see {@link http://stackoverflow.com/questions/512528/set-cursor-position-in-html-textbox}
-     * @param {Integer} [position=0]
-     */
-    setCaretPosition: function (position) {
-        var elem = this.ui.editor.get(0);
-
-        if (elem.createTextRange) {
-            var range = elem.createTextRange();
-            range.move('character', position);
-            range.select();
-        }
-        else {
-            if (typeof elem.selectionStart !== 'undefined') {
-                elem.setSelectionRange(position, position);
-            }
-        }
-    },
-
-    /**
-     * Обработка ппотери фокуса полем ввода
-     *
-     * При потере фокуса надо проверить что введенное значение удовлетваряет контрол.
-     * Если значение контрол принял - скрыть поле ввода, отобразить исходный контрол и вызвать setValue
-     * Если контрол значение не принял - поле ввода не скрывать, установить ошибку
-     */
-    onBlurEditorHandler: function () {
-        this.inFocus = false;
-
-        if (this.cancelled) {
-            //Выход из поля редактора с отменой изменений
-            return;
-        }
-        var control = this.getOptions('parent');
-        var done = this.getOptions('done');
-        var validate = this.getOptions('validate');
-        var convert = this.getOptions('convert');
-        var value = convert(this.ui.editor.val());
-        var editMask = this.getOptions('editMask');
-        var complete = true;
-
-        //Убираем маску при потере фокуса
-        if (typeof editMask !== 'undefined' && editMask !== null) {
-            if (!editMask.getIsComplete(this.ui.editor.val())) {
-                value = null;
-                editMask.reset(value);
-                this.trigger('editor:hide');
-            } else {
-                complete = editMask.getIsComplete(value);
-                value = editMask.getValue();
-            }
-        }
-
-        if (typeof validate !== 'undefined' && validate !== null) {
-            var isValid = complete && validate(value);
-            this.setIsValid(isValid);
-
-            if (!isValid) {
-                //Если значение невалидно - редактор не закрываемю
-                return;
-            }
-        }
-
-        if (typeof done !== 'undefined' && done !== null) {
-            //Если указан коллбек на установку значения - вызываем его
-            done(editMask ? editMask.getData() : value);
-        }
-        //Триггерим событие для скрытия поля редактирования
-        this.trigger('editor:hide');
-    },
-
-    parseInputValue: function () {
-        var control = this.getOptions('parent');
-        var done = this.getOptions('done');
-        var validate = this.getOptions('validate');
-        var convert = this.getOptions('convert');
-        var value = convert(this.ui.editor.val());
-        var editMask = this.getOptions('editMask');
-        var complete = true;
-
-        if (typeof editMask !== 'undefined' && editMask !== null) {
-            if (!editMask.getIsComplete(this.ui.editor.val())) {
-                return;
-            } else {
-                complete = editMask.getIsComplete(value);
-                value = editMask.getValue();
-            }
-        }
-
-        if (typeof validate !== 'undefined' && validate !== null) {
-            var isValid = complete && validate(value);
-            if (!isValid) {
-                //Если значение невалидно
-                return;
-            }
-        }
-
-        return editMask ? editMask.getData() : value;
-    },
-
-    getOptions: function (name) {
-        if (typeof name === 'undefined' || name === '' || name === null) {
-            return;
-        }
-        return this.options[name];
-    }
-
-});
-
-_.extend(TextEditor.prototype, bindUIElementsMixin);
 //####app/controls/_base/editorBase/editorBaseControlMixin.js
 var editorBaseControlMixin = {
 
@@ -6342,7 +5634,6 @@ _.extend(TextEditorBaseModel.prototype, editorBaseModelMixin);
 /**
  * @class TextEditorBaseView
  * @augments ControlView
- * @mixes textEditorMixin
  * @mixed editorBaseViewMixin
  */
 
@@ -6351,17 +5642,14 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
 
     UI: _.extend({}, editorBaseViewMixin.UI, {
         control: '.pl-control',
-        editor: '.pl-control-editor',
+        //editor: '.pl-control-editor',
+        editor: '.pl-editor',
         label: '.pl-control-label',
         textbox: '.pl-text-box-input'
     }),
 
     events: {
-        //Обработчик для показа поля редактирования с использованием маски ввода
-        'focus .pl-text-box-input': 'onFocusControlHandler',
-        'mouseenter .pl-text-box-input': 'onMouseenterControlHandler'
 
-        //@TODO Генерация событий GotFocus/LostFocus должна происходить с учетом что происходит подмена контролов
     },
 
     initialize: function () {
@@ -6376,6 +5664,7 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
         this.listenTo(this.model, 'change:labelFloating', this.updateLabelFloating);
         this.listenTo(this.model, 'change:displayFormat', this.updateDisplayFormat);
         this.listenTo(this.model, 'change:editMask', this.updateEditMask);
+        this.listenTo(this.model, 'change:inputType', this.updateInputType);
     },
 
     updateProperties: function(){
@@ -6383,6 +5672,34 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
         editorBaseViewMixin.updateProperties.call(this);
 
         this.updateLabelText();
+        this.updateInputType();
+    },
+
+    updateFocusable: function () {
+        var focusable = this.model.get('focusable');
+
+        if (!focusable) {
+            this.ui.editor.attr('tabindex', -1);
+        } else {
+            this.ui.editor.removeAttr('tabindex');
+        }
+    },
+
+    updateInputType: function () {
+        var inputType = this.model.get('inputType');
+        var $editor = this.ui.editor;
+        var tagName = $editor.prop('tagName');
+        if (inputType && tagName.toLowerCase() === 'input') {
+            $editor.attr('type', inputType);
+        }
+    },
+
+    updateEditMask: function(){
+        this.updateValue();
+    },
+
+    setFocus: function () {
+        this.ui.editor.focus();
     },
 
     updateValue: function(){
@@ -6408,31 +5725,16 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
         this.updateValue();
     },
 
-    updateEditMask: function(){
-        this.updateValue();
-    },
-
-
     /**
      * Рендеринг редактора значений
-     * @params {Object} options
-     * @params {jQuery} options.el
-     * @params {Number} options.multiline
-     * @params {Number} options.lineCount
-     * @params {String} options.inputType
      *
      */
-    renderControlEditor: function (options) {
-
-        options = _.defaults(options, {
-            el: this.ui.editor,
-            multiline: false,
-            lineCount: 2,
-            inputType: 'text'
-        });
-
-        //@TODO Возможно при отсутвии maskEdit поле редактирования использовать не надо?
-        this.renderEditor(options);
+    renderControlEditor: function () {
+        var model = this.model;
+        var editor = model.get('editor');
+        if (editor) {
+            editor.render(this.ui.editor);
+        }
     },
 
     getData: function () {
@@ -6447,10 +5749,6 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
             });
     },
 
-    onEditorValidate: function (value) {
-        return true;
-    },
-
     getDisplayValue: function () {
         var
             model = this.model,
@@ -6462,7 +5760,6 @@ var TextEditorBaseView = ControlView.extend(/** @lends TextEditorBaseView.protot
 
 }));
 
-_.extend(TextEditorBaseView.prototype, textEditorMixin); //Работа с масками ввода
 //####app/controls/_base/eventManager.js
 function EventManager() {
     this.handlers = {};
@@ -6524,6 +5821,702 @@ var highlightMixin = {
 };
 
 
+//####app/controls/_base/textEditor/textEditorModel.js
+/**
+ * @TODO Если маска заполнена не полностью - не выходить из режима редактирования
+ */
+var TextEditorModel = Backbone.Model.extend({
+
+    Mode: {
+        Edit: 'edit',
+        Display: 'display'
+    },
+
+    initialize: function () {
+
+        this.initEditMode();
+
+        this.on('change:originalValue', this.onChangeOriginalValueHandler);
+        this.on('change:value', this.onChangeValueHandler);
+        this.on('change:mode', this.onChangeModeHandler);
+        this.on('change:text', this.onChangeTextHandler);
+    },
+
+    onChangeTextHandler: function (model, value, options) {
+        var modeStrategy = this.get('modeStrategy');
+        modeStrategy.onChangeTextHandler(model, value, options);
+    },
+
+    convertValue: function (value) {
+        var getConverter = this.get('valueConverter');
+        var converter = getConverter.call(null);
+        return (typeof converter === 'function') ? converter.call(this, value) : value;
+    },
+
+    initEditMode: function () {
+        this.modeStrategies = {};
+        this.modeStrategies[this.Mode.Edit] = new TextEditorModelEditModeStrategy();
+        this.modeStrategies[this.Mode.Display] = new TextEditorModelDisplayModeStrategy();
+
+        this.updateEditModeStrategy();
+    },
+
+    defaults: function () {
+        return {
+            mode: this.Mode.Display
+        };
+    },
+
+    updateEditModeStrategy: function () {
+        var mode = this.get('mode');
+        this.set('modeStrategy', this.modeStrategies[mode]);
+    },
+
+    onChangeModeHandler: function (model, mode, options) {
+        var prevMode = this.previous('mode');
+        if (options.cancel) {
+            this.cancelChanges();
+        } else if (mode === this.Mode.Display && prevMode === this.Mode.Edit) {
+            //При успешном переходе из режима редактирования в режим отображения - обновляем исходное значение
+            this.applyChanges();
+        }
+
+        this.updateEditModeStrategy();
+        this.updateText();
+    },
+
+    /**
+     *
+     * @param {boolean} [cancel = false]
+     * @param {boolean} [validate = true]
+     */
+    setDisplayMode: function (cancel, validate) {
+        cancel = !!cancel;
+        validate = (typeof validate === 'undefined') ? true : !!validate;
+
+        this.set('mode', this.Mode.Display, {
+            cancel: cancel,
+            validate: validate
+        });
+
+    },
+
+    applyChanges: function () {
+        this.set('originalValue', this.get('value'));
+    },
+
+    cancelChanges: function () {
+        this.set('value', this.get('originalValue'));
+    },
+
+    /**
+     *
+     * @param text
+     * @param {boolean} [ui = false]
+     */
+    setText: function (text, ui) {
+        var modeStrategy = this.get('modeStrategy');
+        modeStrategy.setText(this, text, ui);
+    },
+
+    getEditMask: function () {
+        return this.get('editMask');
+    },
+
+    getValue: function () {
+        return this.get('value');
+        //
+        //
+        //var editMask = this.getEditMask();
+        //var value;
+        //
+        //if (editMask) {
+        //    value = editMask.getValue()
+        //} else {
+        //    value = this.$el.val();
+        //}
+
+        //return value;
+    },
+
+    getDisplayFormat: function () {
+        return this.get('displayFormat');
+    },
+
+    setEditMode: function () {
+        this.set('mode', this.Mode.Edit);
+    },
+
+    validate: function (attrs, options) {
+
+        //@TODO Если меняется Mode Edit => Display, проверить введенное значение!!!
+        var validateValue = this.get('validateValue'),
+            value = this.getValue();
+
+        if (_.isFunction(validateValue)) {
+            return validateValue.call(null, value);
+        }
+    },
+
+    updateText: function () {
+        var modeStrategy = this.get('modeStrategy');
+        modeStrategy.updateText(this);
+    },
+
+    onChangeValueHandler: function (model, value, options) {
+        if (!options.ui) {
+            this.updateText();
+        }
+
+    },
+
+    onChangeOriginalValueHandler: function (model, value) {
+        model.set('value', value, {originalValue: true});
+    }
+
+});
+//####app/controls/_base/textEditor/textEditorView.js
+var TextEditorView = Backbone.View.extend({
+
+    /**
+     * @member {TextEditorModel} model
+     */
+
+    classNameError: 'has-error',
+
+    events: {
+        'focusin': 'onFocusinHandler',
+        'focusout': 'onFocusoutHandler',
+        'keydown': 'onKeydownHandler',
+        'change': 'onChangeHandler',
+        'input': 'onInputHandler',
+        'keyup': 'onKeyupHandler',  //trigger OnKeyDown Event
+        'click': 'onClickHandler',
+        'drop': 'onDropHandler',
+        'dragstart': 'OnDragstartHandler',
+        'dragend': 'OnDragendHandler',
+        'dragover': 'OnDragoverHandler',
+        'dragleave': 'OnDragleaveHandler',
+        'dragenter': 'OnDragenterHandler',
+        'paste': 'onPasteHandler'
+    },
+
+    updateModelTextFromEditor: function () {
+        var model = this.model,
+            editMask = model.getEditMask();
+
+        if (!editMask) {
+            model.setText(this.$el.val(), true);
+        }
+    },
+
+    onChangeHandler: function () {
+        //Обработка для корректной обработки автозаполняемых полей
+        this.updateModelTextFromEditor();
+    },
+
+    onInputHandler: function () {
+        var editMask = this.model.getEditMask();
+        if (!editMask) {
+            this.updateModelTextFromEditor();
+        }
+    },
+
+    onKeydownHandler: function (event) {
+        if (event.ctrlKey || event.altKey) {
+            return;
+        }
+
+        if (event.which === InfinniUI.Keyboard.KeyCode.ESCAPE) {
+            //Отменить изменения и выйти из режима редактирования
+            this.model.setDisplayMode(true, false);
+            this.$el.blur();
+            return;
+        }
+
+        var editMask = this.model.getEditMask();
+        if (!editMask) {
+            //model.text будет изменено в обработчике onInputHandler
+            return;
+        }
+
+        var model = this.model;
+        var position;
+
+        switch (event.which) {
+            case InfinniUI.Keyboard.KeyCode.TAB:
+                break;
+            case InfinniUI.Keyboard.KeyCode.HOME:
+                if (!event.shiftKey) {
+                    position = editMask.moveToPrevChar(0);
+                    if (position !== false) {
+                        event.preventDefault();
+                        this.setCaretPosition(position);
+                    }
+                }
+
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.LEFT_ARROW:
+                if (!event.shiftKey) {
+                    position = editMask.moveToPrevChar(this.getCaretPosition());
+                    if (position !== false) {
+                        event.preventDefault();
+                        this.setCaretPosition(position);
+                    }
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.RIGHT_ARROW:
+                if (!event.shiftKey) {
+                    position = editMask.moveToNextChar(this.getCaretPosition());
+                    if (position !== false) {
+                        event.preventDefault();
+                        this.setCaretPosition(position);
+                    }
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.END:
+                if (!event.shiftKey) {
+                    position = editMask.moveToNextChar(this.$el.val().length);
+                    if (position !== false) {
+                        event.preventDefault();
+                        this.setCaretPosition(position);
+                    }
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.UP_ARROW:
+                if (!event.shiftKey) {
+                    position = editMask.setNextValue(this.getCaretPosition());
+                    if (position !== false) {
+                        event.preventDefault();
+                        model.setText(editMask.getText());
+                        this.setCaretPosition(position);
+                    }
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.DOWN_ARROW:
+                if (!event.shiftKey) {
+                    position = editMask.setPrevValue(this.getCaretPosition());
+                    if (position !== false) {
+                        event.preventDefault();
+                        this.model.setText(editMask.getText());
+                        this.setCaretPosition(position);
+                    }
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.DELETE:
+                event.preventDefault();
+                position = editMask.deleteCharRight(this.getCaretPosition(), this.getSelectionLength());
+
+                this.model.setText(editMask.getText());
+                if (position !== false) {
+                    this.setCaretPosition(position);
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.BACKSPACE:
+                event.preventDefault();
+                position = editMask.deleteCharLeft(this.getCaretPosition(), this.getSelectionLength());
+
+                this.model.setText(editMask.getText());
+                if (position !== false) {
+                    this.setCaretPosition(position);
+                }
+                break;
+
+            case InfinniUI.Keyboard.KeyCode.SPACE:
+                if (editMask.value instanceof Date) {
+                    event.preventDefault();
+                    position = editMask.getNextItemMask(this.getCaretPosition());
+                    if (position !== false) {
+                        this.setCaretPosition(position);
+                    }
+                }
+                break;
+
+            default:
+                //замена выделенного текста, по нажатию
+                var char = event.key;
+                event.preventDefault();
+                if (this.getSelectionLength() > 0) {
+                    position = editMask.deleteSelectedText(this.getCaretPosition(), this.getSelectionLength(), char);
+                } else {
+                    //Ввод символа
+                    position = editMask.setCharAt(char, this.getCaretPosition(), this.getSelectionLength());
+                }
+
+                this.model.setText(editMask.getText());
+                if (position !== false) {
+                    this.setCaretPosition(position);
+                }
+                break;
+        }
+
+
+    },
+
+    onKeyupHandler: function (event) {
+
+        this.trigger('onKeyDown', {
+            keyCode: event.which,
+            value: this.model.getValue()
+        });
+    },
+
+    onClickHandler: function (event) {
+        this.checkCurrentPosition();
+        event.preventDefault();
+    },
+
+    onPasteHandler: function (event) {
+        var originalEvent = event.originalEvent;
+        var text = originalEvent.clipboardData.getData('text/plain');
+        var editMask = this.model.getEditMask();
+
+        event.preventDefault();
+
+        if (editMask) {
+            this.textTyping(text);
+        } else {
+            this.model.setText(text);
+        }
+
+    },
+
+    OnDragstartHandler: function (event) {
+        var originalEvent = event.originalEvent;
+        originalEvent.dataTransfer.effectAllowed = 'copy';
+        this.$el.attr('data-dragged', true);
+    },
+
+    OnDragendHandler: function (/*event*/) {
+        this.$el.removeAttr('data-dragged', false);
+    },
+
+    OnDragoverHandler: function (event) {
+        event.preventDefault();
+    },
+
+    OnDragenterHandler: function (event) {
+        var dragged = this.$el.attr('data-dragged');
+
+        if (!dragged && this.getCanChange()) {
+            this.model.setEditMode();
+        }
+    },
+
+    OnDragleaveHandler: function (event) {
+        var dragged = this.$el.attr('data-dragged');
+
+        if (!dragged) {
+            this.model.setDisplayMode();
+        }
+    },
+
+    onDropHandler: function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var dragged = this.$el.attr('data-dragged');
+
+        if (dragged) {  //prevent drop on self
+            return;
+        }
+
+        if (!this.getCanChange()) {
+            return;
+        }
+
+        var originalEvent = event.originalEvent;
+        var text = originalEvent.dataTransfer.getData('text/plain');
+
+
+
+        this.textTyping(text, 0);
+        this.$el.focus();
+    },
+
+    getCanChange: function () {
+        var disabled = this.$el.prop('disabled');
+
+        return disabled === false;
+    },
+
+    /**
+     * @description Заполняет поле ввода строкой text начиная с позиции position
+     * @protected
+     *
+     * @param {string} text
+     * @param {number} [position]
+     */
+    textTyping: function (text, position) {
+        var editMask = this.model.getEditMask();
+        var newText = text;
+
+        if (editMask) {
+            text.split('')
+                .reduce(function (pos, char) {
+                    return editMask.setCharAt(char, pos);
+                }, _.isNumber(position) ? position : this.getCaretPosition());
+
+            newText = editMask.getText();
+        }
+
+        this.model.setText(newText);
+    },
+
+    checkCurrentPosition: function (currentPosition) {
+
+        if (!this.canCaretPosition()) {
+            return;
+        }
+        var editMask = this.model.getEditMask();
+        if (!editMask) {
+            return;
+        }
+
+        if (typeof currentPosition === 'undefined') {
+            currentPosition = this.getCaretPosition();
+        }
+
+        var position = currentPosition === 0 ? editMask.moveToPrevChar(0) : editMask.moveToNextChar(currentPosition - 1);
+        if (position !== currentPosition) {
+            this.setCaretPosition(position);
+        }
+
+    },
+
+    getSelectionLength: function () {
+        var el = this.el,
+            len = 0;
+
+        if (this.canCaretPosition()) {
+            var startPos = parseInt(el.selectionStart, 10),
+                endPos = parseInt(el.selectionEnd, 10);
+
+            if (!isNaN(startPos) && !isNaN(endPos)) {
+                len = endPos - startPos;
+            }
+        }
+
+        return len;
+    },
+
+    canCaretPosition: function () {
+        return (/text|password|search|tel|url/).test(this.el.type);
+    },
+
+    setCaretPosition: function (caretPosition) {
+
+        if (_.isNumber(caretPosition) && this.canCaretPosition()) {
+            var el = this.el;
+
+            //IE9+
+            if (typeof el.selectionStart !== 'undefined') {
+                el.setSelectionRange(caretPosition, caretPosition);
+            }
+        }
+
+    },
+
+    /**
+     * @private
+     * Получение позиции курсора в поле редактирования
+     * @returns {number}
+     */
+    getCaretPosition: function () {
+        /** @var {HTMLInputElement} **/
+        var el = this.el;
+
+        var position = 0;
+
+        if (this.canCaretPosition()) {
+            position = el.selectionStart;
+        }
+
+        return position;
+    },
+
+    initialize: function () {
+        this.applyAutocomplete();
+        this.listenTo(this.model, 'change:mode', this.onChangeModeHandler);
+        this.listenTo(this.model, 'change:text', this.onChangeTextHandler);
+        this.listenTo(this.model, 'invalid', this.onInvalidHandler);
+    },
+
+    /**
+     * @description Для элементов с маской ввода отключаем поддержку автозаполнения
+     */
+    applyAutocomplete: function () {
+        var editMask = this.model.getEditMask();
+        if (editMask) {
+            this.$el.attr('autocomplete', 'off');
+        }
+    },
+
+    onInvalidHandler: function (model, error) {
+        this.$el.toggleClass(this.classNameError, true);
+    },
+
+    onFocusinHandler: function (/* event */) {
+        this.model.setEditMode();
+    },
+
+    onFocusoutHandler: function (/* event */) {
+        this.model.setDisplayMode();
+    },
+
+    onChangeModeHandler: function (model, mode) {
+        this.checkCurrentPosition();
+    },
+
+    onChangeTextHandler: function (model, text) {
+        var $input = this.$el;
+        var position = this.getCaretPosition();
+
+        $input.toggleClass(this.classNameError, false);
+
+        if($input.val() !== text) {
+            $input.val(text);
+        }
+
+        var editMask = this.model.getEditMask();
+
+        if (editMask) {
+            if ($input.is(':focus')) {
+                this.checkCurrentPosition(position);
+            }
+        }
+
+    }
+
+});
+//####app/controls/_base/textEditor/_mode/textEditorModelBaseModeStrategy.js
+/**
+ *
+ * @constructor
+ */
+function TextEditorModelBaseModeStrategy() {
+}
+
+/**
+ * Отображает текстовое представление значения элемента
+ * @abstract
+ * @param {TextEditorModel} model
+ */
+TextEditorModelBaseModeStrategy.prototype.updateText = function (model) {
+
+};
+
+
+/**
+ * Устанавливает значение поля оторажения/ввода значения
+ * @param {TextEditorModel} model
+ * @param {string} text
+ * @param {boolean} ui Признак исзменения со стороны UI
+ */
+TextEditorModelBaseModeStrategy.prototype.setText = function (model, text, ui) {
+
+};
+
+
+/**
+ * @param model
+ * @param value
+ */
+TextEditorModelBaseModeStrategy.prototype.onChangeTextHandler = function (model, value, options) {
+
+};
+
+
+//####app/controls/_base/textEditor/_mode/textEditorModelDisplayModeStrategy.js
+/**
+ * @augments TextEditorModelBaseModeStrategy
+ * @constructor
+ */
+function TextEditorModelDisplayModeStrategy() {
+    TextEditorModelBaseModeStrategy.call(this);
+}
+
+TextEditorModelDisplayModeStrategy.prototype = Object.create(TextEditorModelBaseModeStrategy.prototype);
+TextEditorModelDisplayModeStrategy.prototype.constructor = TextEditorModelDisplayModeStrategy;
+
+TextEditorModelDisplayModeStrategy.prototype.updateText = function (model) {
+    var displayFormat = model.getDisplayFormat();
+    var value = model.get('value');
+
+    var text;
+
+    if (_.isFunction(displayFormat)) {
+        text = displayFormat.call(null, null, {value: value});
+    } else {
+        text = value;
+    }
+
+    model.set('text', text);
+};
+
+TextEditorModelDisplayModeStrategy.prototype.setText = function (model, text, ui) {
+    if (ui) {
+        //Изменение значения в поле ввода для режима просмотра - результат срабатывания автозаполнения браузера
+        model.set('text', text, {ui: ui});
+    }
+};
+
+TextEditorModelDisplayModeStrategy.prototype.onChangeTextHandler = function (model, text, options) {
+    if (options.ui) {
+        var value = model.convertValue(text);
+        model.set('value', value, {ui: options.ui});
+    }
+    model.applyChanges();
+};
+//####app/controls/_base/textEditor/_mode/textEditorModelEditModeStrategy.js
+/**
+ * @augments TextEditorModelBaseModeStrategy
+ * @constructor
+ */
+function TextEditorModelEditModeStrategy() {
+    TextEditorModelBaseModeStrategy.call(this);
+}
+
+TextEditorModelEditModeStrategy.prototype = Object.create(TextEditorModelBaseModeStrategy.prototype);
+TextEditorModelEditModeStrategy.prototype.constructor = TextEditorModelBaseModeStrategy;
+
+TextEditorModelEditModeStrategy.prototype.updateText = function (model) {
+    var editMask = model.getEditMask();
+    var value = model.get('value');
+    var text;
+
+    if (!editMask) {
+        text = value;
+    } else {
+        editMask.reset(value);
+        text = editMask.getText();
+    }
+
+    if (typeof text === 'undefined' || text === null) {
+        model.set('text', '');
+    } else {
+        model.set('text', text.toString());
+    }
+
+};
+
+TextEditorModelEditModeStrategy.prototype.setText = function (model, text, ui) {
+    model.set('text', text, {ui: ui});
+};
+
+TextEditorModelEditModeStrategy.prototype.onChangeTextHandler = function (model, newValue, options) {
+    var editMask = model.getEditMask();
+    var value = editMask ?  editMask.getData() : newValue;
+    model.set('value', model.convertValue(value), {silent: !!editMask, ui: options.ui});
+};
+
+
 //####app/controls/textBox/textBoxControl.js
 /**
  *
@@ -6560,7 +6553,7 @@ var TextBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototype 
         TextEditorBaseModel.prototype.defaults,
         {
             multiline: false,
-            type: 'text'
+            inputType: 'text'
         }
     ),
 
@@ -6577,8 +6570,8 @@ var TextBoxModel = TextEditorBaseModel.extend(/** @lends TextBoxModel.prototype 
 var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
 
     template: {
-        oneline: InfinniUI.Template["controls/textBox/template/textBoxInput.tpl.html"],
-        multiline: InfinniUI.Template["controls/textBox/template/textBoxArea.tpl.html"]
+        oneline: InfinniUI.Template["controls/textBox/template/oneline.tpl.html"],
+        multiline: InfinniUI.Template["controls/textBox/template/multiline.tpl.html"]
     },
 
     className: 'pl-textbox form-group',
@@ -6586,13 +6579,7 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
     UI: _.extend({}, TextEditorBaseView.prototype.UI),
 
     events: _.extend({}, TextEditorBaseView.prototype.events, {
-        //Отображение поля редактирования для INPUT[TEXT]
-        'focus .pl-text-box-input': 'onFocusControlHandler',
-        'mouseenter .pl-text-box-input': 'onMouseenterControlHandler',
 
-        //Отображение поля редактирования для TEXTAREA
-        'focus .pl-text-area-input': 'onFocusControlHandler',
-        'mouseenter .pl-text-area-input': 'onMouseenterControlHandler'
     }),
 
     initHandlersForProperties: function(){
@@ -6600,14 +6587,12 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
 
         this.listenTo(this.model, 'change:multiline', this.updateMultiline);
         this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
-        this.listenTo(this.model, 'change:type', this.updateType);
     },
 
     updateProperties: function(){
         TextEditorBaseView.prototype.updateProperties.call(this);
 
         this.updateLineCount();
-        this.updateType();
     },
 
     updateMultiline: function(){
@@ -6616,33 +6601,18 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
 
     updateLineCount: function(){
         var lineCount = this.model.get('lineCount');
-        this.ui.control.attr('rows', lineCount);
         this.ui.editor.attr('rows', lineCount);
     },
 
-    updateType: function () {
-        var type = this.model.get('type');
-        this.ui.control.attr('type', type);
-        this.ui.editor.find('.pl-control-editor').attr('type', type);
-    },
-
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        if (!focusable) {
-            this.ui.control.attr('tabindex', -1);
-        } else {
-            this.ui.control.removeAttr('tabindex');
-        }
-    },
-
     render: function () {
+        this.prerenderingActions();
+
         var model = this.model;
         var template = model.get('multiline') ? this.template.multiline : this.template.oneline;
 
-        this.prerenderingActions();
         this.renderTemplate(template);
         this.renderTextBoxEditor();
+
         this.updateProperties();
 
         this.trigger('render');
@@ -6663,19 +6633,7 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
     },
 
     renderTextBoxEditor: function () {
-        var model = this.model;
-        this.renderControlEditor({
-            el: this.ui.editor,
-            multiline: model.get('multiline'),
-            lineCount: model.get('lineCount'),
-            inputType: model.get('inputType')
-        });
-
-        return this;
-    },
-
-    setFocus: function () {
-        this.ui.textbox.focus();
+        this.renderControlEditor();
     }
 
 });
@@ -7994,8 +7952,6 @@ var DateTimePickerView = TextEditorBaseView.extend(/** @lends DateTimePickerView
     }),
 
     events: _.extend({}, TextEditorBaseView.prototype.events, {
-        'focus .pl-datepicker-input': 'onFocusControlHandler',
-        'mouseenter .pl-datepicker-input': 'onMouseenterControlHandler',
         'click .pl-datepicker-calendar': 'onClickDropdownHandler'
     }),
 
@@ -8071,36 +8027,9 @@ var DateTimePickerView = TextEditorBaseView.extend(/** @lends DateTimePickerView
 
     renderDateTimePickerEditor: function () {
         var model = this.model;
-        this.renderControlEditor({
-            el: this.ui.editor,
-            multiline: false,
-            convert: this.convertValue
-        });
-
+        this.renderControlEditor();
         return this;
     },
-
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        if (!focusable) {
-            this.ui.control.attr('tabindex', -1);
-        } else {
-            this.ui.control.removeAttr('tabindex');
-        }
-    },
-
-    /**
-     * Используется миксином textEditorMixin
-     * @param value
-     * @returns {boolean}
-     */
-    onEditorValidate: function (value) {
-        var model = this.model;
-        
-        return InfinniUI.DateUtils.checkRangeDate(value, model.get('minValue'), model.get('maxValue'));
-    },
-
 
     getTemplate: function () {
         throw new Error('Не перекрыт getTemplate');
@@ -8661,17 +8590,6 @@ console.assert(dateTimePickerModeDate, "dateTimePickerModeDate is undefined");
 
 var dateTimePickerModeDatePicker = _.extend({}, dateTimePickerModeDate, {
 
-    onEditorDone: function (value) {
-        if(typeof value === 'undefined' || value === null || !value.toString().length) {
-            value = null;
-        } else {
-            //Дата в формате ISO 8601
-            value = InfinniUI.DateUtils.dateToTimestamp(value);
-        }
-
-        this.model.set('value', value);
-    },
-
     convertValue: function (value) {
         var _value = null;
         if (value && value.constructor === Date) {
@@ -8689,26 +8607,6 @@ console.assert(dateTimePickerModeTime, "dateTimePickerModeTime is undefined");
 
 var dateTimePickerModeTimePicker = _.extend({}, dateTimePickerModeTime, {
 
-    onEditorDone: function (value) {
-        if(typeof value === 'undefined' || value === null || !value.toString().length) {
-            value = null;
-        } else {
-            //Дата в формате ISO 8601
-            value = InfinniUI.DateUtils.dateToTimestampTime(value);
-        }
-
-        this.model.set('value', value);
-    },
-
-    onEditorValidate: function (value) {
-        var model = this.model;
-
-        var minValue = InfinniUI.DateUtils.restoreTimezoneOffset(model.get('minValue'), model.get('timeZone'));
-        var maxValue = InfinniUI.DateUtils.restoreTimezoneOffset(model.get('maxValue'), model.get('timeZone'));
-
-        return InfinniUI.DateUtils.checkRangeDate(value, minValue, maxValue);
-    },
-
     convertValue: function (value) {
         var _value = null;
         if (value && value.constructor === Date) {
@@ -8717,6 +8615,7 @@ var dateTimePickerModeTimePicker = _.extend({}, dateTimePickerModeTime, {
 
         return _value;
     }
+
 });
 
 dateTimePickerStrategy['TimePicker'] = dateTimePickerModeTimePicker;
@@ -9647,7 +9546,7 @@ var MenuItemButtonView = LinkButtonView.extend({
         var that = this;
         var $el;
 
-        this.whenReady(
+        domHelper.whenReady(
             function(){
                 $el = that.$el.parent().parent();
                 return $el.length > 0;
@@ -9664,24 +9563,6 @@ var MenuItemButtonView = LinkButtonView.extend({
             }
         );
 
-    },
-
-    whenReady: function(conditionFunction, onConditionFunction, n){
-        var that = this;
-
-        if(n === undefined){
-            n = 100;
-        }
-
-        if(!conditionFunction()){
-            if(n>0){
-                setTimeout( function(){
-                    that.whenReady(conditionFunction, onConditionFunction, n-1);
-                }, 10);
-            }
-        }else{
-            onConditionFunction();
-        }
     }
 
 });
@@ -9813,20 +9694,6 @@ var ButtonEditView = TextBoxView.extend(/** @lends ButtonEditView.prototype */{
 
     onClickClearHandler: function (event) {
         this.model.clearValue();
-    },
-
-    onFocusControlHandler: function (event) {
-        if (this.model.get('readOnly')) {
-            return;
-        }
-        TextBoxView.prototype.onFocusControlHandler.call(this, event);
-    },
-
-    onMouseenterControlHandler: function (event) {
-        if (this.model.get('readOnly')) {
-            return;
-        }
-        TextBoxView.prototype.onMouseenterControlHandler.call(this, event);
     }
 
 });
@@ -12197,6 +12064,8 @@ var CommonPopupButtonView = ContainerView.extend({
 
         this.$dropdown = this.renderDropdown();
 
+        this.$dropdown.on('click', this.close.bind(this));
+
         this.updateProperties();
 
         this.trigger('render');
@@ -12238,9 +12107,7 @@ var CommonPopupButtonView = ContainerView.extend({
         this.alignDropdown();
 
         var $ignoredElements = this.$dropdown.add (this.ui.grip);
-        this.$dropdown.on('click', function () {
-            that.close();
-        });
+
         //new ActionOnLoseFocus($ignoredElements, function(){
         //    that.close();
         //});
@@ -15053,7 +14920,6 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
         fileDownload: '.pl-filebox-file-download',
         fileDownloadUrl: '.pl-filebox-file-download-url',
         edit: '.pl-filebox-edit',
-        readonly: '.pl-filebox-readonly',
         control: '.form-control',
 
         input: 'input'
@@ -15067,7 +14933,6 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
     initHandlersForProperties: function(){
         ControlView.prototype.initHandlersForProperties.call(this);
         this.listenTo(this.model, 'change:labelText', this.updateLabelText);
-        this.listenTo(this.model, 'change:readOnly', this.updateReadOnly);
         this.listenTo(this.model, 'change:fileName', this.updateFileName);
         this.listenTo(this.model, 'change:fileSize', this.updateFileSize);
         this.listenTo(this.model, 'change:fileTime', this.updateFileTime);
@@ -15085,7 +14950,6 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
     updateProperties: function(){
         ControlView.prototype.updateProperties.call(this);
 
-        this.updateReadOnly();
         this.updateLabelText();
         this.updateFileName();
         this.updateFileSize();
@@ -15102,13 +14966,6 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
     updateLabelText: function () {
         var labelText = this.model.get('labelText');
         this.ui.label.text(labelText);
-    },
-
-    updateReadOnly: function () {
-        var model = this.model;
-        var readOnly = model.get('readOnly');
-        this.ui.edit.toggleClass('hidden', readOnly === true);
-        this.ui.readonly.toggleClass('hidden', readOnly !== true);
     },
 
     updateAcceptTypes: function () {
@@ -15298,6 +15155,22 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
         this.trigger('render');
 
         this.postrenderingActions();
+
+        var that = this;
+
+        domHelper.whenReady(
+            function(){
+                return that.$el.closest('.pl-view').length > 0;
+            },
+
+            function(){
+                var width = that.$el.width(),
+                    buttonWidth = that.$el.find('.input-group-btn').width();
+
+                that.$el.find('.form-control').css('width', (width - buttonWidth) );
+            }
+        );
+
         return this;
     }
 
@@ -15644,7 +15517,6 @@ _.extend(ImageBoxControl.prototype, {
 var ImageBoxModel = ControlModel.extend( _.extend({
 
     defaults: _.defaults({
-            readOnly: true,
             text: 'Выбрать изображение'
         },
         editorBaseModelMixin.defaults_editorBaseModel,
@@ -16197,8 +16069,6 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
     }),
 
     events: _.extend({}, TextEditorBaseView.prototype.events, {
-        'focus .pl-numeric-box-input': 'onFocusControlHandler',
-        'mouseenter .pl-numeric-box-input': 'onMouseenterControlHandler',
         'click .pl-numeric-box-min': 'onClickMinControlHandler',
         'click .pl-numeric-box-max': 'onClickMaxControlHandler',
         'mousedown .pl-numeric-box-min': 'onMousedownMinControlHandler',
@@ -16228,16 +16098,7 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
     },
 
     renderNumericBoxEditor: function () {
-        var model = this.model;
-
-        this.renderControlEditor({
-            el: this.ui.editor,
-            multiline: false,
-            lineCount: 1,
-            inputType: model.get('inputType')
-        });
-
-        return this;
+        this.renderControlEditor();
     },
 
     onChangeEnabledHandler: function (model, value) {
@@ -16247,19 +16108,27 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
     },
 
     onClickMinControlHandler: function () {
-        this.model.decValue();
+        if (this.canChangeValue()) {
+            this.model.decValue();
+        }
     },
 
     onClickMaxControlHandler: function () {
-        this.model.incValue();
+        if (this.canChangeValue()) {
+            this.model.incValue();
+        }
     },
 
     onMousedownMinControlHandler: function (event) {
-        this.repeatUpdateValue(this.model.decValue.bind(this.model));
+        if (this.canChangeValue()) {
+            this.repeatUpdateValue(this.model.decValue.bind(this.model));
+        }
     },
 
     onMousedownMaxControlHandler: function (event) {
-        this.repeatUpdateValue(this.model.incValue.bind(this.model));
+        if (this.canChangeValue()) {
+            this.repeatUpdateValue(this.model.incValue.bind(this.model));
+        }
     },
 
     repeatUpdateValue: function (cb) {
@@ -16279,23 +16148,11 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
 
     },
 
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
+    canChangeValue: function () {
+        var model = this.model,
+            enabled = model.get('enabled');
 
-        if (!focusable) {
-            this.ui.control.attr('tabindex', -1);
-        } else {
-            this.ui.control.removeAttr('tabindex');
-        }
-    },
-
-    /**
-     * Используется миксином textEditorMixin
-     * @param value
-     * @returns {boolean}
-     */
-    onEditorValidate: function (value) {
-        return this.model.validateValue(value);
+        return enabled === true;
     }
 
 });
@@ -16596,7 +16453,8 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
 
     events: {
         'blur .pl-control': 'onBlurHandler',
-        'input .pl-control': 'onInputHandler'
+        'input .pl-control': 'onInputHandler',
+        'change .pl-control': 'onChangeHandler'
     },
 
     initialize: function () {
@@ -16641,16 +16499,6 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
         this.ui.input.val(value);
     },
 
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        if (!focusable) {
-            this.ui.input.attr('tabindex', -1);
-        } else {
-            this.ui.input.removeAttr('tabindex');
-        }
-    },
-
     updateEnabled: function () {
         ControlView.prototype.updateEnabled.call(this);
 
@@ -16679,26 +16527,33 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
         return this;
     },
 
+    remove: function () {
+        ControlView.prototype.remove.call(this);
+    },
+
     getTemplate: function () {
         var model = this.model;
 
         return model.get('autocomplete') ? this.template.autocomplete : this.template.noautocomplete;
     },
 
-    onBlurHandler: function () {
-        var model = this.model;
-
+    updateModelValue: function () {
         var value = this.ui.input.val();
-
+        var model = this.model;
         model.set('value', value);
+        model.set('rawValue', value);
+    },
+
+    onBlurHandler: function () {
+        this.updateModelValue();
+    },
+
+    onChangeHandler: function () {
+        this.updateModelValue();
     },
 
     onInputHandler: function () {
-        var model = this.model;
-
-        var value = this.ui.input.val();
-
-        model.set('rawValue', value);
+        this.updateModelValue();
     }
 
 }));
@@ -21137,6 +20992,10 @@ var editorBaseBuilderMixin = {
 };
 
 //####app/elements/_base/editorBase/editorBaseMixin.js
+/**
+ *
+ * @mixin editorBaseMixin
+ */
 var editorBaseMixin = {
     initialize_editorBase: function(){
 
@@ -21180,6 +21039,15 @@ var editorBaseMixin = {
 
     setWarningText: function (value) {
         this.control.set('warningText', value);
+    },
+
+
+    validateValue: function (value) {
+
+    },
+
+    convertValue: function (value) {
+        return value;
     },
 
     onValueChanging:  function (handler) {
@@ -21398,6 +21266,10 @@ _.inherit(TextEditorBase, Element);
 
 _.extend(TextEditorBase.prototype, {
 
+    setEditor: function (editor) {
+        this.control.set('editor', editor);
+    },
+
     setDisplayFormat: function (value) {
         this.control.set('displayFormat', value);
     },
@@ -21438,6 +21310,16 @@ _.extend(TextEditorBase.prototype, {
         function isNotEmpty(val) {
             return val !== null && typeof val !== 'undefined';
         }
+    },
+
+    getInputType: function () {
+        return this.control.get('inputType');
+    },
+
+    setInputType: function (inputType) {
+        if (inputType) {
+            this.control.set('inputType', inputType);
+        }
     }
 
 }, editorBaseMixin, labelTextElementMixin);
@@ -21469,14 +21351,56 @@ _.extend(TextEditorBaseBuilder.prototype, {
 
         this.initBindingToProperty(params, 'LabelText');
 
+        element.setInputType(this.getCompatibleInputType(params));
         this
             .initDisplayFormat(params)
-            .initEditMask(params);
+            .initEditMask(params)
+            .initEditor(params);
+    },
+
+    getCompatibleInputType: function (params) {
+        var inputType = params.metadata.Type,
+            editMask = params.metadata.EditMask;
+
+        if (typeof inputType === 'undefined') {
+            inputType = params.element.getInputType();
+        }
+
+        if (editMask) {
+            //Маска редактирования задается только для input[type=text]
+            inputType = 'text'
+        }
+        return inputType;
+    },
+
+    initEditor: function (params) {
+        var element = params.element;
+        var editor = new TextEditor();
+        editor
+            .setDisplayFormat(element.getDisplayFormat())
+            .setEditMask(element.getEditMask())
+            .setValueConverter(function () {
+                return element.convertValue.bind(element)
+            })
+            .setValidatorValue(element.validateValue.bind(element));
+
+        element.setEditor(editor);
+
+        editor.onValueChanged(function (value) {
+            //element.setValue(element.convertValue(value));
+            element.setValue(value);
+        });
+
+        element.onValueChanged(function (context, args) {
+            editor.setValue(args.newValue);
+        });
+
+        editor.setValue(element.getValue());
+
+        return this;
     },
 
     initDisplayFormat: function (params) {
-
-
         var
             metadata = params.metadata,
             format = this.buildDisplayFormat(metadata.DisplayFormat, params);
@@ -21505,6 +21429,75 @@ _.extend(TextEditorBaseBuilder.prototype, {
 
 
 
+//####app/elements/_base/textEditor/textEditor.js
+/**
+ * @constructor
+ */
+
+var TextEditor = function () {
+    var model = new TextEditorModel();
+
+
+
+    model.on('invalid', function (model, error) {
+        console.log('error', error);
+    });
+
+    //@TODO Handle Enabled state
+
+    this._model = model;
+
+};
+
+TextEditor.prototype.setDisplayFormat = function (displayFormat) {
+    this._model.set('displayFormat', displayFormat);
+    return this;
+};
+
+TextEditor.prototype.setEditMask = function (editMask) {
+    this._model.set('editMask', editMask);
+    return this;
+};
+
+TextEditor.prototype.setValidatorValue = function (validatorValue) {
+    this._model.set('validateValue', validatorValue);
+    return this;
+};
+
+TextEditor.prototype.setValueConverter = function (converter) {
+    this._model.set('valueConverter', converter);
+    return this;
+};
+
+/**
+ *
+ * @param {HTMLInputElement} inputElement
+ * @returns {*}
+ */
+TextEditor.prototype.render = function (inputElement) {
+
+    this._view = new TextEditorView({
+        model: this._model,
+        el: inputElement
+    });
+
+    //return this._view.render();
+};
+
+TextEditor.prototype.setValue = function (value) {
+    this._model.set('originalValue', value, {originalValue: true});
+    return this;
+};
+
+TextEditor.prototype.onValueChanged = function (handler) {
+    this._model.on('change:originalValue', function (model, value, options) {
+        if (options.originalValue === true) {
+            return;
+        }
+
+        handler.call(null, value);
+    });
+};
 //####app/elements/listBox/listBox.js
 function ListBox(parent, viewMode) {
     _.superClass(ListBox, this, parent, viewMode);
@@ -21565,15 +21558,8 @@ _.extend(TextBox.prototype, {
 
     setLineCount: function (value) {
         this.control.set('lineCount', value);
-    },
-
-    getType: function () {
-        return this.control.get('type');
-    },
-
-    setType: function (type) {
-        this.control.set('type', type);
     }
+
 });
 
 
@@ -21600,18 +21586,12 @@ TextBoxBuilder.prototype.applyMetadata = function (params) {
     var element = params.element;
     var metadata = params.metadata;
     var lineCount = metadata.LineCount;
-    var type = metadata.Type;
     element.setMultiline(metadata.Multiline);
     if (metadata.Multiline && lineCount === null || typeof lineCount === 'undefined') {
         lineCount = 2;
     }
     element.setLineCount(lineCount);
-
-    if (type) {
-        element.setType(type);
-    }
 };
-
 
 //####app/elements/dateTimePicker/dateTimePicker.js
 /**
@@ -21668,6 +21648,21 @@ DateTimePicker.prototype.setDateFormat = function (value) {
     this.control.set('format', value);
 };
 
+DateTimePicker.prototype.validateValue = function (value) {
+    if (value === null || value === '' || typeof value === 'undefined') {
+        return;
+    }
+
+    var minValue = InfinniUI.DateUtils.restoreTimezoneOffset(this.getMinValue(), this.getTimeZone());
+    var maxValue = InfinniUI.DateUtils.restoreTimezoneOffset(this.getMaxValue(), this.getTimeZone());
+
+    var isValid = InfinniUI.DateUtils.checkRangeDate(value, minValue, maxValue);
+
+    if (!isValid) {
+        return "Неверное значение";
+    }
+};
+
 
 
 //####app/elements/dateTimePicker/dateTimePickerBuilder.js
@@ -21688,8 +21683,10 @@ DateTimePickerBuilder.prototype.createElement = function (params) {
 
 DateTimePickerBuilder.prototype.applyMetadata = function (params) {
     var element = params.element;
-    var metadata = params.metadata;
+
     this.applyDefaultMetadata(params);
+    var metadata = params.metadata;
+
     TextEditorBaseBuilder.prototype.applyMetadata.call(this, params);
 
     element.setTimeZone(metadata.TimeZone);
@@ -21712,7 +21709,6 @@ DateTimePickerBuilder.prototype.applyMaxValue = function (element, maxValue) {
 
 DateTimePickerBuilder.prototype.applyDefaultMetadata = function (params) {
     var metadata = params.metadata;
-
     var defaultFormat = {
             Date: '{:d}',
             DateTime: '{:g}',
@@ -21724,8 +21720,13 @@ DateTimePickerBuilder.prototype.applyDefaultMetadata = function (params) {
             Time: {DateTimeEditMask: {Mask: 'T'}}
         };
 
-    _.defaults(metadata, {Mode: 'Date'});
-    _.defaults(metadata, {DisplayFormat: defaultFormat[metadata.Mode], EditMask: defaultEditMask[metadata.Mode]});
+    params.metadata = _.extend({}, metadata);
+
+    _.defaults(params.metadata, {Mode: 'Date'});
+    _.defaults(params.metadata, {
+        DisplayFormat: defaultFormat[params.metadata.Mode],
+        EditMask: defaultEditMask[params.metadata.Mode]
+    });
 };
 
 DateTimePickerBuilder.prototype.initDisplayFormat = function (params) {
@@ -21765,6 +21766,18 @@ DatePicker.prototype.setTimeZone = function () {
 DatePicker.prototype.createControl = function (parent) {
     return new DatePickerControl(parent);
 };
+
+DatePicker.prototype.convertValue = function (value) {
+    var _value = null;
+
+    if(typeof value === 'undefined' || value === null || !value.toString().length) {
+        _value = null;
+    } else {
+        _value = InfinniUI.DateUtils.dateToTimestamp(value);
+    }
+
+    return _value;
+};
 //####app/elements/datePicker/datePickerBuilder.js
 function DatePickerBuilder() {
     _.superClass(DatePickerBuilder, this);
@@ -21772,19 +21785,22 @@ function DatePickerBuilder() {
 
 _.inherit(DatePickerBuilder, DateTimePickerBuilder);
 
+DatePickerBuilder.prototype.createElement = function (params) {
+    return new DatePicker(params.parent);
+};
+
+
 DatePickerBuilder.prototype.applyDefaultMetadata = function (params) {
 
-    DateTimePickerBuilder.call(this, params);
+    params.metadata = _.extend({}, params.metadata, {
+        Mode: 'DatePicker',
+        TimeZone: 0
+    });
 
-    var metadata = params.metadata;
-    metadata.Mode = 'DatePicker';
-    metadata.TimeZone = 0;
-
-    _.defaults(metadata, {
+    _.defaults(params.metadata, {
         DisplayFormat: '{:d}',
         EditMask: {DateTimeEditMask: {Mask: 'd'}}
     });
-
 };
 //####app/elements/timePicker/timePicker.js
 function TimePicker(parent) {
@@ -21804,6 +21820,18 @@ TimePicker.prototype.createControl = function (parent) {
 TimePicker.prototype.setTimeZone = function () {
     DateTimePicker.prototype.setTimeZone.call(this, 0);
 };
+
+TimePicker.prototype.convertValue = function (value) {
+    var _value = null;
+
+    if(typeof value === 'undefined' || value === null || !value.toString().length) {
+        _value = null;
+    } else {
+        _value = InfinniUI.DateUtils.dateToTimestampTime(value);
+    }
+
+    return _value;
+};
 //####app/elements/timePicker/timePickerBuilder.js
 function TimePickerBuilder() {
     _.superClass(TimePickerBuilder, this);
@@ -21817,15 +21845,18 @@ TimePickerBuilder.prototype.createElement = function (params) {
 
 TimePickerBuilder.prototype.applyDefaultMetadata = function (params) {
 
-    DateTimePickerBuilder.call(this, params);
+    params.metadata = _.extend({}, params.metadata, {
+        Mode: 'TimePicker',
+        TimeZone: 0
+    });
 
-    var metadata = params.metadata;
-    metadata.Mode = 'TimePicker';
-    metadata.TimeZone = 0;
-
-    _.defaults(metadata, {
+    _.defaults(params.metadata, {
         DisplayFormat: '{:T}',
-        EditMask: {DateTimeEditMask: {Mask: 'T'}}
+        EditMask: {
+            DateTimeEditMask: {
+                Mask: 'T'
+            }
+        }
     });
 
 };
@@ -23580,18 +23611,6 @@ _.extend(ImageBox.prototype, {
         return this.control.get('acceptTypes');
     },
 
-
-    /**
-     *  Методы, не описанные в документации
-     */
-    setReadOnly: function (value) {
-        this.control.set('readOnly', value);
-    },
-
-    getReadOnly: function () {
-        return this.control.get('readOnly');
-    },
-
     /**
      * @description Недокументированный!
      * @param {Array} types
@@ -23638,8 +23657,6 @@ _.extend(ImageBoxBuilder.prototype, {
         var element = params.element;
         var metadata = params.metadata;
 
-        element.setReadOnly(metadata.ReadOnly);
-
         if (Array.isArray(metadata.AcceptTypes)) {
             element.setAcceptTypes(metadata.AcceptTypes);
         }
@@ -23666,7 +23683,7 @@ _.extend(ImageBoxBuilder.prototype, {
             params.element.onPropertyChanged('file', function (context, args) {
                 var file = args.newValue;
 
-                if (file instanceof File) {
+                if (file instanceof File || file === null) {
                     ds.setProperty(binding.getSourceProperty(), args.newValue)
                 }
             });
@@ -24025,6 +24042,46 @@ NumericBox.prototype.setIncrement = function (value) {
  */
 NumericBox.prototype.setStartValue = function (value) {
     this.control.set('startValue', value);
+};
+
+NumericBox.prototype.validateValue = function (value) {
+    var error,
+        min = this.getMinValue(),
+        max = this.getMaxValue();
+
+    value = this.convertValue(value);
+
+    if (value === null || typeof value === 'undefined') {
+        return error;
+    }
+
+    if (!_.isNumber(value)) {
+        error = 'Значение должно быть числом';
+    } else  if (_.isNumber(min)) {
+        if (_.isNumber(max)) {
+            if (value < min || value > max) {
+                error = 'Значение должно быть от ' + min + ' до ' + max;
+            }
+        } else {
+            if (value < min) {
+                error = 'Значение должно быть больше ' + min;
+            }
+        }
+    } else {
+        if (_.isNumber(max)) {
+            if (value > max) {
+                error = 'Значение должно быть меьше ' + max;
+            }
+        }
+    }
+
+    return error;
+};
+
+NumericBox.prototype.convertValue = function (value) {
+    var val = (value === null || value === '' || typeof value === 'undefined') ? null : +value;
+
+    return _.isNumber(val) ? val : null;
 };
 
 /**
@@ -30012,10 +30069,10 @@ function ObjectFormatBuilder () {
     /**
      * Удалить выделенный текст
      * @param position
+     * @oaram {Number} len
      * @returns {boolean|number}
      */
-    deleteSelectedText: function(position){
-
+    deleteSelectedText: function(position, len){
         return false;
     },
 
@@ -30830,17 +30887,55 @@ _.extend(DateTimeEditMask.prototype, {
     },
 
     /**
+     * @param {Number} position
+     * @param {Number} selectionLength
+     * @param {String} char
+     * @returns {Number}
+     */
+    deleteSelectedText: function (position, selectionLength, char) {
+
+        var data;
+        var from;
+        var text;
+        var mask;
+        var prevPos, pos = position, len = selectionLength;
+        char = char || '';
+        var newPos = position + char.length - 1;
+
+
+        while(data = this.getItemTemplate(pos)) {
+            prevPos = pos;
+            from = pos - data.left;
+            text = data.item.text;
+            mask = this.masks[data.item.mask];
+
+            text = text.substring(0, from) + char + text.substring(from + len);
+            if (!text.length || mask.match(text)) {
+                data.item.text = text;
+            }
+
+            pos = this.getNextItemMask(pos);
+            if (prevPos === pos) {
+                break;
+            }
+            len = selectionLength - (pos - position);
+            char = '';
+        }
+
+        return this.moveToNextChar(newPos);
+    },
+
+    /**
      * Удалить символ слева от курсора
      * @param position
+     * @param {Number|undefined} selectionLength
      */
-    deleteCharLeft: function (position) {
+    deleteCharLeft: function (position, selectionLength) {
         var data = this.getItemTemplate(position);
         var item, text;
 
-        var selection = window.getSelection().toString();
-
-        if (selection) {
-            this.selectRemove(this.template, position, selection);
+        if (selectionLength) {
+            position = this.deleteSelectedText(position, selectionLength);
         } else {
             if (data !== null) {
                 if (data.index > 0) {
@@ -30862,15 +30957,14 @@ _.extend(DateTimeEditMask.prototype, {
     /**
      * Удалить символ справа от курсора
      * @param position
+     * @param {Number|undefined} selectionLength
      */
-    deleteCharRight: function (position) {
+    deleteCharRight: function (position, selectionLength) {
         var data = this.getItemTemplate(position);
         var item, text;
 
-        var selection = window.getSelection().toString();
-
-        if (selection) {
-            this.selectRemove(this.template, position, selection);
+        if (selectionLength) {
+            position = this.deleteSelectedText(position, selectionLength);
         } else {
             if (data !== null) {
                 item = data.item;
@@ -30884,46 +30978,6 @@ _.extend(DateTimeEditMask.prototype, {
             }
         }
         return position;
-    },
-
-    /**
-     * Удаление выделенного текста
-     * @param template
-     * @param position
-     * @param selection
-     */
-    selectRemove: function(template, position, selection){
-        var firstItem = this.getItemTemplate(position);
-        var lastItem = this.getItemTemplate(position + selection.length);
-
-        var firstIndexItem = template.indexOf(firstItem.item);
-        var lastIndexItem = template.indexOf(lastItem.item);
-
-        for (var i = firstIndexItem; i < lastIndexItem + 1; i++) {
-            if (typeof template[i] == "object") {
-                if (firstIndexItem == lastIndexItem) {
-                    build(template[i], position, selection);
-                } else if (i == firstIndexItem) {
-                    build(template[i], position, selection);
-                } else if (i == lastIndexItem) {
-                    build(template[i], position, selection);
-                } else {
-                    template[i].text = '';
-                }
-            }
-        }
-
-        function build(templateText, position, selection) {
-            var arraySymbols = templateText.text.split('');
-            var start = position - templateText.position;
-            var end = (position + selection.length) - templateText.position;
-
-            if (start < 0) start = 0;
-            arraySymbols.splice(start, end - start);
-
-            templateText.text = arraySymbols.join('');
-            return templateText;
-        }
     },
 
     /**
@@ -31015,6 +31069,11 @@ _.extend(DateTimeEditMask.prototype, {
         var index;
         var result = null;
 
+        if (typeof  template === 'undefined') {
+            this.reset();
+            template = this.template;
+        }
+
         if (!Array.isArray(template)) {
             return null;
         }
@@ -31042,27 +31101,6 @@ _.extend(DateTimeEditMask.prototype, {
     },
 
     setCharAt: function (char, position) {
-//        var template;
-//
-//        for (var i = 0, ln = this.template.length; i < ln; i = i + 1) {
-//            template = this.template[i];
-//            if (typeof template === 'string') { //Статический текст
-//                continue;
-//            }
-//            if (template.position === position) {    //Маска ввода
-//                mask = this.masks[template.mask];
-//                console.log(mask);
-//                text = char.substr(0,1);
-//                if (mask.validator(text)) {
-//                    template.text = text;
-//                    position = this.getNextItemMask(position);
-//                }
-//                break;
-//            }
-//            if (template.position > position) {
-//                break;
-//            }
-//        }
         var data = this.getItemTemplate(position);
         var text;
         var item;
@@ -31120,7 +31158,8 @@ _.extend(DateTimeEditMask.prototype, {
         var mask;
         var width;
         var left = 0;
-        var last;
+        var last = left;
+
         for (var i = 0, ln = template.length; i < ln; i = i + 1) {
             item = template[i];
             if (typeof item === 'string') { //Простой символ
@@ -31271,7 +31310,7 @@ _.extend(DateTimeEditMask.prototype, {
             template.push(mask.substring(lastPosition));
         }
 
-        return template;
+        return this.template = template;
     },
 
     /**
@@ -31799,6 +31838,11 @@ _.extend(TemplateEditMask.prototype, {
         var index;
         var result = null;
 
+        if (typeof  template === 'undefined') {
+            this.reset();
+            template = this.template;
+        }
+
         if (!Array.isArray(template)) {
             return null;
         }
@@ -31825,92 +31869,50 @@ _.extend(TemplateEditMask.prototype, {
         return result;
     },
 
-    deleteCharRight: function (position) {
+    deleteCharRight: function (position, len) {
         var template;
         var i, ln;
         var left;
 
-        var selection = window.getSelection().toString();
-
-        if (selection) {
-            this.selectRemove(this.template, position, selection);
-        }else{
-            for (i = 0, ln = this.template.length; i < ln; i = i + 1) {
-                template = this.template[i];
-
-                if (typeof template === 'string' || template.position < position) {
-                    continue;
-                }
-                position = template.position + 1; // Перенос каретки на 1 символ вправо для корректной работы DEL
-                template.text = '';
-                break;
-            }
+        if (len > 0) {
+            return this.deleteSelectedText(position, len);
         }
+
+        for (i = 0, ln = this.template.length; i < ln; i = i + 1) {
+            template = this.template[i];
+
+            if (typeof template === 'string' || template.position < position) {
+                continue;
+            }
+            position = template.position + 1; // Перенос каретки на 1 символ вправо для корректной работы DEL
+            template.text = '';
+            break;
+        }
+
         return position;
     },
 
-    deleteCharLeft: function (position) {
+    deleteCharLeft: function (position, len) {
         var template;
         var i, ln;
         var left;
 
-        var selection = window.getSelection().toString();
-
-        if (selection) {
-            this.selectRemove(this.template, position, selection);
-        }else {
-            for (i = this.template.length - 1; i >= 0; i = i - 1) {
-                template = this.template[i];
-
-                if (typeof template === 'string' || template.position >= position) {
-                    continue;
-                }
-                position = template.position;
-                template.text = '';
-                break;
-            }
+        if (len > 0) {
+            return this.deleteSelectedText(position, len);
         }
+
+        for (i = this.template.length - 1; i >= 0; i = i - 1) {
+            template = this.template[i];
+
+            if (typeof template === 'string' || template.position >= position) {
+                continue;
+            }
+            position = template.position;
+            template.text = '';
+            break;
+        }
+
         return position;
-    },
-
-    /**
-     * Удаление выделенного текста
-     * @param template
-     * @param position
-     * @param selection
-     */
-    selectRemove: function(template, position, selection){
-        var firstItem = this.getItemTemplate(position);
-        var lastItem = this.getItemTemplate(position + selection.length);
-
-        var firstIndexItem = template.indexOf(firstItem.item);
-        var lastIndexItem = template.indexOf(lastItem.item);
-
-        for (var i = firstIndexItem; i < lastIndexItem + 1; i++) {
-            if (typeof template[i] == "object") {
-                if (firstIndexItem == lastIndexItem) {
-                    build(template[i], position, selection);
-                } else if (i == firstIndexItem) {
-                    build(template[i], position, selection);
-                } else if (i == lastIndexItem) {
-                    build(template[i], position, selection);
-                } else {
-                    template[i].text = '';
-                }
-            }
-        }
-
-        function build(templateText, position, selection) {
-            var arraySymbols = templateText.text.split('');
-            var start = position - templateText.position;
-            var end = (position + selection.length) - templateText.position;
-
-            if (start < 0) start = 0;
-            arraySymbols.splice(start, end - start);
-
-            templateText.text = arraySymbols.join('');
-            return templateText;
-        }
     },
 
     /**
@@ -32017,7 +32019,8 @@ _.extend(TemplateEditMask.prototype, {
      * @param position
      */
     setCharAt: function (char, position, len) {
-        var template;
+        var itemTemplate = this.template;
+        //var itemTemplate = this.getItemTemplate(position);
         var mask;
         var text;
 
@@ -32029,8 +32032,8 @@ _.extend(TemplateEditMask.prototype, {
             this.clearText(position, len);
         }
 
-        for (var i = 0, ln = this.template.length; i < ln; i = i + 1) {
-            template = this.template[i];
+        for (var i = 0, ln = itemTemplate.length; i < ln; i = i + 1) {
+            var template = itemTemplate[i];
             if (typeof template === 'string') { //Статический текст
                 continue;
             }
@@ -32057,10 +32060,7 @@ _.extend(TemplateEditMask.prototype, {
             startFrom = this.setCharAt(char, position);
         }
 
-        return {
-            position: startFrom,
-            result: this.getText()
-        };
+        return startFrom;
     },
 
     getNextItemMask: function (position) {
@@ -32333,7 +32333,7 @@ _.extend(NumberEditMask.prototype, {
             template.push(text.substring(position + mask.length));
         });
 
-        return template;
+        return this.template = template;
     },
 
     getText: function () {
@@ -32579,7 +32579,9 @@ _.extend(NumberEditMask.prototype, {
             res = null;
         }
 
-        return {result: res, position: position};
+        this.reset(res);
+
+        return res ? position : 0;
     },
 
     /**
@@ -32589,6 +32591,10 @@ _.extend(NumberEditMask.prototype, {
      * @returns {*}
      */
     deleteCharRight: function (position, len) {
+
+        if (len > 0) {
+            return this.deleteSelectedText(position, len);
+        }
         var itemTemplate = this.getItemTemplate();
         var left = itemTemplate.left;
         var item = itemTemplate.item;
@@ -32763,6 +32769,11 @@ _.extend(NumberEditMask.prototype, {
         var item;
         var left = 0;
         var result = null;
+
+        if (typeof  template === 'undefined') {
+            this.reset();
+            template = this.template;
+        }
 
         if (!Array.isArray(template)) {
             return null;

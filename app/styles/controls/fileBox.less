@@ -1,8 +1,13 @@
 .pl-file-box {
 
+  .input-group-btn .btn {
+    width: 40px;
+  }
+
   .pl-filebox-file-upload, .pl-filebox-file-empty, .pl-filebox-file-download-url {
     overflow: hidden;
-    line-height: 21px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .pl-filebox-file-upload {
@@ -11,28 +16,9 @@
   .pl-filebox-file-empty {
     color: @btn-link-disabled-color;
   }
+
   .pl-filebox-file-download-url{
+    width: 100%;
     display: block;
-    height: 100%;
   }
-  //.pl-filebox-file {
-  //  position: relative;
-  //  overflow: hidden;
-  //
-  //  input[type=file] {
-  //    display: block;
-  //    height: 2000px;
-  //    width: 2000px;
-  //    position: absolute;
-  //    right: -50px;
-  //    bottom: -50px;
-  //    outline: none;
-  //  }
-  //
-  //  .pl-filebox-grip {
-  //    text-align: center;
-  //    background-color: #777777;
-  //    padding: 20px;
-  //  }
-  //}
 }

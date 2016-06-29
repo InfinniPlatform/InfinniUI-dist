@@ -16,7 +16,8 @@
           {
             "Id": 1,
             "Title": "1",
-            "Volume": "I"
+            "Volume": "I",
+            "Date": "2016-05-16T12:32:00Z"
           },
           {
             "Id": 2,
@@ -54,97 +55,65 @@
   ],
   "Items": [
     {
-      "Label": {
-        "Text": "Focusable",
-        "Focusable": true
+      "DateTimePicker": {
+        "Mode": "DateTime"
       }
     },
     {
-      "Label": {
-        "Text": "Not Focusable"
-      }
-    },
-    {
-      "NumericBox": {
-        "Focusable": true
-      }
-    },
-    {
-      "ListBox": {
-        "Items": {
-          "Source": "ds1",
-          "Property": ""
-        },
-        "ItemTemplate": {
-          "StackPanel": {
-            "Items": [
-              {
-                "PasswordBox": {
-
-                }
-              },
-              {
-                "ImageBox": {
-                  "Focusable": false,
-                  "Value": {
-                    "Source": "ds1",
-                    "Property": "0.file"
-                  }
-                }
-              },
-              {
-                "Icon": {
-                  "Value": "remove",
-                  "Focusable": true
-                }
-              },
-              {
-                "FileBox": {
-                  "Value": {
-                    "Source": "ds1",
-                    "Property": "0.file"
-                  },
-                  "Focusable": true
-                }
-              },
-              {
-                "Button": {
-                  "Focusable": false,
-                  "Text": "Btn 1"
-                }
-              },
-              {
-                "ButtonEdit": {
-                  "Focusable": true
-                }
-              },
-              {
-                "ComboBox": {
-                  "Focusable": false,
-                  "Items": {
-                    "Source": "ds1",
-                    "Property": ""
-                  },
-                  "ItemProperty": "Title"
-                }
-              },
-              {
-                "CheckBox": {
-                  "Text": "Btn 1"
-                }
-              },
-              {
-                "TextBox": {
-                  "Multiline": true
-                }
-              },
-              {
-                "TextBox": {
-                  "Focusable": false
-                }
-              }
-            ]
+      "TextBox": {
+        "LabelText": "One line input[type=text]",
+        "Multiline": false,
+        "DisplayFormat": "{:F}",
+        "EditMask": {
+          "DateTimeEditMask": {
+            "Mask": "dd----MM----yyyy"
           }
+        },
+        "Value": {
+          "Source": "ds1",
+          "Property": "0.Date"
+        }
+      }
+    },
+    {
+      "Label": {
+        "Text": {
+          "Source": "ds1",
+          "Property": "0.Date"
+        }
+      }
+    },
+    {
+      "TextBox": {
+        "LabelText": "One line input[type=text]",
+        "Multiline": false,
+        "DisplayFormat": "{:n4}",
+        "EditMask": {
+          "NumberEditMask": {
+            "Mask": "n3"
+          }
+        },
+        "Value": {
+          "Source": "ds1",
+          "Property": "0.num"
+        }
+      }
+    },
+    {
+      "Label": {
+        "Text": {
+          "Source": "ds1",
+          "Property": "0.num"
+        }
+      }
+    },
+    {
+      "TextBox": {
+        "LabelText": "One line area",
+        "Multiline": true,
+        "Value": {
+          "Source": "ds1",
+          "Property": "0.text"
         }
 
       }
