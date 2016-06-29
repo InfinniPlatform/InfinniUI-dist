@@ -6917,11 +6917,15 @@ body {
 .timepicker-seconds .second-selected {
   border: 1px solid #FF0000;
 }
+.pl-file-box .input-group-btn .btn {
+  width: 40px;
+}
 .pl-file-box .pl-filebox-file-upload,
 .pl-file-box .pl-filebox-file-empty,
 .pl-file-box .pl-filebox-file-download-url {
   overflow: hidden;
-  line-height: 21px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .pl-file-box .pl-filebox-file-upload {
   color: #777777;
@@ -6930,8 +6934,8 @@ body {
   color: #777777;
 }
 .pl-file-box .pl-filebox-file-download-url {
+  width: 100%;
   display: block;
-  height: 100%;
 }
 .pl-stack-panel {
   list-style: none;

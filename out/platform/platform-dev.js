@@ -1649,6 +1649,28 @@ window.InfinniUI.DateUtils = (function () {
     }
 
 })();
+//####app/utils/domHelper.js
+var domHelper = {
+
+    whenReady: function(conditionFunction, onConditionFunction, n){
+        var that = this;
+
+        if(n === undefined){
+            n = 100;
+        }
+
+        if(!conditionFunction()){
+            if(n>0){
+                setTimeout( function(){
+                    that.whenReady(conditionFunction, onConditionFunction, n-1);
+                }, 10);
+            }
+        }else{
+            onConditionFunction();
+        }
+    }
+
+};
 //####app/utils/dot.js
 /**
  * Синглтон для работы с путями построенными по dot-notation
@@ -9669,7 +9691,7 @@ var MenuItemButtonView = LinkButtonView.extend({
         var that = this;
         var $el;
 
-        this.whenReady(
+        domHelper.whenReady(
             function(){
                 $el = that.$el.parent().parent();
                 return $el.length > 0;
@@ -9686,24 +9708,6 @@ var MenuItemButtonView = LinkButtonView.extend({
             }
         );
 
-    },
-
-    whenReady: function(conditionFunction, onConditionFunction, n){
-        var that = this;
-
-        if(n === undefined){
-            n = 100;
-        }
-
-        if(!conditionFunction()){
-            if(n>0){
-                setTimeout( function(){
-                    that.whenReady(conditionFunction, onConditionFunction, n-1);
-                }, 10);
-            }
-        }else{
-            onConditionFunction();
-        }
     }
 
 });
@@ -12865,6 +12869,22 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
         this.trigger('render');
 
         this.postrenderingActions();
+
+        var that = this;
+
+        domHelper.whenReady(
+            function(){
+                return that.$el.closest('.pl-view').length > 0;
+            },
+
+            function(){
+                var width = that.$el.width(),
+                    buttonWidth = that.$el.find('.input-group-btn').width();
+
+                that.$el.find('.form-control').css('width', (width - buttonWidth) );
+            }
+        );
+
         return this;
     }
 
@@ -15063,6 +15083,8 @@ var CommonPopupButtonView = ContainerView.extend({
 
         this.$dropdown = this.renderDropdown();
 
+        this.$dropdown.on('click', this.close.bind(this));
+
         this.updateProperties();
 
         this.trigger('render');
@@ -15104,9 +15126,7 @@ var CommonPopupButtonView = ContainerView.extend({
         this.alignDropdown();
 
         var $ignoredElements = this.$dropdown.add (this.ui.grip);
-        this.$dropdown.on('click', function () {
-            that.close();
-        });
+
         //new ActionOnLoseFocus($ignoredElements, function(){
         //    that.close();
         //});
