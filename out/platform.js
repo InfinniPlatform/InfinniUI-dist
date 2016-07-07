@@ -23687,25 +23687,6 @@ _.extend(ImageBoxBuilder.prototype, {
                     ds.setProperty(binding.getSourceProperty(), args.newValue)
                 }
             });
-
-            ds.onItemsUpdated(function (context, args) {
-                /**
-                 * @TODO Принудительное обновление изображений. Удалить после изменений на backend'е,
-                 * когда будет изменяться BlobInfo
-                 */
-                var element = params.element;
-                var url = element.getValue();
-                var pattern = /&salt=.*$/;
-                if (url) {
-                    var salt = '&salt=' + Date.now();
-                    if (pattern.test(url)) {
-                        url.replace(pattern, salt);
-                    } else {
-                        url += salt;
-                    }
-                    element.setValue(url);
-                }
-            });
         }
 
     }
