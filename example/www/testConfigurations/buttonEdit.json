@@ -1,0 +1,56 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "MainDataSource",
+				"Items": [
+					{
+                        "Address": {
+                          "City": "city",
+                          "Street": "street",
+                          "House": 15
+                        }
+                    }
+				]
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"ButtonEdit": {
+						"Action": {
+                          "OpenAction": {
+                            "LinkView": {
+                              "InlineView": {
+                                "View": {
+                                  "Items": [
+                                    {
+                                      "Label": {
+                                        "Value": "Action"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "OpenMode": "Dialog"
+                              }
+                            }
+                          }
+                        },
+						"OnButtonClick": "{alert('OnButtonClick');}",
+						"LabelText": "LabelText",
+                        "Value": {
+                          "Source": "MainDataSource",
+                          "Property": "$.Address"
+                        },
+                      "DisplayFormat": "{City}, {Street} st., {House}",
+                        "Icon": "gitlab",
+                        "ReadOnly": true,
+                        "ShowClear": true
+					}
+				}
+			]
+		}
+	}]
+}

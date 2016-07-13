@@ -44,6 +44,14 @@ InfinniUI.ColorStyle = {
     white: "White",
     black: "Black"
 };
+//####app/elements/_common/enums/elementHorizontalAlignment.js
+InfinniUI.ElementHorizontalAlignment = {
+    left: 'Left',
+    right: 'Right',
+    center: 'Center',
+    justify: 'Stretch'
+};
+
 //####app/elements/_common/enums/textHorizontalAlignment.js
 InfinniUI.TextHorizontalAlignment = {
     left: 'Left',
@@ -62,8 +70,11 @@ InfinniUI.TextStyle = {
     headline: "Headline",
     title: "Title",
     subhead: "Subhead",
-    body: "Body",
     caption: "Caption",
+
+    body1: "Body1",
+    body2: "Body2",
+
     menu: "Menu",
     button: "Button"
 };
@@ -4531,7 +4542,6 @@ var ControlModel = Backbone.Model.extend({
         textStyle: null,
         background: null,
         foreground: null,
-        texture: null,
         isLoaded: false,
         validationState: 'success',
         validationMessage: '',
@@ -4613,7 +4623,6 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         this.listenTo(this.model, 'change:textStyle', this.updateTextStyle);
         this.listenTo(this.model, 'change:background', this.updateBackground);
         this.listenTo(this.model, 'change:foreground', this.updateForeground);
-        this.listenTo(this.model, 'change:texture', this.updateTexture);
 
         this.listenTo(this.model, 'change:validationState', this.updateValidationState);
 
@@ -4667,7 +4676,6 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         this.updateTextStyle();
         this.updateBackground();
         this.updateForeground();
-        this.updateTexture();
 
         this.updateValidationState();
 
@@ -4809,22 +4817,6 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         this.currentForeground = customStyle;
     },
 
-    updateTexture: function () {
-        var customStyle = this.model.get('texture');
-
-        if (this.currentTexture) {
-            this.$el
-                .removeClass(this.valueToTextureClassName(this.currentTexture));
-        }
-
-        if (customStyle) {
-            this.$el
-                .addClass(this.valueToTextureClassName(customStyle));
-        }
-
-        this.currentTexture = customStyle;
-    },
-
     updateStyle: function () {
         var customStyle = this.model.get('style');
 
@@ -4949,10 +4941,6 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         return 'pl-' + value.toLowerCase();
     },
 
-    valueToTextureClassName: function (value) {
-        return 'pl-' + value.toLowerCase();
-    },
-
     renderTemplate: function (template) {
         var data = this.getData();
         this.$el.html(template(data));
@@ -4974,8 +4962,7 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
             textVerticalAlignment: model.get('textVerticalAlignment'),
             textStyle: model.get('textStyle'),
             foreground: model.get('foreground'),
-            background: model.get('background'),
-            texture: model.get('texture')
+            background: model.get('background')
         }
     },
 
@@ -14965,7 +14952,14 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
 
     updateLabelText: function () {
         var labelText = this.model.get('labelText');
-        this.ui.label.text(labelText);
+
+        if(labelText != '') {
+            this.ui.label
+                .css({display: 'inline-block'})
+                .text(labelText);
+        } else {
+            this.ui.label.css({display: 'none'});
+        }
     },
 
     updateAcceptTypes: function () {
@@ -15812,47 +15806,6 @@ var IndeterminateCheckboxView = CheckBoxView.extend({
 	}
 });
 
-//####app/controls/loaderIndicator/loaderIndicator.js
-(function () {
-    var template = InfinniUI.Template["controls/loaderIndicator/template.tpl.html"];
-
-    InfinniUI.loaderIndicator = {
-        show: function(){
-            $.blockUI({
-                message: $(template()),
-                ignoreIfBlocked: true,
-                baseZ: 99999
-            });
-        },
-        hide: function(){
-            $.unblockUI();
-        }
-    };
-
-    if (!InfinniUI.config.useLoaderIndicator) {
-        return;
-    }
-
-    jQuery(function () {
-        var $indicator = $(template());
-        $('body').append($indicator);
-        $.blockUI.defaults.css = {};
-        $(document).ajaxStart(function () {
-                $.blockUI({
-                    message: $indicator,
-                    ignoreIfBlocked: true,
-                    baseZ: 99999
-                });
-            })
-            .ajaxStop(function () {
-                $.unblockUI();
-            })
-            .ajaxError(function () {
-                $.unblockUI();
-            });
-    });
-
-})();
 //####app/controls/menuBar/menuBarControl.js
 /**
  *
@@ -15949,6 +15902,47 @@ var MenuBarView = ContainerView.extend(
     }
 );
 
+//####app/controls/loaderIndicator/loaderIndicator.js
+(function () {
+    var template = InfinniUI.Template["controls/loaderIndicator/template.tpl.html"];
+
+    InfinniUI.loaderIndicator = {
+        show: function(){
+            $.blockUI({
+                message: $(template()),
+                ignoreIfBlocked: true,
+                baseZ: 99999
+            });
+        },
+        hide: function(){
+            $.unblockUI();
+        }
+    };
+
+    if (!InfinniUI.config.useLoaderIndicator) {
+        return;
+    }
+
+    jQuery(function () {
+        var $indicator = $(template());
+        $('body').append($indicator);
+        $.blockUI.defaults.css = {};
+        $(document).ajaxStart(function () {
+                $.blockUI({
+                    message: $indicator,
+                    ignoreIfBlocked: true,
+                    baseZ: 99999
+                });
+            })
+            .ajaxStop(function () {
+                $.unblockUI();
+            })
+            .ajaxError(function () {
+                $.unblockUI();
+            });
+    });
+
+})();
 //####app/controls/numericBox/numericBoxControl.js
 /**
  *
@@ -19560,16 +19554,6 @@ _.extend(Element.prototype, {
         }
     },
 
-    getTexture: function () {
-        return this.control.get('texture');
-    },
-
-    setTexture: function (texture) {
-        if (typeof texture == 'string') {
-            this.control.set('texture', texture);
-        }
-    },
-
     onLoaded: function (handler) {
         this.control.onLoaded(handler);
     },
@@ -19969,7 +19953,6 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 		this.initBindingToProperty(params, 'TextStyle');
 		this.initBindingToProperty(params, 'Foreground');
 		this.initBindingToProperty(params, 'Background');
-		this.initBindingToProperty(params, 'Texture');
 		this.initBindingToProperty(params, 'Style');
 		this.initBindingToProperty(params, 'Tag');
 		this.initBindingToProperty(params, 'Focusable', true);
@@ -22174,10 +22157,6 @@ ButtonEditBuilder.prototype.createElement = function (params) {
 
 ButtonEditBuilder.prototype.applyMetadata = function (params) {
     TextBoxBuilder.prototype.applyMetadata.call(this, params);
-
-    /** @type {ButtonEdit} **/
-    var element = params.element;
-    var metadata = params.metadata;
 
     this.initBindingToProperty(params, 'Icon');
     this.initBindingToProperty(params, 'ReadOnly', true);
