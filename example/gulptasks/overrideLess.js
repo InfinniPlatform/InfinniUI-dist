@@ -1,6 +1,6 @@
 'use strict';
 
-const gulp = require('gulp'),
+var gulp = require('gulp'),
 			$ = require('gulp-load-plugins')(),
 			through2 = require('through2').obj,
 			combiner = require('stream-combiner2').obj,
@@ -13,8 +13,8 @@ module.exports = function(options) {
 			gulp.src(options.src),
 			$.if(isDevelopment, $.sourcemaps.init()),
 			through2(function(file, enc, callback) {
-				for(let key in options.changedVariables) {
-					let re = new RegExp(key + ': "some.less";'),
+				for(var key in options.changedVariables) {
+					var re = new RegExp(key + ': "some.less";'),
 							newValue = key + ': "' + options.changedVariables[key] + '";';
 					file.contents = new Buffer(file.contents.toString().replace(re, newValue));
 				}

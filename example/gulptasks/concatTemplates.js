@@ -1,6 +1,6 @@
 'use strict';
 
-const gulp = require('gulp'),
+var gulp = require('gulp'),
 			$ = require('gulp-load-plugins')(),
 			through2 = require('through2').obj,
 			combiner = require('stream-combiner2').obj,
@@ -9,7 +9,7 @@ const gulp = require('gulp'),
 
 module.exports = function(options) {
 	return function(callback) {
-		let firstStream = true;
+		var firstStream = true;
 		return combiner(
 			gulp.src(options.src),
 			// $.newer(options.dest + options.finalName),
@@ -18,7 +18,7 @@ module.exports = function(options) {
 			}),
 			through2(function(file, enc, callback) {
 				//convernt file.content into string
-				let newFileContent = new Buffer(file.contents).toString(),
+				var newFileContent = new Buffer(file.contents).toString(),
 						re = /\(function\(\) \{([\s\S]*)\}\)\(\);/,
 						re2 = /\n/g,
 						firstStr = 'this["InfinniUI"] = this["InfinniUI"] || {};\nthis["InfinniUI"]["Template"] = this["InfinniUI"]["Template"] || {};\n';

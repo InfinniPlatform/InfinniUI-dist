@@ -1,16 +1,16 @@
 'use strict';
-const infinniUIpath = '..';
-const fromInfinniToNewStylesPath = '/example/styles/';
-const platformOutputFolder = '/out/';
-const exampleRootFolder = './www/';
-const exampleFolderForPlatform = './www/compiled/platform/';
-const exampleFolderForExtensions = './www/compiled/js/';
-const stylesFile = '/app/styles/main.less';
+var infinniUIpath = '..';
+var fromInfinniToNewStylesPath = '/example/styles/';
+var platformOutputFolder = '/out/';
+var exampleRootFolder = './www/';
+var exampleFolderForPlatform = './www/compiled/platform/';
+var exampleFolderForExtensions = './www/compiled/js/';
+var stylesFile = '/app/styles/main.less';
 
-const jsFiles = ['./js/**/*.js'];
-const templateFiles = ["./js/**/*.tpl.html"];
+var jsFiles = ['./js/**/*.js'];
+var templateFiles = ["./js/**/*.tpl.html"];
 
-const sourceForTasks = {
+var sourceForTasks = {
 	cleanFolder: {
 		src: exampleFolderForPlatform,
 		taskPath: "./gulptasks/cleanFolder"

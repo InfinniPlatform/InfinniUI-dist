@@ -1,17 +1,17 @@
 ﻿'use strict';
-let help = '';
-const gulp = require('gulp'),
+var help = '';
+var gulp = require('gulp'),
 			watch = require('gulp-watch'),
 			sourceForTasks = require('./gulptasks/sourceForTasks'),
 			lazyRequireTask = function(taskName, path, options) {
 				options = options || {};
 				options.taskName = taskName;
 				gulp.task(taskName, function(callback) {
-					let task = require(path).call(this, options);
+					var task = require(path).call(this, options);
 					return task(callback);
 				});
 			};
-for(let key in sourceForTasks) {
+for(var key in sourceForTasks) {
 	help += ('- gulp ' + key + '\n');
 	lazyRequireTask(key, sourceForTasks[key].taskPath, sourceForTasks[key]);
 }

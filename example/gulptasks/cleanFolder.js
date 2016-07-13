@@ -1,6 +1,6 @@
 'use strict';
 
-const del = require('del');
+var del = require('del');
 
 module.exports = function(options) {
 	return function() {

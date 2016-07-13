@@ -1,6 +1,6 @@
 'use strict';
 
-const gulp = require('gulp'),
+var gulp = require('gulp'),
 			$ = require('gulp-load-plugins')();
 
 module.exports = function(options) {

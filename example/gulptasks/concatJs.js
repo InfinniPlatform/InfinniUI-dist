@@ -1,6 +1,6 @@
 'use strict';
 
-const gulp = require('gulp'),
+var gulp = require('gulp'),
 			$ = require('gulp-load-plugins')(),
 			combiner = require('stream-combiner2').obj,
 			isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
