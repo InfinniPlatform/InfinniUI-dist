@@ -28691,6 +28691,7 @@ _.extend(RestDataProvider.prototype, {
                         result[i] = extractFilesFromNode(value, currentPath);
                     } else {
                         //Object instance
+                        result[i] = null;
                         files[currentPath.join('.')] = value;
                         continue;
                     }
