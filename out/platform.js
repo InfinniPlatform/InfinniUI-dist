@@ -12016,8 +12016,7 @@ var CommonPopupButtonView = ContainerView.extend({
     dropdownTemplate: InfinniUI.Template["controls/popupButton/commonView/template/popupButton.dropdown.tpl.html"],
 
     events: {
-        'click .pl-popup-button__grip': 'onClickGripHandler',
-        'click .pl-popup-button__button': 'onClickHandler'
+        'click': 'onClickHandler'
     },
 
     UI: {
@@ -12106,9 +12105,22 @@ var CommonPopupButtonView = ContainerView.extend({
     },
 
     alignDropdown: function(){
-        var offset = this.$el.offset();
-        var top = offset.top + this.$el.height();
-        var left = offset.left;
+        var offset = this.$el.offset(),
+            $elHeight = this.$el.height(),
+            $elWidth = this.$el.width(),
+            dropdownList = this.$dropdown.find('.pl-popup-button__items')[0],
+            $dropdownHeight = dropdownList.offsetHeight,
+            $dropdownWidth = dropdownList.offsetWidth,
+            left = offset.left,
+            top = offset.top + $elHeight;
+
+        if( (offset.left + $dropdownWidth) >= window.innerWidth ) {
+            left += ($elWidth - $dropdownWidth);
+        }
+
+        if( (top + $dropdownHeight) >= window.innerHeight ) {
+            top -= ($elHeight + $dropdownHeight + 2);
+        }
 
         this.$dropdown.offset({
             top: top,
@@ -12116,12 +12128,16 @@ var CommonPopupButtonView = ContainerView.extend({
         });
     },
 
-    onClickGripHandler: function(){
+    toggle: function(){
         if(!this.$dropdown.hasClass('open')){
             this.open();
         }else{
             this.close();
         }
+    },
+
+    onClickHandler: function(){
+        this.toggle();
     },
 
     updateGrouping: function(){}
