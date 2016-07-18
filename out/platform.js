@@ -114,8 +114,7 @@ _.defaults( InfinniUI.config, {
     maxLengthUrl: 2048,
     cacheMetadata: false, //boolean - enable/disable cache | milliseconds
     serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
-    configId: 'PTA',
-    configName: 'Хабинет'
+    configName: 'InfinniUI'
 //devblockstart
     ,editorService: {
         url: 'http://localhost:5500/api/metadata'
@@ -3338,7 +3337,11 @@ var layoutManager = {
     },
 
     init: function (container) {
+        if( window.InfinniUI.config.disableLayoutManager === true ) {
+            return false;
+        }
         container = container || document;
+        $('#page-content').addClass('page-content-overflow-hidden');
         this.windowHeight = $(window).height();
         this.onChangeLayout(container);
         if (this.exchange === null) {
@@ -3362,6 +3365,7 @@ var layoutManager = {
 };
 
 window.InfinniUI.LayoutManager = layoutManager;
+
 //####app/utils/logger.js
 var LOG_LEVEL = {
     debug: 1,
@@ -14634,71 +14638,6 @@ var DividerView = ControlView.extend(
 	}
 );
 
-//####app/controls/documentViewer/documentViewerControl .js
-var DocumentViewerControl = function () {
-    _.superClass(DocumentViewerControl, this);
-};
-
-_.inherit(DocumentViewerControl, Control);
-
-_.extend(DocumentViewerControl.prototype, {
-    createControlModel: function () {
-        return new DocumentViewerModel();
-    },
-
-    createControlView: function (model) {
-        return new DocumentViewerView({model: model});
-    },
-
-    onValueChanged: function(handler){
-        this.controlModel.on('change:value', handler);
-    },
-
-    renderDocument: function(){
-        this.controlView.renderDocument();
-    }
-});
-//####app/controls/documentViewer/documentViewerModel.js
-var DocumentViewerModel = ControlModel.extend({
-    initialize: function(){
-        ControlModel.prototype.initialize.apply(this);
-    }
-});
-//####app/controls/documentViewer/documentViewerView.js
-var DocumentViewerView = PdfViewerViewBase.extend({
-    renderDocument: function(){
-        var that = this,
-            renderFrame = function(){
-            this.$el.empty();
-            var requestData = {
-                PrintViewId: this.model.get('viewId'),
-                ConfigId: dataSource.getConfigId(),
-                DocumentId: dataSource.getDocumentId(),
-                PageNumber: dataSource.getPageNumber(),
-                PageSize: dataSource.getPageSize(),
-                Query: dataSource.getFilter()
-            };
-
-            var urlParams = $.param({Form: JSON.stringify(requestData)}).replace(/%22/g, '%27');
-            this.sendRequest(InfinniUI.config.serverUrl+'/SystemConfig/UrlEncodedData/Reporting/GetPrintView/?' + urlParams, function(data){
-                that.renderPdf(data);
-            });
-        }.bind(this);
-
-        var parentView = this.model.get('view');
-        var dataSource = parentView.getContext().dataSources[this.model.get('dataSource')];
-
-        if (typeof this.onDataSourceItemsUpdated !== 'undefined') {
-            this.onDataSourceItemsUpdated.unsubscribe();
-        }
-
-        this.onDataSourceItemsUpdated = dataSource.onItemsUpdated(function(){
-            renderFrame();
-        });
-
-        renderFrame();
-    }
-});
 //####app/controls/extensionPanel/extensionPanel.js
 var ExtensionPanelControl = function () {
     _.superClass(ExtensionPanelControl, this);
@@ -17169,42 +17108,6 @@ var ViewPanelView = ControlView.extend({
         return this;
     }
 });
-//####app/data/dataSource/_mixins/dataSourceBuilderFileProviderMixin.js
-var DataSourceBuilderFileProviderMixin = {
-
-    initFileProvider: function (metadata, dataSource) {
-
-        var host = InfinniUI.config.serverUrl,
-            configId = metadata.ConfigId,
-            documentId = metadata.DocumentId;
-
-        var fileUrlConstructor = new DocumentUploadQueryConstructor(host, {
-            configId: configId,
-            documentId: documentId
-        });
-
-        var fileProvider = new DocumentFileProvider(fileUrlConstructor);
-
-        dataSource.setFileProvider(fileProvider);
-    }
-
-};
-
-//####app/data/dataSource/_mixins/dataSourceFileProviderMixin.js
-/**
- *
- * @mixin dataSourceFileProviderMixin
- */
-var dataSourceFileProviderMixin = {
-
-    setFileProvider: function (fileProvider) {
-        this.set('fileProvider', fileProvider);
-    },
-
-    getFileProvider: function () {
-        return this.get('fileProvider');
-    }
-};
 //####app/data/dataSource/_mixins/dataSourceValidationNotifierMixin.js
 /**
  *
@@ -17256,7 +17159,7 @@ var DataSourceValidationNotifierMixin = {
 /**
  * @constructor
  * @augments Backbone.Model
- * @mixes dataSourceFileProviderMixin, dataSourceFindItemMixin
+ * @mixes dataSourceFindItemMixin
  */
 var BaseDataSource = Backbone.Model.extend({
     defaults: {
@@ -18428,8 +18331,6 @@ BaseDataSource.identifyingStrategy = {
     }
 };
 
-_.extend(BaseDataSource.prototype, dataSourceFileProviderMixin);
-
 InfinniUI.BaseDataSource = BaseDataSource;
 //####app/data/dataSource/restDataSource.js
 var RestDataSource = BaseDataSource.extend({
@@ -18975,7 +18876,7 @@ var DocumentDataSource = RestDataSource.extend({
 //####app/data/dataSource/baseDataSourceBuilder.js
 /**
  * @constructor
- * @mixes DataSourceValidationNotifierMixin, DataSourceBuilderFileProviderMixin
+ * @mixes DataSourceValidationNotifierMixin
  */
 var BaseDataSourceBuilder = function() {
 }
@@ -19042,7 +18943,7 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
         this.initNotifyValidation(dataSource);
         this.initScriptsHandlers(parentView, metadata, dataSource);
 
-        this.initFileProvider(metadata, dataSource);
+        this.initFileProvider(dataSource);
     },
 
     createDataSource: function (parent) {
@@ -19111,14 +19012,24 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
                 basePathOfProperty: params.basePathOfProperty
             });
         };
-    }
+    },
+
+     initFileProvider: function (dataSource) {
+
+             var host = InfinniUI.config.serverUrl;
+
+             var fileUrlConstructor = new DocumentUploadQueryConstructor(host);
+
+             var fileProvider = new DocumentFileProvider(fileUrlConstructor);
+
+             dataSource.setFileProvider(fileProvider);
+     }
+
 
 });
 
 
 _.extend(BaseDataSourceBuilder.prototype, DataSourceValidationNotifierMixin);
-
-_.extend(BaseDataSourceBuilder.prototype, DataSourceBuilderFileProviderMixin);
 
 InfinniUI.BaseDataSourceBuilder = BaseDataSourceBuilder;
 //####app/data/dataSource/restDataSourceBuilder.js
@@ -19264,15 +19175,6 @@ _.extend(DocumentDataSourceBuilder.prototype, {
     },
 
     initBindingToProperty: RestDataSourceBuilder.prototype.initBindingToProperty
-
-    //initFileProvider: function (dataSource) {
-    //    var fileProvider = window.providerRegister.build('DocumentFileProvider', {
-    //        documentId: dataSource.getDocumentId(),
-    //        configId: dataSource.getConfigId()
-    //    });
-    //
-    //    dataSource.setFileProvider(fileProvider);
-    //}
 });
 
 //####app/elements/_base/element/element.js
@@ -21875,80 +21777,6 @@ TimePickerBuilder.prototype.applyMaxValue = function (element, maxValue) {
         element.setMaxValue(date);
     }
 };
-//####app/elements/dataElement/documentViewer/documentViewer.js
-function DocumentViewer(parentView) {
-    _.superClass(DocumentViewer, this, parentView);
-}
-
-_.inherit(DocumentViewer, Element);
-
-_.extend(DocumentViewer.prototype, {
-
-    createControl: function () {
-        return new DocumentViewerControl();
-    },
-
-    setView: function (view) {
-        return this.control.set('view', view);
-    },
-
-    setPrintViewId: function(viewId) {
-        return this.control.set('viewId', viewId);
-    },
-
-    getPrintViewId: function() {
-        return this.control.get('viewId');
-    },
-
-    setSource: function (dataSource) {
-        return this.control.set('dataSource', dataSource);
-    },
-
-    getSource: function () {
-        return this.control.get('dataSource');
-    },
-
-    build: function (){
-        this.control.renderDocument();
-    }
-
-}, valuePropertyMixin);
-//####app/elements/dataElement/documentViewer/documentViewerBuilder.js
-function DocumentViewerBuilder() {
-}
-
-_.inherit(DocumentViewerBuilder, ElementBuilder);
-
-_.extend(DocumentViewerBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        this.initScriptsHandlers(params);
-
-        params.element.setView(params.parentView);
-        params.element.setParent(params.parent);
-
-        params.element.setPrintViewId(params.metadata.PrintViewId);
-        params.element.setSource(params.metadata.Source.Source);
-    },
-
-    createElement: function (params) {
-        return new DocumentViewer(params.view);
-    },
-
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name || metadata.OnLoaded);
-            });
-        }
-    }
-}, builderValuePropertyMixin);
-
 //####app/elements/dataElement/pdfViewer/pdfViewer.js
 function PdfViewer(parentView) {
     _.superClass(PdfViewer, this, parentView);
@@ -21984,9 +21812,9 @@ _.extend(PdfViewerBuilder.prototype, {
     },
 
     createElement: function (params) {
+        return new PdfViewer(params.parentView);
+    },
 
-    return new PdfViewer(params.parentView);
-},
     initScriptsHandlers: function(params){
         var metadata = params.metadata;
 
@@ -26738,210 +26566,6 @@ _.extend(OpenActionBuilder.prototype, {
         return action;
     }
 });
-//####app/actions/printReportAction/printReportAction.js
-function PrintReportAction(parentView){
-    _.superClass(PrintReportAction, this, parentView);
-}
-
-_.inherit(PrintReportAction, BaseAction);
-
-
-_.extend(PrintReportAction.prototype, {
-    execute: function(callback){
-        var $submitForm = this.getProperty('$submitForm');
-
-        $submitForm.submit(callback);
-    }
-});
-//####app/actions/printReportAction/printReportActionBuilder.js
-function PrintReportActionBuilder() {
-    this.build = function (context, args) {
-        var action = new PrintReportAction(args.parentView);
-
-        var data = {
-            Configuration: args.metadata.Configuration,
-            Template: args.metadata.Template,
-            Parameters: args.metadata.Parameters,
-            FileFormat: 0 //metadata.FileFormat
-        };
-        var formData = (JSON.stringify(data)).replace(/"/g, '\'');
-
-        var $submitForm = this.createSubmitForm(formData);
-
-        action.setProperty('$submitForm', $submitForm);
-
-        return action;
-    };
-
-    this.createSubmitForm = function(formData) {
-        var $submitForm = $(this.getSubmitForm(formData));
-        var $modal = $(this.getModalTemplate());
-
-        $submitForm.on('submit', function() {
-            $modal.modal('show');
-        });
-
-        $submitForm.appendTo('body');
-        $modal.appendTo('body');
-
-        return $submitForm;
-    };
-
-    this.getSubmitForm = function(data){
-        return '<form id="form" enctype="application/x-www-form-urlencoded" target="frame" action="http://ic:9900/SystemConfig/UrlEncodedData/Reporting/GetReport" method="post">' +
-            '<input type="text" style="display:none" name="Form" value='+data+'>'+
-            '</form>'
-    };
-
-    this.getModalTemplate = function(){
-        return '<div class="custom-modal modal container fade" id="full-width" tabindex="-1">'+
-            '<div class="modal-header">'+
-            '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'+
-            '<h3>Отчет</h3>'+
-            '</div>'+
-            '<div class="modal-body">'+
-            '<iframe name="frame" style="width: 100%; height: 600px"></iframe>'+
-            '</div>'+
-            '</div>'
-    };
-}
-//####app/actions/printViewAction/printViewAction.js
-function PrintViewAction(parentView){
-    _.superClass(PrintViewAction, this, parentView);
-}
-
-_.inherit(PrintViewAction, BaseAction);
-
-
-_.extend(PrintViewAction.prototype, {
-    execute: function(callback){
-        var self = this;
-
-        var printViewBaseFormData = this.get('printViewBaseFormData');
-        var dataSource = this.get('dataSource');
-        var formData = _.extend(printViewBaseFormData,
-            {
-                ConfigId : dataSource.getConfigId(),
-                DocumentId : dataSource.getDocumentId(),
-                PageNumber : dataSource.getPageNumber(),
-                PageSize : dataSource.getPageSize(),
-                ActionId: dataSource.getUpdateAction(),
-                Item: dataSource.getSelectedItem(),
-                Query : dataSource.getFilter()
-            });
-
-        this.sendRequest(formData, function(message){
-            var frameId = window.pdfDocs.length;
-            window.pdfDocs[frameId] = message;
-
-            var _$modal = $(self.getModalTemplate(frameId));
-            _$modal.appendTo('body');
-
-            if (_.isFunction(callback)) {
-                _$modal.one('shown.bs.modal', function () {
-                    callback();
-                });
-            }
-
-            _$modal.modal('show');
-
-            $('.btn-close'+ frameId).on('click', function(e){
-                _$modal.modal('hide');
-            });
-
-            $('.btn-print' + frameId).on('click', function(e){
-                var frame = self.getFrame('frame'+frameId);
-                var printButtonElement = frame.window.document.getElementById('print');
-                printButtonElement.click();
-            });
-        });
-    },
-
-    getModalTemplate: function(frameId){
-        return '<div class="custom-modal modal container fade" id="full-width" tabindex="-1">'+
-            '<div class="modal-header">'+
-            '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'+
-            //'<h3>Отчет</h3>'+
-            '</div>'+
-            '<div class="modal-body">'+
-            '<iframe name="frame' + frameId + '" src="/app/utils/pdf/web/viewer.html#' + frameId + '" id="print-report" style="width: 100%; height: 600px"></iframe>'+
-            '</div>'+
-            '<button type="button" class="btn btn-default btn-close' + frameId + '" style="float: right; margin: 0 10px 10px 0; border: none">Закрыть</button>'+
-            '<button type="button" class="btn btn-default btn-print' + frameId + '" style="float: right; margin: 0 10px 10px 0; border: none">Печать</button>'+
-            '</div>'
-    },
-
-    getFrame: function(fName)
-    {
-        var frames = window.frames;
-        for(var i=0; i<frames.length; i++){
-            try{
-                if(frames[i].name == fName)
-                    return frames[i];
-            }catch(e) {}
-        }
-
-    },
-
-    sendRequest: function(params, handler){
-        var url = InfinniUI.config.serverUrl+"/SystemConfig/UrlEncodedData/Reporting/GetPrintView";
-        var xmlhttp = this.getProperty('xmlhttp');
-
-        xmlhttp.open('POST', url, true);
-        xmlhttp.withCredentials = true;
-        xmlhttp.responseType = 'arraybuffer';
-        xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xmlhttp.onreadystatechange = function() {
-            if (xmlhttp.readyState == 4) {
-                if(xmlhttp.status == 200) {
-                    handler(xmlhttp.response);
-                }
-            }
-        };
-        xmlhttp.send($.param({
-            Form: (JSON.stringify(params)).replace(/"/g, '\'')
-        }));
-    }
-});
-//####app/actions/printViewAction/printViewActionBuilder.js
-function PrintViewActionBuilder() {
-    this.build = function (context, args) {
-        window.pdfDocs = window.pdfDocs || [];
-
-        var action = new PrintViewAction(args.parentView);
-
-        var dataSource = args.parentView.getContext().dataSources[args.metadata.SourceValue.Source];
-        var printViewBaseFormData = {
-            PrintViewId : args.metadata.PrintViewId,
-            PrintViewType : args.metadata.PrintViewType
-        };
-
-        action.setProperty('xmlhttp', this.getXmlHttp());
-        action.setProperty('dataSource', dataSource);
-        action.setProperty('printViewBaseFormData', printViewBaseFormData);
-
-        return action;
-    };
-
-    this.getXmlHttp = function(){
-        var xmlhttp;
-        try {
-            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-        } catch (e) {
-            try {
-                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-            } catch (e1) {
-                xmlhttp = false;
-            }
-        }
-
-        if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
-            xmlhttp = new XMLHttpRequest();
-        }
-
-        return xmlhttp;
-    };
-}
 //####app/actions/saveAction/saveAction.js
 function SaveAction(parentView){
     _.superClass(SaveAction, this, parentView);
@@ -27424,7 +27048,6 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('ExtensionPanel', new ExtensionPanelBuilder());
         builder.register('PopupButton', new PopupButtonBuilder());
         builder.register('DataNavigation', new DataNavigationBuilder());
-        builder.register('DocumentViewer', new DocumentViewerBuilder());
         builder.register('PdfViewer', new PdfViewerBuilder());
         builder.register('TreeView', new TreeViewBuilder());
         builder.register('Frame', new FrameBuilder());
@@ -27444,8 +27067,6 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('DeleteAction', new DeleteActionBuilder());
         builder.register('EditAction', new EditActionBuilder());
         builder.register('OpenAction', new OpenActionBuilder());
-        builder.register('PrintReportAction', new PrintReportActionBuilder());
-        builder.register('PrintViewAction', new PrintViewActionBuilder());
         builder.register('SaveAction', new SaveActionBuilder());
         builder.register('SelectAction', new SelectActionBuilder());
         builder.register('UpdateAction', new UpdateActionBuilder());
@@ -27871,148 +27492,28 @@ DataBindingBuilder.prototype.scriptByNameOrBody = function(nameOrBody, context){
 
 };
 
-//####app/data/dataProviders/REST/metadataDataSourceProvider.js
-function MetadataDataSourceProvider(urlConstructor, successCallback, failCallback) {
-
-    this.getRegisteredConfigList = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback)
-            .makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getConfigurationMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getDocumentListMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getDocumentMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getDocumentElementListMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getMenuListMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getMenuMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getValidationWarningMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-
-    this.getValidationErrorMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(urlConstructor.constructMetadataRequest());
-    };
-}
-
-window.InfinniUI.Providers.MetadataDataSourceProvider = MetadataDataSourceProvider;
-
 //####app/data/dataProviders/REST/metadataProviderREST.js
 function MetadataProviderREST(metadataUrlConstructor, successCallback, failCallback) {
 
-    //var makeRequest = function (requestData) {
-    //    return $.ajax({
-    //        type: 'post',
-    //        url: requestData.requestUrl,
-    //        data: JSON.stringify(requestData.args),
-    //        contentType: "application/json;charset=UTF-8",
-    //        success: successCallback,
-    //        fail: failCallback
-    //    });
-    //};
-
-    this.getViewMetadata = function (resultCallback) {
-        var data = metadataUrlConstructor.constructViewMetadataRequest();
+    this.getMetadata = function (resultCallback) {
+        var data = metadataUrlConstructor.constructMetadataRequest();
         new RequestExecutor(resultCallback,successCallback,failCallback, this.cache).makeRequest(data);
     };
-
-    this.getConfigMetadata = function (resultCallback) {
-
-        new RequestExecutor(resultCallback, successCallback, failCallback).makeRequest(metadataUrlConstructor.constructConfigMetadataRequest());
-    };
-
-
-    this.getMenuMetadata = function (resultCallback) {
-        new RequestExecutor(resultCallback, successCallback, failCallback, this.cache).makeRequest(metadataUrlConstructor.constructMenuMetadataRequest());
-    };
-
-    this.setCache = function (cache) {
-        this.cache = cache;
-    }
 }
 
 window.InfinniUI.Providers.MetadataProviderREST = MetadataProviderREST;
 //####app/data/dataProviders/REST/queryConstructorMetadata.js
 function QueryConstructorMetadata(host, metadata) {
 
-    var viewMetadataUrlTemplate = '{0}/content/metadata/Views/{1}/{2}.json';
-
-    this.constructViewMetadataRequest = function () {
+    this.constructMetadataRequest = function () {
         return {
-            "requestUrl": stringUtils.format(viewMetadataUrlTemplate, [host, metadata.DocumentId, metadata.MetadataName]),
+            "requestUrl": host + '/' + metadata.Path,
             "method": "GET"
         };
     };
 }
 
 window.InfinniUI.Providers.QueryConstructorMetadata = QueryConstructorMetadata;
-//####app/data/dataProviders/REST/queryConstructorMetadataDataSource.js
-function QueryConstructorMetadataDataSource(host, metadata) {
-
-    metadata = metadata || {};
-
-    var urlTemplate = '{0}/RestfulApi/StandardApi/configuration/getConfigMetadata';
-    var configId = metadata.ConfigId;
-    var documentId = metadata.DocumentId;
-    var metadataType = metadata.MetadataType;
-    var metadataName = metadata.MetadataName;
-
-    var getRequestParams = function() {
-        var changesObject = 'null';
-
-        if(configId || documentId|| metadataType || metadataName){
-            changesObject = {};
-
-            if(configId){
-                changesObject.ConfigId = configId;
-            }
-            if(documentId){
-                changesObject.DocumentId = documentId;
-            }
-            if(metadataType){
-                changesObject.MetadataType = metadataType;
-            }
-            if(metadataName){
-                changesObject.MetadataName = metadataName;
-            }
-        }
-
-        return {
-            "id": null,
-            "changesObject": changesObject,
-            "replace": false
-        };
-    };
-
-
-    this.constructMetadataRequest = function(){
-         return {
-             "requestUrl" : stringUtils.format(urlTemplate,[host]),
-             "args" : getRequestParams()
-         };
-    };
-
-
-}
-
-window.InfinniUI.Providers.QueryConstructorMetadataDataSource = QueryConstructorMetadataDataSource;
 //####app/data/dataProviders/REST/requestExecutor.js
 var RequestExecutorDataStrategy = function (type) {
     if (typeof this.strategies[type] === 'undefined') {
@@ -28150,106 +27651,6 @@ function DataProviderRegister() {
 
 window.InfinniUI.providerRegister = new DataProviderRegister();
 
-//####app/data/dataProviders/file/dataProviderUpload.js
-var DataProviderUpload = function (urlConstructor, successCallback, failCallback) {
-    this.urlConstructor = urlConstructor;
-    this.successCallback = successCallback;
-    this.failCallback = failCallback;
-};
-
-DataProviderUpload.prototype.uploadFile = function (fieldName, instanceId, file, resultCallback) {
-    var requestData = this.urlConstructor.constructUploadFileRequest(fieldName, instanceId, file);
-    new RequestExecutor(resultCallback, this.successCallback, this.failCallback).makeRequestRaw(requestData);
-};
-
-DataProviderUpload.prototype.getFileUrl = function (fieldName, instanceId) {
-    return this.urlConstructor.getFileUrl(fieldName, instanceId);
-};
-//####app/data/dataProviders/file/queryConstructorUpload.js
-/**
- * @class QueryConstructorUpload
- * @param host
- * @param metadata
- * @constructor
- */
-var QueryConstructorUpload = function (host, metadata) {
-    this.host = host;
-    this.metadata = metadata;
-};
-
-/**
- * @public
- * @memberOf QueryConstructorUpload.prototype
- * @param fieldName
- * @param instanceId
- * @param file
- * @returns {{requestUrl: {String}, args: (FormData|*)}}
- */
-QueryConstructorUpload.prototype.constructUploadFileRequest = function (fieldName, instanceId, file) {
-    return {
-        requestUrl: this.getUploadUrl(instanceId, fieldName),
-        args: this.getUploadParams(file)
-    };
-};
-
-/**
- * @public
- * @description Возвращает ссылкц на загруженный ранее файл
- * @memberOf QueryConstructorUpload.prototype
- * @param instanceId
- * @param fieldName
- * @returns {String}
- */
-QueryConstructorUpload.prototype.getFileUrl = function (fieldName, instanceId) {
-
-    if (typeof instanceId === 'undefined' || instanceId === null) {
-        return null;
-    }
-
-    var data = {
-        "Configuration": this.metadata.ConfigId,
-        "Metadata": this.metadata.DocumentId,
-        "DocumentId": instanceId,
-        "FieldName": fieldName
-    };
-    var urlTemplate = '{0}/RestfulApi/UrlEncodedData/configuration/downloadbinarycontent/?Form={1}';
-
-    return stringUtils.format(urlTemplate, [this.host, JSON.stringify(data)]);
-};
-
-/**
- * @protected
- * @memberOf QueryConstructorUpload.prototype
- * @param instanceId
- * @param fieldName
- * @returns {String}
- */
-QueryConstructorUpload.prototype.getUploadUrl = function (instanceId, fieldName) {
-    var data = {
-        "Configuration": this.metadata.ConfigId,
-        "Metadata": this.metadata.DocumentId,
-        "DocumentId": instanceId,
-        "FieldName": fieldName
-    };
-    var urlTemplate = '{0}/RestfulApi/Upload/configuration/uploadbinarycontent/?linkedData={1}';
-
-    return stringUtils.format(urlTemplate, [this.host, JSON.stringify(data)]);
-};
-
-
-/**
- * @protected
- * @memberOf QueryConstructorUpload.prototype
- * @param file
- * @returns {FormData}
- */
-QueryConstructorUpload.prototype.getUploadParams = function (file) {
-    var data = new FormData();
-    data.append('file', file);
-    return data;
-};
-
-
 //####app/data/dataProviders/file/document/documentFileProvider.js
 /**
  *
@@ -28265,31 +27666,6 @@ var DocumentFileProvider = function (urlConstructor, successCallback, failCallba
 };
 
 /**
- * @description Загружает файл для указанного поля документа
- * @param {string} fieldName
- * @param {string} instanceId
- * @param {*} file
- * @param {Function} resultCallback
- */
-DocumentFileProvider.prototype.uploadFile = function (fieldName, instanceId, file, resultCallback) {
-    var deferred = $.Deferred();
-    var requestData = this.urlConstructor.constructUploadFileRequest(fieldName, instanceId, file);
-    new RequestExecutor(resultCallback, function () {
-        deferred.resolve();
-        if (this.successCallback) {
-            this.successCallback();
-        }
-    }.bind(this), function (err) {
-        deferred.reject(err);
-        if (this.failCallback) {
-            this.failCallback();
-        }
-    }.bind(this)).makeRequestRaw(requestData);
-
-    return deferred.promise();
-};
-
-/**
  * Возвращает URL ранее загруженного файла
  * @param {string} fieldName
  * @param {string} instanceId
@@ -28302,101 +27678,22 @@ DocumentFileProvider.prototype.getFileUrl = function (fieldName, instanceId, con
 //####app/data/dataProviders/file/document/documentFileQueryConstructor.js
 /**
  * @param {string} host
- * @param {Object} params
- * @param {string} params.configId
- * @param {string} params.documentId
  * @constructor
  */
-var DocumentUploadQueryConstructor = function (host, params) {
+var DocumentUploadQueryConstructor = function (host) {
     this.host = host;
-    this.configId = params.configId;
-    this.documentId = params.documentId;
-};
-
-DocumentUploadQueryConstructor.prototype.template = {
-    download: _.template('<%= host %>/RestfulApi/UrlEncodedData/configuration/downloadbinarycontent/?Form=<%= form %>'),
-    upload: _.template('<%= host %>/RestfulApi/Upload/configuration/uploadbinarycontent/?linkedData=<%= data %>')
-};
-
-DocumentUploadQueryConstructor.prototype.normalizeFieldName = function (fieldName) {
-    return String(fieldName).replace(/^[\d\$]+\./, '');
-};
-
-/**
- * @public
- * @param fieldName
- * @param instanceId
- * @param file
- * @returns {{requestUrl: {String}, args: (FormData|*)}}
- */
-DocumentUploadQueryConstructor.prototype.constructUploadFileRequest = function (fieldName, instanceId, file) {
-    return {
-        requestUrl: this.getUploadUrl(fieldName, instanceId),
-        args: this.getUploadParams(file)
-    };
 };
 
 /**
  * @public
  * @description Возвращает ссылку на загруженный ранее файл
- * @param instanceId
  * @param fieldName
+ * @param instanceId
+ * @param contentId
  * @returns {String}
  */
 DocumentUploadQueryConstructor.prototype.getFileUrl = function (fieldName, instanceId, contentId) {
-
-    //if (typeof instanceId === 'undefined' || instanceId === null) {
-    //    return null;
-    //}
-
-    var data = {
-        Configuration: this.configId,
-        Metadata: this.documentId,
-        DocumentId: instanceId,
-        ContentId: contentId,
-        FieldName: this.normalizeFieldName(fieldName)
-    };
-    var template = this.template.download;
-
-    return template({
-        host: this.host,
-        form: JSON.stringify((data))
-    });
-};
-
-/**
- * @description Возвращает URL для запроса загрузки файла
- * @protected
- * @param instanceId
- * @param fieldName
- * @returns {String}
- */
-DocumentUploadQueryConstructor.prototype.getUploadUrl = function (fieldName, instanceId) {
-    var data = {
-        "Configuration": this.configId,
-        "Metadata": this.documentId,
-        "DocumentId": instanceId,
-        "FieldName": this.normalizeFieldName(fieldName)
-    };
-
-    var template = this.template.upload;
-
-    return template({
-        host: this.host,
-        data: JSON.stringify(data)
-    });
-};
-
-
-/**
- * @protected
- * @param file
- * @returns {FormData}
- */
-DocumentUploadQueryConstructor.prototype.getUploadParams = function (file) {
-    var data = new FormData();
-    data.append('file', file);
-    return data;
+    return stringUtils.format('{0}/blob/{1}', [this.host, contentId]);
 };
 
 
@@ -28882,15 +28179,6 @@ _.extend(ObjectDataSourceBuilder.prototype, {
         }
 
     }
-
-    //initFileProvider: function (dataSource) {
-    //    var fileProvider = window.providerRegister.build('DocumentFileProvider', {
-    //        documentId: "documentId",
-    //        configId: "configId"
-    //    });
-    //
-    //    dataSource.setFileProvider(fileProvider);
-    //}
 });
 
 InfinniUI.ObjectDataSourceBuilder = ObjectDataSourceBuilder;
@@ -32912,7 +32200,7 @@ function InlineViewBuilder() {
         var builder = params.builder;
         var parameters = this.buildParameters(params);
 
-        if (viewMetadata !== null) {
+        if (viewMetadata != null) {
 
             var view = builder.buildType("View", viewMetadata, {
                 parentView: parentView,
@@ -33081,7 +32369,7 @@ _.extend(MetadataViewBuilder.prototype, {
         return function (onViewReadyHandler) {
             var metadataProvider = window.InfinniUI.providerRegister.build('MetadataDataSource', metadata);
 
-            metadataProvider.getViewMetadata(function (viewMetadata) {
+            metadataProvider.getMetadata(function (viewMetadata) {
 
                 if (viewMetadata == null) {
                     InfinniUI.global.logger.error('view metadata not found');
@@ -33519,25 +32807,6 @@ ScriptExecutor.prototype.buildScriptByBody = function(scriptBody){
     var scriptBuilder = new ScriptBuilder();
     return scriptBuilder.build(context, args);
 };
-//####app/services/autoHeightService.js
-/**
- * @description При изменении размеров окна пересчитывает высоту элементов представления
- */
-InfinniUI.AutoHeightService = (function () {
-    var TIMEOUT = 40;
-    var WAIT = 50;
-    var resizeTimeout;
-
-    $(window).resize(function () {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(_.debounce(onWindowResize, WAIT), TIMEOUT);
-    });
-
-    function onWindowResize() {
-        layoutManager.init();
-    }
-
-})();
 //####app/services/modalWindowService.js
 InfinniUI.ModalWindowService = (function () {
     var modalQueue = [];
