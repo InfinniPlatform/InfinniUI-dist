@@ -170,6 +170,14 @@
   border-radius: 0;
 }
 
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > .open > a {
+  &, &:hover, &:focus {
+    background-color: @pl-primary1;
+    color: #fff;
+  }
+}
+
 // Fix active state of dropdown items in collapsed mode
 @media (max-width: @grid-float-breakpoint-max) {
   .navbar .navbar-nav .open .dropdown-menu > .active > a {

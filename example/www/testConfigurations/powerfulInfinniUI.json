@@ -1,0 +1,394 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "2G"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "GPRS"},
+					{"Id": 7, "rub": 666, "Display": "LTE"}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{"Id": 1, "rub": 11, "Display": "320x480"},
+					{"Id": 2, "rub": 12, "Display": "360x540"},
+					{"Id": 3, "rub": 13, "Display": "375x700"},
+					{"Id": 4, "rub": 14, "Display": "480x960"},
+					{"Id": 5, "rub": 15, "Display": "768x1024"},
+					{"Id": 6, "rub": 16, "Display": "780x1200"},
+					{"Id": 7, "rub": 17, "Display": "900x1600"}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "EditDataSource",
+				"Items": [
+					{"Id": 1, "rub": 11, "Display": "320x480"},
+					{"Id": 2, "rub": 12, "Display": "360x540"},
+					{"Id": 3, "rub": 13, "Display": "375x700"},
+					{"Id": 4, "rub": 14, "Display": "480x960"},
+					{"Id": 5, "rub": 15, "Display": "768x1024"},
+					{"Id": 6, "rub": 16, "Display": "780x1200"},
+					{"Id": 7, "rub": 17, "Display": "900x1600"}
+				]
+			}
+		}
+	],
+	"Items": [{
+		"StackPanel": {
+			"Items": [
+				{
+					"MenuBar": {
+						"Items": [
+							{
+								"Button": {
+									"Name": "View1",
+									"Text": "To View 1",
+									"OnClick": "{  }"
+								}
+							},
+							{
+								"Button": {
+									"Name": "View2",
+									"Text": "To View 2"
+								}
+							}
+						]
+					}
+				},
+				{
+					"GridPanel": {
+						"Items": [
+							{
+								"Cell": {
+									"ColumnSpan": 12,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Different Filters",
+												"HorizontalAlignment": "Center",
+												"TextStyle": "display1"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"TextBox": {
+												"LabelText": "Filter by Name"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"TextBox": {
+												"LabelText": "Filter by Price"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"TextBox": {
+												"LabelText": "Filter by Display"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 3,
+									"Items": [
+										{
+											"StackPanel": {
+												"Items": [
+													{
+														"Button": {
+															"Text": "Add",
+															"HorizontalAlignment": "Right",
+															"Action": {
+																"AddAction": {
+																	"DestinationValue": {
+																		"Source": "ObjectDataSource2",
+																		"Property": ""
+																	},
+																	"SourceValue": {
+																		"Source": "MainDataSource"
+																	},
+																	"LinkView": {
+																		"InlineView": {
+																			"OpenMode": "Dialog",
+																			"DialogWidth": "Middle",
+																			"DataSources": [
+																				{
+																					"ObjectDataSource": {
+																						"Name": "MainDataSource"
+																					}
+																				}
+																			],
+																			"View": {
+																				"Items": [
+																					{
+																						"StackPanel": {
+																							"ViewMode": "FormGroup",
+																							"Orientation": "Vertical",
+																							"Items": [
+																								{
+																									"TextBox": {
+																										"Value": {
+																											"Source": "MainDataSource",
+																											"Property": "Name"
+																										}
+																									}
+																								},
+																								{
+																									"TextBox": {
+																										"Value": {
+																											"Source": "MainDataSource",
+																											"Property": "rub"
+																										}
+																									}
+																								},
+																								{
+																									"TextBox": {
+																										"Value": {
+																											"Source": "MainDataSource",
+																											"Property": "Display"
+																										}
+																									}
+																								},
+																								{
+																									"Button": {
+																										"Text": "Save",
+																										"Action": {
+																											"AcceptAction":{
+
+																											}
+																										}
+																									}
+																								}
+																							]
+																						}
+																					}
+																				]
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 12,
+									"Items": [
+										{
+											"ScrollPanel": {
+												"Items": [
+													{
+														"DataGrid": {
+															"Name": "ItemsPanel",
+															"MultiSelect": true,
+															"VerticalAlignment": "Stretch",
+															"Columns": [
+																{
+																	"Header": "Name",
+																	"CellProperty": "Name"
+																},
+																{
+																	"Header": "Price, rub",
+																	"CellProperty": "rub"
+																},
+																{
+																	"Header": "Display",
+																	"CellProperty": "Display"
+																},
+																{
+																	"Header": "Status",
+																	"Width": 70,
+																	"CellTemplate": {
+																		"StackPanel": {
+																			"Orientation": "Horizontal",
+																			"ViewMode": "FormGroup",
+																			"Items": [
+																				{
+																					"Icon": {
+																						"Value": "minus-circle",
+																						"Foreground": "accent3",
+																						"ToolTip": "Not checked"
+																					}
+																				},
+																				{
+																					"Icon": {
+																						"Value": "chain-broken",
+																						"Foreground": "accent3",
+																						"ToolTip": "Not send"
+																					}
+																				}
+																			]
+																		}
+																	}
+																},
+																{
+																	"HeaderTemplate": {
+																		"Label": {
+																			"Value": "Actions"
+																		}
+																	},
+																	"Width": 70,
+																	"CellTemplate": {
+																		"StackPanel": {
+																			"Orientation": "Horizontal",
+																			"ViewMode": "FormGroup",
+																			"Items": [
+																				{
+																					"Button": {
+																						"ViewMode": "link",
+																						"ContentTemplate": {
+																							"Icon": {
+																								"Value": "pencil",
+																								"Foreground": "primary2",
+																								"ToolTip": "Edit element"
+																							}
+																						},
+																						"Action": {
+																							"EditAction": {
+																								"DestinationValue": {
+																									"Source": "ObjectDataSource2",
+																									"Property": "$"
+																								},
+																								"SourceValue": {
+																									"Source": "ObjectDataSource2"
+																								},
+																								"LinkView": {
+																									"InlineView": {
+																										"OpenMode": "Dialog",
+																										"DialogWidth": "Middle",
+																										"View": {
+																											"Items": [
+																												{
+																													"StackPanel": {
+																														"ViewMode": "FormGroup",
+																														"Orientation": "Vertical",
+																														"Items": [
+																															{
+																																"TextBox": {
+																																	"Value": {
+																																		"Source": "ObjectDataSource2",
+																																		"Property": "Name"
+																																	}
+																																}
+																															},
+																															{
+																																"TextBox": {
+																																	"Value": {
+																																		"Source": "ObjectDataSource2",
+																																		"Property": "rub"
+																																	}
+																																}
+																															},
+																															{
+																																"TextBox": {
+																																	"Value": {
+																																		"Source": "ObjectDataSource2",
+																																		"Property": "Display"
+																																	}
+																																}
+																															},
+																															{
+																																"Button": {
+																																	"Text": "Save",
+																																	"Action": {
+																																		"SaveAction":{
+																																			"DestinationValue": {
+																																				"Source": "ObjectDataSource2"
+																																			},
+																																			"CanClose": true
+																																		}
+																																	}
+																																}
+																															}
+																														]
+																													}
+																												}
+																											]
+																										}
+																									}
+																								}
+																							}
+																						}
+																					}
+																				},
+																				{
+																					"Button": {
+																						"ViewMode": "link",
+																						"ContentTemplate": {
+																							"Icon": {
+																								"Value": "ban",
+																								"Foreground": "primary2",
+																								"ToolTip": "Delete element"
+																							}
+																						},
+																						"Action": {
+																							"DeleteAction": {
+																								"DestinationValue": {
+																									"Source": "ObjectDataSource2",
+																									"Property": "$"
+																								}
+																							}
+																						}
+																					}
+																				}
+																			]
+																		}
+																	}
+																}
+															],
+															"Items": {
+																"Source": "ObjectDataSource2"
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}]
+}

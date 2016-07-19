@@ -1,0 +1,1063 @@
+{
+	"OnLoaded": "OL2",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource1",
+				"Items": [
+					{"Id": 1, "rub": 555, "Display": "LTE"},
+					{"Id": 2, "rub": 111, "Display": "2G"},
+					{"Id": 3, "rub": 222, "Display": "3G"},
+					{"Id": 4, "rub": 333, "Display": "EDGE"},
+					{"Id": 5, "rub": 444, "Display": "GPRS"},
+					{"Id": 6, "rub": 777, "Display": "LTE"},
+					{"Id": 7, "rub": 666, "Display": "2G"}
+				]
+			}
+		},{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource2",
+				"Items": [
+					{ "Value": { "Id": 2, "Display": "2G" }}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "Test",
+				"Items": [
+					{"Id": 1, "Num": "1", "Name": "One", "Group": "odd"},
+					{"Id": 2, "Num": "2", "Name": "Two", "Group": "even"},
+					{"Id": 3, "Num": "3", "Name": "Three", "Group": "odd"},
+					{"Id": 4, "Num": "4", "Name": "Four", "Group": "even"},
+					{"Id": 5, "Num": "5", "Name": "Five", "Group": "odd"},
+					{"Id": 6, "Num": "6", "Name": "Six", "Group": "even"},
+					{"Id": 7, "Num": "7", "Name": "Seven", "Group": "odd"}
+				]
+			}
+		},
+		{
+		"ObjectDataSource":{
+			"Name": "Clone",
+			"Items":{
+				"Source": "BloodGroupDataSource"
+			}
+		}
+	},
+		{
+			"ObjectDataSource": {
+				"Name": "Numbers",
+				"Items": [
+					{"value": 0},
+					{"value": 1},
+					{"value": 2},
+					{"value": 3},
+					{"value": 4},
+					{"value": 5},
+					{"value": 6},
+					{"value": 7},
+					{"value": 8},
+					{"value": 9}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "BloodGroupDataSource",
+				"Items": [
+					{
+						"Id": 1,
+						"DisplayName": "44",
+						"SomeField": "",
+						"Array": [
+							{
+								"Id": 5,
+								"DisplayName": "I-1"
+							},
+							{
+								"Id": 6,
+								"DisplayName": "I-2"
+							},
+							{
+								"Id": 7,
+								"DisplayName": "I-3"
+							}
+						]
+					},
+					{
+						"Id": 2,
+						"DisplayName": "II",
+						"SomeField": "val",
+						"Array": [
+							{
+								"Id": 8,
+								"DisplayName": "II-1"
+							},
+							{
+								"Id": 9,
+								"DisplayName": "II-2"
+							}
+						]
+					},
+					{
+						"Id": 3,
+						"DisplayName": "III",
+						"SomeField": 3
+					},
+					{
+						"Id": 4,
+						"DisplayName": "IV",
+						"SomeField": null
+					}
+				],
+				"OnSelectedItemChanged": {
+					"Name": "OnSelectedItemChanged_1"
+				}
+			}
+		}
+	],
+	"Items": [{
+		"ScrollPanel": {
+			"Items": [
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 5,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 1, 5 columns"
+														}
+													}
+												]
+											}
+										},
+										{
+											"Cell": {
+												"ColumnSpan": 3,
+												"Items": [
+													 {
+														"Label": {
+															"Value": "Row 1, 3 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 2,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 2 columns"
+														}
+													}
+												]
+											}
+										},
+										{
+											"Cell": {
+												"ColumnSpan": 6,
+												"Items": [
+													 {
+														"Label": {
+															"Value": "Row 2, 6 columns"
+														}
+													}
+												]
+											}
+										},
+										{
+											"Cell": {
+												"ColumnSpan": 4,
+												"Items": [
+													 {
+														"Label": {
+															"Value": "Row 2, 4 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Name for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"Name": "name for TablePanel"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Text for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"Text": "text for TablePanel"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Visible for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"Visible": false
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "HorizontalAlignment for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"HorizontalAlignment": "Right"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "TextHorizontalAlignment for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"TextHorizontalAlignment": "Right"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "TextStyle for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"TextStyle": "display2"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Foreground for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"Foreground": "primary2"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Background for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"Background": "primary2"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "ToolTip for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"ToolTip": "tooltip for TablePanel"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Tag for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"Tag": "tag for TablePanel"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnLoaded for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnLoaded": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnClick for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnClick": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnDoubleClick for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnDoubleClick": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnMouseDown for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnMouseDown": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnMouseUp for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnMouseUp": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnMouseWheel for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnMouseWheel": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnMouseEnter for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnMouseEnter": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnMouseLeave for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnMouseLeave": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnMouseMove for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnMouseMove": "{ args.source.setForeground('primary2') }"
+					}
+				},
+				{
+					"TablePanel": {
+						"Items": [
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "OnPropertyChanged for tablePanel"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							},
+							{
+								"Row": {
+									"Items": [
+										{
+											"Cell": {
+												"ColumnSpan": 12,
+												"Items": [
+													{
+														"Label": {
+															"Value": "Row 2, 12 columns"
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						],
+						"OnPropertyChanged": "{ args.source.setForeground('primary2') }"
+					}
+				}
+			]
+		}
+	}]
+}

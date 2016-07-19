@@ -124,12 +124,11 @@
 						"Items": [
 							{
 								"Cell": {
-									"ColumnSpan": 4,
+									"ColumnSpan": 6,
 									"Items": [
 										{
 											"Label": {
-												"Value": "Columns for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "Row 1, 6 columns"
 											}
 										}
 									]
@@ -137,27 +136,24 @@
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 4,
+									"ColumnSpan": 6,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
+											"Label": {
+												"Value": "Row 1, 6 columns"
+											}
+										}
+									],
+									"Text": "gridpanelText"
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 12,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Row 2, 12 columns"
 											}
 										}
 									]
@@ -166,7 +162,49 @@
 							{
 								"Cell": {
 									"ColumnSpan": 3,
-									"Items": []
+									"Items": [
+										{
+											"Label": {
+												"Value": "Row 3, 3 columns"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 8,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Row 3, 8 columns"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 5,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Row 4, 5 columns"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 6,
+									"Items": [
+										{
+											"Label": {
+												"Value": "Row 4, 6 columns"
+											}
+										}
+									]
 								}
 							},
 							{
@@ -175,46 +213,10 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "DataGrid with ShowSelectors false",
-												"HorizontalAlignment": "Right"
+												"Value": "Name for gridpanel"
 											}
 										}
 									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"ShowSelectors": false,
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
 								}
 							},
 							{
@@ -223,40 +225,11 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "MultiSelect for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "4 columns"
 											}
 										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"MultiSelect": true,
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
+									],
+									"Name": "gridpanelName"
 								}
 							},
 							{
@@ -271,8 +244,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "CheckAllVisible true for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "Text for gridpanel"
 											}
 										}
 									]
@@ -283,34 +255,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"MultiSelect": true,
-												"CheckAllVisible": true,
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"Text": "gridpanelText"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -320,8 +275,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnCheckAllChanged for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "Visible false for gridpanel"
 											}
 										}
 									]
@@ -332,35 +286,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"MultiSelect": true,
-												"CheckAllVisible": true,
-												"OnCheckAllChanged": "{ args.source.setForeground( 'primary2' ) }",
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"Visible": false
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -370,8 +306,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "ValueSelector DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "HorizontalAlignment for gridpanel"
 											}
 										}
 									]
@@ -382,33 +317,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"ValueSelector": "{ return 'Internet ' + args.value.Display; }",
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
+											"Label": {
+												"Value": "4 columns aligned to right"
 											}
 										}
-									]
+									],
+									"HorizontalAlignment": "Right"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -418,50 +337,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "ValueProperty: Id for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"ValueProperty": "Id",
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ValueProperty doesn't work",
-												"Foreground": "primary2"
+												"Value": "TextHorizontalAlignment for gridpanel"
 											}
 										}
 									]
@@ -473,1036 +349,20 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "ItemSelector for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"TextHorizontalAlignment": "Right"
 								}
 							},
 							{
 								"Cell": {
 									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													},
-													{
-														"Header": "DollarCost",
-														"CellProperty": "Dollar"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemSelector doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemProperty for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"ItemProperty": "#.Id"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemProperty doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "OnSelectedItemChanged for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnSelectedItemChanged": "{ console.log( 'OnSelectedItemChanged is happened' ) }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "HintText for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"HintText": "This is HintText"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "HintText for DataGrid doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ErrorText for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"ErrorText": "This is ErrorText"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ErrorText for DataGrid doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "WarningText for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"WarningText": "This is WarningText"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "WarningText for DataGrid doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "OnValueChanging for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnValueChanging": "{ console.log( 'OnValueChanging is happened' ) }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "OnValueChanged for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnValueChanged": "{ console.log( 'OnValueChanged is happened' ) }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemFormat DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"GroupItemFormat": "Connect: {Id}",
-												"GroupValueProperty": "Display"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemFormat doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemProperty for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"GroupItemProperty": "Display"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemProperty doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemFormat for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellTemplate": {
-															"Label": {
-																"Value": {
-																	"Source": "ObjectDataSource1",
-																	"Property": "#.Display"
-																}
-															}
-														}
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemFormat doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Name for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Name": "nameDataGrid",
-												"OnLoaded": "{ console.log( args.source.getName() ); }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Text for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Text": "Text for datagrid",
-												"OnLoaded": "{ console.log( args.source.getText() ); }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Focusable false for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Focusable": false
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Focusable doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Enabled false for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Enabled": false
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Enabled doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Visible false for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Visible": false
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "TextHorizontalAlignment for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"TextHorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
 									"Items": [
 										{
 											"Label": {
 												"Value": "TextHorizontalAlignment doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "TextStyle for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"TextStyle": "display2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Foreground for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "Background for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
 												"Background": "primary2"
 											}
 										}
@@ -1511,7 +371,32 @@
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "TextStyle for gridpanel"
+											}
+										}
+									]
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
+									"Items": [
+										{
+											"Label": {
+												"Value": "4 columns"
+											}
+										}
+									],
+									"TextStyle": "display2"
+								}
+							},
+							{
+								"Cell": {
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1521,8 +406,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "ToolTip for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "Foreground for gridpanel"
 											}
 										}
 									]
@@ -1533,33 +417,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"ToolTip": "This is ToolTip for DataGrid"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"Foreground": "primary2"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1569,8 +437,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "Tag and OnLoaded for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "Background for gridpanel"
 											}
 										}
 									]
@@ -1581,34 +448,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"Tag": "This is tag for datagrid",
-												"OnLoaded": "{ console.log( args.source.getTag() ); }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"Background": "primary2"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1618,8 +468,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnGotFocus for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "ToolTip for gridpanel"
 											}
 										}
 									]
@@ -1630,33 +479,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnGotFocus": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"ToolTip": "tooltip for grid panel"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1666,8 +499,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnLostFocus for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "Tag for gridpanel"
 											}
 										}
 									]
@@ -1678,33 +510,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnLostFocus": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"Tag": "this is tag for gridpanel"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1714,8 +530,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnClick for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnLoaded for gridpanel"
 											}
 										}
 									]
@@ -1726,33 +541,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnClick": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnLoaded": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1762,8 +561,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnDoubleClick for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnClick for gridpanel"
 											}
 										}
 									]
@@ -1774,33 +572,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnDoubleClick": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnClick": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1810,8 +592,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnMouseDown for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnDoubleClick for gridpanel"
 											}
 										}
 									]
@@ -1822,33 +603,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnMouseDown": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnDoubleClick": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1858,8 +623,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnMouseUp for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnMouseDown for gridpanel"
 											}
 										}
 									]
@@ -1870,33 +634,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnMouseUp": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnMouseDown": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1906,8 +654,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnMouseWheel for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnMouseUp for gridpanel"
 											}
 										}
 									]
@@ -1918,33 +665,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnMouseWheel": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnMouseUp": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -1954,8 +685,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnMouseEnter for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnMouseWheel for gridpanel"
 											}
 										}
 									]
@@ -1966,33 +696,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnMouseEnter": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnMouseWheel": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -2002,8 +716,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnMouseLeave for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnMouseEnter for gridpanel"
 											}
 										}
 									]
@@ -2014,33 +727,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnMouseLeave": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnMouseEnter": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -2050,8 +747,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnMouseMove for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnMouseLeave for gridpanel"
 											}
 										}
 									]
@@ -2062,33 +758,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnMouseMove": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnMouseLeave": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -2098,8 +778,7 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnKeyDown for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnMouseMove for gridpanel"
 											}
 										}
 									]
@@ -2110,33 +789,17 @@
 									"ColumnSpan": 4,
 									"Items": [
 										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnKeyDown": "{ args.source.setForeground( 'primary2' ) }"
+											"Label": {
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnMouseMove": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
-									"ColumnSpan": 3,
+									"ColumnSpan": 4,
 									"Items": []
 								}
 							},
@@ -2146,46 +809,10 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnKeyUp for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "OnPropertyChanged for gridpanel"
 											}
 										}
 									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnKeyUp": "{ args.source.setForeground( 'primary2' ) }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": []
 								}
 							},
 							{
@@ -2194,387 +821,21 @@
 									"Items": [
 										{
 											"Label": {
-												"Value": "OnPropertyChanged for DataGrid",
-												"HorizontalAlignment": "Right"
+												"Value": "4 columns"
 											}
 										}
-									]
+									],
+									"OnPropertyChanged": "{ args.source.setBackground('primary2') }"
 								}
 							},
 							{
 								"Cell": {
 									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												},
-												"OnPropertyChanged": "{ args.source.setForeground( 'primary2' ) }"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
 									"Items": [
 										{
 											"Label": {
 												"Value": "OnPropertyChanged doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ValueTemplate for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ValueTemplate doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ValueSelector for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ValueSelector doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupValueSelector for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupValueSelector doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemTemplate for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemTemplate doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemSelector for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "GroupItemSelector doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemTemplate for DataGrid",
-												"HorizontalAlignment": "Right"
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 4,
-									"Items": [
-										{
-											"DataGrid": {
-												"Columns": [
-													{
-														"Header": "Name",
-														"CellProperty": "Id"
-													},
-													{
-														"Header": "Cost",
-														"CellProperty": "rub"
-													},
-													{
-														"Header": "Internet",
-														"CellProperty": "Display"
-													}
-												],
-												"Items": {
-													"Source": "ObjectDataSource1"
-												}
-											}
-										}
-									]
-								}
-							},
-							{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "ItemTemplate doesn't work",
-												"Foreground": "primary2"
-											}
-										}
-									]
-								}
-							},
-														{
-								"Cell": {
-									"ColumnSpan": 3,
-									"Items": [
-										{
-											"Label": {
-												"Value": "additional string",
-												"Foreground": "primary2"
+												"Background": "primary2"
 											}
 										}
 									]
