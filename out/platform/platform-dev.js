@@ -26486,7 +26486,7 @@ function AddActionBuilder(){
         var action = new AddAction(parentView);
 
         var suspended = {};
-        suspended[metadata.DestinationValue.Source] = 'AddAction';
+        suspended[metadata.SourceValue.Source] = 'AddAction';
 
         var linkView = builder.build(metadata['LinkView'], {
             parent: args.parent,
@@ -26744,7 +26744,7 @@ function EditActionBuilder(){
         var action = new EditAction(parentView);
 
         var suspended = {};
-        suspended[metadata.DestinationValue.Source] = 'EditAction';
+        suspended[metadata.SourceValue.Source] = 'EditAction';
 
         var linkView = builder.build(metadata['LinkView'], {
             parent: args.parent,
