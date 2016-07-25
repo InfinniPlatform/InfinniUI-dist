@@ -19281,6 +19281,10 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
             dataSource.setResolvePriority(metadata['ResolvePriority']);
         }
 
+        if( _.isObject(metadata.CustomProperties) ) {
+            this.initCustomProperties(dataSource, metadata.CustomProperties);
+        }
+
         this.initValidation(parentView, dataSource, metadata);
         this.initNotifyValidation(dataSource);
         this.initScriptsHandlers(parentView, metadata, dataSource);
@@ -19290,6 +19294,12 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
 
     createDataSource: function (parent) {
         throw 'BaseDataSourceBuilder.createDataSource В потомке BaseDataSourceBuilder не переопределен метод createDataSource.';
+    },
+
+    initCustomProperties: function(dataSource, customProperties){
+        _.each(customProperties, function(value, key){
+            dataSource.setProperty('.' + key, value);
+        });
     },
 
     /**
@@ -19402,7 +19412,7 @@ _.extend(RestDataSourceBuilder.prototype, {
 
         if('UpdatingItemsConverter' in metadata){
             dataSource.setUpdatingItemsConverter(function (items) {
-                return new ScriptExecutor(parent).executeScript(metadata['UpdatingItemsConverter'].Name || metadata['UpdatingItemsConverter'], { value: items });
+                return new ScriptExecutor(parent).executeScript(metadata['UpdatingItemsConverter'].Name || metadata['UpdatingItemsConverter'], { value: items,  source: dataSource });
             });
         }
 
@@ -23267,9 +23277,8 @@ _.extend(DataNavigationBuilder.prototype, {
 
         var element = params.element;
         var metadata = params.metadata;
-        var dsTotalCount;
-        var pageSize;
-        var pageCount;
+        var pageSize, pageNumber;
+        var that = this;
 
         if (Array.isArray(metadata.AvailablePageSizes)) {
             element.getAvailablePageSizes().reset(metadata.AvailablePageSizes);
@@ -23277,43 +23286,45 @@ _.extend(DataNavigationBuilder.prototype, {
 
         var ds = this.findDataSource(params);
         if (ds) {
+            pageSize = ds.getProperty('.pageSize');
+
+            element.setDataSource(ds);
+            element.setPageSize(pageSize);
 
             ds.onItemsUpdated(function(){
-                dsTotalCount = ds.getTotalCount();
-                if(typeof dsTotalCount == 'number'){
-                    pageSize = ds.getPageSize();
-                    pageCount = Math.ceil(dsTotalCount/pageSize);
-                    element.setPageCount(pageCount);
-                    element.setPageNumber(ds.getPageNumber());
-                }
-                element.setIsDataReady(true);
+                that.onDataUpdated(element, ds);
             });
 
             if(ds.isDataReady()){
-                dsTotalCount = ds.getTotalCount();
-                if(typeof dsTotalCount == 'number'){
-                    pageSize = ds.getPageSize();
-                    pageCount = Math.ceil(dsTotalCount/pageSize);
-                    element.setPageCount(pageCount);
-                }
-                element.setIsDataReady(true);
+                this.onDataUpdated(element, ds);
             }
 
-            element.setDataSource(ds);
-            element.setPageNumber(ds.getPageNumber());
-            element.setPageSize(ds.getPageSize());
-
             element.onPageNumberChanged(function (context, message) {
-                ds.setPageNumber(message.value);
+                ds.setProperty('.pageNumber', message.value);
             });
 
             element.onPageSizeChanged(function (context, message) {
-                ds.setPageSize(message.value);
+                ds.setProperty('.pageSize', message.value);
             });
         } else {
             console.error('DataSource not found');
         }
 
+    },
+
+    onDataUpdated: function(element, dataSource){
+        var dsTotalCount = dataSource.getProperty('.totalCount'),
+            pageSize = dataSource.getProperty('.pageSize'),
+            pageNumber = dataSource.getProperty('.pageNumber'),
+            pageCount;
+
+        if(typeof dsTotalCount == 'number'){
+            pageCount = Math.ceil(dsTotalCount/pageSize);
+            element.setPageCount(pageCount);
+        }
+
+        element.setPageNumber(pageNumber);
+        element.setIsDataReady(true);
     },
 
     findDataSource: function (params) {
