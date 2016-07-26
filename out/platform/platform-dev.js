@@ -10181,7 +10181,11 @@ var ComboBoxView = ListEditorBaseView.extend({
 
                     var $dropdown = dropdownView.render();
                     $('body').append($dropdown);
-                    setTimeout(dropdownView.updatePosition(view.el));
+                    
+                    dropdownView.updatePosition(view.el);
+                    view.dropDownView.on('itemsRendered2', function(){
+                        dropdownView.updatePosition(view.el);
+                    });
 
                     if (model.get('autocomplete')) {
                         dropdownView.setSearchFocus();
@@ -10396,6 +10400,7 @@ var ComboBoxView = ListEditorBaseView.extend({
     }
 
 });
+
 //####app/controls/comboBox/dropdown/comboBoxDropdownView.js
 var ComboBoxDropdownView = Backbone.View.extend({
 
@@ -10455,6 +10460,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
     },
 
     renderItems: function () {
+        this.$el.hide();
         var $items = this.strategy.renderItems();
         this.$items = $items;
         var items = this.model.get('items');
@@ -10464,6 +10470,9 @@ var ComboBoxDropdownView = Backbone.View.extend({
 
         this.markSelectedItems();
         this.markCheckedItems();
+
+        this.trigger('itemsRendered2');
+        this.$el.show();
     },
 
     setItemsContent: function (content) {
@@ -10676,9 +10685,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
     applyStyle: function (parentDOMElement, direction) {
         var rect = parentDOMElement.getBoundingClientRect();
 
-        //@TODO Вынести общие стили в css
         var style = {
-            position: "absolute",
             left: window.pageXOffset + rect.left,
             width: Math.round(rect.width) - 1
         };
@@ -10695,6 +10702,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
 });
 
 _.extend(ComboBoxDropdownView.prototype, bindUIElementsMixin);
+
 //####app/controls/comboBox/dropdown/group/groupView.js
 var ComboBoxGroupView = Backbone.View.extend({
 

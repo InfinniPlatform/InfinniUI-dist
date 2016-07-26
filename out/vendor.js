@@ -27314,7 +27314,7 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
  * Project: https://github.com/CodeSeven/toastr
  */
 /* global define */
-; (function (define) {
+(function (define) {
     define(['jquery'], function ($) {
         return (function () {
             var $container;
@@ -27336,7 +27336,7 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                 options: {},
                 subscribe: subscribe,
                 success: success,
-                version: '2.1.2',
+                version: '2.1.3',
                 warning: warning
             };
 
@@ -27447,9 +27447,7 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
             function createContainer(options) {
                 $container = $('<div/>')
                     .attr('id', options.containerId)
-                    .addClass(options.positionClass)
-                    .attr('aria-live', 'polite')
-                    .attr('role', 'alert');
+                    .addClass(options.positionClass);
 
                 $container.appendTo($(options.target));
                 return $container;
@@ -27473,6 +27471,7 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                     closeMethod: false,
                     closeDuration: false,
                     closeEasing: false,
+                    closeOnHover: true,
 
                     extendedTimeOut: 1000,
                     iconClasses: {
@@ -27489,9 +27488,12 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                     escapeHtml: false,
                     target: 'body',
                     closeHtml: '<button type="button">&times;</button>',
+                    closeClass: 'toast-close-button',
                     newestOnTop: true,
                     preventDuplicates: false,
-                    progressBar: false
+                    progressBar: false,
+                    progressClass: 'toast-progress',
+                    rtl: false
                 };
             }
 
@@ -27549,10 +27551,11 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                 return $toastElement;
 
                 function escapeHtml(source) {
-                    if (source == null)
-                        source = "";
+                    if (source == null) {
+                        source = '';
+                    }
 
-                    return new String(source)
+                    return source
                         .replace(/&/g, '&amp;')
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&#39;')
@@ -27566,11 +27569,29 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                     setMessage();
                     setCloseButton();
                     setProgressBar();
+                    setRTL();
                     setSequence();
+                    setAria();
+                }
+
+                function setAria() {
+                    var ariaValue = '';
+                    switch (map.iconClass) {
+                        case 'toast-success':
+                        case 'toast-info':
+                            ariaValue =  'polite';
+                            break;
+                        default:
+                            ariaValue = 'assertive';
+                    }
+                    $toastElement.attr('aria-live', ariaValue);
                 }
 
                 function handleEvents() {
-                    $toastElement.hover(stickAround, delayedHideToast);
+                    if (options.closeOnHover) {
+                        $toastElement.hover(stickAround, delayedHideToast);
+                    }
+
                     if (!options.onclick && options.tapToDismiss) {
                         $toastElement.click(hideToast);
                     }
@@ -27582,6 +27603,11 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                             } else if (event.cancelBubble !== undefined && event.cancelBubble !== true) {
                                 event.cancelBubble = true;
                             }
+
+                            if (options.onCloseClick) {
+                                options.onCloseClick(event);
+                            }
+
                             hideToast(true);
                         });
                     }
@@ -27627,29 +27653,43 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
 
                 function setTitle() {
                     if (map.title) {
-                        $titleElement.append(!options.escapeHtml ? map.title : escapeHtml(map.title)).addClass(options.titleClass);
+                        var suffix = map.title;
+                        if (options.escapeHtml) {
+                            suffix = escapeHtml(map.title);
+                        }
+                        $titleElement.append(suffix).addClass(options.titleClass);
                         $toastElement.append($titleElement);
                     }
                 }
 
                 function setMessage() {
                     if (map.message) {
-                        $messageElement.append(!options.escapeHtml ? map.message : escapeHtml(map.message)).addClass(options.messageClass);
+                        var suffix = map.message;
+                        if (options.escapeHtml) {
+                            suffix = escapeHtml(map.message);
+                        }
+                        $messageElement.append(suffix).addClass(options.messageClass);
                         $toastElement.append($messageElement);
                     }
                 }
 
                 function setCloseButton() {
                     if (options.closeButton) {
-                        $closeElement.addClass('toast-close-button').attr('role', 'button');
+                        $closeElement.addClass(options.closeClass).attr('role', 'button');
                         $toastElement.prepend($closeElement);
                     }
                 }
 
                 function setProgressBar() {
                     if (options.progressBar) {
-                        $progressElement.addClass('toast-progress');
+                        $progressElement.addClass(options.progressClass);
                         $toastElement.prepend($progressElement);
+                    }
+                }
+
+                function setRTL() {
+                    if (options.rtl) {
+                        $toastElement.addClass('rtl');
                     }
                 }
 
@@ -27678,6 +27718,7 @@ if (!PDFJS.workerSrc && typeof document !== 'undefined') {
                         easing: easing,
                         complete: function () {
                             removeToast($toastElement);
+                            clearTimeout(intervalId);
                             if (options.onHidden && response.state !== 'hidden') {
                                 options.onHidden();
                             }
