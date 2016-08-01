@@ -8,6 +8,50 @@
 
 .pl-datagrid {
 
+  .sortable {
+    cursor: pointer;
+  }
+
+  .sorted {
+    position: relative;
+    padding-right: 18px;
+  }
+
+  .headerTemplate-sorted-asc:after, .headerTemplate-sorted-desc:after {
+    position: absolute;
+    right: 5px;
+    top: calc(~"50% - 10px");
+    display: inline-block;
+    font-family: FontAwesome;
+  }
+
+  .headerTemplate-sorted-asc:after {
+    content: "\f0d8";
+  }
+
+  .headerTemplate-sorted-desc:after {
+    content: "\f0d7";
+  }
+
+  .sorted-asc, .sorted-desc {
+    span:after {
+      display: inline-block;
+      font-family: FontAwesome;
+      margin-left: 5px;
+    }
+  }
+  .sorted-asc {
+    span:after {
+      content: "\f0d8";
+    }
+  }
+
+  .sorted-desc {
+    span:after {
+      content: "\f0d7";
+    }
+  }
+
   &_layout {
 
     &_fixed {

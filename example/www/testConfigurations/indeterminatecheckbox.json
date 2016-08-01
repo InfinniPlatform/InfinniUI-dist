@@ -152,21 +152,21 @@
 											}
 										},
 										{
-											"IndeterminateCheckbox": {
+											"IndeterminateCheckBox": {
 												"Value": "unchecked",
-												"Text": "IndeterminateCheckbox"
+												"Text": "IndeterminateCheckBox"
 											}
 										},
 										{
-											"IndeterminateCheckbox": {
+											"IndeterminateCheckBox": {
 												"Value": "checked",
-												"Text": "IndeterminateCheckbox"
+												"Text": "IndeterminateCheckBox"
 											}
 										},
 										{
-											"IndeterminateCheckbox": {
+											"IndeterminateCheckBox": {
 												"Value": "indeterminate",
-												"Text": "IndeterminateCheckbox"
+												"Text": "IndeterminateCheckBox"
 											}
 										}
 									]

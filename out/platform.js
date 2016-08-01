@@ -1675,7 +1675,7 @@ var domHelper = {
             if(n>0){
                 setTimeout( function(){
                     that.whenReady(conditionFunction, onConditionFunction, n-1);
-                }, 10);
+                }, 510);
             }
         }else{
             onConditionFunction();
@@ -1683,6 +1683,7 @@ var domHelper = {
     }
 
 };
+
 //####app/utils/dot.js
 /**
  * Синглтон для работы с путями построенными по dot-notation
@@ -4152,29 +4153,6 @@ var ajaxRequestMixin = (function (bus) {
     }
 
 })(window.InfinniUI.global.messageBus);
-//####app/controls/_base/_mixins/backgroundPropertyMixin.js
-var backgroundPropertyMixin = {
-
-    initBackground: function () {
-        this.listenTo(this.model, 'change:background', this.updateBackground);
-    },
-
-    updateBackground: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-        this.switchClass('background', this.model.get('background'));
-    }
-
-};
-
-
-//####app/controls/_base/_mixins/baseTextControlMixin.js
-var baseTextControlMixin = {
-
-};
-
-
 //####app/controls/_base/_mixins/bindUIElementsMixin.js
 var bindUIElementsMixin = {
     /**
@@ -4196,30 +4174,6 @@ var bindUIElementsMixin = {
         }
     }
 };
-//####app/controls/_base/_mixins/errorTextPropertyMixin.js
-var errorTextPropertyMixin = {
-
-    initErrorText: function () {
-        this.listenTo(this.model, 'change:errorText', this.updateErrorText);
-    },
-
-    updateErrorText: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-        var errorText = this.model.get('errorText');
-        var validationState = 'success';
-        var validationMessage = '';
-        if (_.isEmpty(errorText) === false) {
-            validationMessage = errorText;
-            validationState = 'error';
-        }
-
-        this.model.set('validationState', validationState);
-        this.model.set('validationMessage', validationMessage);
-    }
-};
-
 //####app/controls/_base/_mixins/eventHandlerMixin.js
 var eventHandlerMixin = {
 
@@ -4296,143 +4250,6 @@ var eventHandlerMixin = {
         }
     }
 
-
-};
-//####app/controls/_base/_mixins/foregroundPropertyMixin.js
-var foregroundPropertyMixin = {
-
-    initForeground: function () {
-        this.listenTo(this.model, 'change:foreground', this.updateForeground);
-    },
-
-    updateForeground: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-        this.switchClass('foreground', this.model.get('foreground'));
-    }
-
-};
-
-
-//####app/controls/_base/_mixins/hintTextPropertyMixin.js
-var hintTextPropertyMixin = {
-
-    initHintText: function () {
-        this.listenTo(this.model, 'change:hintText', this.updateHintText);
-    },
-
-    updateHintText: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-
-        var text = this.model.get('hintText');
-        if (typeof text === 'undefined' || text === null) {
-            text = '';
-        }
-        this.ui.hintText.text(text);
-    }
-
-};
-
-
-//####app/controls/_base/_mixins/horizontalTextAlignmentPropertyMixin.js
-//var horizontalTextAlignmentPropertyMixin = {
-//
-//    initHorizontalTextAlignment: function () {
-//        this.listenTo(this.model, 'change:horizontalTextAlignment', this.updateHorizontalTextAlignment);
-//    },
-//
-//    updateHorizontalTextAlignment: function () {
-//        if (!this.wasRendered) {
-//            return;
-//        }
-//        var value = this.model.get('horizontalTextAlignment');
-//
-//        if (InfinniUI.Metadata.HorizontalTextAlignment.indexOf(value) === -1) {
-//            return;
-//        }
-//        this.switchClass('horizontalTextAlignment', value);
-//    }
-//
-//};
-
-//####app/controls/_base/_mixins/labelTextPropertyMixin.js
-var labelTextPropertyMixin = {
-
-    initLabelText: function () {
-        this.listenTo(this.model, 'change:labelText', this.updateLabelText);
-    },
-
-    updateLabelText: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-
-        this.ui.rerender();
-    }
-
-};
-
-//####app/controls/_base/_mixins/lineCountPropertyMixin.js
-var lineCountPropertyMixin = {
-
-    updateLineCount: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-
-        var lineCount = this.model.get('lineCount');
-
-        if (lineCount > 0) {
-            this.switchClass('line-count',  lineCount, this.ui.container);
-            //this.ui.container.removeAttr('class');
-            //this.ui.container.addClass('line-count-' + lineCount);
-        }
-    },
-
-    initUpdateLineCount: function () {
-        this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
-    }
-
-};
-
-//####app/controls/_base/_mixins/textStylePropertyMixin.js
-var textStylePropertyMixin = {
-
-    initTextStyle: function () {
-        this.listenTo(this.model, 'change:textStyle', this.updateTextStyle);
-    },
-
-    updateTextStyle: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-        this.switchClass('textstyle', this.model.get('textStyle'));
-    }
-
-};
-
-//####app/controls/_base/_mixins/textWrappingPropertyMixin.js
-var textWrappingPropertyMixin = {
-
-    initTextWrapping: function () {
-        this.listenTo(this.model, 'change:textWrapping', this.updateLinkText);
-    },
-
-    updateTextWrapping: function () {
-        var textWrapping = this.model.get('textWrapping');
-        this.$el.toggleClass('TextWrapping', textWrapping);
-        this.$el.toggleClass('NoTextWrapping', !textWrapping);
-    }
-};
-//####app/controls/_base/_mixins/valuePropertyMixin.js
-var controlValuePropertyMixin = {
-
-    onValueChanged: function(handler){
-        this.controlModel.on('change:value', handler);
-    }
 
 };
 //####app/controls/_base/control/control.js
@@ -9765,6 +9582,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
     },
 
     renderItems: function () {
+        this.$el.hide();
         var $items = this.strategy.renderItems();
         this.$items = $items;
         var items = this.model.get('items');
@@ -9774,6 +9592,9 @@ var ComboBoxDropdownView = Backbone.View.extend({
 
         this.markSelectedItems();
         this.markCheckedItems();
+
+        this.trigger('itemsRendered2');
+        this.$el.show();
     },
 
     setItemsContent: function (content) {
@@ -9986,9 +9807,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
     applyStyle: function (parentDOMElement, direction) {
         var rect = parentDOMElement.getBoundingClientRect();
 
-        //@TODO Вынести общие стили в css
         var style = {
-            position: "absolute",
             left: window.pageXOffset + rect.left,
             width: Math.round(rect.width) - 1
         };
@@ -10005,6 +9824,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
 });
 
 _.extend(ComboBoxDropdownView.prototype, bindUIElementsMixin);
+
 //####app/controls/comboBox/dropdown/viewBaseStrategy.js
 /**
  * @abstract
@@ -10442,7 +10262,8 @@ var DataGridModel = ListEditorBaseModel.extend({
         showSelectors: true,
         checkAllVisible: false,
         checkAll: false,
-        focusable: false
+        focusable: false,
+        sortedColumn: null
     }, ListEditorBaseModel.prototype.defaults),
 
     initialize: function () {
@@ -10467,6 +10288,7 @@ var DataGridModel = ListEditorBaseModel.extend({
         this.set('columns', new Collection());
     }
 });
+
 //####app/controls/dataGrid/dataGridView.js
 /**
  * @constructor
@@ -10486,7 +10308,8 @@ var DataGridView = ListEditorBaseView.extend({
     events: _.extend({},
         ListEditorBaseView.prototype.events,
         {
-            "click .pl-datagrid-toggle_all": "onClickCheckAllHandler"
+            "click .pl-datagrid-toggle_all": "onClickCheckAllHandler",
+            'click .pl-datagrid-row__cell': 'onClickToHeaderCellHandler'
         }
     ),
 
@@ -10513,6 +10336,7 @@ var DataGridView = ListEditorBaseView.extend({
         this.listenTo(this.model, 'change:showSelectors', this.updateShowSelectors);
         this.listenTo(this.model, 'change:checkAllVisible', this.updateCheckAllVisible);
         this.listenTo(this.model, 'change:checkAll', this.updateCheckAll);
+        this.listenTo(this.model, 'resetSort', this.resetSort);
     },
 
     updateProperties: function () {
@@ -10696,6 +10520,7 @@ var DataGridView = ListEditorBaseView.extend({
     },
 
     renderHeaders: function () {
+        var that = this;
         var columns = this.model.get('columns');
         var templateHeaderCell = this.template.headerCell;
         var sizeCells = [];
@@ -10708,6 +10533,18 @@ var DataGridView = ListEditorBaseView.extend({
 
             var headerTemplate = column.getHeaderTemplate();
             var header = column.getHeader();
+
+            $th.data('pl-column', column);
+
+            if( column.getSortable() ) {
+                $th.addClass('sortable');
+
+                if( column.getSortDirection()  ) {
+                    setTimeout(function() {
+                        that.setUpColumnSort(column, $th, column.getSortDirection(), false);
+                    }, 0);
+                }
+            }
 
             var headerElement;
 
@@ -10780,6 +10617,49 @@ var DataGridView = ListEditorBaseView.extend({
 
     onClickCheckAllHandler: function () {
         this.model.toggleCheckAll();
+    },
+
+    onClickToHeaderCellHandler: function (e) {
+        var $th = $(e.currentTarget);
+        var column = $th.data('pl-column');
+
+        if( column.isSortable() ){
+            if(column.getSortDirection() === null) {
+                this.resetSort();
+                this.setUpColumnSort(column, $th, 'asc');
+            } else if( column.getSortDirection() === 'asc' ) {
+                this.resetSort('asc');
+                this.setUpColumnSort(column, $th, 'desc');
+            } else if( column.getSortDirection() === 'desc' ) {
+                this.resetSort('desc');
+                this.setUpColumnSort(column, $th, 'asc');
+            }
+        }
+    },
+
+    setUpColumnSort: function(column, $th, direction, triggerEvent) {
+        column.setSortDirection(direction);
+        this.model.set('sortedColumn', column);
+        if( !column.getIsHeaderTemplateEmpty() ) {
+            $th.addClass('sorted headerTemplate-sorted-' + direction);
+        } else {
+            $th.addClass('sorted sorted-' + direction);
+        }
+        if( triggerEvent !== false ) {
+            column.trigger('onSort', {sortDirection: direction});
+        }
+    },
+
+    resetSort: function(direction) {
+        if( !direction ) {
+            var $sortableCell = this.$el.find('.sorted');
+            $sortableCell.removeClass('sorted headerTemplate-sorted-asc headerTemplate-sorted-desc sorted-asc sorted-desc');
+            var  sortedCell = this.model.get('sortedColumn');
+            sortedCell.setSortDirection(null);
+        } else {
+            var $sortableCell = this.$el.find('.sorted');
+            $sortableCell.removeClass('headerTemplate-sorted-' + direction + ' sorted-' + direction);
+        }
     }
 
 
@@ -11421,7 +11301,6 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
         this.listenTo(this.model, 'change:displayFormat', this.updateDisplayFormat);
         this.listenTo(this.model, 'change:textWrapping', this.updateTextWrapping);
         this.listenTo(this.model, 'change:textTrimming', this.updateTextTrimming);
-        this.listenTo(this.model, 'change:lineCount', this.updateLineCount);
     },
 
     updateProperties: function(){
@@ -11431,7 +11310,6 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
         this.updateDisplayFormat();
         this.updateTextWrapping();
         this.updateTextTrimming();
-        this.updateLineCount();
     },
 
     updateFocusable: function () {
@@ -11471,10 +11349,6 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
 
     updateText: function () {
         this.updateValue();
-    },
-
-    updateLineCount: function(){
-
     },
 
     getData: function () {
@@ -14190,7 +14064,11 @@ var ComboBoxView = ListEditorBaseView.extend({
 
                     var $dropdown = dropdownView.render();
                     $('body').append($dropdown);
-                    setTimeout(dropdownView.updatePosition(view.el));
+                    
+                    dropdownView.updatePosition(view.el);
+                    view.dropDownView.on('itemsRendered2', function(){
+                        dropdownView.updatePosition(view.el);
+                    });
 
                     if (model.get('autocomplete')) {
                         dropdownView.setSearchFocus();
@@ -14405,6 +14283,7 @@ var ComboBoxView = ListEditorBaseView.extend({
     }
 
 });
+
 //####app/controls/contextMenu/contextMenuControl.js
 function ContextMenuControl() {
     _.superClass(ContextMenuControl, this);
@@ -15125,19 +15004,6 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
 
         var that = this;
 
-        domHelper.whenReady(
-            function(){
-                return that.$el.closest('.pl-view').length > 0;
-            },
-
-            function(){
-                var width = that.$el.width(),
-                    buttonWidth = that.$el.find('.input-group-btn').width();
-
-                that.$el.find('.form-control').css('width', (width - buttonWidth) );
-            }
-        );
-
         return this;
     }
 
@@ -15712,29 +15578,29 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
 
 }));
 
-//####app/controls/indeterminateCheckbox/indeterminateCheckboxControl.js
-function IndeterminateCheckboxControl(parent) {
-	_.superClass(IndeterminateCheckboxControl, this, parent);
+//####app/controls/indeterminateCheckBox/indeterminateCheckBoxControl.js
+function IndeterminateCheckBoxControl(parent) {
+	_.superClass(IndeterminateCheckBoxControl, this, parent);
 	this.initialize_editorBaseControl();
 }
 
-_.inherit(IndeterminateCheckboxControl, CheckBoxControl);
+_.inherit(IndeterminateCheckBoxControl, CheckBoxControl);
 
-_.extend(IndeterminateCheckboxControl.prototype, {
+_.extend(IndeterminateCheckBoxControl.prototype, {
 
 	createControlModel: function () {
-		return new IndeterminateCheckboxModel();
+		return new IndeterminateCheckBoxModel();
 	},
 
 	createControlView: function (model) {
-		return new IndeterminateCheckboxView({model: model});
+		return new IndeterminateCheckBoxView({model: model});
 	}
 
 }, editorBaseControlMixin);
 
 
-//####app/controls/indeterminateCheckbox/indeterminateCheckboxModel.js
-var IndeterminateCheckboxModel = CheckBoxModel.extend({
+//####app/controls/indeterminateCheckBox/indeterminateCheckBoxModel.js
+var IndeterminateCheckBoxModel = CheckBoxModel.extend({
 
 	defaults: _.defaults({
 		value: 'unchecked'
@@ -15742,13 +15608,13 @@ var IndeterminateCheckboxModel = CheckBoxModel.extend({
 
 });
 
-//####app/controls/indeterminateCheckbox/indeterminateCheckboxView.js
+//####app/controls/indeterminateCheckBox/indeterminateCheckBoxView.js
 /**
- * @class IndeterminateCheckboxView
+ * @class IndeterminateCheckBoxView
  * @augments ControlView
  * @mixes editorBaseViewMixin
  */
-var IndeterminateCheckboxView = CheckBoxView.extend({
+var IndeterminateCheckBoxView = CheckBoxView.extend({
 
 	className: 'pl-indeterminate-checkbox',
 
@@ -16164,7 +16030,8 @@ var PanelModel = ContainerModel.extend(/** @lends PanelModel.prototype */ {
 
     defaults: _.defaults({
         collapsible: false,
-        collapsed: false
+        collapsed: false,
+        collapsibleArea: ''
     }, ContainerModel.prototype.defaults),
 
     set: function (key, val, options) {
@@ -16233,6 +16100,7 @@ var PanelModel = ContainerModel.extend(/** @lends PanelModel.prototype */ {
     }
 
 });
+
 //####app/controls/panel/panelView.js
 /**
  * @class
@@ -16342,13 +16210,25 @@ var PanelView = ContainerView.extend(/** @lends PanelView.prototype */ {
 
     },
 
-    onClickHeaderHandler: function (event) {
+    onEventCallback: function () {
         var collapsible = this.model.get('collapsible');
         if (collapsible) {
             var collapsed = this.model.get('collapsed');
             this.model.set('collapsed', !collapsed);
         }
+    },
+
+    onClickHeaderHandler: function (event) {
+        var collapsibleArea = this.model.get('collapsibleArea');
+        if( collapsibleArea !== '' ) {
+            if( $(event.target).closest('[data-pl-name=' + collapsibleArea + ']').length ) {
+                this.onEventCallback();
+            }
+        } else {
+            this.onEventCallback();
+        }
     }
+
 });
 
 //####app/controls/passwordBox/passwordBoxControl.js
@@ -16434,7 +16314,6 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
 
         this.listenTo(this.model, 'change:labelText', this.updateLabelText);
         this.listenTo(this.model, 'change:labelFloating', this.updateLabelFloating);
-        this.listenTo(this.model, 'change:passwordChar', this.updatePasswordChar);
         this.listenTo(this.model, 'change:autocomplete', this.updateAutocomplete);
 
     },
@@ -16443,7 +16322,6 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
         ControlView.prototype.updateProperties.call(this);
         editorBaseViewMixin.updateProperties.call(this);
         this.updateLabelText();
-        this.updatePasswordChar();
     },
 
     updateLabelText: function () {
@@ -16453,10 +16331,6 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
 
     updateAutocomplete: function () {
         this.rerender();
-    },
-
-    updatePasswordChar: function () {
-        //Can't use on native input[type=password]
     },
 
     updateValue: function(){
@@ -17439,24 +17313,6 @@ var BaseDataSource = Backbone.Model.extend({
         });
     },
 
-    _addItems: function (newItems) {
-        var indexedItemsById = this.get('itemsById'),
-            items = this.getItems(),
-            newIndexedItemsById;
-
-        this.set('isDataReady', true);
-        items = _.union(items, newItems);
-        this.set('items', items);
-        if (newItems && newItems.length > 0) {
-            newIndexedItemsById = this._indexItemsById(newItems);
-            _.extend(indexedItemsById, newIndexedItemsById);
-            this.set('itemsById', indexedItemsById);
-        }
-
-        this._notifyAboutItemsUpdatedAsPropertyChanged(items);
-        //this.trigger('settingNewItemsComplete');
-    },
-
     getSelectedItem: function () {
         return this.get('model').getProperty('selectedItem');
     },
@@ -17857,24 +17713,6 @@ var BaseDataSource = Backbone.Model.extend({
 
         this.trigger('onPropertyChanged', context, argument);
         this.trigger('onPropertyChanged:', context, argument);
-    },
-
-    _handleAddedItems: function (itemsData, successHandler) {
-        this._addItems(itemsData);
-        this._notifyAboutItemsAdded(itemsData, successHandler);
-
-    },
-
-    _notifyAboutItemsAdded: function (itemsData, successHandler) {
-        var context = this.getContext(),
-            argument = {
-                value: itemsData
-            };
-
-        if (successHandler) {
-            successHandler(context, argument);
-        }
-        this.trigger('onItemsAdded', context, argument);
     },
 
     createItem: function (success, error) {
@@ -18915,6 +18753,10 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
             dataSource.setResolvePriority(metadata['ResolvePriority']);
         }
 
+        if( _.isObject(metadata.CustomProperties) ) {
+            this.initCustomProperties(dataSource, metadata.CustomProperties);
+        }
+
         this.initValidation(parentView, dataSource, metadata);
         this.initNotifyValidation(dataSource);
         this.initScriptsHandlers(parentView, metadata, dataSource);
@@ -18924,6 +18766,12 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
 
     createDataSource: function (parent) {
         throw 'BaseDataSourceBuilder.createDataSource В потомке BaseDataSourceBuilder не переопределен метод createDataSource.';
+    },
+
+    initCustomProperties: function(dataSource, customProperties){
+        _.each(customProperties, function(value, key){
+            dataSource.setProperty('.' + key, value);
+        });
     },
 
     /**
@@ -18941,35 +18789,40 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
         }
     },
 
+    //Скриптовые обработчики на события
     initScriptsHandlers: function (parentView, metadata, dataSource) {
-        //Скриптовые обработчики на события
-        if (parentView && metadata.OnSelectedItemChanged) {
+
+        if( !parentView ){
+            return;
+        }
+
+        if (metadata.OnSelectedItemChanged) {
             dataSource.onSelectedItemChanged(function (context, args) {
                 new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemChanged.Name || metadata.OnSelectedItemChanged, args);
             });
         }
 
-        if (parentView && metadata.OnItemsUpdated) {
+        if (metadata.OnItemsUpdated) {
             dataSource.onItemsUpdated(function (context, args) {
                 new ScriptExecutor(parentView).executeScript(metadata.OnItemsUpdated.Name || metadata.OnItemsUpdated, args);
             });
         }
 
-        //if (parentView && metadata.OnSelectedItemModified) {
-        //    dataSource.onSelectedItemModified(function () {
-        //        new ScriptExecutor(parentView).executeScript(metadata.OnSelectedItemModified.Name || metadata.OnSelectedItemModified);
-        //    });
-        //}
-
-        if (parentView && metadata.OnPropertyChanged) {
+        if (metadata.OnPropertyChanged) {
             dataSource.onPropertyChanged(function (context, args) {
                 new ScriptExecutor(parentView).executeScript(metadata.OnPropertyChanged.Name || metadata.OnPropertyChanged, args);
             });
         }
 
-        if (parentView && metadata.OnItemDeleted) {
+        if (metadata.OnItemDeleted) {
             dataSource.onItemDeleted(function () {
                 new ScriptExecutor(parentView).executeScript(metadata.OnItemDeleted.Name || metadata.OnItemDeleted);
+            });
+        }
+
+        if (metadata.OnErrorValidator) {
+            dataSource.onErrorValidator(function () {
+                new ScriptExecutor(parentView).executeScript(metadata.OnErrorValidator.Name || metadata.OnErrorValidator);
             });
         }
     },
@@ -19041,7 +18894,7 @@ _.extend(RestDataSourceBuilder.prototype, {
 
         if('UpdatingItemsConverter' in metadata){
             dataSource.setUpdatingItemsConverter(function (items) {
-                return new ScriptExecutor(parent).executeScript(metadata['UpdatingItemsConverter'].Name || metadata['UpdatingItemsConverter'], { value: items });
+                return new ScriptExecutor(parent).executeScript(metadata['UpdatingItemsConverter'].Name || metadata['UpdatingItemsConverter'], { value: items,  source: dataSource });
             });
         }
 
@@ -22497,6 +22350,49 @@ DataGridColumn.prototype.getWidth = function (value) {
     return this.getProperty('width');
 };
 
+DataGridColumn.prototype.setSortable = function (value) {
+    this.setProperty('sortable', value);
+};
+
+DataGridColumn.prototype.getSortable = function () {
+    return this.getProperty('sortable');
+};
+
+DataGridColumn.prototype.isSortable = function () {
+    return this.getSortable();
+};
+
+DataGridColumn.prototype.setSortDirection = function (value) {
+    this.setProperty('sortDirection', value);
+};
+
+DataGridColumn.prototype.getSortDirection = function () {
+    return this.getProperty('sortDirection');
+};
+
+DataGridColumn.prototype.setSortFunction = function (handler) {
+    this.setProperty('sortFunction', handler);
+};
+
+DataGridColumn.prototype.getSortFunction = function () {
+    return this.getProperty('sortFunction');
+};
+
+DataGridColumn.prototype.setIsHeaderTemplateEmpty = function (value) {
+    this.setProperty('isHeaderTemplateEmpty', value);
+};
+
+DataGridColumn.prototype.getIsHeaderTemplateEmpty = function () {
+    return this.getProperty('isHeaderTemplateEmpty');
+};
+
+DataGridColumn.prototype.onSort = function (handler) {
+    var that = this,
+        callback = function (nativeEventData) {
+            handler(nativeEventData);
+        };
+    this.on('onSort', callback);
+};
 
 /**
  * @description Для взаимодействие с DataBinding
@@ -22530,6 +22426,7 @@ DataGridColumn.prototype.getProperty = function (propertyName) {
 };
 
 _.extend(DataGridColumn.prototype, Backbone.Events);
+
 //####app/elements/dataGrid/dataGridColumnBuilder.js
 /**
  *
@@ -22558,6 +22455,20 @@ DataGridColumnBuilder.prototype.build = function (element, metadata, params) {
         .buildHeaderTemplate(column, metadata, params)
         .buildCellTemplate(column, metadata, params)
         .buildWidth(column, metadata);
+
+    if( metadata.Sortable ) {
+        column.setSortable(true);
+        column.setSortDirection( null );
+        if( metadata.SortedDefault && ( metadata.SortedDefault === 'asc' || metadata.SortedDefault === 'desc' ) ) {
+            column.setSortDirection( metadata.SortedDefault );
+        }
+
+        if (metadata.SortFunction) {
+            column.onSort(function (args) {
+                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.SortFunction.Name || metadata.SortFunction, args);
+            });
+        }
+    }
 
     return column;
 };
@@ -22769,8 +22680,10 @@ DataGridColumnBuilder.prototype.buildHeaderTemplate = function (column, metadata
 
     if (typeof headerTemplateMetadata === 'undefined' || _.isEmpty(headerTemplateMetadata)) {
         headerTemplate = this.buildHeaderTemplateByDefault(params);
+        column.setIsHeaderTemplateEmpty(true);
     } else {
         headerTemplate = this.buildHeaderTemplateByMetadata(headerTemplateMetadata, params);
+        column.setIsHeaderTemplateEmpty(false);
     }
 
     column.setHeaderTemplate(headerTemplate);
@@ -22897,9 +22810,8 @@ _.extend(DataNavigationBuilder.prototype, {
 
         var element = params.element;
         var metadata = params.metadata;
-        var dsTotalCount;
         var pageSize;
-        var pageCount;
+        var that = this;
 
         if (Array.isArray(metadata.AvailablePageSizes)) {
             element.getAvailablePageSizes().reset(metadata.AvailablePageSizes);
@@ -22907,43 +22819,45 @@ _.extend(DataNavigationBuilder.prototype, {
 
         var ds = this.findDataSource(params);
         if (ds) {
+            pageSize = ds.getProperty('.pageSize');
+
+            element.setDataSource(ds);
+            element.setPageSize(pageSize);
 
             ds.onItemsUpdated(function(){
-                dsTotalCount = ds.getTotalCount();
-                if(typeof dsTotalCount == 'number'){
-                    pageSize = ds.getPageSize();
-                    pageCount = Math.ceil(dsTotalCount/pageSize);
-                    element.setPageCount(pageCount);
-                    element.setPageNumber(ds.getPageNumber());
-                }
-                element.setIsDataReady(true);
+                that.onDataUpdated(element, ds);
             });
 
             if(ds.isDataReady()){
-                dsTotalCount = ds.getTotalCount();
-                if(typeof dsTotalCount == 'number'){
-                    pageSize = ds.getPageSize();
-                    pageCount = Math.ceil(dsTotalCount/pageSize);
-                    element.setPageCount(pageCount);
-                }
-                element.setIsDataReady(true);
+                this.onDataUpdated(element, ds);
             }
 
-            element.setDataSource(ds);
-            element.setPageNumber(ds.getPageNumber());
-            element.setPageSize(ds.getPageSize());
-
             element.onPageNumberChanged(function (context, message) {
-                ds.setPageNumber(message.value);
+                ds.setProperty('.pageNumber', message.value);
             });
 
             element.onPageSizeChanged(function (context, message) {
-                ds.setPageSize(message.value);
+                ds.setProperty('.pageSize', message.value);
             });
         } else {
             console.error('DataSource not found');
         }
 
+    },
+
+    onDataUpdated: function(element, dataSource){
+        var dsTotalCount = dataSource.getProperty('.totalCount'),
+            pageSize = dataSource.getProperty('.pageSize'),
+            pageNumber = dataSource.getProperty('.pageNumber'),
+            pageCount;
+
+        if(typeof dsTotalCount == 'number'){
+            pageCount = Math.ceil(dsTotalCount/pageSize);
+            element.setPageCount(pageCount);
+        }
+
+        element.setPageNumber(pageNumber);
+        element.setIsDataReady(true);
     },
 
     findDataSource: function (params) {
@@ -23511,46 +23425,46 @@ ImageBoxValueConverter.prototype.toElement = function (context, args) {
     }
     return url;
 };
-//####app/elements/indeterminateCheckbox/indeterminateCheckbox.js
+//####app/elements/indeterminateCheckBox/indeterminateCheckBox.js
 /**
  *
  * @param parent
  * @constructor
  * @augment Element
  */
-function IndeterminateCheckbox(parent) {
-	_.superClass(IndeterminateCheckbox, this, parent);
+function IndeterminateCheckBox(parent) {
+	_.superClass(IndeterminateCheckBox, this, parent);
 	this.initialize_editorBase();
 }
 
-_.inherit(IndeterminateCheckbox, CheckBox);
+_.inherit(IndeterminateCheckBox, CheckBox);
 
 
-_.extend(IndeterminateCheckbox.prototype, {
+_.extend(IndeterminateCheckBox.prototype, {
 
 	createControl: function (parent) {
-		return new IndeterminateCheckboxControl(parent);
+		return new IndeterminateCheckBoxControl(parent);
 	}
 
 }, editorBaseMixin);
 
-//####app/elements/indeterminateCheckbox/indeterminateCheckboxBuilder.js
+//####app/elements/indeterminateCheckBox/indeterminateCheckBoxBuilder.js
 /**
  *
  * @constructor
  * @augments ElementBuilder
  */
-function IndeterminateCheckboxBuilder() {
-	_.superClass(IndeterminateCheckboxBuilder, this);
+function IndeterminateCheckBoxBuilder() {
+	_.superClass(IndeterminateCheckBoxBuilder, this);
 	this.initialize_editorBaseBuilder();
 }
 
-_.inherit(IndeterminateCheckboxBuilder, CheckBoxBuilder);
+_.inherit(IndeterminateCheckBoxBuilder, CheckBoxBuilder);
 
 
-_.extend(IndeterminateCheckboxBuilder.prototype, {
+_.extend(IndeterminateCheckBoxBuilder.prototype, {
 	createElement: function (params) {
-		return new IndeterminateCheckbox(params.parent);
+		return new IndeterminateCheckBox(params.parent);
 	}
 });
 
@@ -23568,14 +23482,6 @@ _.extend(Label.prototype, {
 
         createControl: function () {
             return new LabelControl();
-        },
-
-        getLineCount: function () {
-            return this.control.get('lineCount');
-        },
-
-        setLineCount: function (value) {
-            this.control.set('lineCount', value);
         },
 
         setTextWrapping: function (value) {
@@ -23659,17 +23565,12 @@ _.extend(LabelBuilder.prototype, {
         ElementBuilder.prototype.applyMetadata.call(this, params);
         this.applyMetadata_editorBaseBuilder(params);
 
-        element.setLineCount(params.metadata.LineCount);
         element.setTextWrapping(params.metadata.TextWrapping);
         element.setTextTrimming(params.metadata.TextTrimming);
         element.setEscapeHtml(params.metadata.EscapeHtml);
         
         this.initDisplayFormat(params);
         this.initScriptsHandlers(params);
-        //this.initHorizontalTextAlignmentProperty(params);
-        //this.initForeground(params);
-        //this.initBackground(params);
-        //this.initTextStyle(params);
 
     },
 
@@ -23707,10 +23608,6 @@ _.extend(LabelBuilder.prototype, {
 },
     editorBaseBuilderMixin,
     displayFormatBuilderMixin
-    //builderHorizontalTextAlignmentPropertyMixin,
-    //builderBackgroundMixin,
-    //builderForegroundMixin,
-    //builderTextStyleMixin
 );
 //####app/elements/menuBar/menuBar.js
 /**
@@ -23978,6 +23875,22 @@ Panel.prototype.setHeader = function (value) {
 };
 
 /**
+ * @description Возвращает элемент для открытия панели
+ * @returns {string}
+ */
+Panel.prototype.getCollapsibleArea = function () {
+    return this.control.get('collapsibleArea');
+};
+
+/**
+ * @description Устанавливает элемент при клике на который раскрывается панель
+ * @param {string} value
+ */
+Panel.prototype.setCollapsibleArea = function (value) {
+    this.control.set('collapsibleArea', value);
+};
+
+/**
  * @description Устанавливает обработчик события о том, что панель разворачивается
  * @param {Function} handler
  */
@@ -24016,6 +23929,7 @@ Panel.prototype.onCollapsed = function (handler) {
 Panel.prototype.createControl = function () {
     return new PanelControl();
 };
+
 //####app/elements/panel/panelBuilder.js
 /**
  * @constructor
@@ -24046,6 +23960,7 @@ _.extend(PanelBuilder.prototype, /** @lends PanelBuilder.prototype*/ {
 
         element.setCollapsible(metadata.Collapsible);
         element.setCollapsed(metadata.Collapsed);
+        element.setCollapsibleArea(metadata.CollapsibleArea);
 
         var headerTemplate = this.buildHeaderTemplate(metadata.HeaderTemplate, params);
         element.setHeaderTemplate(headerTemplate);
@@ -24181,14 +24096,6 @@ _.inherit(PasswordBox, Element);
 
 _.extend(PasswordBox.prototype, /* @lends PasswordBox.prototype */ {
 
-        getPasswordChar: function () {
-            return this.control.get('passwordChar');
-        },
-
-        setPasswordChar: function (value) {
-            this.control.set('passwordChar', value);
-        },
-
         setAutocomplete: function (value) {
             if (typeof value === 'undefined' || value === null) {
                 return;
@@ -24236,7 +24143,6 @@ _.extend(PasswordBoxBuilder.prototype, /** @lends PasswordBoxBuilder.prototype *
                 element = params.element;
 
             this.initBindingToProperty(params, 'LabelText');
-            element.setPasswordChar(metadata.PasswordChar);
             element.setAutocomplete(metadata.Autocomplete);
         },
 
@@ -25093,14 +24999,6 @@ _.extend(View.prototype,
             this.registerMember(element.name, element);
         },
 
-        getIcon: function(){
-            return this.control.get('icon');
-        },
-
-        setIcon: function(value){
-            return this.control.set('icon', value);
-        },
-
         getContext: function(){
             return this.context;
         },
@@ -25366,8 +25264,6 @@ _.extend(ViewBuilder.prototype, {
 
         var scripts = element.getScripts();
         var parameters = element.getParameters();
-
-        element.setIcon(metadata.Icon);
 
         if (metadata.Scripts) {
             for (var i = 0, len = metadata.Scripts.length; i < len; ++i) {
@@ -27000,7 +26896,7 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('TextBox', new TextBoxBuilder());
         builder.register('PasswordBox', new PasswordBoxBuilder());
         builder.register('CheckBox', new CheckBoxBuilder());
-        builder.register('IndeterminateCheckbox', new IndeterminateCheckboxBuilder());
+        builder.register('IndeterminateCheckBox', new IndeterminateCheckBoxBuilder());
         builder.register('ImageBox', new ImageBoxBuilder());
         builder.register('FileBox', new FileBoxBuilder());
         builder.register('Label', new LabelBuilder());
@@ -27284,10 +27180,9 @@ var DataBinding = Backbone.Model.extend({
     _initPropertyOnElement: function(){
         var sourceProperty = this.get('sourceProperty');
         var source = this.get('source');
-        var that = this;
         var value;
 
-        if(this._shouldRefreshElement(this.get('mode')) && source){
+        if(this._shouldRefreshElement() && source){
             if(typeof source.isDataReady == 'function' && !source.isDataReady()){
                 if(typeof source.tryInitData == 'function'){
                     if(this.getDefaultValue() !== null){
@@ -27316,11 +27211,7 @@ var DataBinding = Backbone.Model.extend({
      * @description Обработчик события изменения значения элемента
      */
     _onElementPropertyChangedHandler: function (context, argument) {
-        var mode = this.get('mode');
-        var element = this.get('element');
-        var elementProperty = this.get('elementProperty');
-
-        if(this._shouldRefreshSource(mode) && argument.property == elementProperty){
+        if(this._shouldRefreshSource()){
             this._setValueToSource(argument.newValue, context);
         }
     },
@@ -27346,10 +27237,7 @@ var DataBinding = Backbone.Model.extend({
      * @description Обработчик события изменения значения источника
      */
     _onSourcePropertyChangedHandler: function (context, argument) {
-        var mode = this.get('mode');
-        var sourceProperty = this.get('sourceProperty');
-
-        if(this._shouldRefreshElement(mode) && argument.property == sourceProperty){
+        if(this._shouldRefreshElement()){
             this._setValueToElement(argument.newValue);
         }
     },
@@ -27378,11 +27266,13 @@ var DataBinding = Backbone.Model.extend({
         return context;
     },
 
-    _shouldRefreshSource: function(mode){
+    _shouldRefreshSource: function(){
+        var mode = this.get('mode');
         return mode == InfinniUI.BindingModes.twoWay || mode == InfinniUI.BindingModes.toSource;
     },
 
-    _shouldRefreshElement: function(mode){
+    _shouldRefreshElement: function(){
+        var mode = this.get('mode');
         return mode == InfinniUI.BindingModes.twoWay || mode == InfinniUI.BindingModes.toElement;
     }
 });

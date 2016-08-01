@@ -1,7 +1,20 @@
 .pl-file-box {
 
-  .input-group-btn .btn {
-    width: 40px;
+  .input-group {
+    display: block;
+
+    .form-control {
+      display: block;
+      width: calc(~"100% - 40px");
+    }
+  }
+
+  .input-group-btn {
+    width: 100%;
+    
+    .btn {
+      width: 40px;
+    }
   }
 
   .pl-filebox-file-upload, .pl-filebox-file-empty, .pl-filebox-file-download-url {
