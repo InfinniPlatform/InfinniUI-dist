@@ -10309,7 +10309,7 @@ var DataGridView = ListEditorBaseView.extend({
         ListEditorBaseView.prototype.events,
         {
             "click .pl-datagrid-toggle_all": "onClickCheckAllHandler",
-            'click .pl-datagrid-row__cell': 'onClickToHeaderCellHandler'
+            'click thead .pl-datagrid-row__cell': 'onClickToHeaderCellHandler'
         }
     ),
 
@@ -13877,6 +13877,7 @@ var ComboBoxModel = ListEditorBaseModel.extend({
     defaults: _.defaults({
         showClear: true,
         autocomplete: false,
+        autocompleteValue: '',
         valueTemplate: function(context, args){
             return {
                 render: function(){
@@ -15190,6 +15191,7 @@ var GridPanelView = ContainerView.extend(
                 rowSize = 0,
                 element, item;
 
+            //this.$el.hide();
             items.forEach(function(item, i){
                 element = itemTemplate(undefined, {item: item, index: i});
                 var span = element.getColumnSpan();
@@ -15206,6 +15208,7 @@ var GridPanelView = ContainerView.extend(
             if (row.length) {
                 view.renderRow(row);
             }
+            //this.$el.show();
         },
 
         renderRow: function (row) {
@@ -17173,6 +17176,10 @@ var BaseDataSource = Backbone.Model.extend({
         this.on('onItemDeleted', handler);
     },
 
+    onProviderError: function (handler) {
+        this.on('onProviderError', handler);
+    },
+
     getName: function () {
         return this.get('name');
     },
@@ -17496,7 +17503,8 @@ var BaseDataSource = Backbone.Model.extend({
             ds = this,
             logger = window.InfinniUI.global.logger,
             that = this,
-            validateResult;
+            validateResult,
+            errorInProvider = this._compensateOnErrorOfProviderHandler(error);
 
         if (!this.isModified(item)) {
             this._notifyAboutItemSaved({item: item, result: null}, 'notModified');
@@ -17523,7 +17531,7 @@ var BaseDataSource = Backbone.Model.extend({
         }, function(data) {
             var result = that._getValidationResult(data);
             that._notifyAboutValidation(result, 'error');
-            that._executeCallback(error, {item: item, result: result});
+            that._executeCallback(errorInProvider, {item: item, result: result});
         });
     },
 
@@ -17555,7 +17563,8 @@ var BaseDataSource = Backbone.Model.extend({
         var dataProvider = this.get('dataProvider'),
             that = this,
             itemId = this.idOfItem(item),
-            isItemInSet = this.get('itemsById')[itemId] !== undefined;
+            isItemInSet = this.get('itemsById')[itemId] !== undefined,
+            errorInProvider = this._compensateOnErrorOfProviderHandler(error);
 
         if ( item == null || ( itemId !== undefined && !isItemInSet ) ) {
             this._notifyAboutMissingDeletedItem(item, error);
@@ -17563,6 +17572,7 @@ var BaseDataSource = Backbone.Model.extend({
         }
 
         this.beforeDeleteItem(item);
+
         dataProvider.deleteItem(item, function (data) {
             if (!('IsValid' in data) || data['IsValid'] === true) {
                 that._handleDeletedItem(item, success);
@@ -17574,7 +17584,7 @@ var BaseDataSource = Backbone.Model.extend({
         }, function(data) {
             var result = that._getValidationResult(data);
             that._notifyAboutValidation(result, 'error');
-            that._executeCallback(error, {item: item, result: result});
+            that._executeCallback(errorInProvider, {item: item, result: result});
         });
     },
 
@@ -17637,24 +17647,17 @@ var BaseDataSource = Backbone.Model.extend({
             var dataProvider = this.get('dataProvider'),
                 that = this;
 
+
+            onError = this._compensateOnErrorOfProviderHandler(onError);
+
+
             this.set('isRequestInProcess', true);
-            dataProvider.getItems(function (data) {
-
-                var isWaiting =  that.get('isWaiting'),
-                    finishUpdating = function(){
-                        that.set('isRequestInProcess', false);
-                        that._handleUpdatedItemsData(data.data, onSuccess, onError);
-                    };
-
-                if(isWaiting){
-                    that.once('change:isWaiting', function () {
-                        finishUpdating();
-                    });
-                } else {
-                    finishUpdating();
-                }
-
-            }, onError);
+            dataProvider.getItems(
+                function (data) {
+                    that._handleSuccessUpdateItemsInProvider(data, onSuccess, onError);
+                },
+                onError
+            );
 
         }else{
             var handlers = this.get('waitingOnUpdateItemsHandlers');
@@ -17663,6 +17666,41 @@ var BaseDataSource = Backbone.Model.extend({
                 onError: onError
             });
         }
+
+    },
+
+
+    _compensateOnErrorOfProviderHandler: function(onError){
+        var that = this;
+
+        return function(){
+            if(typeof onError == 'function'){
+                onError.apply(undefined, arguments);
+            }else{
+                that.trigger('onProviderError', arguments);
+            }
+        };
+
+    },
+
+    _handleSuccessUpdateItemsInProvider: function(data, onSuccess, onError){
+        var that = this,
+            isWaiting =  that.get('isWaiting'),
+            finishUpdating = function(){
+                that.set('isRequestInProcess', false);
+                that._handleUpdatedItemsData(data.data, onSuccess, onError);
+            };
+
+        if(isWaiting){
+            that.once('change:isWaiting', function () {
+                finishUpdating();
+            });
+        } else {
+            finishUpdating();
+        }
+    },
+
+    _onErrorProviderUpdateItemsHandle: function(){
 
     },
 
@@ -18874,6 +18912,8 @@ _.extend(RestDataSourceBuilder.prototype, {
 
         var tmpParams;
 
+        this.initProviderErrorHandling(dataSource);
+
         if('GettingParams' in metadata){
             tmpParams = this.extractUrlParams(metadata['GettingParams'], '.urlParams.get.params');
             dataSource.setGettingUrlParams(tmpParams);
@@ -18953,6 +18993,14 @@ _.extend(RestDataSourceBuilder.prototype, {
 
             dataBinding.bindElement(dataSource, pathForBinding);
         }
+    },
+
+    initProviderErrorHandling: function(dataSource){
+        dataSource.onProviderError(function(){
+            var exchange = window.InfinniUI.global.messageBus;
+            exchange.send(messageTypes.onNotifyUser, {messageText: 'Ошибка на сервере', messageType: "error"});
+
+        });
     }
 });
 
