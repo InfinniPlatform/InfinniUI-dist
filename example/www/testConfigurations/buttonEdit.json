@@ -5,12 +5,12 @@
 				"Name": "MainDataSource",
 				"Items": [
 					{
-                        "Address": {
-                          "City": "city",
-                          "Street": "street",
-                          "House": 15
-                        }
-                    }
+						"Address": {
+							"City": "city",
+							"Street": "street",
+							"House": 15
+						}
+					}
 				]
 			}
 		}
@@ -21,33 +21,33 @@
 				{
 					"ButtonEdit": {
 						"Action": {
-                          "OpenAction": {
-                            "LinkView": {
-                              "InlineView": {
-                                "View": {
-                                  "Items": [
-                                    {
-                                      "Label": {
-                                        "Value": "Action"
-                                      }
-                                    }
-                                  ]
-                                },
-                                "OpenMode": "Dialog"
-                              }
-                            }
-                          }
-                        },
+							"OpenAction": {
+								"LinkView": {
+									"InlineView": {
+										"View": {
+											"Items": [
+												{
+													"Label": {
+														"Value": "Action"
+													}
+												}
+											]
+										},
+										"OpenMode": "Dialog"
+									}
+								}
+							}
+						},
 						"OnButtonClick": "{alert('OnButtonClick');}",
 						"LabelText": "LabelText",
-                        "Value": {
-                          "Source": "MainDataSource",
-                          "Property": "$.Address"
-                        },
-                      "DisplayFormat": "{City}, {Street} st., {House}",
-                        "Icon": "gitlab",
-                        "ReadOnly": true,
-                        "ShowClear": true
+						"Value": {
+							"Source": "MainDataSource",
+							"Property": "$.Address"
+						},
+						"DisplayFormat": "{City}, {Street} st., {House}",
+						"Icon": "gitlab",
+						"ReadOnly": true,
+						"ShowClear": true
 					}
 				}
 			]

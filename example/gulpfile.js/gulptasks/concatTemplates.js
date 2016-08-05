@@ -12,12 +12,11 @@ module.exports = function(options) {
 		var firstStream = true;
 		return combiner(
 			gulp.src(options.src),
-			// $.newer(options.dest + options.finalName),
 			$.templateCompile({
 				namespace: "InfinniUI.Template"
 			}),
 			through2(function(file, enc, callback) {
-				//convernt file.content into string
+				//convert file.content into string
 				var newFileContent = new Buffer(file.contents).toString(),
 						re = /\(function\(\) \{([\s\S]*)\}\)\(\);/,
 						re2 = /\n/g,
@@ -34,7 +33,7 @@ module.exports = function(options) {
 			$.concat(options.finalName),
 			gulp.dest(options.dest)
 		).on('error', $.notify.onError({
-				title: 'concatTemplate'
+				title: options.taskName
 		}));
 	};
 };

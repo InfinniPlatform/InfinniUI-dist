@@ -28,7 +28,7 @@ module.exports = function(options) {
 			$.if(isDevelopment, $.sourcemaps.write()),
 			gulp.dest(options.dest)
 		).on('error', $.notify.onError({
-				title: 'overrideLess'
+				title: options.taskName
 		}));
 	};
 };

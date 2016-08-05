@@ -1,5 +1,4 @@
 {
-	"OnLoaded": "OL2",
 	"DataSources": [
 		{
 			"ObjectDataSource": {
@@ -33,20 +32,6 @@
 					{"Id": 5, "rub": 15, "Display": "768x1024"},
 					{"Id": 6, "rub": 16, "Display": "780x1200"},
 					{"Id": 7, "rub": 17, "Display": "900x1600"},
-					{"Id": 1, "rub": 11, "Display": "320x480"},
-					{"Id": 2, "rub": 12, "Display": "360x540"},
-					{"Id": 3, "rub": 13, "Display": "375x700"},
-					{"Id": 4, "rub": 14, "Display": "480x960"},
-					{"Id": 5, "rub": 15, "Display": "768x1024"},
-					{"Id": 6, "rub": 16, "Display": "780x1200"},
-					{"Id": 7, "rub": 17, "Display": "900x1600"}
-				]
-			}
-		},
-		{
-			"ObjectDataSource": {
-				"Name": "EditDataSource",
-				"Items": [
 					{"Id": 1, "rub": 11, "Display": "320x480"},
 					{"Id": 2, "rub": 12, "Display": "360x540"},
 					{"Id": 3, "rub": 13, "Display": "375x700"},

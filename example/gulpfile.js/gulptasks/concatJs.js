@@ -9,7 +9,6 @@ module.exports = function(options) {
 	return function(callback) {
 		return combiner(
 			gulp.src(options.src, {base: '.'}),
-			// $.newer(options.dest + options.finalName),
 			$.wrapper({
 				header: function(file) {
 					return '//####' + file.base.replace(file.cwd, '') + file.relative + '\n';
@@ -19,7 +18,7 @@ module.exports = function(options) {
 			$.if(!isDevelopment, $.uglify()),
 			gulp.dest(options.dest)
 		).on('error', $.notify.onError({
-				title: 'concatJs'
+				title: options.taskName
 		}));
 	};
 };

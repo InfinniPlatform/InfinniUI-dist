@@ -1,0 +1,10 @@
+{
+  "name": "infinni-ui",
+  "authors": [
+    "Infinnity Solutions"
+  ],
+  "dependencies": {
+    "infinni-ui": "latest",
+    "infinni-ui-tests": "latest"
+  }
+}

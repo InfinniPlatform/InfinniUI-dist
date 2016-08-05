@@ -4565,6 +4565,10 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
     },
 
     onUpdateVisible: function () {
+        this.updateLayout();
+    },
+
+    updateLayout: function () {
         var exchange = window.InfinniUI.global.messageBus;
         exchange.send('OnChangeLayout', {});
     },
@@ -10336,7 +10340,6 @@ var DataGridView = ListEditorBaseView.extend({
         this.listenTo(this.model, 'change:showSelectors', this.updateShowSelectors);
         this.listenTo(this.model, 'change:checkAllVisible', this.updateCheckAllVisible);
         this.listenTo(this.model, 'change:checkAll', this.updateCheckAll);
-        this.listenTo(this.model, 'resetSort', this.resetSort);
     },
 
     updateProperties: function () {
@@ -10459,6 +10462,7 @@ var DataGridView = ListEditorBaseView.extend({
     },
 
     render: function () {
+        var that = this;
         this.prerenderingActions();
 
         var verticalAlignment = this.model.get('verticalAlignment');
@@ -10469,13 +10473,15 @@ var DataGridView = ListEditorBaseView.extend({
 
         this.renderHeaders();
         this.renderItems();
-        this.updateProperties();
 
         this.trigger('render');
 
         this.applyColumnWidth();
         this.syncBodyAndHead();
         this.postrenderingActions();
+        setTimeout(function() {
+            that.updateProperties();
+        }, 0);
         return this;
     },
 
@@ -10568,27 +10574,30 @@ var DataGridView = ListEditorBaseView.extend({
             valueSelector = model.get('valueSelector'),
             itemTemplate = model.get('itemTemplate'),
             items = model.get('items'),
-            $items = this.ui.items;
+            $items = this.ui.items,
+            that = this;
 
         this.removeRowElements();
 
         items.forEach(function (item, index) {
-            var element = itemTemplate(undefined, {index: index, item: item});
+            setTimeout(function() {
+                var element = itemTemplate(undefined, {index: index, item: item});
 
-            element.onBeforeClick(function() {
-                model.set('selectedItem', item);
-            });
-            element.onToggle(function() {
-                var enabled = this.model.get('enabled');
+                element.onBeforeClick(function() {
+                    model.set('selectedItem', item);
+                });
+                element.onToggle(function() {
+                    var enabled = this.model.get('enabled');
 
-                if(enabled){
-                    model.toggleValue(valueSelector(undefined, {value:item}));
-                }
-            });
-            this.addRowElement(item, element);
+                    if(enabled){
+                        model.toggleValue(valueSelector(undefined, {value:item}));
+                    }
+                });
+                that.addRowElement(item, element);
 
-            var $element = element.render();
-            $items.append($element);
+                var $element = element.render();
+                $items.append($element);
+            }, 0);
         }, this);
 
     },
@@ -16218,6 +16227,7 @@ var PanelView = ContainerView.extend(/** @lends PanelView.prototype */ {
         if (collapsible) {
             var collapsed = this.model.get('collapsed');
             this.model.set('collapsed', !collapsed);
+            this.updateLayout();
         }
     },
 
@@ -19147,6 +19157,10 @@ _.extend(Element.prototype, {
     },
 
     setName: function (name) {
+        if(this.getName()){
+            throw 'name already exists';
+        }
+
         if (typeof name == 'string') {
             this.control.set('name', name);
         }
@@ -22962,6 +22976,75 @@ DividerBuilder.prototype.applyMetadata = function (params) {
 };
 
 
+//####app/elements/extensionPanel/extensionPanel.js
+function ExtensionPanel(parent) {
+    _.superClass(ExtensionPanel, this, parent);
+}
+
+_.inherit(ExtensionPanel, Container);
+
+_.extend(ExtensionPanel.prototype, {
+    createControl: function () {
+        var control = new ExtensionPanelControl();
+        return control;
+    },
+
+    setExtensionName: function (extensionName) {
+        return this.control.set('extensionName', extensionName);
+    },
+
+    setParameters: function (parameters) {
+        return this.control.set('parameters', parameters);
+    },
+
+    getParameters: function () {
+        return this.control.get('parameters');
+    },
+
+    setContext: function (context) {
+        this.control.set('context', context);
+    },
+
+    setBuilder: function (builder) {
+        this.control.set('builder', builder);
+    }
+});
+//####app/elements/extensionPanel/extensionPanelBuilder.js
+function ExtensionPanelBuilder() {
+}
+
+_.inherit(ExtensionPanelBuilder, ContainerBuilder);
+
+_.extend(ExtensionPanelBuilder.prototype, {
+
+    applyMetadata: function (params) {
+        var metadata = params.metadata;
+        var element = params.element;
+        var parentView = params.parentView;
+        var builder = params.builder;
+
+        ContainerBuilder.prototype.applyMetadata.call(this, params);
+
+        element.setExtensionName(metadata['ExtensionName']);
+
+        var parameters = {};
+        _.each(metadata.Parameters, function (parameterMetadata) {
+            var param = builder.buildType('Parameter', parameterMetadata, {parentView: parentView});
+            parameters[param.getName()] = param;
+        });
+
+        element.setParameters(parameters);
+        element.setContext(parentView.getContext());
+        element.setBuilder(builder);
+    },
+
+    createElement: function (params) {
+        var element = new ExtensionPanel(params.parent);
+
+        return element;
+    }
+});
+
 //####app/elements/fileBox/fileBox.js
 /**
  *
@@ -25454,6 +25537,82 @@ _.extend(ViewBuilder.prototype, {
 },
     viewBuilderHeaderTemplateMixin
 );
+//####app/elements/viewPanel/viewPanel.js
+function ViewPanel(parent) {
+    _.superClass(ViewPanel, this, parent);
+}
+
+_.inherit(ViewPanel, Element);
+
+_.extend(ViewPanel.prototype, {
+
+    setLayout: function (layout) {
+        var oldLayout = this.getLayout();
+
+        if(oldLayout) {
+            oldLayout.close();
+        }
+
+        this.control.set('layout', layout);
+    },
+
+    getLayout: function () {
+        return this.control.get('layout');
+    },
+
+    createControl: function () {
+        return new ViewPanelControl();
+    }
+
+});
+//####app/elements/viewPanel/viewPanelBuilder.js
+function ViewPanelBuilder() {
+}
+
+_.inherit(ViewPanelBuilder, ElementBuilder);
+
+_.extend(ViewPanelBuilder.prototype, {
+    applyMetadata: function (params) {
+        ElementBuilder.prototype.applyMetadata.call(this, params);
+
+        var builder = params.builder;
+        var panel = params.element;
+        var metadata = params.metadata;
+        var parentView = params.parentView;
+
+        /* Помощь для обработки OpenMode = Inline */
+        if (_.isEmpty(metadata.Name)) {
+            metadata.Name = guid();
+            panel.setName(metadata.Name);
+        }
+
+        InfinniUI.global.containers[metadata.Name] = panel;
+
+        if ('LinkView' in metadata) {
+            var linkView = builder.build(metadata['LinkView'], {
+                parentView: params.parentView,
+                parent: params.element
+            });
+
+            linkView.setOpenMode('Container');
+            linkView.setContainer(metadata.Name);
+
+            linkView.createView(function (view) {
+                view.open();
+            });
+        }
+
+    },
+
+    createElement: function (params) {
+        return new ViewPanel(params.parent);
+    }
+}
+);
+
+
+InfinniUI.global.containers = {};
+
 //####app/elements/dataGrid/dataGridRow/dataGridRow.js
 function DataGridRow() {
     _.superClass(DataGridRow, this);
@@ -25559,152 +25718,6 @@ _.extend(DataGridRow.prototype, {
 
 });
 
-
-//####app/elements/layoutPanel/extensionPanel/extensionPanel.js
-function ExtensionPanel(parentView) {
-    _.superClass(ExtensionPanel, this, parentView);
-}
-
-_.inherit(ExtensionPanel, Container);
-
-_.extend(ExtensionPanel.prototype, {
-    createControl: function () {
-        var control = new ExtensionPanelControl();
-        return control;
-    },
-
-    setExtensionName: function (extensionName) {
-        return this.control.set('extensionName', extensionName);
-    },
-
-    setParameters: function (parameters) {
-        return this.control.set('parameters', parameters);
-    },
-
-    getParameters: function () {
-        return this.control.get('parameters');
-    },
-
-    setContext: function (context) {
-        this.control.set('context', context);
-    },
-
-    setBuilder: function (builder) {
-        this.control.set('builder', builder);
-    }
-});
-//####app/elements/layoutPanel/extensionPanel/extensionPanelBuilder.js
-function ExtensionPanelBuilder() {
-}
-
-_.inherit(ExtensionPanelBuilder, ContainerBuilder);
-
-_.extend(ExtensionPanelBuilder.prototype, {
-
-    applyMetadata: function (params) {
-        var metadata = params.metadata;
-        var element = params.element;
-        var parentView = params.parentView;
-        var builder = params.builder;
-
-        ContainerBuilder.prototype.applyMetadata.call(this, params);
-
-        element.setExtensionName(metadata['ExtensionName']);
-
-        var parameters = {};
-        _.each(metadata.Parameters, function (parameterMetadata) {
-            var param = builder.buildType('Parameter', parameterMetadata, {parentView: parentView});
-            parameters[param.getName()] = param;
-        });
-
-        element.setParameters(parameters);
-        element.setContext(parentView.getContext());
-        element.setBuilder(builder);
-    },
-
-    createElement: function (params) {
-        var element = new ExtensionPanel(params.parent);
-
-        return element;
-    }
-});
-
-//####app/elements/layoutPanel/viewPanel/viewPanel.js
-function ViewPanel(parentView) {
-    _.superClass(ViewPanel, this, parentView);
-}
-
-_.inherit(ViewPanel, Element);
-
-_.extend(ViewPanel.prototype, {
-
-    setLayout: function (layout) {
-        var oldLayout = this.getLayout();
-
-        if(oldLayout) {
-            oldLayout.close();
-        }
-
-        this.control.set('layout', layout);
-    },
-
-    getLayout: function () {
-        return this.control.get('layout');
-    },
-
-    createControl: function () {
-        return new ViewPanelControl();
-    }
-
-});
-//####app/elements/layoutPanel/viewPanel/viewPanelBuilder.js
-function ViewPanelBuilder() {
-}
-
-_.inherit(ViewPanelBuilder, ElementBuilder);
-
-_.extend(ViewPanelBuilder.prototype, {
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
-
-        var builder = params.builder;
-        var panel = params.element;
-        var metadata = params.metadata;
-        var parentView = params.parentView;
-
-        /* Помощь для обработки OpenMode = Inline */
-        if (_.isEmpty(metadata.Name)) {
-            metadata.Name = guid();
-            panel.setName(metadata.Name);
-        }
-
-        InfinniUI.global.containers[metadata.Name] = panel;
-
-        if ('LinkView' in metadata) {
-            //var linkView = builder.build(params.view, metadata.View);
-            var linkView = builder.build(metadata['LinkView'], {
-                parentView: params.parentView,
-                parent: params.element
-            });
-
-            linkView.setOpenMode('Container');
-            linkView.setContainer(metadata.Name);
-
-            linkView.createView(function (view) {
-                view.open();
-            });
-        }
-
-    },
-
-    createElement: function (params) {
-        return new ViewPanel(params.parent);
-    }
-}
-);
-
-
-InfinniUI.global.containers = {};
 
 //####app/elements/tabPanel/tabPage/tabPage.js
 /**
@@ -32453,6 +32466,7 @@ _.extend(OpenModeDialogStrategy.prototype, {
             show: true,
             backdrop: 'static',
             modalOverflow: true,
+            keyboard: view.getCloseButtonVisibility(),
             focus: this
         });
 

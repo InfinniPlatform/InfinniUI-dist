@@ -1,10 +1,12 @@
 'use strict';
+// Необходимо указать путь до платфомы в bower_components
 var infinniUIpath = '..';
+
 var fromInfinniToNewStylesPath = '/example/styles/';
 var platformOutputFolder = '/out/';
-var exampleRootFolder = './www/';
-var exampleFolderForPlatform = './www/compiled/platform/';
-var exampleFolderForExtensions = './www/compiled/js/';
+var projectRootFolder = './www/';
+var projectFolderForPlatform = './www/compiled/platform/';
+var projectFolderForExtensions = './www/compiled/js/';
 var stylesFile = '/app/styles/main.less';
 
 var jsFiles = ['./js/**/*.js'];
@@ -12,7 +14,7 @@ var templateFiles = ["./js/**/*.tpl.html"];
 
 var sourceForTasks = {
 	cleanFolder: {
-		src: exampleFolderForPlatform,
+		src: projectFolderForPlatform,
 		taskPath: "./gulptasks/cleanFolder"
 	},
 	overrideLess: {
@@ -25,29 +27,29 @@ var sourceForTasks = {
 		},
 		srcForWatch: "./styles/",
 		finalName: "main.css",
-		dest: exampleFolderForPlatform + "css/",
+		dest: projectFolderForPlatform + "css/",
 		taskPath: "./gulptasks/overrideLess"
 	},
 	copyPlatform: {
 		src: [infinniUIpath + platformOutputFolder + '**/*.*', '!' + infinniUIpath + platformOutputFolder + 'unitTest.js'],
-		dest: exampleFolderForPlatform,
+		dest: projectFolderForPlatform,
 		taskPath: "./gulptasks/copyFiles"
 	},
 	concatJs: {
 		src: jsFiles,
 		finalName: "app.js",
-		dest: exampleFolderForExtensions,
+		dest: projectFolderForExtensions,
 		taskPath: "./gulptasks/concatJs"
 	},
 	concatTemplates: {
 		src: templateFiles,
 		finalName: "templates.js",
-		dest: exampleFolderForExtensions,
+		dest: projectFolderForExtensions,
 		taskPath: "./gulptasks/concatTemplates"
 	},
 	'server:example': {
 		src: "./www",
-		watch: exampleRootFolder + "**/*.*",
+		watch: projectRootFolder + "**/*.*",
 		port: 4444,
 		ui: {
 			port: 4040

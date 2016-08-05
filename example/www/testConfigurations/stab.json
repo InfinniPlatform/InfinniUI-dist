@@ -1,448 +1,468 @@
 {
-  "DataSources": [
-    {
-      "ObjectDataSource": {
-        "Name": "ds2",
-        "Items": [
-          {
-          }
-        ]
-      }
-    },
-    {
-      "ObjectDataSource": {
-        "Name": "ds1",
-        "Items": [
-          {
-            "Id": 1,
-            "Title": "1",
-            "Volume": "I",
-            "Email": "mail@mail.mail",
-            "Date": "2016-05-16T12:32:00Z"
-          },
-          {
-            "Id": 2,
-            "Title": "2",
-            "Volume": "I"
-          },
-          {
-            "Id": 3,
-            "Title": "3",
-            "Volume": "I"
-          },
-          {
-            "Id": 4,
-            "Title": "4",
-            "Volume": "I"
-          },
-          {
-            "Id": 5,
-            "Title": "5",
-            "Volume": "I"
-          },
-          {
-            "Id": 6,
-            "Title": "6",
-            "Volume": "II"
-          },
-          {
-            "Id": 7,
-            "Title": "7",
-            "Volume": "II"
-          }
-        ]
-      }
-    }
-  ],
-  "Items": [
-    {
-      "TablePanel": {
-        "Items": [
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "DatePicker": {
-                          "Enabled": false,
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ds1",
+				"Items": [
+					{
+						"Id": 1,
+						"Title": "1",
+						"Volume": "I",
+						"Email": "mail@mail.mail",
+						"Date": "2016-05-16T12:32:00Z"
+					},
+					{
+						"Id": 2,
+						"Title": "2",
+						"Volume": "I"
+					},
+					{
+						"Id": 3,
+						"Title": "3",
+						"Volume": "I"
+					},
+					{
+						"Id": 4,
+						"Title": "4",
+						"Volume": "I"
+					},
+					{
+						"Id": 5,
+						"Title": "5",
+						"Volume": "I"
+					},
+					{
+						"Id": 6,
+						"Title": "6",
+						"Volume": "II"
+					},
+					{
+						"Id": 7,
+						"Title": "7",
+						"Volume": "II"
+					}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"ScrollPanel": {
+				"Items": [
+					{
+						"TablePanel": {
+							"Items": [
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"DatePicker": {
+																"Enabled": false,
 
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.date2"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.date2"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "DateTimePicker": {
-                          "Mode": "DateTime",
-                          "DisplayFormat": "{:g}",
-                          "MinValue": "2015-01-01T00:00",
-                          "EditMask": {
-                            "DateTimeEditMask": {
-                              "Mask": "g"
-                            }
-                          },
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.datetime"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.datetime"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "TimePicker": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.time"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.time"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "TextBox": {
-                          "LabelText": "One line input[type=text]",
-                          "Multiline": false,
-                          "DisplayFormat": "{:F}",
-                          "Focusable": false,
-                          "EditMask": {
-                            "DateTimeEditMask": {
-                              "Mask": "dd----MM----yyyy"
-                            }
-                          },
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.Date"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Text": {
-                            "Source": "ds1",
-                            "Property": "0.Date"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "TextBox": {
-                          "LabelText": "One line input[type=text]",
-                          "Multiline": false,
-                          "DisplayFormat": "{:n4}",
-                          "EditMask": {
-                            "NumberEditMask": {
-                              "Mask": "n3"
-                            }
-                          },
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.num"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.num"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "NumericBox": {
-                          "MinValue": 0,
-                          "MaxValue": 10,
-                          "Enabled": true,
-                          "EditMask": {
-                            "NumberEditMask": {
-                              "Mask": "n0"
-                            }
-                          },
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.num_1"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.num_1"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "TextBox": {
-                          "LabelText": "User Name",
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.username"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.username"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "PasswordBox": {
-                          "LabelText": "Password",
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.password"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.password"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 12,
-                    "Items": [
-                      {
-                        "Button": {
-                          "Text": "submit",
-                          "OnClick": "{debugger; console.log(context);}"
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "Row": {
-              "Items": [
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "TextBox": {
-                          "LabelText": "One line area",
-                          "Multiline": true,
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.text"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                },
-                {
-                  "Cell": {
-                    "ColumnSpan": 6,
-                    "Items": [
-                      {
-                        "Label": {
-                          "Value": {
-                            "Source": "ds1",
-                            "Property": "0.text"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.date2"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.date2"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"DateTimePicker": {
+																"Mode": "DateTime",
+																"DisplayFormat": "{:g}",
+																"MinValue": "2015-01-01T00:00",
+																"EditMask": {
+																	"DateTimeEditMask": {
+																		"Mask": "g"
+																	}
+																},
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.datetime"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.datetime"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"TimePicker": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.time"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.time"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"TextBox": {
+																"LabelText": "One line input[type=text]",
+																"Multiline": false,
+																"DisplayFormat": "{:F}",
+																"Focusable": false,
+																"EditMask": {
+																	"DateTimeEditMask": {
+																		"Mask": "dd----MM----yyyy"
+																	}
+																},
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.Date"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Text": {
+																	"Source": "ds1",
+																	"Property": "0.Date"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"TextBox": {
+																"LabelText": "One line input[type=text]",
+																"Multiline": false,
+																"DisplayFormat": "{:n4}",
+																"EditMask": {
+																	"NumberEditMask": {
+																		"Mask": "n3"
+																	}
+																},
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.num"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.num"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"NumericBox": {
+																"MinValue": 0,
+																"MaxValue": 10,
+																"Enabled": true,
+																"EditMask": {
+																	"NumberEditMask": {
+																		"Mask": "n0"
+																	}
+																},
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.num_1"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.num_1"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"TextBox": {
+																"LabelText": "User Name",
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.username"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.username"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"PasswordBox": {
+																"LabelText": "Password",
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.password"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.password"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 12,
+													"Items": [
+														{
+															"Button": {
+																"Text": "submit",
+																"OnClick": "{debugger; console.log(context);}"
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Row": {
+										"Items": [
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"TextBox": {
+																"LabelText": "One line area",
+																"Multiline": true,
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.text"
+																}
+															}
+														}
+													]
+												}
+											},
+											{
+												"Cell": {
+													"ColumnSpan": 6,
+													"Items": [
+														{
+															"Label": {
+																"Value": {
+																	"Source": "ds1",
+																	"Property": "0.text"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"TestElement": {
+							"TestProperty": "test-property-value",
+							"Foreground": "primary2"
+						}
+					},
+					{
+						"ExtensionPanel": {
+							"ExtensionName": "TestExtension",
+							"ItemTemplate": {
+								"Label": {
+									"Value": {
+										"Source": "ds1",
+										"Property": "#.Title"
+									}
+								}
+							},
+							"Items": {
+								"Source": "ds1",
+								"Property": ""
+							}
+						}
+					}
+				]
+			}
+		}
+	]
 }
 
