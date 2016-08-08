@@ -3028,6 +3028,10 @@ window.InfinniUI.Keyboard = {
         NUMPAD_7: 103,
         NUMPAD_8: 104,
         NUMPAD_9: 105,
+        PLUS: 43,
+        MINUS: 45,
+        ASTERISK: 42,
+        SLASH: 47,
         0: 48,
         1: 49,
         2: 50,
@@ -3041,15 +3045,38 @@ window.InfinniUI.Keyboard = {
     },
 
     getCharByKeyCode: function (keyCode) {
-        var char;
+        var char, code;
 
         if (keyCode < 32) {
             //Спецсимвол
             char = null;
         } else {
-            char = String.fromCharCode(
-                (this.KeyCode.NUMPAD_0 <= keyCode && keyCode <= this.KeyCode.NUMPAD_9) ? keyCode-this.KeyCode['0'] : keyCode
-            );
+            //@see http://unixpapa.com/js/key.html
+            if (keyCode >= this.KeyCode.NUMPAD_0 && keyCode <= this.KeyCode.NUMPAD_9) {
+                code = keyCode - 48;
+            } else {
+                switch (keyCode) {
+                    //convert numpad key codes
+                    case 110:
+                        code = this.KeyCode.DELETE;  //.Del
+                        break;
+                    case 107:
+                        code = this.KeyCode.PLUS;  //+
+                        break;
+                    case 109:
+                        code = this.KeyCode.MINUS;  //-
+                        break;
+                    case 106:
+                        code = this.KeyCode.ASTERISK;  //*
+                        break;
+                    case 111:
+                        code = this.KeyCode.SLASH;  // /
+                        break;
+                    default:
+                        code = keyCode;
+                }
+            }
+            char = String.fromCharCode(code);
         }
         return char;
     }
@@ -5971,7 +5998,7 @@ var TextEditorView = Backbone.View.extend({
 
             default:
                 //замена выделенного текста, по нажатию
-                var char = event.key;
+                var char = InfinniUI.Keyboard.getCharByKeyCode(event.keyCode);
                 event.preventDefault();
                 if (this.getSelectionLength() > 0) {
                     position = editMask.deleteSelectedText(this.getCaretPosition(), this.getSelectionLength(), char);
@@ -6194,6 +6221,7 @@ var TextEditorView = Backbone.View.extend({
 
     onFocusinHandler: function (/* event */) {
         this.model.setEditMode();
+        setTimeout(this.setCaretPosition.bind(this, 0), 4);
     },
 
     onFocusoutHandler: function (/* event */) {
@@ -15698,102 +15726,6 @@ var IndeterminateCheckBoxView = CheckBoxView.extend({
     });
 
 })();
-//####app/controls/menuBar/menuBarControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function MenuBarControl(parent) {
-    _.superClass(MenuBarControl, this, parent);
-}
-
-_.inherit(MenuBarControl, ContainerControl);
-
-_.extend(MenuBarControl.prototype,
-    /** @lends MenuBarControl.prototype */
-    {
-        createControlModel: function () {
-            return new MenuBarModel();
-        },
-
-        createControlView: function (model) {
-            return new MenuBarView({model: model});
-        }
-    }
-);
-
-
-//####app/controls/menuBar/menuBarModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var MenuBarModel = ContainerModel.extend(
-    /** @lends MenuBarModel.prototype */
-    {
-        initialize: function () {
-            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-        }
-    }
-);
-//####app/controls/menuBar/menuBarView.js
-/**
- * @class
- * @augments ControlView
- */
-var MenuBarView = ContainerView.extend(
-    /** @lends MenuBarView.prototype */
-    {
-        tagName: 'nav',
-        className: 'pl-menu-bar navbar navbar-default',
-
-        template: InfinniUI.Template["controls/menuBar/template/menuBar.tpl.html"],
-
-        UI: {
-
-        },
-
-        render: function () {
-            this.prerenderingActions();
-
-            this.removeChildElements();
-
-            this.$el.html(this.template({
-                items: this.model.get('items')
-            }));
-            this.renderItemsContents();
-
-            this.bindUIElements();
-
-            this.updateProperties();
-            this.trigger('render');
-
-            this.postrenderingActions();
-            return this;
-        },
-
-        renderItemsContents: function(){
-            var $items = this.$el.find('.pl-menu-bar-item'),
-                items = this.model.get('items'),
-                itemTemplate = this.model.get('itemTemplate'),
-                that = this,
-                element, item;
-
-            $items.each(function(i, el){
-                item = items.getByIndex(i);
-                element = itemTemplate(undefined, {item: item, index: i});
-                that.addChildElement(element);
-                $(el)
-                    .append(element.render());
-            });
-        },
-
-        updateGrouping: function(){}
-    }
-);
-
 //####app/controls/numericBox/numericBoxControl.js
 /**
  *
@@ -16001,6 +15933,102 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
     }
 
 });
+
+//####app/controls/menuBar/menuBarControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function MenuBarControl(parent) {
+    _.superClass(MenuBarControl, this, parent);
+}
+
+_.inherit(MenuBarControl, ContainerControl);
+
+_.extend(MenuBarControl.prototype,
+    /** @lends MenuBarControl.prototype */
+    {
+        createControlModel: function () {
+            return new MenuBarModel();
+        },
+
+        createControlView: function (model) {
+            return new MenuBarView({model: model});
+        }
+    }
+);
+
+
+//####app/controls/menuBar/menuBarModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var MenuBarModel = ContainerModel.extend(
+    /** @lends MenuBarModel.prototype */
+    {
+        initialize: function () {
+            ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+        }
+    }
+);
+//####app/controls/menuBar/menuBarView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var MenuBarView = ContainerView.extend(
+    /** @lends MenuBarView.prototype */
+    {
+        tagName: 'nav',
+        className: 'pl-menu-bar navbar navbar-default',
+
+        template: InfinniUI.Template["controls/menuBar/template/menuBar.tpl.html"],
+
+        UI: {
+
+        },
+
+        render: function () {
+            this.prerenderingActions();
+
+            this.removeChildElements();
+
+            this.$el.html(this.template({
+                items: this.model.get('items')
+            }));
+            this.renderItemsContents();
+
+            this.bindUIElements();
+
+            this.updateProperties();
+            this.trigger('render');
+
+            this.postrenderingActions();
+            return this;
+        },
+
+        renderItemsContents: function(){
+            var $items = this.$el.find('.pl-menu-bar-item'),
+                items = this.model.get('items'),
+                itemTemplate = this.model.get('itemTemplate'),
+                that = this,
+                element, item;
+
+            $items.each(function(i, el){
+                item = items.getByIndex(i);
+                element = itemTemplate(undefined, {item: item, index: i});
+                that.addChildElement(element);
+                $(el)
+                    .append(element.render());
+            });
+        },
+
+        updateGrouping: function(){}
+    }
+);
 
 //####app/controls/panel/panelControl.js
 /**
@@ -21077,7 +21105,7 @@ _.extend(TextEditorBase.prototype, {
      * @returns {*}
      */
     getRawValue: function () {
-        var value = this.getValue(),
+        var value = this.control.get('editor').getValue(),
             editMask = this.getEditMask();
 
         if (editMask) {
@@ -21253,6 +21281,10 @@ TextEditor.prototype.setValidatorValue = function (validatorValue) {
 TextEditor.prototype.setValueConverter = function (converter) {
     this._model.set('valueConverter', converter);
     return this;
+};
+
+TextEditor.prototype.getValue = function() {
+    return this._model.getValue();
 };
 
 /**
@@ -32986,8 +33018,6 @@ var MessageBox = Backbone.View.extend({
     },
 
     onClickButtonHandler: function (event) {
-        event.preventDefault();
-
         var $el = $(event.target),
             i = parseInt( $el.data('index'), 10),
             handler = this.options.buttons[i].onClick;
