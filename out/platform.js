@@ -15075,6 +15075,106 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
 
 }));
 
+//####app/controls/frame/frameControl.js
+/**
+ *
+ * @constructor
+ * @augments Control
+ * @mixes editorBaseControlMixin
+ */
+var FrameControl = function () {
+    _.superClass(FrameControl, this);
+    this.initialize_editorBaseControl();
+};
+
+_.inherit(FrameControl, Control);
+
+_.extend(FrameControl.prototype, {
+
+    createControlModel: function () {
+        return new FrameModel();
+    },
+
+    createControlView: function (model) {
+        return new FrameView({model: model});
+    }
+
+}, editorBaseControlMixin);
+//####app/controls/frame/frameModel.js
+var FrameModel = ControlModel.extend(_.extend({
+
+    defaults: _.defaults({},
+        editorBaseModelMixin.defaults_editorBaseModel,
+        ControlModel.prototype.defaults
+    ),
+
+    initialize: function(){
+        ControlModel.prototype.initialize.apply(this, arguments);
+        this.initialize_editorBaseModel();
+    }
+}, editorBaseModelMixin));
+//####app/controls/frame/frameView.js
+/**
+ * @class FrameView
+ * @augments ControlView
+ * @mixes editorBaseViewMixin
+ */
+var FrameView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @lends FrameView.prototype */{
+
+    className: 'pl-frame',
+
+    template: InfinniUI.Template["controls/frame/template/frame.tpl.html"],
+
+    UI: _.extend({}, editorBaseViewMixin.UI, {
+        iframe: 'iframe'
+    }),
+
+    initialize: function () {
+        ControlView.prototype.initialize.apply(this);
+    },
+
+    initHandlersForProperties: function(){
+        ControlView.prototype.initHandlersForProperties.call(this);
+        editorBaseViewMixin.initHandlersForProperties.call(this);
+    },
+
+    updateProperties: function(){
+        ControlView.prototype.updateProperties.call(this);
+        editorBaseViewMixin.updateProperties.call(this);
+    },
+
+    updateValue: function(){
+        var value = this.model.get('value');
+
+        this.ui.iframe.attr('src', value);
+    },
+
+    getData: function () {
+        return _.extend(
+            {},
+            ControlView.prototype.getData.call(this),
+            editorBaseViewMixin.getData.call(this),
+            {
+
+            }
+        );
+    },
+
+    render: function () {
+        var model = this.model;
+
+        this.prerenderingActions();
+        this.renderTemplate(this.template);
+
+        this.updateProperties();
+
+        this.trigger('render');
+        this.postrenderingActions();
+        return this;
+    }
+
+}));
+
 //####app/controls/gridPanel/gridPanelControl.js
 /**
  *
@@ -15189,106 +15289,6 @@ var GridPanelView = ContainerView.extend(
         updateGrouping: function(){}
     }
 );
-
-//####app/controls/frame/frameControl.js
-/**
- *
- * @constructor
- * @augments Control
- * @mixes editorBaseControlMixin
- */
-var FrameControl = function () {
-    _.superClass(FrameControl, this);
-    this.initialize_editorBaseControl();
-};
-
-_.inherit(FrameControl, Control);
-
-_.extend(FrameControl.prototype, {
-
-    createControlModel: function () {
-        return new FrameModel();
-    },
-
-    createControlView: function (model) {
-        return new FrameView({model: model});
-    }
-
-}, editorBaseControlMixin);
-//####app/controls/frame/frameModel.js
-var FrameModel = ControlModel.extend(_.extend({
-
-    defaults: _.defaults({},
-        editorBaseModelMixin.defaults_editorBaseModel,
-        ControlModel.prototype.defaults
-    ),
-
-    initialize: function(){
-        ControlModel.prototype.initialize.apply(this, arguments);
-        this.initialize_editorBaseModel();
-    }
-}, editorBaseModelMixin));
-//####app/controls/frame/frameView.js
-/**
- * @class FrameView
- * @augments ControlView
- * @mixes editorBaseViewMixin
- */
-var FrameView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @lends FrameView.prototype */{
-
-    className: 'pl-frame',
-
-    template: InfinniUI.Template["controls/frame/template/frame.tpl.html"],
-
-    UI: _.extend({}, editorBaseViewMixin.UI, {
-        iframe: 'iframe'
-    }),
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-    },
-
-    initHandlersForProperties: function(){
-        ControlView.prototype.initHandlersForProperties.call(this);
-        editorBaseViewMixin.initHandlersForProperties.call(this);
-    },
-
-    updateProperties: function(){
-        ControlView.prototype.updateProperties.call(this);
-        editorBaseViewMixin.updateProperties.call(this);
-    },
-
-    updateValue: function(){
-        var value = this.model.get('value');
-
-        this.ui.iframe.attr('src', value);
-    },
-
-    getData: function () {
-        return _.extend(
-            {},
-            ControlView.prototype.getData.call(this),
-            editorBaseViewMixin.getData.call(this),
-            {
-
-            }
-        );
-    },
-
-    render: function () {
-        var model = this.model;
-
-        this.prerenderingActions();
-        this.renderTemplate(this.template);
-
-        this.updateProperties();
-
-        this.trigger('render');
-        this.postrenderingActions();
-        return this;
-    }
-
-}));
 
 //####app/controls/icon/iconControl.js
 /**
@@ -33046,6 +33046,8 @@ var MessageBox = Backbone.View.extend({
     },
 
     onClickButtonHandler: function (event) {
+        event.preventDefault();
+
         var $el = $(event.target),
             i = parseInt( $el.data('index'), 10),
             handler = this.options.buttons[i].onClick;
