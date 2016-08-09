@@ -25518,12 +25518,31 @@ _.extend(ViewBuilder.prototype, {
             element.noDataSourceOnView();
         }
 
+        if( metadata.NotificationSubsriptions ) {
+            var subscriptor = InfinniUI.global.notificationSubsription;
+            for( var key in metadata.NotificationSubsriptions ) {
+                (function() {
+                    var script = metadata.NotificationSubsriptions[key];
+                    subscriptor.subscribe(key, function(context, args) {
+                        new ScriptExecutor(element).executeScript(script, {context: context, message: args.message});
+                    }, this);
+                })();
+            }
+
+            element.onClosing(function() {
+                for( var key2 in metadata.NotificationSubsriptions ) {
+                    subscriptor.unsubscribe(key2, this);
+                }
+            });
+        }
+
+        this.initBindingToProperty(params, 'CloseButtonVisibility', true);
+
         element.setHeaderTemplate(this.buildHeaderTemplate(element, params));
-        element.setCloseButtonVisibility(metadata.CloseButtonVisibility);
 
         if(metadata.OnOpening){
             element.onOpening(function() {
-                new ScriptExecutor(element).executeScript(metadata.OnOpening.Name || metadata.OnOpening);
+                return new ScriptExecutor(element).executeScript(metadata.OnOpening.Name || metadata.OnOpening);
             });
         }
 
@@ -25597,6 +25616,7 @@ _.extend(ViewBuilder.prototype, {
 },
     viewBuilderHeaderTemplateMixin
 );
+
 //####app/elements/viewPanel/viewPanel.js
 function ViewPanel(parent) {
     _.superClass(ViewPanel, this, parent);
@@ -32532,11 +32552,17 @@ _.extend(OpenModeDialogStrategy.prototype, {
 
         this._initBehaviorFocusingInModal($modal, $modalBody);
 
+        var updateCloseButtonVisibility = function() {
+            $closeButton.toggleClass('hidden', !view.getCloseButtonVisibility());
+        };
+
+        updateCloseButtonVisibility();
+
+        view.control.controlView.listenTo(view.control.controlModel, 'change:closeButtonVisibility', updateCloseButtonVisibility);
 
 
-        var
-            headerTemplate = view.getHeaderTemplate();
-        $closeButton.toggleClass('hidden', !view.getCloseButtonVisibility());
+        var headerTemplate = view.getHeaderTemplate();
+
         $header.append(headerTemplate().render());
 
         $modal.find('.pl-close-modal').on('click', function(){
@@ -32579,6 +32605,7 @@ _.extend(OpenModeDialogStrategy.prototype, {
         InfinniUI.ModalWindowService.modalWasClosed(this.$modal);
     }
 });
+
 //####app/localizations/culture.js
 function Culture(name){
     this.name = name;
