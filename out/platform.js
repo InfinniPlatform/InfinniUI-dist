@@ -6063,14 +6063,10 @@ var TextEditorView = Backbone.View.extend({
         var text = originalEvent.clipboardData.getData('text/plain');
         var editMask = this.model.getEditMask();
 
-        event.preventDefault();
-
         if (editMask) {
+            event.preventDefault();
             this.textTyping(text);
-        } else {
-            this.model.setText(text);
         }
-
     },
 
     OnDragstartHandler: function (event) {
@@ -9239,9 +9235,9 @@ var CommonButtonView = ControlView.extend({
         var focusable = this.model.get('focusable');
 
         if (!focusable) {
-            this.ui.button.attr('tabindex', -1);
+            this.getButtonElement().attr('tabindex', -1);
         } else {
-            this.ui.button.removeAttr('tabindex');
+            this.getButtonElement().removeAttr('tabindex');
         }
     },
 
@@ -9256,12 +9252,12 @@ var CommonButtonView = ControlView.extend({
         var customStyle = this.model.get('background');
 
         if (this.currentBackground) {
-            this.ui.button
+            this.getButtonElement()
                 .removeClass(this.valueToBackgroundClassName(this.currentBackground));
         }
 
         if (customStyle) {
-            this.ui.button
+            this.getButtonElement()
                 .addClass(this.valueToBackgroundClassName(customStyle));
         }
 
@@ -9284,7 +9280,7 @@ var CommonButtonView = ControlView.extend({
     },
 
     setFocus: function () {
-        this.ui.button.focus();
+        this.getButtonElement().focus();
     }
 
 
@@ -9320,46 +9316,6 @@ var LinkButtonView = CommonButtonView.extend({
     UI: {
     },
 
-    updateBackground: function () {
-        var customStyle = this.model.get('background');
-
-        if (this.currentBackground) {
-            this.$el
-                .removeClass(this.valueToBackgroundClassName(this.currentBackground));
-        }
-
-        if (customStyle) {
-            this.$el
-                .addClass(this.valueToBackgroundClassName(customStyle));
-        }
-
-        this.currentBackground = customStyle;
-    },
-
-    updateFocusable: function () {
-        var focusable = this.model.get('focusable');
-
-        if (!focusable) {
-            this.$el.attr('tabindex', -1);
-        }
-    },
-
-    //updateForeground: function () {
-    //    var customStyle = this.model.get('foreground');
-    //
-    //    if (this.currentBackground) {
-    //        this.ui.button
-    //            .removeClass(this.valueToBackgroundClassName(this.currentBackground));
-    //    }
-    //
-    //    if (customStyle) {
-    //        this.ui.button
-    //            .addClass(this.valueToBackgroundClassName(customStyle));
-    //    }
-    //
-    //    this.currentBackground = customStyle;
-    //},
-
     getButtonElement: function(){
         return this.$el;
     }
@@ -9367,6 +9323,7 @@ var LinkButtonView = CommonButtonView.extend({
 });
 
 InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Button.link', LinkButtonView);
+
 //####app/controls/button/buttonControl.js
 /**
  *
@@ -10308,6 +10265,14 @@ _.extend(DataGridControl.prototype, {
 
     onCheckAllChanged: function (handler) {
         this.controlModel.onCheckAllChanged(handler);
+    },
+
+    onRowClick: function(callback) {
+        this.controlView.$el.on('click', '.pl-datagrid__body .pl-datagrid-row', callback);
+    },
+
+    onRowDoubleClick: function(callback) {
+        this.controlView.$el.on('dblclick', '.pl-datagrid__body .pl-datagrid-row', callback);
     }
 });
 
@@ -10720,7 +10685,9 @@ var DataGridView = ListEditorBaseView.extend({
             var $sortableCell = this.$el.find('.sorted');
             $sortableCell.removeClass('sorted headerTemplate-sorted-asc headerTemplate-sorted-desc sorted-asc sorted-desc');
             var  sortedCell = this.model.get('sortedColumn');
-            sortedCell.setSortDirection(null);
+            if( sortedCell ) {
+                sortedCell.setSortDirection(null);
+            }
         } else {
             var $sortableCell = this.$el.find('.sorted');
             $sortableCell.removeClass('headerTemplate-sorted-' + direction + ' sorted-' + direction);
@@ -15711,6 +15678,101 @@ var IndeterminateCheckBoxView = CheckBoxView.extend({
 		}
 
 	}
+});
+
+//####app/controls/link/linkElementControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments Control
+ */
+function LinkElementControl() {
+    _.superClass(LinkElementControl, this);
+}
+
+_.inherit(LinkElementControl, ButtonControl);
+
+_.extend(
+    LinkElementControl.prototype, {
+
+        createControlModel: function () {
+            return new LinkElementModel();
+        },
+
+        createControlView: function (model) {
+            return new LinkElementView({model: model});
+        }
+
+    });
+
+//####app/controls/link/linkElementModel.js
+/**
+ * @class
+ * @augments ButtonModel
+ */
+var LinkElementModel = ButtonModel.extend({
+
+    defaults: _.defaults({
+        href: "javascript:;",
+        target: "self"
+    }, ButtonModel.prototype.defaults),
+
+    initialize: function () {
+        ButtonModel.prototype.initialize.apply(this, arguments);
+    }
+
+});
+
+//####app/controls/link/linkElementView.js
+/**
+ * @class LinkElementView
+ * @augments CommonButtonView
+ */
+var LinkElementView = CommonButtonView.extend({
+
+    tagName: 'a',
+
+    className: 'pl-link',
+
+    events: {
+        'click': 'onClickHandler'
+    },
+
+    template: function(){return '';},
+
+    updateProperties: function(){
+        CommonButtonView.prototype.updateProperties.call(this);
+
+        this.updateHref();
+        this.updateTarget();
+    },
+
+    getButtonElement: function(){
+        return this.$el;
+    },
+
+    initHandlersForProperties: function(){
+        CommonButtonView.prototype.initHandlersForProperties.call(this);
+
+        this.listenTo(this.model, 'change:href', this.updateHref);
+        this.listenTo(this.model, 'change:target', this.updateTarget);
+    },
+
+    updateHref: function() {
+        var newHref = this.model.get('href'),
+            $link = this.getButtonElement();
+
+        $link.attr('href', newHref);
+    },
+
+    updateTarget: function() {
+        var newTarget = this.model.get('target'),
+            $link = this.getButtonElement();
+
+        $link.attr('target', '_' + newTarget);
+    }
+
 });
 
 //####app/controls/loaderIndicator/loaderIndicator.js
@@ -22337,6 +22399,26 @@ DataGrid.prototype.onCheckAllChanged = function (handler) {
 DataGrid.prototype.createControl = function () {
     return new DataGridControl();
 };
+
+
+DataGrid.prototype.onRowClick = function (handler) {
+    var that = this,
+    callback = function (nativeEventData) {
+        var eventData = that._getHandlingMouseEventData(nativeEventData);
+        handler(eventData);
+    };
+    return this.control.onRowClick(callback);
+};
+
+DataGrid.prototype.onRowDoubleClick = function (handler) {
+    var that = this,
+        callback = function (nativeEventData) {
+            var eventData = that._getHandlingMouseEventData(nativeEventData);
+            handler(eventData);
+        };
+    return this.control.onRowDoubleClick(callback);
+};
+
 //####app/elements/dataGrid/dataGridBuilder.js
 function DataGridBuilder() {
     _.superClass(DataGridBuilder, this);
@@ -22365,6 +22447,19 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
                 new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnCheckAllChanged.Name || metadata.OnCheckAllChanged, args);
             });
         }
+
+        if( metadata.OnRowClick ) {
+            element.onRowClick(function (args) {
+                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnRowClick.Name || metadata.OnRowClick, args);
+            });
+        }
+
+        if( metadata.OnRowDoubleClick ) {
+            element.onRowDoubleClick(function (args) {
+                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnRowDoubleClick.Name || metadata.OnRowDoubleClick, args);
+            });
+        }
+
         this.applyColumnsMetadata(params);
     },
 
@@ -22427,6 +22522,7 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
     }
 
 });
+
 //####app/elements/dataGrid/dataGridColumn.js
 function DataGridColumn() {
     this._values = Object.create(null);
@@ -23800,6 +23896,68 @@ _.extend(LabelBuilder.prototype, {
     editorBaseBuilderMixin,
     displayFormatBuilderMixin
 );
+//####app/elements/link/link.js
+/**
+ * @param parent
+ * @augments Button
+ * @constructor
+ */
+function LinkElement(parent) {
+    _.superClass(LinkElement, this, parent);
+}
+
+_.inherit(LinkElement, Button);
+
+LinkElement.prototype.createControl = function () {
+    return new LinkElementControl();
+};
+
+LinkElement.prototype.setHref = function (value) {
+    this.control.set('href', value);
+};
+
+LinkElement.prototype.getHref = function () {
+    return this.control.get('href');
+};
+
+LinkElement.prototype.setTarget = function (value) {
+    this.control.set('target', value);
+};
+
+LinkElement.prototype.getTarget = function () {
+    return this.control.get('target');
+};
+
+//####app/elements/link/linkBuilder.js
+function LinkElementBuilder() {
+    _.superClass(LinkElementBuilder, this);
+}
+
+_.inherit(LinkElementBuilder, ButtonBuilder);
+
+_.extend(LinkElementBuilder.prototype, {
+
+    createElement: function (params) {
+        return new LinkElement(params.parent);
+    },
+
+    applyMetadata: function (params) {
+        ButtonBuilder.prototype.applyMetadata.call(this, params);
+
+        var metadata = params.metadata,
+            element = params.element;
+
+        if( metadata.Href ) {
+            element.setHref(metadata.Href);
+        }
+
+        if( metadata.Target ) {
+            element.setTarget(metadata.Target);
+        }
+    }
+
+});
+
 //####app/elements/menuBar/menuBar.js
 /**
  * @param parent
@@ -26086,7 +26244,7 @@ _.extend(RowBuilder.prototype,
 
     });
 
-//####app/actions/baseAction.js
+//####app/actions/_base/baseAction/baseAction.js
 function BaseAction(parentView){
     this.parentView = parentView;
     this._properties = Object.create(null);
@@ -26113,6 +26271,14 @@ _.extend(BaseAction.prototype, {
 
     initDefaultValues: function () {
 
+    },
+
+    onExecutedHandler: function(args) {
+        var onExecutedHandler = this.getProperty('onExecutedHandler');
+
+        if(_.isFunction(onExecutedHandler)) {
+            onExecutedHandler(args);
+        }
     }
 
 }, Backbone.Events);
@@ -26124,7 +26290,19 @@ InfinniUI.global.executeAction = function (context, executeActionMetadata, resul
 
     action.execute(resultCallback);
 };
-//####app/actions/baseEditAction.js
+//####app/actions/_base/baseAction/baseActionBuilderMixin.js
+var BaseActionBuilderMixin = {
+    applyBaseActionMetadata: function(action, params) {
+        var metadata = params.metadata;
+
+        if('OnExecuted' in metadata) {
+            action.setProperty('onExecutedHandler', function(args) {
+                new ScriptExecutor(action.parentView).executeScript(metadata.OnExecuted.Name || metadata.OnExecuted, args);
+            });
+        }
+    }
+};
+//####app/actions/_base/baseEditAction/baseEditAction.js
 function BaseEditAction(parentView){
     _.superClass(BaseEditAction, this, parentView);
 }
@@ -26175,6 +26353,8 @@ _.extend(BaseEditAction.prototype, {
 
         this.save();
 
+        this.onExecutedHandler();
+
         if (_.isFunction(callback)) {
             callback();
         }
@@ -26184,6 +26364,69 @@ _.extend(BaseEditAction.prototype, {
         return 'setItems' in source;
     }
 });
+//####app/actions/_base/baseEditAction/baseEditActionBuilderMixin.js
+var BaseEditActionBuilderMixin = {
+    applyBaseEditActionMetadata: function(action, args) {
+        var metadata = args.metadata,
+            parentView = args.parentView,
+            builder = args.builder;
+
+        var suspended = {};
+        suspended[metadata.SourceValue.Source] = 'BaseEditAction';
+
+        var linkView = builder.build(metadata['LinkView'], {
+            parent: args.parent,
+            parentView: parentView,
+            basePathOfProperty: args.basePathOfProperty,
+            suspended: suspended
+        });
+
+        action.setProperty('linkView', linkView);
+        action.setProperty('sourceSource', metadata.SourceValue.Source);
+        action.setProperty('destinationSource', metadata.DestinationValue.Source);
+
+        var destinationProperty = (args.basePathOfProperty != null) ?
+            args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
+            metadata.DestinationValue.Property;
+
+        action.setProperty('destinationProperty', destinationProperty);
+    }
+};
+//####app/actions/_base/baseFallibleAction/baseFallibleActionBuilderMixin.js
+var BaseFallibleActionBuilderMixin = {
+    applyBaseFallibleActionMetadata: function(action, params) {
+        var metadata = params.metadata;
+
+        if('OnSuccess' in metadata) {
+            action.setProperty('onSuccessHandler', function(args) {
+                new ScriptExecutor(action.parentView).executeScript(metadata.OnSuccess.Name || metadata.OnSuccess, args);
+            });
+        }
+
+        if('OnError' in metadata) {
+            action.setProperty('onErrorHandler', function(args) {
+                new ScriptExecutor(action.parentView).executeScript(metadata.OnError.Name || metadata.OnError, args);
+            });
+        }
+    }
+};
+//####app/actions/_base/baseFallibleAction/baseFallibleActionMixin.js
+var BaseFallibleActionMixin = {
+    onSuccessHandler: function(args) {
+        var onSuccessHandler = this.getProperty('onSuccessHandler');
+
+        if(_.isFunction(onSuccessHandler)) {
+            onSuccessHandler(args);
+        }
+    },
+    onErrorHandler: function(args) {
+        var onErrorHandler = this.getProperty('onErrorHandler');
+
+        if(_.isFunction(onErrorHandler)) {
+            onErrorHandler(args);
+        }
+    }
+};
 //####app/actions/acceptAction/acceptAction.js
 function AcceptAction(parentView){
     _.superClass(AcceptAction, this, parentView);
@@ -26194,11 +26437,15 @@ _.inherit(AcceptAction, BaseAction);
 
 _.extend(AcceptAction.prototype, {
     execute: function(callback){
-        if (callback) {
-            this.parentView.onClosed(function () {
+        var that = this;
+
+        this.parentView.onClosed(function () {
+            that.onExecutedHandler();
+
+            if (callback) {
                 callback();
-            });
-        }
+            }
+        });
 
         this.parentView.setDialogResult(DialogResult.accepted);
         this.parentView.close();
@@ -26206,10 +26453,20 @@ _.extend(AcceptAction.prototype, {
 });
 //####app/actions/acceptAction/acceptActionBuilder.js
 function AcceptActionBuilder() {
-    this.build = function (context, args) {
-        return new AcceptAction(args.parentView);
-    }
 }
+
+_.extend(AcceptActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    {
+        build: function (context, args) {
+            var action = new AcceptAction(args.parentView);
+
+            this.applyBaseActionMetadata(action, args);
+
+            return action;
+        }
+    }
+);
 //####app/actions/addAction/addAction.js
 function AddAction(parentView){
     _.superClass(AddAction, this, parentView);
@@ -26249,37 +26506,22 @@ _.extend(AddAction.prototype, {
     }
 });
 //####app/actions/addAction/addActionBuilder.js
-function AddActionBuilder(){
-    this.build = function(context, args){
-        var metadata = args.metadata,
-            parentView = args.parentView,
-            builder = args.builder;
+function AddActionBuilder(){}
 
-        var action = new AddAction(parentView);
+_.extend(AddActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    BaseEditActionBuilderMixin,
+    {
+        build: function(context, args){
+            var action = new AddAction(args.parentView);
 
-        var suspended = {};
-        suspended[metadata.SourceValue.Source] = 'AddAction';
+            this.applyBaseActionMetadata(action, args);
+            this.applyBaseEditActionMetadata(action, args);
 
-        var linkView = builder.build(metadata['LinkView'], {
-            parent: args.parent,
-            parentView: parentView,
-            basePathOfProperty: args.basePathOfProperty,
-            suspended: suspended
-        });
-
-        action.setProperty('linkView', linkView);
-		action.setProperty('sourceSource', metadata.SourceValue.Source);
-        action.setProperty('destinationSource', metadata.DestinationValue.Source);
-
-        var destinationProperty = (args.basePathOfProperty != null) ?
-            args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
-            metadata.DestinationValue.Property;
-
-        action.setProperty('destinationProperty', destinationProperty);
-
-        return action;
+            return action;
+        }
     }
-}
+);
 //####app/actions/cancelAction/cancelAction.js
 function CancelAction(parentView){
     _.superClass(CancelAction, this, parentView);
@@ -26290,22 +26532,35 @@ _.inherit(CancelAction, BaseAction);
 
 _.extend(CancelAction.prototype, {
     execute: function(callback){
-        if (callback) {
-            this.parentView.onClosed(function () {
+        var that = this;
+
+        this.parentView.onClosed(function () {
+            that.onExecutedHandler();
+
+            if (callback) {
                 callback();
-            });
-        }
+            }
+        });
 
         this.parentView.setDialogResult(DialogResult.canceled);
         this.parentView.close();
     }
 });
 //####app/actions/cancelAction/cancelActionBuilder.js
-function CancelActionBuilder() {
-    this.build = function (context, args) {
-        return new CancelAction(args.parentView);
+function CancelActionBuilder() {}
+
+_.extend(CancelActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    {
+        build: function (context, args) {
+            var action = new CancelAction(args.parentView);
+
+            this.applyBaseActionMetadata(action, args);
+
+            return action;
+        }
     }
-}
+);
 //####app/actions/deleteAction/deleteAction.js
 function DeleteAction(parentView){
     _.superClass(DeleteAction, this, parentView);
@@ -26314,112 +26569,139 @@ function DeleteAction(parentView){
 _.inherit(DeleteAction, BaseAction);
 
 
-_.extend(DeleteAction.prototype, {
-    execute: function(callback){
-        var accept = this.getProperty('accept'),
-            that = this,
-            dataSource = this.getProperty('destinationSource'),
-            property = this.getProperty('destinationProperty');
+_.extend(DeleteAction.prototype,
+    BaseFallibleActionMixin,
+    {
+        execute: function(callback){
+            var accept = this.getProperty('accept'),
+                that = this,
+                dataSource = this.getProperty('destinationSource'),
+                property = this.getProperty('destinationProperty');
 
-        if( dataSource.getProperty(property) ) {
-            if(accept){
+            if( dataSource.getProperty(property) ) {
+                if(accept){
+                    new MessageBox({
+                        text: 'Вы уверены, что хотите удалить?',
+                        buttons: [
+                            {
+                                name: 'Да',
+                                type: 'action',
+                                onClick: function() {
+                                    that.remove(callback);
+                                }
+                            },
+                            {
+                                name: 'Нет'
+                            }
+                        ]
+                    });
+                } else {
+                    this.remove(callback);
+                }
+            } else {
                 new MessageBox({
-                    text: 'Вы уверены, что хотите удалить?',
+                    text: 'Вы не выбрали элемент который необходимо удалить',
                     buttons: [
                         {
-                            name: 'Да',
-                            type: 'action',
-                            onClick: function() {
-                                that.remove(callback);
-                            }
-                        },
-                        {
-                            name: 'Нет'
+                            name: 'Закрыть'
                         }
                     ]
                 });
-            } else {
-                this.remove(callback);
             }
-        } else {
-            new MessageBox({
-                text: 'Вы не выбрали элемент который необходимо удалить',
-                buttons: [
-                    {
-                        name: 'Закрыть'
+        },
+
+        remove: function (callback) {
+            var dataSource = this.getProperty('destinationSource'),
+                property = this.getProperty('destinationProperty');
+
+            if( this._isDocument(property) ) {
+                this._deleteDocument(dataSource, property, callback);
+            } else {
+                this._deleteItem(dataSource, property, callback);
+            }
+        },
+
+        _deleteDocument: function(dataSource, property, callback){
+            var that = this,
+                onSuccessDelete = function (context, args) {
+                    dataSource.updateItems();
+
+                    that.onExecutedHandler(args);
+                    that.onSuccessHandler(args);
+
+                    if (_.isFunction(callback)) {
+                        callback();
                     }
-                ]
-            });
-        }
-    },
+                },
+                onErrorDelete = function(context, args){
+                    that.onExecutedHandler(args);
+                    that.onErrorHandler(args);
 
-    remove: function (callback) {
-        var dataSource = this.getProperty('destinationSource'),
-            property = this.getProperty('destinationProperty');
+                    if (_.isFunction(callback)) {
+                        callback();
+                    }
+                };
 
-        if( this._isDocument(property) ) {
-            this._deleteDocument(dataSource, property, callback);
-        } else {
-            this._deleteItem(dataSource, property, callback);
-        }
-    },
+            var selectedItem = dataSource.getProperty(property);
+            dataSource.deleteItem(selectedItem, onSuccessDelete, onErrorDelete);
+        },
 
-    _deleteDocument: function(dataSource, property, callback){
-        var onSuccessDelete = function () {
-            dataSource.updateItems();
+        _deleteItem: function(dataSource, property, callback){
+            var propertyPathList = property.split("."),
+                index = propertyPathList.pop(),
+                parentProperty = propertyPathList.join("."),
+                items = dataSource.getProperty(parentProperty);
+
+            items = _.clone( items );
+            items.splice(index, 1);
+            dataSource.setProperty(parentProperty, items);
+
+            this.onExecutedHandler();
+            that.onSuccessHandler();
 
             if (_.isFunction(callback)) {
                 callback();
             }
-        };
+        },
 
-        var selectedItem = dataSource.getProperty(property);
-        dataSource.deleteItem(selectedItem, onSuccessDelete);
-    },
-
-    _deleteItem: function(dataSource, property, callback){
-        var propertyPathList = property.split("."),
-            index = propertyPathList.pop(),
-            parentProperty = propertyPathList.join("."),
-            items = dataSource.getProperty(parentProperty);
-
-        items = _.clone( items );
-        items.splice(index, 1);
-        dataSource.setProperty(parentProperty, items);
-
-        if (_.isFunction(callback)) {
-            callback();
+        _isDocument: function(propertyName){
+            return propertyName == '$' || _.isFinite(propertyName);
         }
-    },
-
-    _isDocument: function(propertyName){
-        return propertyName == '$' || _.isFinite(propertyName);
     }
-});
+);
 
 //####app/actions/deleteAction/deleteActionBuilder.js
-function DeleteActionBuilder(){
-    this.build = function(context, args){
-        var metadata = args.metadata,
-            parentView = args.parentView,
-            sourceName = metadata.DestinationValue.Source,
-            propertyName = metadata.DestinationValue.Property || '$';
+function DeleteActionBuilder(){}
 
-        var action = new DeleteAction(parentView);
+_.extend(DeleteActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    BaseFallibleActionBuilderMixin,
+    {
+        build: function(context, args){
+            var metadata = args.metadata,
+                parentView = args.parentView,
+                sourceName = metadata.DestinationValue.Source,
+                propertyName = metadata.DestinationValue.Property || '$';
 
-        var accept = (metadata['Accept'] !== false),
-            dataSource = parentView.getContext().dataSources[sourceName],
-            destinationProperty = (args.basePathOfProperty != null) ?
-                                    args.basePathOfProperty.resolveProperty( propertyName ) :
-                                    propertyName;
+            var action = new DeleteAction(parentView);
 
-        action.setProperty('accept', accept);
-        action.setProperty('destinationSource', dataSource);
-        action.setProperty('destinationProperty', destinationProperty);
+            this.applyBaseActionMetadata(action, args);
+            this.applyBaseFallibleActionMetadata(action, args);
 
-        return action;
+            var accept = (metadata['Accept'] !== false),
+                dataSource = parentView.getContext().dataSources[sourceName],
+                destinationProperty = (args.basePathOfProperty != null) ?
+                                        args.basePathOfProperty.resolveProperty( propertyName ) :
+                                        propertyName;
+
+            action.setProperty('accept', accept);
+            action.setProperty('destinationSource', dataSource);
+            action.setProperty('destinationProperty', destinationProperty);
+
+            return action;
+        }
     }
-}
+);
 //####app/actions/editAction/editAction.js
 function EditAction(parentView){
     _.superClass(EditAction, this, parentView);
@@ -26464,7 +26746,7 @@ _.extend(EditAction.prototype, {
 
     _resumeUpdateEditDataSource: function () {
         var editDataSource = this.getProperty('editDataSource');
-        editDataSource.resumeUpdate('EditAction');
+        editDataSource.resumeUpdate('BaseEditAction');
     },
 
     _setDocument: function (editDataSource, selectedItem){
@@ -26503,37 +26785,22 @@ _.extend(EditAction.prototype, {
     }
 });
 //####app/actions/editAction/editActionBuilder.js
-function EditActionBuilder(){
-    this.build = function(context, args){
-        var metadata = args.metadata,
-            parentView = args.parentView,
-            builder = args.builder;
+function EditActionBuilder(){}
 
-        var destinationProperty = (args.basePathOfProperty != null) ?
-            args.basePathOfProperty.resolveProperty( metadata.DestinationValue.Property ) :
-            metadata.DestinationValue.Property;
+_.extend(EditActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    BaseEditActionBuilderMixin,
+    {
+        build: function(context, args){
+            var action = new EditAction(args.parentView);
 
-        var action = new EditAction(parentView);
+            this.applyBaseActionMetadata(action, args);
+            this.applyBaseEditActionMetadata(action, args);
 
-        var suspended = {};
-        suspended[metadata.SourceValue.Source] = 'EditAction';
-
-        var linkView = builder.build(metadata['LinkView'], {
-            parent: args.parent,
-            parentView: parentView,
-            basePathOfProperty: args.basePathOfProperty,
-            suspended: suspended
-        });
-        action.setProperty('linkView', linkView);
-
-        action.setProperty('sourceSource', metadata.SourceValue.Source);
-        action.setProperty('destinationSource', metadata.DestinationValue.Source);
-
-        action.setProperty('destinationProperty', destinationProperty || '$');
-
-        return action;
+            return action;
+        }
     }
-}
+);
 //####app/actions/openAction/openAction.js
 function OpenAction(parentView){
     _.superClass(OpenAction, this, parentView);
@@ -26544,14 +26811,18 @@ _.inherit(OpenAction, BaseAction);
 
 _.extend(OpenAction.prototype, {
     execute: function(callback){
-        var linkView = this.getProperty('linkView');
+        var linkView = this.getProperty('linkView'),
+            that = this;
 
         linkView.createView(function (view) {
-            if (callback) {
-                view.onLoaded(function () {
+
+            view.onLoaded(function () {
+                that.onExecutedHandler();
+
+                if (callback) {
                     callback(view);
-                });
-            }
+                }
+            });
 
             view.open();
         });
@@ -26559,20 +26830,24 @@ _.extend(OpenAction.prototype, {
 });
 //####app/actions/openAction/openActionBuilder.js
 function OpenActionBuilder(){
-
 }
 
 
-_.extend(OpenActionBuilder.prototype, {
-    build: function(context, args){
-        var action = new OpenAction(args.parentView);
+_.extend(OpenActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    {
+        build: function(context, args){
+            var action = new OpenAction(args.parentView);
 
-        var linkView = args.builder.build(args.metadata.LinkView, {parent: args.parent, parentView: args.parentView, basePathOfProperty: args.basePathOfProperty});
-        action.setProperty('linkView', linkView);
+            this.applyBaseActionMetadata(action, args);
 
-        return action;
+            var linkView = args.builder.build(args.metadata.LinkView, {parent: args.parent, parentView: args.parentView, basePathOfProperty: args.basePathOfProperty});
+            action.setProperty('linkView', linkView);
+
+            return action;
+        }
     }
-});
+);
 //####app/actions/saveAction/saveAction.js
 function SaveAction(parentView){
     _.superClass(SaveAction, this, parentView);
@@ -26581,41 +26856,65 @@ function SaveAction(parentView){
 _.inherit(SaveAction, BaseAction);
 
 
-_.extend(SaveAction.prototype, {
-    execute: function(callback){
-        var parentView = this.parentView;
-        var dataSource = this.getProperty('dataSource');
-        var canClose = this.getProperty('canClose');
+_.extend(SaveAction.prototype,
+    BaseFallibleActionMixin,
+    {
+        execute: function(callback){
+            var parentView = this.parentView,
+                dataSource = this.getProperty('dataSource'),
+                canClose = this.getProperty('canClose'),
+                that = this;
 
-        var onSuccessSave = function(context, args){
-            if(canClose !== false){
-                parentView.setDialogResult(DialogResult.accepted);
-                parentView.close();
-            }
+            var onSuccessSave = function(context, args){
+                    if(canClose !== false){
+                        parentView.setDialogResult(DialogResult.accepted);
+                        parentView.close();
+                    }
 
-            if(_.isFunction(callback)){
-                callback(context, args);
-            }
-        };
+                    that.onExecutedHandler(args);
+                    that.onSuccessHandler(args);
 
-        var selectedItem = dataSource.getSelectedItem();
-        dataSource.saveItem(selectedItem, onSuccessSave, callback);
+                    if(_.isFunction(callback)){
+                        callback(context, args);
+                    }
+                },
+                onErrorSave = function(context, args){
+                    that.onExecutedHandler(args);
+                    that.onErrorHandler(args);
+
+                    if (_.isFunction(callback)) {
+                        callback();
+                    }
+                };
+
+            var selectedItem = dataSource.getSelectedItem();
+            dataSource.saveItem(selectedItem, onSuccessSave, onErrorSave);
+        }
     }
-});
+);
 //####app/actions/saveAction/saveActionBuilder.js
-function SaveActionBuilder() {
-    this.build = function (context, args) {
-        var parentView = args.parentView;
-        var dataSource = parentView.getContext().dataSources[args.metadata.DestinationValue.Source];
+function SaveActionBuilder() {}
 
-        var action = new SaveAction(parentView);
+_.extend(SaveActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    BaseFallibleActionBuilderMixin,
+    {
+        build: function (context, args) {
+            var parentView = args.parentView;
+            var dataSource = parentView.getContext().dataSources[args.metadata.DestinationValue.Source];
 
-        action.setProperty('dataSource', dataSource);
-        action.setProperty('canClose', args.metadata.CanClose);
+            var action = new SaveAction(parentView);
 
-        return action;
+            this.applyBaseActionMetadata(action, args);
+            this.applyBaseFallibleActionMetadata(action, args);
+
+            action.setProperty('dataSource', dataSource);
+            action.setProperty('canClose', args.metadata.CanClose);
+
+            return action;
+        }
     }
-}
+);
 //####app/actions/selectAction/selectAction.js
 function SelectAction(parentView){
     _.superClass(SelectAction, this, parentView);
@@ -26626,18 +26925,19 @@ _.inherit(SelectAction, BaseAction);
 
 _.extend(SelectAction.prototype, {
     execute: function(callback){
-        var parentView = this.parentView;
-        var linkView = this.getProperty('linkView');
+        var parentView = this.parentView,
+            linkView = this.getProperty('linkView'),
+            that = this;
 
-        var srcDataSourceName = this.getProperty('sourceSource');
-        var srcPropertyName = this.getProperty('sourceProperty');
+        var srcDataSourceName = this.getProperty('sourceSource'),
+            srcPropertyName = this.getProperty('sourceProperty');
 
-        var dstDataSourceName = this.getProperty('destinationSource');
-        var dstPropertyName = this.getProperty('destinationProperty');
+        var dstDataSourceName = this.getProperty('destinationSource'),
+            dstPropertyName = this.getProperty('destinationProperty');
 
         linkView.createView(function(createdView){
 
-            createdView.onClosed(function () {
+            createdView.onClosed(function (context, args) {
                 var dialogResult = createdView.getDialogResult();
 
                 if (dialogResult == DialogResult.accepted) {
@@ -26646,10 +26946,12 @@ _.extend(SelectAction.prototype, {
 
                     var value = srcDataSource.getProperty(srcPropertyName);
                     dstDataSource.setProperty(dstPropertyName, value);
+                }
 
-                    if (callback) {
-                        callback(value);
-                    }
+                that.onExecutedHandler(args);
+
+                if (callback) {
+                    callback(context, args);
                 }
             });
 
@@ -26658,24 +26960,32 @@ _.extend(SelectAction.prototype, {
     }
 });
 //####app/actions/selectAction/selectActionBuilder.js
-function SelectActionBuilder() {
-    this.build = function (context, args) {
-        var builder = args.builder,
-            metadata = args.metadata,
-            parentView = args.parentView;
-        var action = new SelectAction(parentView);
+function SelectActionBuilder() {}
 
-        var linkView = builder.build(metadata['LinkView'], {parentView: parentView});
+_.extend(SelectActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    {
+        build: function (context, args) {
+            var builder = args.builder,
+                metadata = args.metadata,
+                parentView = args.parentView;
 
-        action.setProperty('linkView', linkView);
-        action.setProperty('sourceSource', metadata.SourceValue.Source);
-        action.setProperty('sourceProperty', metadata.SourceValue.Property);
-        action.setProperty('destinationSource', metadata.DestinationValue.Source);
-        action.setProperty('destinationProperty', metadata.DestinationValue.Property);
+            var action = new SelectAction(parentView);
 
-        return action;
+            this.applyBaseActionMetadata(action, args);
+
+            var linkView = builder.build(metadata['LinkView'], {parentView: parentView});
+
+            action.setProperty('linkView', linkView);
+            action.setProperty('sourceSource', metadata.SourceValue.Source);
+            action.setProperty('sourceProperty', metadata.SourceValue.Property);
+            action.setProperty('destinationSource', metadata.DestinationValue.Source);
+            action.setProperty('destinationProperty', metadata.DestinationValue.Property);
+
+            return action;
+        }
     }
-}
+);
 
 
 //####app/actions/serverAction/downloadExecutor.js
@@ -26813,156 +27123,181 @@ function ServerAction(parentView) {
 
 _.inherit(ServerAction, BaseAction);
 
-_.extend(ServerAction.prototype, {
+_.extend(ServerAction.prototype,
+    BaseFallibleActionMixin,
+    {
+        defaults: {
+            contentType: 'application/x-www-form-urlencoded; charset=utf-8',
+            method: 'GET',
+            data: {}
+        },
 
-    defaults: {
-        contentType: 'application/x-www-form-urlencoded; charset=utf-8',
-        method: 'GET',
-        data: {}
-    },
+        updateContentTypeStrategy: function () {
+            var contentType = this.getProperty('contentType');
 
-    updateContentTypeStrategy: function () {
-        var contentType = this.getProperty('contentType');
-
-        if( _.isString(contentType) && contentType.includes('multipart') ){
-            this.contentTypeStrategy = serverActionContentTypeStrategy['File'];
-        } else {
-            this.contentTypeStrategy = serverActionContentTypeStrategy['Object'];
-        }
-    },
-
-    execute: function (callback) {
-        this.contentTypeStrategy.run(this.provider, this._getRequestData(), callback);
-    },
-
-    setParam: function(name, value) {
-        this.setProperty('params.' + name, value);
-    },
-
-    getParam: function(name) {
-        return this.getProperty('params.' + name);
-    },
-
-    _getRequestData: function () {
-        var origin = this._replaceParamsInStr( this.getProperty('origin') );
-        var path = this._replaceParamsInStr( this.getProperty('path') );
-        var method = this.getProperty('method').toUpperCase();
-        var contentType = this.getProperty('contentType');
-        var data = this._replaceParamsInObject( this.getProperty('data') );
-
-        var result = {};
-        result.requestUrl = origin + path;
-        result.method = method;
-        result.contentType = contentType;
-
-        if( !_.isEmpty(data) ){
-            if( method == 'GET') {
-                result.requestUrl = result.requestUrl + '?' + stringUtils.joinDataForQuery(data);
+            if( _.isString(contentType) && contentType.includes('multipart') ){
+                this.contentTypeStrategy = serverActionContentTypeStrategy['File'];
             } else {
-                result.args = ( _.isString(contentType) && contentType.includes('application/json')) ? JSON.stringify(data) : data;
+                this.contentTypeStrategy = serverActionContentTypeStrategy['Object'];
             }
-        }
+        },
 
-        return result;
-    },
+        execute: function (callback) {
+            var that = this,
+                onExecuted = function(args){
+                    that.onExecutedHandler(args);
 
-    _replaceParamsInStr: function(str){
-        if(!str){
-            return str;
-        }
-
-        var that = this;
-
-        return str.replace(/<%([\s\S]+?)%>/g, function(p1, p2){
-            return that.getParam(p2);
-        });
-    },
-
-    _replaceParamsInObject: function(obj){
-        if(_.isEmpty(obj) ){
-            return obj;
-        }
-
-        var str = JSON.stringify(obj);
-        var replacedStr = this._replaceParamsInStr(str);
-        return JSON.parse(replacedStr);
-    }
-});
-
-//####app/actions/serverAction/serverActionBuilder.js
-function ServerActionBuilder() {
-    this.build = function (context, args) {
-        var builder = args.builder,
-            metadata = args.metadata,
-            parentView = args.parentView;
-
-        var action = new ServerAction(parentView);
-
-        action.setProperty('origin', metadata.Origin);
-        action.setProperty('path', metadata.Path);
-
-        if (metadata.Data) {
-            action.setProperty('data', metadata.Data);
-        }
-
-        if (metadata.Method) {
-            action.setProperty('method', metadata.Method);
-        }
-
-        if (metadata.ContentType || metadata.ContentType === false) {
-            action.setProperty('contentType', metadata.ContentType);
-        }
-
-        if(metadata.Params){
-            for(var name in metadata.Params) {
-
-                var value = metadata.Params[name];
-
-                if (typeof value != 'object') {
-                    if (value !== undefined) {
-                        action.setParam(name, value);
+                    if (_.isFunction(callback)) {
+                        callback(args);
                     }
+                },
+                onSuccess = function(args) {
+                    that.onSuccessHandler(args);
+                },
+                onError = function(args) {
+                    that.onErrorHandler(args);
+                };
+
+            this.contentTypeStrategy.run(this.provider, this._getRequestData(), onExecuted, onSuccess, onError);
+        },
+
+        setParam: function(name, value) {
+            this.setProperty('params.' + name, value);
+        },
+
+        getParam: function(name) {
+            return this.getProperty('params.' + name);
+        },
+
+        _getRequestData: function () {
+            var origin = this._replaceParamsInStr( this.getProperty('origin') );
+            var path = this._replaceParamsInStr( this.getProperty('path') );
+            var method = this.getProperty('method').toUpperCase();
+            var contentType = this.getProperty('contentType');
+            var data = this._replaceParamsInObject( this.getProperty('data') );
+
+            var result = {};
+            result.requestUrl = origin + path;
+            result.method = method;
+            result.contentType = contentType;
+
+            if( !_.isEmpty(data) ){
+                if( method == 'GET') {
+                    result.requestUrl = result.requestUrl + '?' + stringUtils.joinDataForQuery(data);
                 } else {
-                    this._initBinding(name, value, action, parentView, builder);
+                    result.args = ( _.isString(contentType) && contentType.includes('application/json')) ? JSON.stringify(data) : data;
                 }
             }
-        }
 
-        return action;
-    };
+            return result;
+        },
 
-    this._initBinding = function (paramName, paramValue, action, parentView, builder) {
-        var args = {
-            parent: parentView,
-            parentView: parentView
-        };
-
-        var dataBinding = builder.buildBinding(paramValue, args);
-
-        dataBinding.setMode(InfinniUI.BindingModes.toElement);
-
-        dataBinding.bindElement({
-            setProperty: function (name, value) {
-                action.setParam(name, value);
-            },
-
-            onPropertyChanged: function () {
+        _replaceParamsInStr: function(str){
+            if(!str){
+                return str;
             }
 
-        }, paramName);
-    };
-}
+            var that = this;
 
+            return str.replace(/<%([\s\S]+?)%>/g, function(p1, p2){
+                return that.getParam(p2);
+            });
+        },
+
+        _replaceParamsInObject: function(obj){
+            if(_.isEmpty(obj) ){
+                return obj;
+            }
+
+            var str = JSON.stringify(obj);
+            var replacedStr = this._replaceParamsInStr(str);
+            return JSON.parse(replacedStr);
+        }
+    }
+);
+
+//####app/actions/serverAction/serverActionBuilder.js
+function ServerActionBuilder() {}
+
+_.extend(ServerActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    BaseFallibleActionBuilderMixin,
+    {
+        build: function (context, args) {
+            var builder = args.builder,
+                metadata = args.metadata,
+                parentView = args.parentView;
+
+            var action = new ServerAction(parentView);
+
+            this.applyBaseActionMetadata(action, args);
+            this.applyBaseFallibleActionMetadata(action, args);
+
+            action.setProperty('origin', metadata.Origin);
+            action.setProperty('path', metadata.Path);
+
+            if (metadata.Data) {
+                action.setProperty('data', metadata.Data);
+            }
+
+            if (metadata.Method) {
+                action.setProperty('method', metadata.Method);
+            }
+
+            if (metadata.ContentType || metadata.ContentType === false) {
+                action.setProperty('contentType', metadata.ContentType);
+            }
+
+            if(metadata.Params){
+                for(var name in metadata.Params) {
+
+                    var value = metadata.Params[name];
+
+                    if (typeof value != 'object') {
+                        if (value !== undefined) {
+                            action.setParam(name, value);
+                        }
+                    } else {
+                        this._initBinding(name, value, action, parentView, builder);
+                    }
+                }
+            }
+
+            return action;
+        },
+
+        _initBinding: function (paramName, paramValue, action, parentView, builder) {
+            var args = {
+                parent: parentView,
+                parentView: parentView
+            };
+
+            var dataBinding = builder.buildBinding(paramValue, args);
+
+            dataBinding.setMode(InfinniUI.BindingModes.toElement);
+
+            dataBinding.bindElement({
+                setProperty: function (name, value) {
+                    action.setParam(name, value);
+                },
+
+                onPropertyChanged: function () {
+                }
+
+            }, paramName);
+        }
+    }
+);
 //####app/actions/serverAction/serverActionContentTypeStrategy.js
 var serverActionContentTypeStrategy = {
     "File": {
-        run: function (provider, params, callback) {
-            provider.download(params, callback);
+        run: function (provider, params, callback, onSuccess, onError) {
+            provider.download(params, callback, onSuccess, onError);
         }
     },
     "Object": {
-        run: function (provider, params, callback) {
-            provider.request(params, callback);
+        run: function (provider, params, callback, onSuccess, onError) {
+            provider.request(params, callback, onSuccess, onError);
         }
     }
 };
@@ -26973,28 +27308,57 @@ function UpdateAction(parentView){
 
 _.inherit(UpdateAction, BaseAction);
 
+_.extend(UpdateAction.prototype,
+    BaseFallibleActionMixin,
+    {
+        execute: function(callback){
 
-_.extend(UpdateAction.prototype, {
-    execute: function(callback){
+            var dataSource = this.getProperty('dataSource');
 
-        var dataSource = this.getProperty('dataSource');
+            var that = this,
+                onSuccessUpdate = function (context, args) {
+                    that.onExecutedHandler(args);
+                    that.onSuccessHandler(args);
 
-        dataSource.updateItems(callback, callback);
+                    if (_.isFunction(callback)) {
+                        callback();
+                    }
+                },
+                onErrorUpdate = function (context, args) {
+                    that.onExecutedHandler(args);
+                    that.onErrorHandler(args);
+
+                    if (_.isFunction(callback)) {
+                        callback();
+                    }
+                };
+
+            dataSource.updateItems(onSuccessUpdate, onErrorUpdate);
+        }
     }
-});
+);
 //####app/actions/updateAction/updateActionBuilder.js
-function UpdateActionBuilder() {
-    this.build = function (context, args) {
+function UpdateActionBuilder() {}
 
-        var dataSource = args.parentView.getContext().dataSources[args.metadata.DestinationValue.Source];
+_.extend(UpdateActionBuilder.prototype,
+    BaseActionBuilderMixin,
+    BaseFallibleActionBuilderMixin,
+    {
+        build: function (context, args) {
 
-        var action = new UpdateAction(args.parentView);
+            var dataSource = args.parentView.getContext().dataSources[args.metadata.DestinationValue.Source];
 
-        action.setProperty('dataSource', dataSource);
+            var action = new UpdateAction(args.parentView);
 
-        return action;
+            this.applyBaseActionMetadata(action, args);
+            this.applyBaseFallibleActionMetadata(action, args);
+
+            action.setProperty('dataSource', dataSource);
+
+            return action;
+        }
     }
-}
+);
 //####app/builders/applicationBuilder.js
 function ApplicationBuilder() {
     if(!this.builder){
@@ -27041,6 +27405,7 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('ImageBox', new ImageBoxBuilder());
         builder.register('FileBox', new FileBoxBuilder());
         builder.register('Label', new LabelBuilder());
+        builder.register('Link', new LinkElementBuilder());
         builder.register('Icon', new IconBuilder());
         builder.register('DateTimePicker', new DateTimePickerBuilder());
         builder.register('DatePicker', new DatePickerBuilder());
@@ -28011,7 +28376,7 @@ window.InfinniUI.Providers.RestDataProvider = RestDataProvider;
 var ServerActionProvider = function () {
 };
 
-ServerActionProvider.prototype.request = function (requestData, resultCallback) {
+ServerActionProvider.prototype.request = function (requestData, resultCallback, onSuccess, onError) {
     var that = this;
     var requestId = Math.round((Math.random() * 100000));
 
@@ -28024,19 +28389,31 @@ ServerActionProvider.prototype.request = function (requestData, resultCallback) 
         data: requestData.args,
         contentType: requestData.contentType,
         success: function(data){
+            var args = {
+                requestId: requestId,
+                data: data
+            };
+
             if( _.isFunction(resultCallback) ){
-                resultCallback({
-                    requestId: requestId,
-                    data: data
-                });
+                resultCallback(args);
+            }
+
+            if( _.isFunction(onSuccess) ){
+                onSuccess(args);
             }
         },
         error: function (data) {
+            var args = {
+                requestId: requestId,
+                data: data
+            };
+
             if( _.isFunction(resultCallback) ){
-                resultCallback({
-                    requestId: requestId,
-                    data: data
-                });
+                resultCallback(args);
+            }
+
+            if( _.isFunction(onError) ){
+                onError(args);
             }
         }
     });
@@ -28044,8 +28421,8 @@ ServerActionProvider.prototype.request = function (requestData, resultCallback) 
     return requestId;
 };
 
-ServerActionProvider.prototype.download = function (requestData, resultCallback) {
-    new DownloadExecutor(resultCallback)
+ServerActionProvider.prototype.download = function (requestData, resultCallback, onSuccess, onError) {
+    new DownloadExecutor(resultCallback, onSuccess, onError)
         .run(requestData);
 };
 
