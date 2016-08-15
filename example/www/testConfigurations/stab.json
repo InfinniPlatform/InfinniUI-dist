@@ -1,4 +1,17 @@
 {
+	"CloseButtonVisibility": {
+		"Source": "UserCanClose",
+		"Property": "",
+		"Converter": {
+			"ToElement": "{ return true; }"
+		}
+	},
+	"NotificationSubsriptions": {
+		"key1": "{ console.log( 'key1: ' + args.message ) }",
+		"key2": "{ console.log( 'key2: ' + args.message ) }",
+		"key3": "{ console.log( 'key3: ' + args.message ) }",
+		"key4": "{ console.log( 'key4: ' + args.message ) }"
+	},
 	"DataSources": [
 		{
 			"ObjectDataSource": {
