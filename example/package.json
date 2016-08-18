@@ -27,6 +27,6 @@
   },
   "scripts": {
     "start": "gulp example",
-    "build": "bower i && npm i && gulp cleanFolder"
+    "build": "bower i && npm i && gulp cleanAndBuild"
   }
 }

@@ -1,0 +1,115 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ds1",
+				"Items": [
+					{
+						"yaParams": {
+							"Dimentions": {
+								"Width": "900px",
+								"Height": "500px"
+							},
+							"address":"Челябинск",
+							"center": [37.587596, 55.753093],
+							"zoom": 10
+						},
+						"Points": [
+							{
+								"address":"Челябинск ленина 12",
+								"GeoObjGeometry": {
+									"geometry": {
+										"type": "Point"
+									},
+									"properties": {
+										"iconContent": "Я тащусь1",
+										"hintContent": "Ну давай уже тащи1"
+									}
+								},
+								"GeoObjOptions": {
+									"preset": "islands#blackStretchyIcon",
+									"draggable": true
+								}
+							},
+							{
+								"address":"Челябинск, Доватора 10",
+								"GeoObjGeometry": {
+									"geometry": {
+										"type": "Point"
+									},
+									"properties": {
+										"iconContent": "Я тащусь2",
+										"hintContent": "Ну давай уже тащи2"
+									}
+								},
+								"GeoObjOptions": {
+									"preset": "islands#blackStretchyIcon",
+									"draggable": true
+								}
+							},
+							{
+								"address":"Челябинск, Молодогвардейцев 10",
+								"GeoObjGeometry": {
+									"geometry": {
+										"type": "Point"
+									},
+									"properties": {
+										"iconContent": "Я тащусь3",
+										"hintContent": "Ну давай уже тащи3"
+									}
+								},
+								"GeoObjOptions": {
+									"preset": "islands#blackStretchyIcon",
+									"draggable": true
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"TablePanel": {
+				"Items": [
+					{
+						"Row": {
+							"Items": [
+								{
+									"Cell": {
+										"ColumnSpan": 6,
+										"Items": [
+											{
+												"ExtensionPanel": {
+													"ExtensionName": "YaMapExtension",
+													"Parameters": [
+														{
+															"Name": "coordinate",
+															"Value": {
+																"Source": "ds1",
+																"Property": "$.yaParams"
+															}
+														},
+														{
+															"Name": "points",
+															"Value": {
+																"Source": "ds1",
+																"Property": "$.Points"
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}
+

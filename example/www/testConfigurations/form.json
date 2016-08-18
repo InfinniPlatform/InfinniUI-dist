@@ -1,0 +1,49 @@
+{
+	"Items": [
+		{
+			"GridPanel": {
+				"Items": [
+					{
+						"Cell": {
+							"ColumnSpan": 4
+						}
+					},
+					{
+						"Cell": {
+							"ColumnSpan": 4,
+							"Items": [
+								{
+									"Form": {
+										"Method": "post",
+										"Action": "/blabla",
+										"OnSubmit": "{ console.log( 'First input: ' + context.view.childElements[0].childElements[1].childElements[0].childElements[0].getValue() + '__Second input: ' + context.view.childElements[0].childElements[1].childElements[0].childElements[1].getValue() ); }",
+										"Items": [
+											{
+												"TextBox": {
+													"Name": "Login",
+													"Value": "Username"
+												}
+											},
+											{
+												"TextBox": {
+													"Name": "Password",
+													"Value": "parol"
+												}
+											},
+											{
+												"Button": {
+													"Text": "Войти",
+													"Type": "submit"
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}

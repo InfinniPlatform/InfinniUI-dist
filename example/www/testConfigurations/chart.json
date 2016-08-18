@@ -1,0 +1,96 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ds1",
+				"Items": [
+					{
+						"chartParams": {
+							"dimentions": {
+								"width": "800px",
+								"height": "500px"
+							},
+							"type":"line",
+							"data": {
+								"labels": ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+								"datasets": [
+									{
+										"label": "",
+										"data": [12, 19, 3, 5, 15, 3],
+										"borderWidth": 3,
+										"backgroundColor": [
+											"rgba(255, 99, 132, 0.2)",
+											"rgba(54, 162, 235, 0.2)",
+											"rgba(255, 206, 86, 0.2)",
+											"rgba(75, 192, 192, 0.2)",
+											"rgba(153, 102, 255, 0.2)",
+											"rgba(255, 159, 64, 0.2)",
+											"rgba(75, 192, 192, 0.2)",
+											"rgba(153, 102, 255, 0.2)",
+											"rgba(255, 159, 64, 0.2)"
+										]
+									}
+								]
+							},
+							"options": {
+								"maintainAspectRatio": false,
+								"scales": {
+									"yAxes": [
+										{
+											"ticks": {
+												"beginAtZero": true
+											}
+										}
+									],
+									"xAxes": [
+										{
+											"ticks": {
+												"beginAtZero": true
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"TablePanel": {
+				"Items": [
+					{
+						"Row": {
+							"Items": [
+								{
+									"Cell": {
+										"ColumnSpan": 6,
+										"Items": [
+											{
+												"ExtensionPanel": {
+													"ExtensionName": "ChartExtension",
+													"Parameters": [
+														{
+															"Name": "chartParams",
+															"Value": {
+																"Source": "ds1",
+																"Property": "$.chartParams"
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}
+

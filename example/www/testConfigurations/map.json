@@ -1,0 +1,83 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ds1",
+				"Items": [
+					{
+						"googleParams": {
+							"Dimentions": {
+								"Width": "900px",
+								"Height": "500px"
+							},
+							"address":"Россия, Челябинск Братьев кашириных 105",
+							"center": {"lat": 0, "lng": 0},
+							"zoom": 10
+						},
+						"Points": [
+							{
+								"address":"Челябинск ленина 12",
+								"Events": {
+									"click": "{ console.log( args ); }"
+								}
+							},
+							{
+								"address":"Челябинск, Доватора 10",
+								"infoWindow": {
+									"content": "Uluru, also referred to as Ayers Rock, is a largead. Kata Tjuta and Uluru are the two major.",
+									"event": "click"
+								}
+							},
+							{
+								"address":"Челябинск, Молодогвардейцев 10"
+							}
+						]
+					}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"TablePanel": {
+				"Items": [
+					{
+						"Row": {
+							"Items": [
+								{
+									"Cell": {
+										"ColumnSpan": 6,
+										"Items": [
+											{
+												"ExtensionPanel": {
+													"ExtensionName": "MapExtension",
+													"Parameters": [
+														{
+															"Name": "coordinate",
+															"Value": {
+																"Source": "ds1",
+																"Property": "$.googleParams"
+															}
+														},
+														{
+															"Name": "points",
+															"Value": {
+																"Source": "ds1",
+																"Property": "$.Points"
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}
+

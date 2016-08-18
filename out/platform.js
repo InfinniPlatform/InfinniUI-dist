@@ -417,7 +417,7 @@ Collection.prototype.set = function (newItems, silent) {
  */
 Collection.prototype.replace = function (oldItem, newItem) {
     var itemValue;
-    var changed = true;
+    var changed = false;
     for (var i = 0; i < this._items.length; i = i + 1) {
         itemValue = this.getCollectionItemValue(i);
         if (this.isEqual(oldItem, itemValue)) {
@@ -2886,6 +2886,15 @@ HashMap.prototype.add = function (key, value) {
     }
 };
 
+HashMap.prototype.remove = function (key) {
+    var i = this._getIndexOfKey(key);
+
+    if (i !== -1) {
+        this._keys.splice(i, 1);
+        this._values.splice(i, 1);
+    }
+};
+
 HashMap.prototype.getKeyByValue = function (value) {
     var key,
         i = this._getIndexOfValue(value);
@@ -4874,93 +4883,6 @@ _.extend(ControlView.prototype, bindUIElementsMixin, eventHandlerMixin);
 
 InfinniUI.ControlView = ControlView;
 
-//####app/controls/_base/control/pdfViewerViewBase.js
-var PdfViewerViewBase = ControlView.extend({
-    className: 'pl-document-viewer',
-
-    template: _.template(
-        '<div class="pl-documentViewer">' +
-        '   <iframe id="documentViewer" name="documentViewer" style="width:100%;" src="/app/utils/pdf/web/viewer.html#<%= frameId %>"></iframe>' +
-        '</div>'),
-
-    events: {
-        'click .print': 'onButtonPrintClickHandler'
-    },
-
-    initialize: function () {
-        ControlView.prototype.initialize.apply(this);
-        this.listenTo(this.model, 'change:dataSource', this.onChangeDataSource);
-    },
-
-    onChangeDataSource: function () {
-        if (!this.wasRendered) {
-            return;
-        }
-        this.renderDocument();
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.renderDocument();
-
-        this.postrenderingActions();
-        return this;
-    },
-
-    renderPdf: function(data){
-        window.pdfDocs = window.pdfDocs||[];
-
-        var frameId = this.genId();
-        window.pdfDocs[frameId] = data;
-        var template = this.template({frameId: frameId});
-        this.$el.html(template);
-    },
-
-    onButtonPrintClickHandler: function () {
-        $('#documentViewer').get(0).contentWindow.print();
-    },
-
-    genId: function(){
-        return Math.round((Math.random() * 100000));
-    },
-
-    sendRequest: function(url, handler){
-        var xmlhttp = this.getXmlHttp();
-
-        xmlhttp.open('GET', url, true);
-        xmlhttp.withCredentials = true;
-        xmlhttp.responseType = 'arraybuffer';
-        xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xmlhttp.onreadystatechange = function() {
-            if (xmlhttp.readyState == 4) {
-                if(xmlhttp.status == 200) {
-                    handler(xmlhttp.response);
-                }
-            }
-        };
-        xmlhttp.send();
-    },
-
-    getXmlHttp: function(){
-        var xmlhttp;
-        try {
-            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-        } catch (e) {
-            try {
-                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-            } catch (e1) {
-                xmlhttp = false;
-            }
-        }
-
-        if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
-            xmlhttp = new XMLHttpRequest();
-        }
-
-        return xmlhttp;
-    }
-});
 //####app/controls/_base/button/buttonControlMixin.js
 var buttonControlMixin = {
 
@@ -5025,15 +4947,20 @@ var ContainerView = ControlView.extend(
         },
 
         updateGrouping: function(){
-            throw 'ContainerView.updateGrouping � ������� ContainerView �� ����������� ���������� �����������.';
+            throw 'ContainerView.updateGrouping В потомке ContainerView не реализовано обновление группировок.';
         },
 
         initHandlersForProperties: function(){
             ControlView.prototype.initHandlersForProperties.call(this);
 
             var that = this;
-            this.model.get('items').onChange(function(){
-                that.rerender();
+            this.model.get('items').onChange(function(event){
+                switch (event.action) {
+                    case 'replace':
+                        break;
+                    default:
+                        that.rerender();
+                }
             });
         },
 
@@ -9204,6 +9131,12 @@ var CommonButtonView = ControlView.extend({
         ControlView.prototype.updateProperties.call(this);
 
         this.updateContent();
+        this.updateType();
+    },
+
+    updateType: function() {
+        var type = this.model.get('type');
+        this.getButtonElement().attr('type', type);
     },
 
     updateContent: function(){
@@ -9353,6 +9286,14 @@ _.extend(
             var ViewClass = window.InfinniUI.viewModes.Button[viewMode];
 
             return new ViewClass({model: model});
+        },
+
+        setType: function(type) {
+            this.controlModel.set('type', type);
+        },
+
+        getType: function() {
+            return this.controlModel.get('type');
         }
 
     }, buttonControlMixin);
@@ -9368,8 +9309,8 @@ var ButtonModel = ControlModel.extend({
     defaults: _.defaults({
         content: null,
         contentTemplate: null,
-        horizontalAlignment: 'Left'
-
+        horizontalAlignment: 'Left',
+        type: 'button'
     }, ControlModel.prototype.defaults),
 
     initialize: function () {
@@ -9377,6 +9318,7 @@ var ButtonModel = ControlModel.extend({
     }
 
 });
+
 //####app/controls/button/menuItemView/buttonView.js
 /**
  * @class ButtonView
@@ -10361,6 +10303,21 @@ var DataGridView = ListEditorBaseView.extend({
         this.listenTo(this.model, 'change:showSelectors', this.updateShowSelectors);
         this.listenTo(this.model, 'change:checkAllVisible', this.updateCheckAllVisible);
         this.listenTo(this.model, 'change:checkAll', this.updateCheckAll);
+
+        /** Update hash item => element when item changed **/
+        var rowElements = this.rowElements;
+        var model = this.model;
+        this.model.get('items').onChange(function(event){
+            if (event.action === 'replace') {
+                event.oldItems.forEach(function (oldItem, index) {
+                    rowElements.add(event.newItems[index], rowElements.get(oldItem));
+                    rowElements.remove(oldItem);
+                    if (model.get('selectedItem') === oldItem) {
+                        model.set('selectedItem', event.newItems[index]);
+                    }
+                });
+            }
+        });
     },
 
     updateProperties: function () {
@@ -10605,15 +10562,19 @@ var DataGridView = ListEditorBaseView.extend({
                 var element = itemTemplate(undefined, {index: index, item: item});
 
                 element.onBeforeClick(function() {
-                    model.set('selectedItem', item);
+                    var items = model.get('items');
+                    model.set('selectedItem', items.getByIndex(index));
                 });
+
                 element.onToggle(function() {
                     var enabled = this.model.get('enabled');
+                    var items = model.get('items');
 
                     if(enabled){
-                        model.toggleValue(valueSelector(undefined, {value:item}));
+                        model.toggleValue(valueSelector(undefined, {value:items.getByIndex(index)}));
                     }
                 });
+
                 that.addRowElement(item, element);
 
                 var $element = element.render();
@@ -12531,14 +12492,16 @@ _.extend(StackPanelViewPlainStrategy.prototype, {
         return this.stackPanel.template.plain;
     },
 
-    appendItemsContent: function(preparedItems){
+    appendItemsContent: function(preparedItems, childElementsClass){
         var $stackPanel = this.stackPanel.$el,
             itemTemplate = this.stackPanel.getItemTemplate(),
             items = preparedItems.items,
             stackPanel = this.stackPanel,
             itemEl, $el;
 
-        $stackPanel.find('.pl-stack-panel-i').each(function(i, el){
+        childElementsClass = childElementsClass || '.pl-stack-panel-i';
+
+        $stackPanel.find(childElementsClass).each(function(i, el){
             $el = $(el);
             itemEl = itemTemplate(undefined, {index: i, item: items[i]});
             stackPanel.addChildElement(itemEl);
@@ -12548,6 +12511,7 @@ _.extend(StackPanelViewPlainStrategy.prototype, {
         });
     }
 });
+
 //####app/controls/tablePanel/tablePanelControl.js
 /**
  *
@@ -15042,6 +15006,139 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
 
 }));
 
+//####app/controls/form/formControl.js
+function FormControl(parent) {
+	_.superClass(FormControl, this, parent);
+}
+
+_.inherit(FormControl, StackPanelControl);
+
+_.extend(FormControl.prototype, {
+
+	createControlModel: function () {
+		return new FormModel();
+	},
+
+	createControlView: function (model) {
+		return new FormView({model: model});
+	},
+
+	onSubmit: function (callback) {
+		this.controlView.$el.on('submit', callback);
+	},
+
+	setSubmitFunction: function(func) {
+		this.controlModel.set('submitFunction', func);
+	},
+
+	getSubmitFunction: function() {
+		return this.controlModel.get('submitFunction');
+	},
+
+	setMethod: function(method) {
+		this.controlModel.set('method', method);
+	},
+
+	getMethod: function() {
+		 return this.controlModel.get('method');
+	},
+
+	setAction: function(action) {
+		this.controlModel.set('action', action);
+	},
+
+	getAction: function() {
+		 return this.controlModel.get('action');
+	}
+
+});
+
+//####app/controls/form/formModel.js
+var FormModel = StackPanelModel.extend({
+
+	defaults: _.defaults({
+		submitFunction: null,
+		method: '',
+		action: ''
+	}, StackPanelModel.prototype.defaults)
+
+});
+
+//####app/controls/form/formView.js
+/**
+ * @class FormView
+ * @augments StackPanelView
+ */
+var FormView = StackPanelView.extend({
+
+	className: 'pl-form',
+
+	tagName: 'form',
+
+	template: {
+		plain: InfinniUI.Template["controls/form/template/form.tpl.html"]
+	},
+
+	events: {
+		'submit': 'onSubmit'
+	},
+
+	onSubmit: function (e) {
+		e.preventDefault();
+	},
+
+	initialize: function (options) {
+		StackPanelView.prototype.initialize.call(this, options);
+
+		this.listenTo(this.model, 'change:method', this.updateMethod);
+		this.listenTo(this.model, 'change:action', this.updateAction);
+	},
+
+	updateGrouping: function(){
+		this.strategy = new StackPanelViewPlainStrategy(this);
+	},
+
+	render: function () {
+		this.prerenderingActions();
+
+		this.removeChildElements();
+
+		var preparedItems = this.strategy.prepareItemsForRendering();
+		var template = this.strategy.getTemplate();
+
+		this.$el.html(template(preparedItems));
+
+		this.strategy.appendItemsContent(preparedItems, '.pl-form-i');
+
+		this.bindUIElements();
+		this.updateProperties();
+		this.trigger('render');
+
+		this.postrenderingActions();
+		return this;
+	},
+
+	updateProperties: function() {
+		StackPanelView.prototype.updateProperties.call(this);
+
+		this.updateMethod();
+		this.updateAction();
+	},
+
+	updateMethod: function() {
+		var method = this.model.get('method');
+
+		this.$el.attr('method', method);
+	},
+
+	updateAction: function() {
+		var action = this.model.get('action');
+
+		this.$el.attr('action', action);
+	}
+
+});
+
 //####app/controls/frame/frameControl.js
 /**
  *
@@ -16530,50 +16627,6 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
 
 }));
 
-//####app/controls/pdfViewer/pdfViewerControl.js
-var PdfViewerControl = function () {
-    _.superClass(PdfViewerControl, this);
-};
-
-_.inherit(PdfViewerControl, Control);
-
-_.extend(PdfViewerControl.prototype, {
-    createControlModel: function () {
-        return new PdfViewerModel();
-    },
-
-    createControlView: function (model) {
-        return new PdfViewerView({model: model});
-    },
-
-    onValueChanged: function(handler){
-        this.controlModel.on('change:value', handler);
-    }
-});
-//####app/controls/pdfViewer/pdfViewerModel.js
-var PdfViewerModel = ControlModel.extend({
-    initialize: function(){
-        ControlModel.prototype.initialize.apply(this);
-    }
-});
-//####app/controls/pdfViewer/pdfViewerView.js
-var PdfViewerView = PdfViewerViewBase.extend({
-    renderDocument: function () {
-        var that = this,
-            renderFrame = function(){
-                if(this.model.get('url')){
-                    var url = encodeURI(this.model.get('url'));
-                    this.sendRequest(url, function(data){
-                        that.renderPdf(data);
-                    });
-                }
-            }.bind(this);
-
-        renderFrame();
-
-        this.listenTo(this.model, 'change:url', renderFrame);
-    }
-});
 //####app/controls/scrollPanel/scrollPanelControl.js
 /**
  *
@@ -20738,6 +20791,15 @@ _.extend(ContainerBuilder.prototype, {
             };
         }
 
+        var source = binding.getSource();
+        source.onPropertyChanged('*', function (context, args) {
+            var items = element.getItems();
+            //При замене целого элемента списка, заменить элемент в коллекции
+            if (args.property && args.property.match(/^\d+$/)) {
+                items.replace(args.oldValue, args.newValue);
+            }
+        });
+
         binding.bindElement({
             setProperty: function (name, value) {
                 var items = element.getItems(),
@@ -21784,55 +21846,66 @@ TimePickerBuilder.prototype.applyMaxValue = function (element, maxValue) {
         element.setMaxValue(date);
     }
 };
-//####app/elements/dataElement/pdfViewer/pdfViewer.js
-function PdfViewer(parentView) {
-    _.superClass(PdfViewer, this, parentView);
+//####app/elements/stackPanel/stackPanel.js
+/**
+ * @param parent
+ * @constructor
+ * @augments Container
+ */
+function StackPanel(parent, viewMode) {
+    _.superClass(StackPanel, this, parent, viewMode);
 }
 
-_.inherit(PdfViewer, Element);
+_.inherit(StackPanel, Container);
 
-_.extend(PdfViewer.prototype, {
+StackPanel.prototype.getOrientation = function () {
+    return this.control.get('orientation');
+};
 
-    createControl: function () {
-        return new PdfViewerControl();
-    },
-
-    setUrl: function (url) {
-        return this.control.set('url', url);
+StackPanel.prototype.setOrientation = function (value) {
+    if (InfinniUI.Metadata.isValidValue(value, InfinniUI.StackPanelOrientation)) {
+        this.control.set('orientation', value)
     }
+};
 
-}, valuePropertyMixin);
-//####app/elements/dataElement/pdfViewer/pdfViewerBuilder.js
-function PdfViewerBuilder() {
+StackPanel.prototype.createControl = function (viewMode) {
+    return new StackPanelControl(viewMode);
+};
+//####app/elements/stackPanel/stackPanelBuilder.js
+/**
+ * @constructor
+ * @augments ContainerBuilder
+ */
+function StackPanelBuilder() {
+    _.superClass(StackPanelBuilder, this);
 }
 
-_.inherit(PdfViewerBuilder, ElementBuilder);
+_.inherit(StackPanelBuilder, ContainerBuilder);
 
-_.extend(PdfViewerBuilder.prototype, {
+_.extend(StackPanelBuilder.prototype,
+    /** @lends StackPanelBuilder.prototype*/
+    {
+        createElement: function (params) {
+            return new StackPanel(params.parent, params.metadata['ViewMode']);
+        },
 
-    applyMetadata: function (params) {
-        ElementBuilder.prototype.applyMetadata.call(this, params);
+        /**
+         * @param {Object} params
+         * @param {StackPanel} params.element
+         * @param {Object} params.metadata
+         */
+        applyMetadata: function (params) {
+            var
+                metadata = params.metadata,
+                element = params.element;
 
-        this.initScriptsHandlers(params);
+            var result = ContainerBuilder.prototype.applyMetadata.call(this, params);
+            element.setOrientation(metadata.Orientation);
 
-        params.element.setUrl(params.metadata.Value);
-    },
-
-    createElement: function (params) {
-        return new PdfViewer(params.parentView);
-    },
-
-    initScriptsHandlers: function(params){
-        var metadata = params.metadata;
-
-        //Скриптовые обработчики на события
-        if (params.view && metadata.OnLoaded){
-            params.element.onLoaded(function() {
-                new ScriptExecutor(params.view).executeScript(metadata.OnLoaded.Name);
-            });
+            return result;
         }
-    }
-}, builderValuePropertyMixin);
+
+    });
 
 //####app/elements/button/button.js
 /**
@@ -21841,17 +21914,25 @@ _.extend(PdfViewerBuilder.prototype, {
  * @constructor
  */
 function Button(parent, viewMode) {
-    _.superClass(Button, this, parent, viewMode);
-    this.buttonInit();
+	_.superClass(Button, this, parent, viewMode);
+	this.buttonInit();
 }
 
 _.inherit(Button, Element);
 
 _.extend(Button.prototype, {
 
-    createControl: function (viewMode) {
-        return new ButtonControl(viewMode);
-    }
+	createControl: function (viewMode) {
+		return new ButtonControl(viewMode);
+	},
+
+	setType: function(type) {
+		this.control.setType(type);
+	},
+
+	getType: function() {
+		return this.control.getType();
+	}
 
 }, buttonMixin);
 
@@ -21906,9 +21987,14 @@ _.extend(ButtonBuilder.prototype, {
         ElementBuilder.prototype.applyMetadata.call(this, params);
 
         this.applyButtonMetadata(params);
+
+        if( params.metadata.Type ) {
+            params.element.setType(params.metadata.Type);
+        }
     }
 
 }, buttonBuilderMixin);
+
 //####app/elements/buttonEdit/buttonEdit.js
 /**
  *
@@ -23407,6 +23493,94 @@ FileBoxValueConverter.prototype.toElement = function (context, args) {
 
     return url;
 };
+//####app/elements/form/form.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augment StackPanel
+ */
+function Form(parent) {
+	_.superClass(Form, this, parent);
+}
+
+_.inherit(Form, StackPanel);
+
+Form.prototype.createControl = function (parent) {
+	return new FormControl(parent);
+};
+
+Form.prototype.onSubmit = function (handler) {
+	var that = this,
+			callback = function (nativeEventData) {
+				handler(nativeEventData);
+			};
+	return this.control.onSubmit(callback);
+};
+
+Form.prototype.setSubmitFunction = function(func) {
+	this.control.setSubmitFunction(func);
+};
+
+Form.prototype.getSubmitFunction = function() {
+	return this.control.getSubmitFunction();
+};
+
+Form.prototype.setMethod = function(method) {
+	this.control.setMethod(method);
+};
+
+Form.prototype.getMethod = function() {
+	return this.control.getMethod();
+};
+
+Form.prototype.setAction = function(action) {
+	this.control.setAction(action);
+};
+
+Form.prototype.getAction = function() {
+	return this.control.getAction();
+};
+
+//####app/elements/form/formBuilder.js
+/**
+ *
+ * @constructor
+ * @augments StackPanelBuilder
+ */
+function FormBuilder() {
+	_.superClass(FormBuilder, this);
+}
+
+_.inherit(FormBuilder, StackPanelBuilder);
+
+_.extend(FormBuilder.prototype, {
+
+	createElement: function (params) {
+		return new Form(params.parent);
+	},
+
+	applyMetadata: function(params) {
+		var element = params.element,
+				metadata = params.metadata;
+		StackPanelBuilder.prototype.applyMetadata.call(this, params);
+
+		if( metadata.OnSubmit ) {
+			element.onSubmit(function() {
+				return new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnSubmit.Name || metadata.OnSubmit);
+			});
+		}
+
+		if( metadata.Method ) {
+			element.setMethod(metadata.Method);
+		}
+
+		if( metadata.Action ) {
+			element.setAction(metadata.Action);
+		}
+	}
+});
+
 //####app/elements/frame/frame.js
 /**
  *
@@ -23902,43 +24076,43 @@ _.extend(LabelBuilder.prototype, {
  * @augments Button
  * @constructor
  */
-function LinkElement(parent) {
-    _.superClass(LinkElement, this, parent);
+function Link(parent) {
+    _.superClass(Link, this, parent);
 }
 
-_.inherit(LinkElement, Button);
+_.inherit(Link, Button);
 
-LinkElement.prototype.createControl = function () {
+Link.prototype.createControl = function () {
     return new LinkElementControl();
 };
 
-LinkElement.prototype.setHref = function (value) {
+Link.prototype.setHref = function (value) {
     this.control.set('href', value);
 };
 
-LinkElement.prototype.getHref = function () {
+Link.prototype.getHref = function () {
     return this.control.get('href');
 };
 
-LinkElement.prototype.setTarget = function (value) {
+Link.prototype.setTarget = function (value) {
     this.control.set('target', value);
 };
 
-LinkElement.prototype.getTarget = function () {
+Link.prototype.getTarget = function () {
     return this.control.get('target');
 };
 
 //####app/elements/link/linkBuilder.js
-function LinkElementBuilder() {
-    _.superClass(LinkElementBuilder, this);
+function LinkBuilder() {
+    _.superClass(LinkBuilder, this);
 }
 
-_.inherit(LinkElementBuilder, ButtonBuilder);
+_.inherit(LinkBuilder, ButtonBuilder);
 
-_.extend(LinkElementBuilder.prototype, {
+_.extend(LinkBuilder.prototype, {
 
     createElement: function (params) {
-        return new LinkElement(params.parent);
+        return new Link(params.parent);
     },
 
     applyMetadata: function (params) {
@@ -24685,67 +24859,6 @@ _.extend(ScrollPanelBuilder.prototype, /** @lends ScrollPanelBuilder.prototype*/
     }
 
 });
-
-//####app/elements/stackPanel/stackPanel.js
-/**
- * @param parent
- * @constructor
- * @augments Container
- */
-function StackPanel(parent, viewMode) {
-    _.superClass(StackPanel, this, parent, viewMode);
-}
-
-_.inherit(StackPanel, Container);
-
-StackPanel.prototype.getOrientation = function () {
-    return this.control.get('orientation');
-};
-
-StackPanel.prototype.setOrientation = function (value) {
-    if (InfinniUI.Metadata.isValidValue(value, InfinniUI.StackPanelOrientation)) {
-        this.control.set('orientation', value)
-    }
-};
-
-StackPanel.prototype.createControl = function (viewMode) {
-    return new StackPanelControl(viewMode);
-};
-//####app/elements/stackPanel/stackPanelBuilder.js
-/**
- * @constructor
- * @augments ContainerBuilder
- */
-function StackPanelBuilder() {
-    _.superClass(StackPanelBuilder, this);
-}
-
-_.inherit(StackPanelBuilder, ContainerBuilder);
-
-_.extend(StackPanelBuilder.prototype,
-    /** @lends StackPanelBuilder.prototype*/
-    {
-        createElement: function (params) {
-            return new StackPanel(params.parent, params.metadata['ViewMode']);
-        },
-
-        /**
-         * @param {Object} params
-         * @param {StackPanel} params.element
-         * @param {Object} params.metadata
-         */
-        applyMetadata: function (params) {
-            var
-                metadata = params.metadata,
-                element = params.element;
-
-            var result = ContainerBuilder.prototype.applyMetadata.call(this, params);
-            element.setOrientation(metadata.Orientation);
-
-            return result;
-        }
-
-    });
 
 //####app/elements/tabPanel/tabPanel.js
 /**
@@ -27405,7 +27518,8 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('ImageBox', new ImageBoxBuilder());
         builder.register('FileBox', new FileBoxBuilder());
         builder.register('Label', new LabelBuilder());
-        builder.register('Link', new LinkElementBuilder());
+        builder.register('Link', new LinkBuilder());
+        builder.register('Form', new FormBuilder());
         builder.register('Icon', new IconBuilder());
         builder.register('DateTimePicker', new DateTimePickerBuilder());
         builder.register('DatePicker', new DatePickerBuilder());
@@ -27420,7 +27534,6 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('ExtensionPanel', new ExtensionPanelBuilder());
         builder.register('PopupButton', new PopupButtonBuilder());
         builder.register('DataNavigation', new DataNavigationBuilder());
-        builder.register('PdfViewer', new PdfViewerBuilder());
         builder.register('TreeView', new TreeViewBuilder());
         builder.register('Frame', new FrameBuilder());
         builder.register('ButtonEdit', new ButtonEditBuilder());
@@ -33652,153 +33765,4 @@ InfinniUI.ToolTipService = (function () {
 			})
 			.tooltip('show');
 	}
-})();
-
-//####extensions/excelButton.js
-function ExcelButton() {
-    this.render = function (target, parameters, context) {
-        var $button = $('<a>')
-            .attr('href', '#')
-            .append($('<img src="/launchers/main/excel.png" />').css('width', '34px'))
-            .click(function () {
-                context.Global.executeAction({
-                    OpenViewAction: {
-                        View: {
-                            AutoView: {
-                                ConfigId: 'Schedule',
-                                DocumentId: 'OperationAppointment',
-                                MetadataName: 'ExcelView',
-                                OpenMode: 'Dialog'
-                            }
-                        }
-                    }
-                });
-
-                return false;
-            });
-
-        target.append($button);
-    }
-}
-//####extensions/loginForm/loginForm.js
-function LoginForm(context, args) {
-
-    var EVENT_NAME_LOGIN = 'SignIn';
-    var exchange = context.messageBus;
-    var template = InfinniUI.Template["extensions/loginForm/template/loginForm.tpl.html"];
-    var uid = guid();
-    var username = 'Электронная почта';
-    var password = 'Пароль';
-    var submit = 'Войти';
-
-    var $form;
-    this.render = render;
-
-    function render() {
-
-        var html = template({
-            uid: uid,
-            username: username,
-            password: password,
-            submit: submit
-        });
-
-        $form = $(html);
-
-        args.$el.append($form);
-
-        initFormEventsHandler();
-
-    }
-
-    function initFormEventsHandler() {
-        $("button[type=submit]", $form).on('click', onSubmitHandler);
-    }
-
-    function onSubmitHandler() {
-        var username = $("input[type=text]", $form).val();
-        var password = $("input[type=password]", $form).val();
-
-        exchange.send(EVENT_NAME_LOGIN, {value: {username: username, password: password}});
-    }
-}
-
-//####extensions/testt/testt.js
-function Testt(context, args) {
-    this.context = args.context;
-
-    this.$el = args.$el;
-    this.parameters = args.parameters;
-    this.itemTemplate = args.itemTemplate;
-}
-
-_.extend( Testt.prototype, {
-    render: function(){
-        this.$el
-            .append(this.itemTemplate(this.context, {index:0}).render());
-    }
-});
-//####developer/jsonEditor/jsonEditor.js
-InfinniUI.JsonEditor = (function () {
-    var childWindow;
-    var metadataForOpen;
-    var pathForOpen;
-
-    function updateContentOfChildWindow(){
-        if(metadataForOpen){
-            childWindow.setMetadata(JSON.stringify(metadataForOpen));
-            metadataForOpen = undefined;
-        }
-
-        if (pathForOpen) {
-            childWindow.setPath(pathForOpen);
-            pathForOpen = undefined;
-        }
-    }
-
-    return {
-        setMetadata: function (metadata) {
-            // TODO: Не универсально
-            var name = metadata.Namespace + '.' + metadata.Name;
-            return $.get(InfinniUI.config.editorService.url, {name: name})
-                .success(function (data) {
-                    metadataForOpen = data;
-
-                    if (!childWindow) {
-
-                        var tempChildWindow = window.open('compiled/platform/jsonEditor/index.html', 'JSON_Editor', {});
-
-                        tempChildWindow.onload = function () {
-                            childWindow = tempChildWindow;
-
-                            childWindow.onSaveMetadata(function (metadata) {
-                                $.post(InfinniUI.config.editorService.url, {Json: JSON.stringify(metadata)})
-                                    .success(function () {
-                                        toastr.success('Metadata saved');
-                                    })
-                                    .error(function (error) {
-                                        alert(JSON.stringify(error));
-                                    });
-                            });
-
-                            updateContentOfChildWindow();
-                        };
-
-                        tempChildWindow.addEventListener('unload', function() {
-                            childWindow = undefined;
-                        });
-                    } else {
-                        updateContentOfChildWindow();
-                        childWindow.focus();
-                    }
-                });
-        },
-        setPath: function (path) {
-            pathForOpen = path;
-
-            if(childWindow){
-                updateContentOfChildWindow();
-            }
-        }
-    };
 })();

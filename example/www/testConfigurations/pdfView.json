@@ -1,0 +1,24 @@
+{
+	"Items": [
+		{
+			"ScrollPanel": {
+				"Items": [
+					{
+						"StackPanel": {
+							"Items": [
+								{
+									"PdfViewer": {
+										"Value": "/typescript.pdf",
+										"Width": "60%",
+										"Height": "800px"
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}
+
