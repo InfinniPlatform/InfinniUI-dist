@@ -33829,9 +33829,13 @@ var notificationSubsription = (function() {
 	var subscription = {},
 			hubProxy,
 			connection,
+			onSuccessCb,
+			onErrorCb,
 			isConnected = false;
 
-	var setUpConnection = function(hubName) {
+	var setUpConnection = function(hubName, onSuccess, onError) {
+		onSuccessCb = onSuccess;
+		onErrorCb = onError;
 		connection = $.hubConnection(window.InfinniUI.config.serverUrl);
 		hubProxy = connection.createHubProxy(hubName);
 
@@ -33904,10 +33908,16 @@ var notificationSubsription = (function() {
 		connection.start()
 			.done(function() {
 				console.log( 'signalR: connection is started' );
+				if( typeof onSuccessCb === 'function' ) {
+					onSuccessCb();
+				}
 			})
 			.fail(function() {
 				console.log( 'signalR: connection fail' );
 				isConnected = false;
+				if( typeof onErrorCb === 'function' ) {
+					onErrorCb();
+				}
 			});
 	};
 
