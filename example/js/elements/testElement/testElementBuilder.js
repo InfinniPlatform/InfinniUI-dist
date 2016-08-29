@@ -9,7 +9,7 @@ _.extend(TestElementBuilder.prototype, {
             var element = params.element;
             var metadata = params.metadata;
 
-            ElementBuilder.prototype.applyMetadata.call(this, params);
+            InfinniUI.ElementBuilder.prototype.applyMetadata.call(this, params);
 
             if('TestProperty' in metadata){
                 element.setTestProperty(metadata['TestProperty']);

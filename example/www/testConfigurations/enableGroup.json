@@ -1,0 +1,237 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ds1",
+				"Items": [
+					{
+						"Weight": 70,
+						"Tall": "180",
+						"Age": "20",
+						"Gender": "M"
+					},
+					{
+						"Weight": 80,
+						"Tall": "167",
+						"Age": "28",
+						"Gender": "M"
+					},
+					{
+						"Weight": 76,
+						"Tall": "160",
+						"Age": "43",
+						"Gender": "F"
+					},
+					{
+						"Weight": 87,
+						"Tall": "150",
+						"Age": "29",
+						"Gender": "M"
+					},
+					{
+						"Weight": 57,
+						"Tall": "187",
+						"Age": "54",
+						"Gender": "F"
+					}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "ds2",
+				"Items": [
+					{
+						"Weight": 70,
+						"Tall": "180",
+						"Age": "20",
+						"Gender": "M"
+					},
+					{
+						"Weight": 80,
+						"Tall": "167",
+						"Age": "28",
+						"Gender": "M"
+					},
+					{
+						"Weight": 76,
+						"Tall": "160",
+						"Age": "43",
+						"Gender": "F"
+					},
+					{
+						"Weight": 87,
+						"Tall": "150",
+						"Age": "29",
+						"Gender": "M"
+					},
+					{
+						"Weight": 57,
+						"Tall": "187",
+						"Age": "54",
+						"Gender": "F"
+					}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "ds3",
+				"Items": [
+					{
+						"Weight": 70,
+						"Tall": "180",
+						"Age": "20",
+						"Gender": "M"
+					},
+					{
+						"Weight": 80,
+						"Tall": "167",
+						"Age": "28",
+						"Gender": "M"
+					},
+					{
+						"Weight": 76,
+						"Tall": "160",
+						"Age": "43",
+						"Gender": "F"
+					},
+					{
+						"Weight": 87,
+						"Tall": "150",
+						"Age": "29",
+						"Gender": "M"
+					},
+					{
+						"Weight": 57,
+						"Tall": "187",
+						"Age": "54",
+						"Gender": "F"
+					}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"ScrollPanel": {
+				"Items": [
+					{
+						"StackPanel": {
+							"Orientation": "Vertical",
+							"Items": [
+								{
+									"TextBox": {
+										"Value": "textbox1"
+									}
+								},
+								{
+									"TextBox": {
+										"Value": "textbox2",
+										"Enabled": false
+									}
+								},
+								{
+									"TextBox": {
+										"Value": "textbox3"
+									}
+								}
+							]
+						}
+					},
+					{
+						"DataGrid": {
+							"Name": "HousesDataGrid",
+							"DisabledItemCondition": "{ return args.value.Age < 35; }",
+							"VerticalAlignment": "Stretch",
+							"Columns": [
+								{
+									"Header": "Вес",
+									"CellProperty": "Weight"
+								},
+								{
+									"Header": "Рост",
+									"CellProperty": "Tall",
+									"Width": "120px"
+								},
+								{
+									"Header": "Возраст",
+									"Width": "170px",
+									"CellProperty": "Age"
+								},
+								{
+									"Header": "Пол",
+									"Width": "300px",
+									"CellTemplate": {
+										"TextBox": {
+											"Value": {
+												"Source": "ds1",
+												"Property": "#.Gender"
+											}
+										}
+									}
+								},
+								{
+									"Header": "Статус",
+									"Width": "70px",
+									"CellTemplate": {
+										"StackPanel": {
+											"Orientation": "Horizontal",
+											"ViewMode": "FormGroup",
+											"Items": [
+												{
+													"Icon": {
+														"Value": "pencil",
+														"Foreground": "primary2"
+													}
+												},
+												{
+													"Icon": {
+														"Value": "trash",
+														"Foreground": "primary2"
+													}
+												}
+											]
+										}
+									}
+								}
+							],
+							"Items": {
+								"Source": "ds1",
+								"Property": ""
+							}
+						}
+					},
+					{
+						"ListBox": {
+							"DisabledItemCondition": "{ return args.value.Age > 35; }",
+							"ItemTemplate": {
+								"TextBox": {
+									"Value": {
+										"Source": "ds2",
+										"Property": "#.Weight"
+									}
+								}
+							},
+							"Items": {
+								"Source": "ds2",
+								"Property": ""
+							}
+						}
+					},
+					{
+						"ComboBox": {
+							"DisabledItemCondition": "{ return args.value.Tall < 170; }",
+							"ItemFormat": "{Tall}",
+							"ValueFormat": "{Age}",
+							"Items": {
+								"Source": "ds3",
+								"Property": ""
+							}
+						}
+					}
+				]
+			}
+		}
+	]
+}
