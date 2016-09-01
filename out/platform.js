@@ -10680,10 +10680,10 @@ var DataGridView = ListEditorBaseView.extend({
     },
 
     onClickToHeaderCellHandler: function (e) {
-        var $th = $(e.currentTarget);
-        var column = $th.data('pl-column');
+        var $th = $(e.currentTarget),
+            column = $th.data('pl-column');
 
-        if( column.isSortable() ){
+        if( column && column.isSortable() ){
             if(column.getSortDirection() === null) {
                 this.resetSort();
                 this.setUpColumnSort(column, $th, 'asc');
@@ -15955,6 +15955,16 @@ var LinkElementView = CommonButtonView.extend({
             $link = this.getButtonElement();
 
         $link.attr('target', '_' + newTarget);
+    },
+
+    onClickHandler: function(e) {
+        var href = this.model.get('href');
+        if( href.indexOf('http://') === -1 ) {
+            InfinniUI.AppRouter.navigate(href, {trigger: true});
+            if( e.which !== 2 ) {
+                e.preventDefault();
+            }
+        }
     }
 
 });
@@ -20454,6 +20464,106 @@ var labelTextElementMixin = {
         this.control.set('labelText', value);
     }
 };
+//####app/elements/_base/_mixins/routerServiceMixin.js
+var routerServiceMixin = {
+
+	replaceParamsInHref: function(oldHref, param, newValue, hrefPattern) {
+		if( hrefPattern ) {
+			var newHref = hrefPattern.split('?')[0],
+					query = hrefPattern.split('?')[1],
+					tmpArr = newHref.split('/'),
+					index = tmpArr.indexOf(':' + param);
+
+			if( index === -1 ) {
+				throw new Error('Different param names in metadata and InfinniUI.config.Routes');
+			}
+			tmpArr = oldHref.split('/');
+			tmpArr[index] = newValue;
+			tmpArr = tmpArr.join('/');
+			if( query ) {
+				tmpArr += '?' + query;
+			}
+			return tmpArr;
+		} else {
+			return oldHref.replace(':' + param, newValue);
+		}
+	},
+
+	replaceParamsInQuery: function(oldHref, queryParam, newValue, queryPattern) {
+		if( queryPattern ) {
+			var newHref = oldHref.split('?')[0],
+					query = oldHref.split('?')[1],
+					queryTmp = queryPattern.split('?')[1],
+					tmpArr = queryTmp.split('&'),
+					index = -1;
+
+			for(var i = 0, ii = tmpArr.length; i < ii; i += 1) {
+				if( tmpArr[i].indexOf(':' + queryParam) !== -1 ) {
+					index = i;
+				}
+			}
+
+			if( index === -1 ) {
+				throw new Error('Different query names in metadata and InfinniUI.config.Routes');
+			}
+			tmpArr = query.split('&');
+			var tmpValue =  tmpArr[index].split('=');
+			tmpValue[1] = newValue;
+			tmpArr[index] = tmpValue.join('=');
+			var finalString = newHref + '?' + tmpArr.join('&');
+			return finalString;
+		} else {
+			return oldHref.replace(':' + queryParam, newValue);
+		}
+	},
+
+	bindParams: function(params, paramName, paramValue, hrefPattern) {
+		var element = params.element,
+				builder = params.builder,
+				that = this,
+				args = {
+					parent: params.parent,
+					parentView: params.parentView,
+					basePathOfProperty: params.basePathOfProperty
+				};
+
+			var dataBinding = params.builder.buildBinding(paramValue, args);
+
+			dataBinding.bindElement({
+				onPropertyChanged: function() {},
+				setProperty: function(elementProperty, newValue) {
+					var oldHref = element.getHref(),
+							newHref = that.replaceParamsInHref(oldHref, paramName, newValue, hrefPattern);
+					element.setHref(newHref);
+				},
+				getProperty: function() {}
+			}, '');
+	},
+
+	bindQuery: function(params, queryName, queryValue, queryPattern) {
+		var element = params.element,
+				builder = params.builder,
+				that = this,
+				args = {
+					parent: params.parent,
+					parentView: params.parentView,
+					basePathOfProperty: params.basePathOfProperty
+				};
+
+			var dataBinding = params.builder.buildBinding(queryValue, args);
+
+			dataBinding.bindElement({
+				onPropertyChanged: function() {},
+				setProperty: function(elementProperty, newValue) {
+					var oldHref = element.getHref(),
+							newHref = that.replaceParamsInQuery(oldHref, queryName, newValue, queryPattern);
+					element.setHref(newHref);
+				},
+				getProperty: function() {}
+			}, '');
+	}
+};
+
 //####app/elements/_base/_mixins/valuePropertyMixin.js
 var valuePropertyMixin = {
 
@@ -20988,15 +21098,17 @@ var editorBaseBuilderMixin = {
         }
 
         if (metadata.Value !== undefined) {
-            if(InfinniUI.Metadata.isBindingMetadata(metadata.Value)){
+            if (InfinniUI.Metadata.isBindingMetadata(metadata.Value)) {
                 var buildParams = {
                     parentView: params.parentView,
                     basePathOfProperty: params.basePathOfProperty
                 };
 
                 var dataBinding = params.builder.buildBinding(metadata.Value, buildParams);
-                if (bindingOptions.converter) {
-                    dataBinding.setConverter(bindingOptions.converter);
+                var mergedConverter = mergeConverters(dataBinding.getConverter(), bindingOptions.converter);
+
+                if (mergedConverter) {
+                    dataBinding.setConverter(mergedConverter);
                 }
                 if (bindingOptions.mode) {
                     dataBinding.setMode(bindingOptions.mode);
@@ -21005,9 +21117,24 @@ var editorBaseBuilderMixin = {
 
                 this.initValidationResultText(element, dataBinding);
 
-            }else{
+            } else {
                 params.element.setValue(metadata.Value);
             }
+        }
+
+        function mergeConverters(topPriority, nonPriority) {
+            topPriority = topPriority || {};
+            nonPriority = nonPriority || {};
+
+            if(!topPriority.toElement && nonPriority.toElement) {
+                topPriority.toElement = nonPriority.toElement;
+            }
+
+            if(!topPriority.toSource && nonPriority.toSource) {
+                topPriority.toSource = nonPriority.toSource;
+            }
+
+            return !_.isEmpty(topPriority) ? topPriority : null;
         }
 
         return {
@@ -21023,7 +21150,7 @@ var editorBaseBuilderMixin = {
         var source = binding.getSource();
         var property = binding.getSourceProperty();
 
-        if(typeof source.onErrorValidator == 'function'){
+        if (typeof source.onErrorValidator == 'function') {
             source.onErrorValidator(function (context, args) {
                 var result = args.value,
                     text = '';
@@ -21035,7 +21162,7 @@ var editorBaseBuilderMixin = {
             });
         }
 
-        if(typeof source.onWarningValidator == 'function'){
+        if (typeof source.onWarningValidator == 'function') {
             source.onWarningValidator(function (context, args) {
                 var result = args.value,
                     text = '';
@@ -21058,7 +21185,9 @@ var editorBaseBuilderMixin = {
                 })
                 .join(' ');
         }
-    }
+    },
+
+
 };
 
 //####app/elements/_base/editorBase/editorBaseMixin.js
@@ -24351,33 +24480,67 @@ Link.prototype.getTarget = function () {
 
 //####app/elements/link/linkBuilder.js
 function LinkBuilder() {
-    _.superClass(LinkBuilder, this);
+	_.superClass(LinkBuilder, this);
 }
 
 window.InfinniUI.LinkBuilder = LinkBuilder;
 
 _.inherit(LinkBuilder, ButtonBuilder);
 
-_.extend(LinkBuilder.prototype, {
+_.extend(LinkBuilder.prototype, routerServiceMixin, {
 
-    createElement: function (params) {
-        return new Link(params.parent);
-    },
+	createElement: function (params) {
+		return new Link(params.parent);
+	},
 
-    applyMetadata: function (params) {
-        ButtonBuilder.prototype.applyMetadata.call(this, params);
+	applyMetadata: function (params) {
+		ButtonBuilder.prototype.applyMetadata.call(this, params);
 
-        var metadata = params.metadata,
-            element = params.element;
+		var metadata = params.metadata,
+				element = params.element;
 
-        if( metadata.Href ) {
-            element.setHref(metadata.Href);
-        }
+		if( metadata.Href && typeof metadata.Href === 'string' ) {
+			element.setHref(metadata.Href);
+		} else if( metadata.Href ) {
+			var pathName = metadata.Href.Name,
+					hrefParams = metadata.Href.Params,
+					query = metadata.Href.Query,
+					href = routerService.getLinkByName(pathName, 'no'),
+					newHref = href;
 
-        if( metadata.Target ) {
-            element.setTarget(metadata.Target);
-        }
-    }
+			element.setHref(newHref);
+			if( hrefParams ) {
+				for( var i = 0, ii = hrefParams.length; i < ii; i += 1 ) {
+					if( typeof hrefParams[i].Value === 'string' ) {
+						if( element.getHref() !== newHref ) {
+							newHref = element.getHref();
+						}
+						newHref = this.replaceParamsInHref(newHref, hrefParams[i].Name, hrefParams[i].Value);
+						element.setHref(newHref);
+					} else {
+						this.bindParams(params, hrefParams[i].Name, hrefParams[i].Value, newHref);
+					}
+				}
+			}
+			if( query ) {
+				for( var i = 0, ii = query.length; i < ii; i += 1 ) {
+					if( typeof query[i].Value === 'string' ) {
+						if( element.getHref() !== newHref ) {
+							newHref = element.getHref();
+						}
+						newHref = this.replaceParamsInQuery(newHref, query[i].Name, query[i].Value);
+						element.setHref(newHref);
+					} else {
+						this.bindQuery(params, query[i].Name, query[i].Value, newHref);
+					}
+				}
+			}
+		}
+
+		if( metadata.Target ) { 
+			element.setTarget(metadata.Target);
+		}
+	}
 
 });
 
@@ -27323,6 +27486,84 @@ _.extend(OpenActionBuilder.prototype,
 
 window.InfinniUI.OpenActionBuilder = OpenActionBuilder;
 
+//####app/actions/routeToAction/routeToAction.js
+function RouteToAction(){
+    _.superClass(RouteToAction, this);
+    this.href = '';
+}
+
+_.inherit(RouteToAction, BaseAction);
+
+
+_.extend(RouteToAction.prototype, {
+
+    execute: function(callback){
+        var router = InfinniUI.AppRouter,
+            href = this.getHref();
+
+        router.navigate(href, {trigger: true});
+    },
+
+    getHref: function() {
+        return this.href;
+    },
+
+    setHref: function(href) {
+        this.href = href;
+    }
+
+});
+
+window.InfinniUI.RouteToAction = RouteToAction;
+
+//####app/actions/routeToAction/routeToActionBuilder.js
+function RouteToActionBuilder() {}
+
+_.extend(RouteToActionBuilder.prototype, BaseActionBuilderMixin, routerServiceMixin, {
+
+	build: function (context, args) {
+		var action = new RouteToAction(),
+				newHref = routerService.getLinkByName(args.metadata.Name, 'no'),
+				hrefParams = args.metadata.Params,
+				query = args.metadata.Query;
+
+		action.setHref(newHref);
+		args.element = action;
+
+		if( hrefParams ) {
+			for( var i = 0, ii = hrefParams.length; i < ii; i += 1 ) {
+				if( typeof hrefParams[i].Value === 'string' ) {
+					if( action.getHref() !== newHref ) {
+						newHref = action.getHref();
+					}
+					newHref = this.replaceParamsInHref(newHref, hrefParams[i].Name, hrefParams[i].Value);
+					action.setHref(newHref);
+				} else {
+					this.bindParams(args, hrefParams[i].Name, hrefParams[i].Value, newHref);
+				}
+			}
+		}
+
+		if( query ) {
+			for( var i = 0, ii = query.length; i < ii; i += 1 ) {
+				if( typeof query[i].Value === 'string' ) {
+					if( action.getHref() !== newHref ) {
+						newHref = action.getHref();
+					}
+					newHref = this.replaceParamsInQuery(newHref, query[i].Name, query[i].Value);
+					action.setHref(newHref);
+				} else {
+					this.bindQuery(args, query[i].Name, query[i].Value, newHref);
+				}
+			}
+		}
+		return action;
+	}
+
+});
+
+window.InfinniUI.RouteToActionBuilder = RouteToActionBuilder;
+
 //####app/actions/saveAction/saveAction.js
 function SaveAction(parentView){
     _.superClass(SaveAction, this, parentView);
@@ -27942,6 +28183,8 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('SelectAction', new SelectActionBuilder());
         builder.register('UpdateAction', new UpdateActionBuilder());
         builder.register('ServerAction', new ServerActionBuilder());
+
+        builder.register('RouteToAction', new RouteToActionBuilder());
 
 
         builder.register('BooleanFormat', new BooleanFormatBuilder());
@@ -29383,6 +29626,110 @@ var formatMixin = {
 
 window.InfinniUI.FormatMixin = formatMixin;
 
+//####app/formats/displayFormat/boolean/booleanFormat.js
+/**
+ * @description Формат отображения логического значения.
+ * @class BooleanFormat
+ * @mixes formatMixin
+ */
+var BooleanFormat = function () {};
+
+window.InfinniUI.BooleanFormat = BooleanFormat;
+
+_.extend(BooleanFormat.prototype, {
+
+    /**
+     * @description Текст для отображения истинного значения
+     * @memberOf BooleanFormat.prototype
+     */
+    defaultTrueText: 'True',
+
+    /**
+     * @description Текст для отображения ложного значения
+     * @memberOf BooleanFormat.prototype
+     */
+    defaultFalseText: 'False',
+
+    /**
+     * @description Возвращает текст для отображения ложного значения.
+     * @memberOf BooleanFormat.prototype
+     * @returns {String}
+     */
+    getFalseText: function () {
+        return this.getPropertyValue('falseText', this.defaultFalseText);
+    },
+
+    /**
+     * @description Устанавливает текст для отображения ложного значения.
+     * @memberOf BooleanFormat.prototype
+     * @param {String} value
+     */
+    setFalseText: function (value) {
+        this.falseText = value;
+    },
+
+    /**
+     * @description Возвращает текст для отображения истинного значения.
+     * @memberOf BooleanFormat.prototype
+     * @returns {String}
+     */
+    getTrueText: function () {
+        return this.getPropertyValue('trueText', this.defaultTrueText);
+    },
+
+    /**
+     * @description Устанавливает текст для отображения истинного значения
+     * @memberOf BooleanFormat.prototype
+     * @param {String} value
+     */
+    setTrueText: function (value) {
+        this.trueText = value;
+    },
+
+    /**
+     * @description Форматирует значение
+     * @memberOf BooleanFormat.prototype
+     * @param {Boolean} originalValue
+     * @returns {String}
+     */
+    formatValue: function (originalValue) {
+        if (originalValue === false || originalValue === null || typeof originalValue === 'undefined') {
+            return this.getFalseText();
+        } else {
+            return this.getTrueText();
+        }
+    }
+
+}, formatMixin);
+
+//####app/formats/displayFormat/boolean/booleanFormatBuilder.js
+/**
+ * @description Билдер BooleanFormat
+ * @class BooleanFormatBuilder
+ */
+function BooleanFormatBuilder () {
+
+    /**
+     * @description Создает и инициализирует экземпляр {@link BooleanFormat}
+     * @memberOf BooleanFormatBuilder
+     * @instance
+     * @param context
+     * @param args
+     * @returns {BooleanFormat}
+     */
+    this.build = function (context, args) {
+
+        var format = new BooleanFormat();
+
+        format.setFalseText(args.metadata.FalseText);
+        format.setTrueText(args.metadata.TrueText);
+
+        return format;
+    }
+}
+
+window.InfinniUI.BooleanFormatBuilder = BooleanFormatBuilder;
+
 //####app/formats/displayFormat/dateTime/dateTimeFormat.js
 /**
  * @description Формат отображения даты/времени.
@@ -30086,110 +30433,6 @@ function ObjectFormatBuilder () {
 }
 
 window.InfinniUI.ObjectFormatBuilder = ObjectFormatBuilder;
-
-//####app/formats/displayFormat/boolean/booleanFormat.js
-/**
- * @description Формат отображения логического значения.
- * @class BooleanFormat
- * @mixes formatMixin
- */
-var BooleanFormat = function () {};
-
-window.InfinniUI.BooleanFormat = BooleanFormat;
-
-_.extend(BooleanFormat.prototype, {
-
-    /**
-     * @description Текст для отображения истинного значения
-     * @memberOf BooleanFormat.prototype
-     */
-    defaultTrueText: 'True',
-
-    /**
-     * @description Текст для отображения ложного значения
-     * @memberOf BooleanFormat.prototype
-     */
-    defaultFalseText: 'False',
-
-    /**
-     * @description Возвращает текст для отображения ложного значения.
-     * @memberOf BooleanFormat.prototype
-     * @returns {String}
-     */
-    getFalseText: function () {
-        return this.getPropertyValue('falseText', this.defaultFalseText);
-    },
-
-    /**
-     * @description Устанавливает текст для отображения ложного значения.
-     * @memberOf BooleanFormat.prototype
-     * @param {String} value
-     */
-    setFalseText: function (value) {
-        this.falseText = value;
-    },
-
-    /**
-     * @description Возвращает текст для отображения истинного значения.
-     * @memberOf BooleanFormat.prototype
-     * @returns {String}
-     */
-    getTrueText: function () {
-        return this.getPropertyValue('trueText', this.defaultTrueText);
-    },
-
-    /**
-     * @description Устанавливает текст для отображения истинного значения
-     * @memberOf BooleanFormat.prototype
-     * @param {String} value
-     */
-    setTrueText: function (value) {
-        this.trueText = value;
-    },
-
-    /**
-     * @description Форматирует значение
-     * @memberOf BooleanFormat.prototype
-     * @param {Boolean} originalValue
-     * @returns {String}
-     */
-    formatValue: function (originalValue) {
-        if (originalValue === false || originalValue === null || typeof originalValue === 'undefined') {
-            return this.getFalseText();
-        } else {
-            return this.getTrueText();
-        }
-    }
-
-}, formatMixin);
-
-//####app/formats/displayFormat/boolean/booleanFormatBuilder.js
-/**
- * @description Билдер BooleanFormat
- * @class BooleanFormatBuilder
- */
-function BooleanFormatBuilder () {
-
-    /**
-     * @description Создает и инициализирует экземпляр {@link BooleanFormat}
-     * @memberOf BooleanFormatBuilder
-     * @instance
-     * @param context
-     * @param args
-     * @returns {BooleanFormat}
-     */
-    this.build = function (context, args) {
-
-        var format = new BooleanFormat();
-
-        format.setFalseText(args.metadata.FalseText);
-        format.setTrueText(args.metadata.TrueText);
-
-        return format;
-    }
-}
-
-window.InfinniUI.BooleanFormatBuilder = BooleanFormatBuilder;
 
 //####app/formats/editMask/_common/editMaskMixin.js
 var editMaskMixin = {
@@ -34228,6 +34471,71 @@ InfinniUI.MessageBox = MessageBox;
         }
     ]
 });*/
+//####app/services/router/routerService.js
+var routerService = (function(myRoutes) {
+	if( !myRoutes ) {
+		return null;
+	}
+
+	var parseRouteForBackbone = function(myRoutes) {
+		var routerObj = {};
+		routerObj.routes = {};
+		for( var i = 0, ii = myRoutes.length; i < ii; i += 1 ) {
+			myRoutes[i].originalPath = myRoutes[i].Path;
+			if( myRoutes[i].Path.search('<%') !== -1 ) {
+				var tmpArr,
+						tmpParam,
+						re = /\<\%[\sa-zA-Z0-9]+\%\>/g;
+				while( tmpArr = re.exec(myRoutes[i].Path) ) {
+					tmpParam = tmpArr[0].replace(/\s+/g, '').slice(2, -2);
+					myRoutes[i].Path = myRoutes[i].Path.slice(0, tmpArr.index) + ':' + tmpParam + myRoutes[i].Path.slice(tmpArr.index + tmpArr[0].length);
+					re.lastIndex = tmpArr.index + tmpParam.length;
+				}
+			}
+			routerObj.routes[myRoutes[i].Path.slice(1)] = myRoutes[i].Name; // remove first slash from myRoutes[i].Path for backbone
+			routerObj[myRoutes[i].Name] = myFunc(myRoutes[i].Name, myRoutes[i].Action);
+		}
+		return routerObj;
+	};
+
+	var getLinkByName = function(name, originalPath) {
+		var original = originalPath || 'yes';
+		for( var i = 0, ii = myRoutes.length; i < ii; i += 1 )  {
+			if( myRoutes[i].Name === name ) {
+				if( original === 'yes' ) {
+					return myRoutes[i].originalPath;
+				} else {
+					return myRoutes[i].Path;
+				}
+			}
+		}
+	};
+
+	var myFunc = function(name, callback) {
+		return function() {
+			var params = Array.prototype.slice.call(arguments);
+			new ScriptExecutor({getContext: function() {return 'No context';}}).executeScript(callback, { name: name, params: params });
+		};
+	};
+
+	var routerObj = parseRouteForBackbone(myRoutes);
+
+	var startRouter = function() {
+		var Router = Backbone.Router.extend(routerObj);
+		InfinniUI.AppRouter = new Router();
+
+		Backbone.history = Backbone.history || new Backbone.History({});
+		Backbone.history.start(InfinniUI.config.HistoryAPI);
+	};
+
+	return {
+		getLinkByName: getLinkByName,
+		startRouter: startRouter
+	};
+})(InfinniUI.config.Routes);
+
+window.InfinniUI.RouterService = routerService;
+
 //####app/services/toolTipService/toolTipService.js
 InfinniUI.ToolTipService = (function () {
 

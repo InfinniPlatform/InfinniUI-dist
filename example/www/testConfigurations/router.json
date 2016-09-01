@@ -1,0 +1,331 @@
+{
+	"Name": "routerView",
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ds1",
+				"Items": [
+					{
+						"Id": 1,
+						"Value": "element1"
+					}
+				]
+			}
+		},
+		{
+			"ObjectDataSource": {
+				"Name": "ds2",
+				"Items": [
+					{
+						"Id": 1,
+						"userIdParam": "userInfinniUI",
+						"pageNumber": "firstPage",
+						"queryId1": "queryFirstTextbox",
+						"queryId2": "querySecondTextbox"
+					}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"MenuBar": {
+				"Name": "MainMenu",
+				"Items": [
+					{
+						"Link": {
+							"Text": "External Link",
+							"Href": "http://www.Infinnity.ru"
+						}
+					},
+					{
+						"Link": {
+							"Text": "testRouteLink1",
+							"Href": {
+								"Name": "testRoute"
+							}
+						}
+					},
+					{
+						"Link": {
+							"Text": "testRouteLink2",
+							"Href": {
+								"Name": "testRoute5",
+								"Params": [
+									{
+										"Name": "userId",
+										"Value": "valueString"
+									},
+									{
+										"Name": "pageNumber",
+										"Value": "hardcodedPage"
+									}
+								]
+							}
+						}
+					},
+					{
+						"Link": {
+							"Text": "testRouteLink3",
+							"Href": {
+								"Name": "testRoute5",
+								"Params": [
+									{
+										"Name": "userId",
+										"Value": {
+											"Source": "ds2",
+											"Property": "$.userIdParam"
+										}
+									},
+									{
+										"Name": "pageNumber",
+										"Value": {
+											"Source": "ds2",
+											"Property": "$.pageNumber"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"Link": {
+							"Text": "testRouteLink4",
+							"Href": {
+								"Name": "testRoute6",
+								"Query": [
+									{
+										"Name": "queryId",
+										"Value": {
+											"Source": "ds2",
+											"Property": "$.queryId1"
+										}
+									},
+									{
+										"Name": "userAge",
+										"Value": "teenager"
+									}
+								]
+							}
+						}
+					},
+					{
+						"Link": {
+							"Text": "testRouteLink5",
+							"Href": {
+								"Name": "testRoute7",
+								"Params": [
+									{
+										"Name": "pageNumber",
+										"Value": {
+											"Source": "ds2",
+											"Property": "$.pageNumber"
+										}
+									}
+								],
+								"Query": [
+									{
+										"Name": "queryId",
+										"Value": {
+											"Source": "ds2",
+											"Property": "$.queryId2"
+										}
+									}
+								]
+							}
+						}
+					},
+					{
+						"Button": {
+							"Text": "testRouteBtn1",
+							"Action": {
+								"RouteToAction": {
+									"Name": "testRoute2"
+								}
+							}
+						}
+					},
+					{
+						"Button": {
+							"Text": "testRouteBtn2",
+							"Action": {
+								"RouteToAction": {
+									"Name": "testRoute3",
+									"Params": [
+										{
+											"Name": "userId",
+											"Value": {
+												"Source": "ds2",
+												"Property": "$.userIdParam"
+											}
+										},
+										{
+											"Name": "pageNumber",
+											"Value": "theBiggestPageNumber"
+										}
+									]
+								}
+							}
+						}
+					},
+					{
+						"Button": {
+							"Text": "testRouteBtn3",
+							"Action": {
+								"RouteToAction": {
+									"Name": "testRoute4",
+									"Query": [
+										{
+											"Name": "queryId",
+											"Value": {
+												"Source": "ds2",
+												"Property": "$.queryId1"
+											}
+										},
+										{
+											"Name": "userAge",
+											"Value": "btnTeenager"
+										}
+									]
+								}
+							}
+						}
+					},
+					{
+						"Button": {
+							"Text": "testRouteBtn4",
+							"Action": {
+								"RouteToAction": {
+									"Name": "testRoute7",
+									"Params": [
+										{
+											"Name": "pageNumber",
+											"Value": {
+												"Source": "ds2",
+												"Property": "$.pageNumber"
+											}
+										}
+									],
+									"Query": [
+										{
+											"Name": "queryId",
+											"Value": {
+												"Source": "ds2",
+												"Property": "$.queryId2"
+											}
+										},
+										{
+											"Name": "userAge",
+											"Value": "btnTeenager"
+										}
+									]
+								}
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"StackPanel": {
+				"Orientation": "Vertical",
+				"Items": [
+					{
+						"TextBox": {
+							"Value": {
+								"Source": "ds2",
+								"Property": "$.pageNumber"
+							}
+						}
+					},
+					{
+						"TextBox": {
+							"Value": {
+								"Source": "ds2",
+								"Property": "$.userIdParam"
+							}
+						}
+					},
+					{
+						"TextBox": {
+							"Value": {
+								"Source": "ds2",
+								"Property": "$.queryId1"
+							}
+						}
+					},
+					{
+						"TextBox": {
+							"Value": {
+								"Source": "ds2",
+								"Property": "$.queryId2"
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"DataGrid": {
+				"Name": "HousesDataGrid",
+				"VerticalAlignment": "Stretch",
+				"Columns": [
+					{
+						"Header": "Вес",
+						"CellProperty": "Value"
+					},
+					{
+						"Header": "Рост",
+						"CellProperty": "Value",
+						"Width": "120px"
+					},
+					{
+						"Header": "Возраст",
+						"Width": "170px",
+						"CellProperty": "Value"
+					},
+					{
+						"Header": "Пол",
+						"Width": "300px",
+						"CellTemplate": {
+							"TextBox": {
+								"Value": {
+									"Source": "ds1",
+									"Property": "#.Value"
+								}
+							}
+						}
+					},
+					{
+						"Header": "Статус",
+						"Width": "70px",
+						"CellTemplate": {
+							"StackPanel": {
+								"Orientation": "Horizontal",
+								"ViewMode": "FormGroup",
+								"Items": [
+									{
+										"Icon": {
+											"Value": "pencil",
+											"Foreground": "primary2"
+										}
+									},
+									{
+										"Icon": {
+											"Value": "trash",
+											"Foreground": "primary2"
+										}
+									}
+								]
+							}
+						}
+					}
+				],
+				"Items": {
+					"Source": "ds1",
+					"Property": ""
+				}
+			}
+		}
+	]
+}

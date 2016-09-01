@@ -38,7 +38,7 @@ moment.locale('ru');
         });
 
         function onWindowResize() {
-            layoutManager.init();
+            InfinniUI.LayoutManager.init();
         }
 
     })();
@@ -64,7 +64,11 @@ moment.locale('ru');
     openHomePage()
         .done(function (viewMetadata) {
             var action = builder.buildType('OpenAction', viewMetadata, {parentView: rootView});
-            action.execute();
+            action.execute(function() {
+                if( window.InfinniUI.RouterService ) {
+                    window.InfinniUI.RouterService.startRouter();
+                }
+            });
         });
 
     function openHomePage() {
