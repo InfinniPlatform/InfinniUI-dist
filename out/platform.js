@@ -6459,6 +6459,9 @@ var TextBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype */{
 
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -7855,6 +7858,9 @@ var DateTimePickerView = TextEditorBaseView.extend(/** @lends DateTimePickerView
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -9247,6 +9253,9 @@ var CommonButtonView = ControlView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -9579,6 +9588,9 @@ var ComboBoxDropdownView = Backbone.View.extend({
         this.bindUIElements();
         this.updateProperties();
         this.renderItems();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this.$el;
     },
 
@@ -9816,7 +9828,7 @@ var ComboBoxDropdownView = Backbone.View.extend({
         if (direction === 'bottom') {
             style.top = window.pageYOffset + rect.bottom;
         } else {
-            style.top = rect.top - this.$el.height();
+            style.top = window.pageYOffset + rect.top - this.$el.height();
         }
 
         this.$el.css(style);
@@ -10065,12 +10077,17 @@ var ComboBoxGroupView = Backbone.View.extend({
         this.ui.header.append(options.header);
         this.ui.items.append(options.items);
 
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
+
         return this.$el;
     }
 
 });
 
 _.extend(ComboBoxGroupView.prototype, bindUIElementsMixin);
+
 //####app/controls/comboBox/values/comboBoxValue.js
 var ComboBoxValueModel = Backbone.Model.extend({
 
@@ -10524,6 +10541,9 @@ var DataGridView = ListEditorBaseView.extend({
         this.postrenderingActions();
         setTimeout(function() {
             that.updateProperties();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: that});
+            //devblockstop
         }, 0);
         return this;
     },
@@ -11197,6 +11217,10 @@ var DataNavigationView = ControlView.extend({
         this.trigger('render');
         this.renderPageSizes();
         this.postrenderingActions();
+
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -11432,6 +11456,9 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
 
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -11460,6 +11487,7 @@ var CommonLabelView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @
 }));
 
 InfinniUI.ObjectUtils.setPropertyValueDirect(window.InfinniUI, 'viewModes.Label.common', CommonLabelView);
+
 //####app/controls/label/label.js
 var LabelControl = function (viewMode) {
     _.superClass(LabelControl, this, viewMode);
@@ -11630,6 +11658,9 @@ var BaseListBoxView = ListEditorBaseView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -12033,7 +12064,9 @@ var CommonPopupButtonView = ContainerView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
-
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -12069,10 +12102,6 @@ var CommonPopupButtonView = ContainerView.extend({
         this.alignDropdown();
 
         var $ignoredElements = this.$dropdown.add (this.ui.grip);
-
-        //new ActionOnLoseFocus($ignoredElements, function(){
-        //    that.close();
-        //});
     },
 
     close: function(){
@@ -12229,7 +12258,9 @@ var ForMenuPopupButtonView = CommonPopupButtonView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
-
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -12302,11 +12333,7 @@ var ForMenuPopupButtonView = CommonPopupButtonView.extend({
     },
 
     onClickGripHandler: function(){
-        if(!this.$dropdown.hasClass('open')){
-            this.open();
-        }else{
-            this.close();
-        }
+        this.toggle();
     },
 
     updateGrouping: function(){},
@@ -12429,9 +12456,10 @@ var StackPanelView = ContainerView.extend(
             this.updateProperties();
 
             this.trigger('render');
-
-
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -12663,6 +12691,9 @@ var TablePanelView = ContainerView.extend(
             this.trigger('render');
 
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -12755,6 +12786,9 @@ var CellView = ContainerView.extend(
             this.trigger('render');
 
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -12865,6 +12899,9 @@ var RowView = ContainerView.extend(
             this.trigger('render');
 
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -12994,6 +13031,9 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
 
         this.trigger('render');
         this.updateProperties();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -13212,6 +13252,7 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
     }
 
 });
+
 //####app/controls/tabPanel/tabHeader/tabHeaderView.js
 var TabHeaderModel = Backbone.Model.extend({
 
@@ -13249,6 +13290,9 @@ var TabHeaderView = Backbone.View.extend({
         this.$el.html(this.template);
         this.bindUIElements();
         this.trigger('rendered');
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -13331,6 +13375,7 @@ var TabHeaderView = Backbone.View.extend({
 });
 
 _.extend(TabHeaderView.prototype, bindUIElementsMixin);
+
 //####app/controls/tabPanel/tabPage/tabPageControl.js
 /**
  *
@@ -13420,6 +13465,9 @@ var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
 
         this.trigger('render');
         this.updateProperties();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -13452,6 +13500,7 @@ var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
     }
 
 });
+
 //####app/controls/treeView/treeViewControl.js
 function TreeViewControl() {
     _.superClass(TreeViewControl, this);
@@ -13514,6 +13563,9 @@ var TreeViewView = ListEditorBaseView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -13705,6 +13757,7 @@ var TreeViewView = ListEditorBaseView.extend({
 
 
 });
+
 //####app/controls/treeView/node/treeViewNodeBase.js
 var TreeViewNodeBase = Backbone.View.extend({
 
@@ -13913,6 +13966,9 @@ var CheckBoxView = ControlView.extend(/** @lends CheckBoxView.prototype */ _.ext
 
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -14190,6 +14246,9 @@ var ComboBoxView = ListEditorBaseView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -14456,6 +14515,10 @@ var ContextMenuView = ContainerView.extend({
 			that.open(args.value);
 		});
 
+		//devblockstart
+    window.InfinniUI.global.messageBus.send('render', {element: this});
+    //devblockstop
+
 		return this;
 	},
 
@@ -14613,6 +14676,9 @@ var DividerView = ControlView.extend(
 			this.trigger('render');
 
 			this.postrenderingActions();
+			//devblockstart
+      window.InfinniUI.global.messageBus.send('render', {element: this});
+      //devblockstop
 			return this;
 		}
 
@@ -14669,6 +14735,9 @@ var ExtensionPanelView = ContainerView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -14687,6 +14756,7 @@ var ExtensionPanelView = ContainerView.extend({
         this.extensionObject = new window[extensionName](context, {$el: this.$el, parameters: parameters, itemTemplate: itemTemplate, items: items, builder: builder});
     }
 });
+
 //####app/controls/fileBox/fileBoxControl.js
 /**
  *
@@ -15086,7 +15156,9 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
 
         this.postrenderingActions();
 
-        var that = this;
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
 
         return this;
     }
@@ -15202,6 +15274,11 @@ var FormView = StackPanelView.extend({
 		this.trigger('render');
 
 		this.postrenderingActions();
+
+		//devblockstart
+    window.InfinniUI.global.messageBus.send('render', {element: this});
+    //devblockstop
+    
 		return this;
 	},
 
@@ -15321,6 +15398,9 @@ var FrameView = ControlView.extend(_.extend({}, editorBaseViewMixin, /** @lends 
 
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     }
 
@@ -15396,6 +15476,9 @@ var GridPanelView = ContainerView.extend(
             this.trigger('render');
 
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -15499,6 +15582,9 @@ var IconView = ControlView.extend({
         this.updateProperties();
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -15532,6 +15618,7 @@ var IconView = ControlView.extend({
     }
 
 });
+
 //####app/controls/imageBox/imageBoxControl.js
 /**
  *
@@ -15792,6 +15879,9 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
         this.trigger('render');
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     }
 
@@ -16083,6 +16173,9 @@ var MenuBarView = ContainerView.extend(
             this.trigger('render');
 
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -16239,6 +16332,9 @@ var NumericBoxView = TextEditorBaseView.extend(/** @lends TextBoxView.prototype 
         this.updateProperties();
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -16466,6 +16562,9 @@ var PanelView = ContainerView.extend(/** @lends PanelView.prototype */ {
         this.updateProperties();
 
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -16690,6 +16789,9 @@ var PasswordBoxView = ControlView.extend(_.extend({}, editorBaseViewMixin, {
 
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -16812,7 +16914,9 @@ var ScrollPanelView = ContainerView.extend(/** @lends ScrollPanelView.prototype 
                 $el.scrollTop(0);
             }, 0);
         })(this.$el);
-
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -16991,6 +17095,9 @@ var ToggleButtonView = ControlView.extend(/** @lends ToggleButtonView.prototype 
 
         this.trigger('render');
         this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -17079,7 +17186,9 @@ var ToolBarView = ContainerView.extend({
         this.trigger('render');
 
         this.postrenderingActions();
-
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     },
 
@@ -17189,6 +17298,9 @@ var ViewView = ContainerView.extend(
             this.trigger('render');
 
             this.postrenderingActions();
+            //devblockstart
+            window.InfinniUI.global.messageBus.send('render', {element: this});
+            //devblockstop
             return this;
         },
 
@@ -17281,9 +17393,13 @@ var ViewPanelView = ControlView.extend({
         this.trigger('render');
 
         this.postrenderingActions(false);
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
         return this;
     }
 });
+
 //####app/data/dataSource/_mixins/dataSourceValidationNotifierMixin.js
 /**
  *
@@ -17947,7 +18063,9 @@ var BaseDataSource = Backbone.Model.extend({
                 onError: onError
             });
         }
-
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('updateItems', {dataSource: this});
+        //devblockstop
     },
 
 

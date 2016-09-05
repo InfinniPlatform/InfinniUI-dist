@@ -20,8 +20,6 @@ gulp.task('build', gulp.series(
 	gulp.parallel(gulp.series('copyPlatform', 'overrideLess'), 'concatJs', 'concatTemplates')
 ));
 
-gulp.task('cleanAndBuild', gulp.series('cleanFolder', 'build'));
-
 gulp.task('fullWatch', function() {
 	watch(sourceForTasks.copyPlatform.src, gulp.series('copyPlatform', 'overrideLess'));
 	watch(sourceForTasks.overrideLess.srcForWatch, gulp.series('overrideLess'));
@@ -39,7 +37,6 @@ gulp.task('default', function(cb) {
 							'####Use any of defined tasks:\n' +
 							help +
 							'- gulp build\n' +
-							'- gulp cleanAndBuild\n' +
 							'- gulp example'
 							);
 	cb();

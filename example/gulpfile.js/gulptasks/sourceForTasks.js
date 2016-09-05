@@ -49,6 +49,8 @@ var sourceForTasks = {
 	},
 	'server:example': {
 		src: "./www",
+		// turn it on when develop single page application
+		// spa: true, 
 		watch: projectRootFolder + "**/*.*",
 		port: 4444,
 		ui: {

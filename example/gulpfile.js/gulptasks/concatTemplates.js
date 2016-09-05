@@ -3,9 +3,7 @@
 var gulp = require('gulp'),
 			$ = require('gulp-load-plugins')(),
 			through2 = require('through2').obj,
-			combiner = require('stream-combiner2').obj,
-
-			isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
+			combiner = require('stream-combiner2').obj;
 
 module.exports = function(options) {
 	return function(callback) {
