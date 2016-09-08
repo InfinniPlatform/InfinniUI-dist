@@ -15105,6 +15105,7 @@ var FileBoxView = ControlView.extend(/** @lends FileBoxView.prototype */ _.exten
         if (value === null || typeof value === 'undefined') {
             //No file
             fileEmpty = value === null || typeof value === 'undefined';
+            this.ui.input.val(null);
             this.updateUrl(null);
         } else if (value && typeof value === 'object') {
             //File instance
