@@ -13253,6 +13253,129 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
 
 });
 
+//####app/controls/tabPanel/tabHeader/tabHeaderView.js
+var TabHeaderModel = Backbone.Model.extend({
+
+    defaults: {
+        text: '',
+        canClose: false
+    }
+});
+
+var TabHeaderView = Backbone.View.extend({
+
+    className: "pl-tabheader",
+
+    tagName: "li",
+
+    template: InfinniUI.Template["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"],
+
+    events: {
+        "click": "onClickHandler",
+        "click .pl-close": "onClickCloseHandler"
+    },
+
+    UI: {
+        label: '.pl-tabheader-text',
+        close: '.pl-close'
+    },
+
+    initialize: function (options) {
+        this.model = new TabHeaderModel(options);
+
+        this.on('rendered', this.onRenderedHandler);
+    },
+
+    render: function () {
+        this.$el.html(this.template);
+        this.bindUIElements();
+        this.trigger('rendered');
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
+        return this;
+    },
+
+    /**
+     *
+     * @param {string} value
+     */
+    setText: function (value) {
+        this.model.set('text', value);
+    },
+
+    /**
+     *
+     * @param {boolean} value
+     */
+    setCanClose: function (value) {
+        this.model.set('canClose', value);
+    },
+
+    /**
+     *
+     * @param {boolean} value
+     */
+    setSelected: function (value) {
+        this.model.set('selected', value);
+    },
+
+    /**
+     * @protected
+     */
+    updateProperties: function () {
+        this.updateTextHandler();
+        this.updateCanClose();
+        this.updateSelectedHandler();
+    },
+
+    /**
+     * @protected
+     */
+    onRenderedHandler: function () {
+        this.updateProperties();
+        this.listenTo(this.model, 'change:text', this.updateTextHandler);
+        this.listenTo(this.model, 'change:selected', this.updateSelectedHandler);
+        this.listenTo(this.model, 'cahnge:canClose', this.updateCanClose);
+    },
+
+    /**
+     * @protected
+     */
+    updateTextHandler: function () {
+        var text = this.model.get('text');
+        this.ui.label.text(text);
+    },
+
+    /**
+     * @protected
+     */
+    updateCanClose: function () {
+        var canClose = this.model.get('canClose');
+        this.ui.close.toggleClass('hidden', !canClose);
+    },
+
+    /**
+     * @protected
+     */
+    updateSelectedHandler: function () {
+        var selected = this.model.get('selected');
+        this.$el.toggleClass('pl-active active', selected);
+    },
+
+    onClickHandler: function (event) {
+        this.trigger('selected');
+    },
+
+    onClickCloseHandler: function (event) {
+        event.stopPropagation();
+        this.trigger('close');
+    }
+
+});
+
+_.extend(TabHeaderView.prototype, bindUIElementsMixin);
+
 //####app/controls/tabPanel/tabPage/tabPageControl.js
 /**
  *
@@ -13377,129 +13500,6 @@ var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
     }
 
 });
-
-//####app/controls/tabPanel/tabHeader/tabHeaderView.js
-var TabHeaderModel = Backbone.Model.extend({
-
-    defaults: {
-        text: '',
-        canClose: false
-    }
-});
-
-var TabHeaderView = Backbone.View.extend({
-
-    className: "pl-tabheader",
-
-    tagName: "li",
-
-    template: InfinniUI.Template["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"],
-
-    events: {
-        "click": "onClickHandler",
-        "click .pl-close": "onClickCloseHandler"
-    },
-
-    UI: {
-        label: '.pl-tabheader-text',
-        close: '.pl-close'
-    },
-
-    initialize: function (options) {
-        this.model = new TabHeaderModel(options);
-
-        this.on('rendered', this.onRenderedHandler);
-    },
-
-    render: function () {
-        this.$el.html(this.template);
-        this.bindUIElements();
-        this.trigger('rendered');
-        //devblockstart
-        window.InfinniUI.global.messageBus.send('render', {element: this});
-        //devblockstop
-        return this;
-    },
-
-    /**
-     *
-     * @param {string} value
-     */
-    setText: function (value) {
-        this.model.set('text', value);
-    },
-
-    /**
-     *
-     * @param {boolean} value
-     */
-    setCanClose: function (value) {
-        this.model.set('canClose', value);
-    },
-
-    /**
-     *
-     * @param {boolean} value
-     */
-    setSelected: function (value) {
-        this.model.set('selected', value);
-    },
-
-    /**
-     * @protected
-     */
-    updateProperties: function () {
-        this.updateTextHandler();
-        this.updateCanClose();
-        this.updateSelectedHandler();
-    },
-
-    /**
-     * @protected
-     */
-    onRenderedHandler: function () {
-        this.updateProperties();
-        this.listenTo(this.model, 'change:text', this.updateTextHandler);
-        this.listenTo(this.model, 'change:selected', this.updateSelectedHandler);
-        this.listenTo(this.model, 'cahnge:canClose', this.updateCanClose);
-    },
-
-    /**
-     * @protected
-     */
-    updateTextHandler: function () {
-        var text = this.model.get('text');
-        this.ui.label.text(text);
-    },
-
-    /**
-     * @protected
-     */
-    updateCanClose: function () {
-        var canClose = this.model.get('canClose');
-        this.ui.close.toggleClass('hidden', !canClose);
-    },
-
-    /**
-     * @protected
-     */
-    updateSelectedHandler: function () {
-        var selected = this.model.get('selected');
-        this.$el.toggleClass('pl-active active', selected);
-    },
-
-    onClickHandler: function (event) {
-        this.trigger('selected');
-    },
-
-    onClickCloseHandler: function (event) {
-        event.stopPropagation();
-        this.trigger('close');
-    }
-
-});
-
-_.extend(TabHeaderView.prototype, bindUIElementsMixin);
 
 //####app/controls/treeView/treeViewControl.js
 function TreeViewControl() {
@@ -29308,6 +29308,144 @@ ServerActionProvider.prototype.download = function (requestData, resultCallback,
 };
 
 window.InfinniUI.Providers.ServerActionProvider = ServerActionProvider;
+//####app/data/dataSource/dataProviderReplaceItemQueue.js
+/**
+ * @description Организация очереди запросов на создание/изменение документа.
+ * Признак одного и того же документа по атрибутам Id или __Id (@see {@link EditDataSourceStrategy.getItems})
+ * @param attributes
+ * @constructor
+ */
+var DataProviderReplaceItemQueue = function (attributes) {
+    var _attributes = attributes || [];
+    var _queue = [];
+    var requestIdProperty = '__Id';
+
+    var getQueueItemCriteria = function (data) {
+        var criteria = _.pick(data, _attributes);
+        var idProperty = _.isEmpty(data[requestIdProperty]) ? 'Id' : requestIdProperty;
+        criteria[idProperty] = data[idProperty];
+        return criteria;
+    };
+
+    var getQueueItem = function (data) {
+        return _.findWhere(_queue, getQueueItemCriteria(data));
+    };
+
+    var getQueueItems = function (data) {
+        return _.where(_queue, getQueueItemCriteria(data));
+    };
+
+    var updateInstanceId = function (data, response) {
+        var items = getQueueItems(data);
+        items.forEach(function (item) {
+            item.Id = response.Id;
+            item.value.Id = response.Id;
+        });
+    };
+
+    var next = function (data) {
+        var index = _queue.indexOf(data);
+        if (index === -1) {
+            console.error('DataProviderReplaceItemQueue: Не найден запрос в очереди');
+        }
+        _queue.splice(index, 1);
+        var item = getQueueItem(data);
+        run(item);
+    };
+
+    var run = function (data) {
+        if (typeof data === 'undefined' || data === null) {
+            return;
+        }
+        data.request(data)
+            .done(updateInstanceId.bind(undefined, data))
+            .always(next.bind(undefined, data));
+    };
+
+
+    this.append = function (data, request) {
+        var item = _.defaults(data, _.pick(data.value, ['Id', requestIdProperty]));
+        item.request = request;
+
+        var items = getQueueItems(item);
+        _queue.push(item);
+
+        if (items.length === 0) {
+            //В очереди нет запросов с заданными параметрами
+            run(data);
+        } else if (items.length > 1) {
+            //В очереди несколько элементов, удаляем промежуточные
+            for (var i = 1, ln = items.length; i < ln; i = i + 1) {
+                var index = _queue.indexOf(items[i]);
+                _queue.splice(index, 1);
+            }
+        }
+    };
+
+};
+
+
+window.InfinniUI.Providers.DataProviderReplaceItemQueue = DataProviderReplaceItemQueue;
+
+//####app/data/dataSource/objectDataSource.js
+var ObjectDataSource = BaseDataSource.extend({
+
+    initDataProvider: function(){
+        var dataProvider = window.InfinniUI.providerRegister.build('ObjectDataSource');
+        this.set('dataProvider', dataProvider);
+    },
+
+    setItems: function(items){
+        this.get('dataProvider').setItems(items);
+        this.updateItems();
+    }
+
+});
+
+window.InfinniUI.ObjectDataSource = ObjectDataSource;
+
+//####app/data/dataSource/objectDataSourceBuilder.js
+function ObjectDataSourceBuilder() {
+}
+
+_.inherit(ObjectDataSourceBuilder, BaseDataSourceBuilder);
+
+_.extend(ObjectDataSourceBuilder.prototype, {
+    createDataSource: function(parent){
+        return new ObjectDataSource({
+            view: parent
+        });
+    },
+
+    applyMetadata: function(builder, parent, metadata, dataSource){
+        BaseDataSourceBuilder.prototype.applyMetadata.call(this, builder, parent, metadata, dataSource);
+
+        if(!'IsLazy' in metadata){
+            dataSource.setIsLazy(false);
+        }
+
+        if(metadata.Items){
+            if($.isArray(metadata.Items)){
+                dataSource.setItems(metadata.Items);
+            }
+
+            if($.isPlainObject(metadata.Items)){
+                var binding = builder.buildBinding(metadata.Items, {
+                    parentView: parent
+                });
+
+                binding.setMode(InfinniUI.BindingModes.toElement);
+
+                binding.bindElement(dataSource, '');
+            }
+
+        }
+
+    }
+});
+
+window.InfinniUI.ObjectDataSourceBuilder = ObjectDataSourceBuilder;
+
 //####app/data/parameter/parameter.js
 /**
  * @constructor
@@ -29542,144 +29680,6 @@ function ParameterBuilder() {
 }
 
 window.InfinniUI.ParameterBuilder = ParameterBuilder;
-
-//####app/data/dataSource/dataProviderReplaceItemQueue.js
-/**
- * @description Организация очереди запросов на создание/изменение документа.
- * Признак одного и того же документа по атрибутам Id или __Id (@see {@link EditDataSourceStrategy.getItems})
- * @param attributes
- * @constructor
- */
-var DataProviderReplaceItemQueue = function (attributes) {
-    var _attributes = attributes || [];
-    var _queue = [];
-    var requestIdProperty = '__Id';
-
-    var getQueueItemCriteria = function (data) {
-        var criteria = _.pick(data, _attributes);
-        var idProperty = _.isEmpty(data[requestIdProperty]) ? 'Id' : requestIdProperty;
-        criteria[idProperty] = data[idProperty];
-        return criteria;
-    };
-
-    var getQueueItem = function (data) {
-        return _.findWhere(_queue, getQueueItemCriteria(data));
-    };
-
-    var getQueueItems = function (data) {
-        return _.where(_queue, getQueueItemCriteria(data));
-    };
-
-    var updateInstanceId = function (data, response) {
-        var items = getQueueItems(data);
-        items.forEach(function (item) {
-            item.Id = response.Id;
-            item.value.Id = response.Id;
-        });
-    };
-
-    var next = function (data) {
-        var index = _queue.indexOf(data);
-        if (index === -1) {
-            console.error('DataProviderReplaceItemQueue: Не найден запрос в очереди');
-        }
-        _queue.splice(index, 1);
-        var item = getQueueItem(data);
-        run(item);
-    };
-
-    var run = function (data) {
-        if (typeof data === 'undefined' || data === null) {
-            return;
-        }
-        data.request(data)
-            .done(updateInstanceId.bind(undefined, data))
-            .always(next.bind(undefined, data));
-    };
-
-
-    this.append = function (data, request) {
-        var item = _.defaults(data, _.pick(data.value, ['Id', requestIdProperty]));
-        item.request = request;
-
-        var items = getQueueItems(item);
-        _queue.push(item);
-
-        if (items.length === 0) {
-            //В очереди нет запросов с заданными параметрами
-            run(data);
-        } else if (items.length > 1) {
-            //В очереди несколько элементов, удаляем промежуточные
-            for (var i = 1, ln = items.length; i < ln; i = i + 1) {
-                var index = _queue.indexOf(items[i]);
-                _queue.splice(index, 1);
-            }
-        }
-    };
-
-};
-
-
-window.InfinniUI.Providers.DataProviderReplaceItemQueue = DataProviderReplaceItemQueue;
-
-//####app/data/dataSource/objectDataSource.js
-var ObjectDataSource = BaseDataSource.extend({
-
-    initDataProvider: function(){
-        var dataProvider = window.InfinniUI.providerRegister.build('ObjectDataSource');
-        this.set('dataProvider', dataProvider);
-    },
-
-    setItems: function(items){
-        this.get('dataProvider').setItems(items);
-        this.updateItems();
-    }
-
-});
-
-window.InfinniUI.ObjectDataSource = ObjectDataSource;
-
-//####app/data/dataSource/objectDataSourceBuilder.js
-function ObjectDataSourceBuilder() {
-}
-
-_.inherit(ObjectDataSourceBuilder, BaseDataSourceBuilder);
-
-_.extend(ObjectDataSourceBuilder.prototype, {
-    createDataSource: function(parent){
-        return new ObjectDataSource({
-            view: parent
-        });
-    },
-
-    applyMetadata: function(builder, parent, metadata, dataSource){
-        BaseDataSourceBuilder.prototype.applyMetadata.call(this, builder, parent, metadata, dataSource);
-
-        if(!'IsLazy' in metadata){
-            dataSource.setIsLazy(false);
-        }
-
-        if(metadata.Items){
-            if($.isArray(metadata.Items)){
-                dataSource.setItems(metadata.Items);
-            }
-
-            if($.isPlainObject(metadata.Items)){
-                var binding = builder.buildBinding(metadata.Items, {
-                    parentView: parent
-                });
-
-                binding.setMode(InfinniUI.BindingModes.toElement);
-
-                binding.bindElement(dataSource, '');
-            }
-
-        }
-
-    }
-});
-
-window.InfinniUI.ObjectDataSourceBuilder = ObjectDataSourceBuilder;
 
 //####app/formats/displayFormat/_common/formatMixin.js
 /**
@@ -30792,7 +30792,7 @@ var DateTimeMaskPartStrategy = (function () {
     var regExpMonth = /^(?:1[0-2]|0?[1-9]?)$/;
     var regExpFullYear = /^\d{1,4}$/;
     var regExpYear = /^\d{1,2}$/;
-    var regExpHour24 = /^(?:[12][0-3]|[01]?[1-9]?)$/;
+    var regExpHour24 = /^(?:[2][0-3]|[01]?[0-9]?)$/;
     var regExp60 = /^[0-5]?[0-9]$/;
 
     return {
