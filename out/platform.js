@@ -8055,7 +8055,7 @@ var SelectDate = Backbone.View.extend({
         var height = this.$el.height();
 
         var direction = 'bottom';
-        if (rect.bottom + height + 30 > windowHeight && rect.bottom > windowHeight / 2) {
+        if (rect.bottom + height + 30 > windowHeight && rect.bottom > windowHeight / 2 && rect.top > height) {
             direction = 'top';
         }
 
@@ -8076,7 +8076,7 @@ var SelectDate = Backbone.View.extend({
         if (direction === 'bottom') {
             style.top = window.pageYOffset + rect.bottom;
         } else {
-            style.top = rect.top - this.$el.height();
+            style.top = window.pageYOffset + rect.top - this.$el.height();
         }
 
         this.$el.css(style);
