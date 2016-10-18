@@ -31,8 +31,6 @@ var TestView = InfinniUI.ControlView.extend({
     },
 
     render: function () {
-        var model = this.model;
-
         this.prerenderingActions();
         this.renderTemplate(this.template);
 

@@ -9,8 +9,10 @@ window.InfinniUI.config.configName = 'test';
 
 window.InfinniUI.config.homePage = '/testConfigurations/stab.json';
 
-// when disableLayoutManager = true, body will have full height and will scrollable
-// window.InfinniUI.config.disableLayoutManager = true;
+window.InfinniUI.config.lang = 'ru-RU';
+
+// when disableAutoHeightService = true, body will have full height and will scrollable
+// window.InfinniUI.config.disableAutoHeightService = true;
 
 // when need to disable GetCurrentUser and when need to disable SignInExternalForm
 InfinniUI.config.disableGetCurrentUser = InfinniUI.config.disableSignInExternalForm = false;

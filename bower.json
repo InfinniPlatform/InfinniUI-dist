@@ -13,8 +13,5 @@
     "infinni-ui",
     "ui-framework"
   ],
-  "license": "GPL",
-  "dependencies": {
-    "infinni-ui-metadata": "latest"
-  }
+  "license": "GPL"
 }
