@@ -1,0 +1,37 @@
+{
+	"Items": [
+		{
+			"GridPanel": {
+				"Items": [
+					{
+						"Cell": {
+							"ColumnSpan": 3
+						}
+					},
+					{
+						"Cell": {
+							"ColumnSpan": 6,
+							"Items": [
+								{
+									"TextBox": {
+										"LabelText": "Username"
+									}
+								},
+								{
+									"PasswordBox": {
+										"LabelText": "Password"
+									}
+								},
+								{
+									"Button": {
+										"Text": "Login"
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}

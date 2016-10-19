@@ -28,6 +28,6 @@
   },
   "scripts": {
     "start": "gulp example",
-    "build": "bower i && npm i && gulp cleanFolder && gulp build"
+    "build": "npm i && bower i && gulp cleanFolder && gulp build"
   }
 }

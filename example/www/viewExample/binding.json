@@ -1,0 +1,48 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource",
+				"Items": [
+					{"Id": 1, "Text": "Hello world!"}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"GridPanel": {
+				"Items": [
+					{
+						"Cell": {
+							"ColumnSpan": 3
+						}
+					},
+					{
+						"Cell": {
+							"ColumnSpan": 6,
+							"Items": [
+								{
+									"Label": {
+										"Value": {
+											"Source": "ObjectDataSource",
+											"Property": "0.Text"
+										}
+									}
+								},
+								{
+									"TextBox": {
+										"Value": {
+											"Source": "ObjectDataSource",
+											"Property": "0.Text"
+										}
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}

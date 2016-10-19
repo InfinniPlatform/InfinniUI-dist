@@ -1,31 +1,50 @@
-function startAction(context, args) {
-    console.log( 'startAction ', args );
+function openHomePage(context, args) {
+	if( context.controls["MainContent"] != null ) {
+		context.controls["MainContent"].setLayout(null);
+	}
 };
 
-function startAction1(context, args) {
-    console.log( 'startAction1 ', args );
+function openDatagridPage(context, args) {
+	context.global.executeAction(context, {
+		OpenAction: {
+			LinkView: {
+				AutoView: {
+					Path: "viewExample/dataGrid.json",
+					OpenMode: "Container",
+					Container: "MainContent"
+				}
+			}
+		}
+	});
 };
 
-function startAction2(context, args) {
-    console.log( 'startAction2 ', args );
+function openLoginPage(context, args) {
+	context.global.executeAction(context, {
+		OpenAction: {
+			LinkView: {
+				AutoView: {
+					Path: "viewExample/loginPage.json",
+					OpenMode: "Container",
+					Container: "MainContent"
+				}
+			}
+		}
+	});
 };
 
-function startAction3(context, args) {
-    console.log( 'startAction3 ', args );
+function openDataBindingPage(context, args) {
+	var itemId = args.params[0];
+
+	context.global.executeAction(context, {
+		OpenAction: {
+			LinkView: {
+				AutoView: {
+					Path: "viewExample/binding.json",
+					OpenMode: "Container",
+					Container: "MainContent"
+				}
+			}
+		}
+	});
 };
 
-function startAction4(context, args) {
-    console.log( 'startAction4 ', args );
-};
-
-function startAction5(context, args) {
-    console.log( 'startAction5 ', args );
-};
-
-function startAction6(context, args) {
-    console.log( 'startAction6 ', args );
-};
-
-function startAction7(context, args) {
-    console.log( 'startAction7 ', args );
-};

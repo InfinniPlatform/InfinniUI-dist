@@ -2,7 +2,7 @@
 // Необходимо указать путь до платфомы в bower_components
 var infinniUIpath = './bower_components/infinni-ui/';
 
-// Путь из infinniUIpath к прикладным стилям 
+// Путь из infinniUIpath к прикладным стилям
 var fromInfinniToNewStylesPath = '/../../styles/';
 
 // Путь до папки-результата
@@ -58,7 +58,7 @@ var sourceForTasks = {
 	'server:example': {
 		src: "./www",
 		// turn it on when develop single page application
-		// spa: true, 
+		spa: true,
 		watch: projectRootFolder + "**/*.*",
 		port: 4444,
 		ui: {

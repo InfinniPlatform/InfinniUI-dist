@@ -1,0 +1,251 @@
+{
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "ObjectDataSource",
+				"Items": [
+					{"_id": 1, "Name": "Mobile small", "currency": 1100, "Display": "480x320"},
+					{"_id": 2, "Name": "Mobile middle", "currency": 1200, "Display": "640x320"},
+					{"_id": 3, "Name": "Mobile large", "currency": 1300, "Display": "771x375"},
+					{"_id": 4, "Name": "Tablet", "currency": 1400, "Display": "960x480"},
+					{"_id": 5, "Name": "Desktop small", "currency": 1500, "Display": "1024x768"},
+					{"_id": 6, "Name": "Desktop middle", "currency": 1600, "Display": "1600x900"},
+					{"_id": 7, "Name": "Desktop", "currency": 2000, "Display": "1920x1080"}
+				]
+			}
+		}
+	],
+	"Items": [
+		{
+			"StackPanel": {
+				"Items": [
+					{
+						"GridPanel": {
+							"Items": [
+								{
+									"Cell": {
+										"ColumnSpan": 12,
+										"Items": [
+											{
+												"Label": {
+													"Value": "Different Filters",
+													"HorizontalAlignment": "Center",
+													"TextStyle": "display1"
+												}
+											}
+										]
+									}
+								},
+								{
+									"Cell": {
+										"ColumnSpan": 4,
+										"Items": [
+											{
+												"TextBox": {
+													"LabelText": "Filter by Name"
+												}
+											}
+										]
+									}
+								},
+								{
+									"Cell": {
+										"ColumnSpan": 4,
+										"Items": [
+											{
+												"TextBox": {
+													"LabelText": "Filter by Price"
+												}
+											}
+										]
+									}
+								},
+								{
+									"Cell": {
+										"ColumnSpan": 4,
+										"Items": [
+											{
+												"TextBox": {
+													"LabelText": "Filter by Display"
+												}
+											}
+										]
+									}
+								},
+								{
+									"Cell": {
+										"ColumnSpan": 12,
+
+										"Items": [
+											{
+												"StackPanel": {
+													"Items": [
+														{
+															"Button": {
+																"Name": "AddBtn",
+																"Text": "Add",
+																"HorizontalAlignment": "Right",
+																"Action": {
+																	"AddAction": {
+																		"DestinationValue": {
+																			"Source": "ObjectDataSource",
+																			"Property": ""
+																		},
+																		"SourceValue": {
+																			"Source": "MainDataSource"
+																		},
+																		"LinkView": {
+																			"AutoView": {
+																				"OpenMode": "Dialog",
+																				"DialogWidth": "Middle",
+																				"Path": "viewExample/addItem.json"
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								},
+								{
+									"Cell": {
+										"ColumnSpan": 12,
+										"Items": [
+											{
+												"ScrollPanel": {
+													"Items": [
+														{
+															"DataGrid": {
+																"Name": "ItemsPanel",
+																"MultiSelect": true,
+																"VerticalAlignment": "Stretch",
+																"CheckAllVisible": true,
+																"Columns": [
+																	{
+																		"Header": "Name",
+																		"CellProperty": "Name"
+																	},
+																	{
+																		"Header": "Price",
+																		"CellFormat": "$ {currency}"
+																	},
+																	{
+																		"Header": "Display",
+																		"CellProperty": "Display"
+																	},
+																	{
+																		"Header": "Status",
+																		"Width": 70,
+																		"CellTemplate": {
+																			"StackPanel": {
+																				"Orientation": "Horizontal",
+																				"ViewMode": "FormGroup",
+																				"Items": [
+																					{
+																						"Icon": {
+																							"Value": "minus-circle",
+																							"Foreground": "accent3",
+																							"ToolTip": "Not checked"
+																						}
+																					},
+																					{
+																						"Icon": {
+																							"Value": "chain-broken",
+																							"Foreground": "accent3",
+																							"ToolTip": "Not send"
+																						}
+																					}
+																				]
+																			}
+																		}
+																	},
+																	{
+																		"HeaderTemplate": {
+																			"Label": {
+																				"Value": "Actions"
+																			}
+																		},
+																		"Width": 70,
+																		"CellTemplate": {
+																			"StackPanel": {
+																				"Orientation": "Horizontal",
+																				"ViewMode": "FormGroup",
+																				"Items": [
+																					{
+																						"Button": {
+																							"ViewMode": "link",
+																							"ContentTemplate": {
+																								"Icon": {
+																									"Value": "pencil",
+																									"Foreground": "primary2",
+																									"ToolTip": "Edit element"
+																								}
+																							},
+																							"Action": {
+																								"EditAction": {
+																									"DestinationValue": {
+																										"Source": "ObjectDataSource",
+																										"Property": "$"
+																									},
+																									"SourceValue": {
+																										"Source": "EditDataSource"
+																									},
+																									"LinkView": {
+																										"AutoView": {
+																											"OpenMode": "Dialog",
+																											"DialogWidth": "Middle",
+																											"Path": "viewExample/editItem.json"
+																										}
+																									}
+																								}
+																							}
+																						}
+																					},
+																					{
+																						"Button": {
+																							"ViewMode": "link",
+																							"ContentTemplate": {
+																								"Icon": {
+																									"Value": "ban",
+																									"Foreground": "primary2",
+																									"ToolTip": "Delete element"
+																								}
+																							},
+																							"Action": {
+																								"DeleteAction": {
+																									"DestinationValue": {
+																										"Source": "ObjectDataSource",
+																										"Property": "$"
+																									}
+																								}
+																							}
+																						}
+																					}
+																				]
+																			}
+																		}
+																	}
+																],
+																"Items": {
+																	"Source": "ObjectDataSource"
+																}
+															}
+														}
+													]
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}

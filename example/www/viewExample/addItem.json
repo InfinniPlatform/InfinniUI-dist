@@ -1,0 +1,82 @@
+{
+	"HeaderTemplate": {
+		"Label": {
+			"Text": "Add new item"
+		}
+	},
+	"CloseButtonVisibility": false,
+	"DataSources": [
+		{
+			"ObjectDataSource": {
+				"Name": "MainDataSource",
+				"Items": []
+			}
+		}
+	],
+	"Items": [
+		{
+			"StackPanel": {
+				"ViewMode": "FormGroup",
+				"Orientation": "Vertical",
+				"Items": [
+					{
+						"TextBox": {
+							"LabelText": "Type name",
+							"Value": {
+								"Source": "MainDataSource",
+								"Property": "Name"
+							}
+						}
+					},
+					{
+						"TextBox": {
+							"LabelText": "Type price",
+							"Value": {
+								"Source": "MainDataSource",
+								"Property": "currency"
+							}
+						}
+					},
+					{
+						"TextBox": {
+							"LabelText": "Type display",
+							"Value": {
+								"Source": "MainDataSource",
+								"Property": "Display"
+							}
+						}
+					}
+				]
+			}
+		},
+		{
+			"StackPanel": {
+				"ViewMode": "FormGroup",
+				"Orientation": "Horizontal",
+				"Items": [
+					{
+						"Button": {
+							"Text": "Save",
+							"Action": {
+								"SaveAction":{
+									"DestinationValue": {
+										"Source": "MainDataSource"
+									},
+									"CanClose": true
+								}
+							}
+						}
+					},
+					{
+						"Button": {
+							"Text": "Cancel",
+							"Action": {
+								"CancelAction":{}
+							}
+						}
+					}
+				]
+			}
+		}
+	]
+}
