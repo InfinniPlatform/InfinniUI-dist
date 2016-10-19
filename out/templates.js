@@ -79,15 +79,15 @@ this["InfinniUI"]["Template"]["controls/textBox/template/oneline.tpl.html"] = fu
 
 this["InfinniUI"]["Template"]["controls/toggleButton/template/toggleButton.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="togglebutton-box">\r\n    <div class="togglebutton-container">\r\n        <span class="togglebutton-handle-on"></span>\r\n        <span class="togglebutton-handle-label">&nbsp;</span>\r\n        <span class="togglebutton-handle-off"></span>\r\n    </div>\r\n</div>';}return __p};
 
-this["InfinniUI"]["Template"]["controls/toolBar/template/toolBar.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-tool-bar__container"></div>';}return __p};
-
-this["InfinniUI"]["Template"]["controls/toolBar/template/toolBarItem.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div style="display: inline-block;"></div>';}return __p};
-
 this["InfinniUI"]["Template"]["controls/treeView/template/node-checkbox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<span class="pl-treeview-node__button"><!-- pl-treeview-node__button_collapse -->\r\n    <!-- expand/collapse button -->\r\n</span>\r\n\r\n<div class="pl-treeview-node__item pl-treeview-item"><!-- pl-treeview-item_checked -->\r\n    <div class="pl-treeview-item__checker pl-treeview-item__checker_checkbox">\r\n\r\n    </div>\r\n\r\n    <div class="pl-treeview-item__content"><!-- pl-treeview-item__content_selected -->\r\n        <!-- item content HTML markup -->\r\n    </div>\r\n</div>\r\n\r\n<div class="pl-treeview-node__items"><!-- pl-treeview-node__items_expanded -->\r\n    <!-- subitems list -->\r\n</div>';}return __p};
 
 this["InfinniUI"]["Template"]["controls/treeView/template/node-radio.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<span class="pl-treeview-node__button"><!-- pl-treeview-node__button_collapse -->\r\n    <!-- expand/collapse button -->\r\n</span>\r\n\r\n<div class="pl-treeview-node__item pl-treeview-item"><!-- pl-treeview-item_checked -->\r\n    <div class="pl-treeview-item__checker pl-treeview-item__checker_radio"></div>\r\n\r\n    <div class="pl-treeview-item__content"><!-- pl-treeview-item__content_selected -->\r\n        <!-- item content HTML markup -->\r\n    </div>\r\n</div>\r\n\r\n<div class="pl-treeview-node__items"><!-- pl-treeview-node__items_expanded -->\r\n    <!-- subitems list -->\r\n</div>';}return __p};
 
 this["InfinniUI"]["Template"]["controls/treeView/template/treeview.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '';}return __p};
+
+this["InfinniUI"]["Template"]["controls/toolBar/template/toolBar.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-tool-bar__container"></div>';}return __p};
+
+this["InfinniUI"]["Template"]["controls/toolBar/template/toolBarItem.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div style="display: inline-block;"></div>';}return __p};
 
 this["InfinniUI"]["Template"]["services/ajaxLoaderIndicator/template/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-ajaxloader-indicator"></div>';}return __p};
 
