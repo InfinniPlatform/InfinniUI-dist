@@ -2,12 +2,14 @@
 
 Если вы только что скачали InfinniUI, необходимо настроить сборку конфигурации. Для этого в файле ./gulpfile.js/gulptasks/sourceForTasks.js проверьте/исправтье значения переменных infinniUIpath, fromInfinniToNewStylesPath, projectRootFolder, projectFolderForPlatform, projectFolderForExtensions.
 
+Для корректной работы необходимо добавить путь './node_modules/.bin' в переменную Path окружения Windows, чтобы npm мог использовать локальные пакеты при сборке.
+
 Файл runExample.bat делает полную сборку платформы и конфигурации, а также запуск сервера. Результат сборки можно посмотреть по адресу http://localhost:4444.
 
 
 === Переопределение и расширение конфигурационных переменных ===
 
-Формат конфигурации платформы можно посмотреть в документации (http://docs.infinnity.ru/docs/API/Core/InfinniUI/InfinniUI.config/). 
+Формат конфигурации платформы можно посмотреть в документации (http://docs.infinnity.ru/docs/API/Core/InfinniUI/InfinniUI.config/).
 Чтобы перекрыть требуемые поля, нужно задать их до подключения основного js-файла с платформой.
 В примере, это происходит в файле ./www/config.js (обратите внимание, что config.js подключается до platform.js)
 

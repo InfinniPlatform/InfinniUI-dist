@@ -29,5 +29,9 @@
   "scripts": {
     "start": "gulp example",
     "build": "npm i && bower i && gulp cleanFolder && gulp build"
+  },
+  "engines": {
+    "node": "4.x",
+    "npm": "3.8.x"
   }
 }
