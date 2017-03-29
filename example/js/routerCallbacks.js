@@ -2,7 +2,7 @@ function openHomePage(context, args) {
 	if( context.controls["MainContent"] != null ) {
 		context.controls["MainContent"].setLayout(null);
 	}
-};
+}
 
 function openDatagridPage(context, args) {
 	context.global.executeAction(context, {
@@ -16,7 +16,7 @@ function openDatagridPage(context, args) {
 			}
 		}
 	});
-};
+}
 
 function openLoginPage(context, args) {
 	context.global.executeAction(context, {
@@ -30,11 +30,9 @@ function openLoginPage(context, args) {
 			}
 		}
 	});
-};
+}
 
 function openDataBindingPage(context, args) {
-	var itemId = args.params[0];
-
 	context.global.executeAction(context, {
 		OpenAction: {
 			LinkView: {
@@ -46,5 +44,5 @@ function openDataBindingPage(context, args) {
 			}
 		}
 	});
-};
+}
 

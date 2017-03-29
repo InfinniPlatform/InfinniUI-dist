@@ -1,0 +1,58 @@
+{
+  "DataSources": [{
+    "ObjectDataSource": {
+      "Name": "TestDS",
+      "Items": [{
+        "Items": [{}]
+      }]
+    }
+  }],
+  "Items": [{
+    "StackPanel": {
+      "Items": {
+        "Source": "TestDS",
+        "Property": "$.Items"
+      },
+      "ItemTemplate": {
+        "StackPanel": {
+          "Orientation": "Horizontal",
+          "Items": [{
+            "TextBox": {
+              "LabelText": "Label",
+              "Value": {
+                "Source": "TestDS",
+                "Property": "$.Items.#.Value"
+              }
+            }
+          },
+            {
+              "Button": {
+                "Text": "Удалить",
+                "ToolTip": {
+                  "Label": {
+                    "Text": {
+                      "Source": "TestDS",
+                      "Property": "@.#.Value"
+                    }
+                  }
+                },
+                "Tag": {
+                  "Source": "TestDS",
+                  "Property": "@.#"
+                },
+                "OnClick": "{var items = context.dataSources.TestDS.getProperty('$.Items'); items = _.reject(items, function(i) {return i === args.source.getTag();}); context.dataSources.TestDS.setProperty('$.Items', items);}"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+    {
+      "Button": {
+        "Text": "Добавить ещё",
+        "OnClick": "{var items = context.dataSources.TestDS.getProperty('$.Items'); items.push({}); context.dataSources.TestDS.setProperty('$.Items', _.clone(items));}"
+      }
+    }
+  ]
+}

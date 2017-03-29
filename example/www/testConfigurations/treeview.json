@@ -30,6 +30,11 @@
 						"Name": "Победы"
 					},
 					{
+						"Id": 55,
+						"ParentId": 4,
+						"Name": "Ленина"
+					},
+					{
 						"Id": 6,
 						"ParentId": 5,
 						"Name": "33/1"
@@ -45,7 +50,7 @@
 				"ParentProperty": "ParentId",
 				"ItemProperty": "Name",
 				"ValueProperty": "Name",
-				"MultiSelect": true,
+				"MultiSelect": false,
 				"Items": {
 					"Source": "Geo"
 				}

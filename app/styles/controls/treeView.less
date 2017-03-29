@@ -17,14 +17,23 @@
     .user-select(none);
 
     &_expand {
-      &:before {
-        content: "\f196";
+      .pl-treeview-node__icon_expanded,
+      .pl-treeview-node__icon_blank {
+        display: none;
       }
     }
 
     &_collapse {
-      &:before {
-        content: "\f147";
+      .pl-treeview-node__icon_collapsed,
+      .pl-treeview-node__icon_blank {
+        display: none;
+      }
+    }
+
+    &_none {
+      .pl-treeview-node__icon_expanded,
+      .pl-treeview-node__icon_collapsed {
+        display: none;
       }
     }
   }
@@ -50,18 +59,22 @@
 .pl-treeview-item {
   &__checker {
     display: inline-block;
-    font: normal normal normal 14px/1 FontAwesome;
+
     .user-select(none);
 
     &_checkbox {
-      &:before {
-        content: "\f096";
-      }
+
     }
 
     &_checkbox&_checked {
-      &:before{
-        content: "\f14a";
+      .pl-treeview-node__icon_unchecked {
+        display: none;
+      }
+    }
+
+    &_checkbox&_unchecked {
+      .pl-treeview-node__icon_checked {
+        display: none;
       }
     }
 
