@@ -116,13 +116,180 @@ _.defaults( InfinniUI.config, {
     cacheMetadata: false, //boolean - enable/disable cache | milliseconds
     serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
     configName: 'InfinniUI'
-//devblockstart
-    ,editorService: {
-        url: 'http://localhost:5500/api/metadata'
-    }
-//devblockstop
-
 });
+
+InfinniUI.VERSION = '2.1.60';
+
+//####app/localizations/culture.js
+function Culture(name){
+    this.name = name;
+    this.caption = InfinniUI.localizations[name].caption;
+    this.dateTimeFormatInfo = InfinniUI.localizations[name].dateTimeFormatInfo;
+    this.numberFormatInfo = InfinniUI.localizations[name].numberFormatInfo;
+}
+
+window.InfinniUI.global.culture = new Culture(InfinniUI.config.lang);
+window.InfinniUI.Culture = Culture;
+
+//####app/localizations/dateTimeFormatInfo.js
+InfinniUI.localizations['ru-RU'].dateTimeFormatInfo = {
+    monthNames: [ "Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ],
+    abbreviatedMonthNames: ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"],
+    dayNames: [ "воскресенье","понедельник","вторник","среда","четверг","пятница","суббота" ],
+    abbreviatedDayNames: [ "Вс","Пн","Вт","Ср","Чт","Пт","Сб" ],
+    dateSeparator: '.',
+    timeSeparator: ':',
+    amDesignator: '',
+    pmDesignator: '',
+    firstDayOfWeek: 1
+};
+
+InfinniUI.localizations['en-US'].dateTimeFormatInfo = {
+    monthNames: [ "January","February","March","April","May","June","July","August","September","October","November","December" ],
+    abbreviatedMonthNames: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    dayNames: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    abbreviatedDayNames: ["Sun", "Mon","Tue","Wed","Thu","Fri","Sat"],
+    dateSeparator: '/',
+    timeSeparator: ':',
+    amDesignator: 'AM',
+    pmDesignator: 'PM',
+    firstDayOfWeek: 0
+};
+//####app/localizations/localized.js
+var localized = InfinniUI.localizations [InfinniUI.config.lang];
+
+InfinniUI.localized = localized;
+//####app/localizations/numberFormatInfo.js
+InfinniUI.localizations['ru-RU'].numberFormatInfo = {
+    numberDecimalDigits: 2,
+    numberDecimalSeparator: ',',
+    numberGroupSeparator: ' ',
+    numberNegativePattern: '-n',
+    numberPositivePattern: 'n',
+
+    percentDecimalDigits: 2,
+    percentDecimalSeparator: ',',
+    percentGroupSeparator: ' ',
+    percentSymbol: '%',
+    percentNegativePattern: '-p%',
+    percentPositivePattern: 'p%',
+
+    currencyDecimalDigits: 2,
+    currencyDecimalSeparator: ',',
+    currencyGroupSeparator: ' ',
+    currencySymbol: 'р.',
+    currencyNegativePattern: '-c$',
+    currencyPositivePattern: 'c$',
+
+    negativeInfinitySymbol: '-бесконечность',
+    positiveInfinitySymbol: 'бесконечность',
+    NaNSymbol: 'NaN'
+};
+
+InfinniUI.localizations['en-US'].numberFormatInfo = {
+    numberDecimalDigits: 2,
+    numberDecimalSeparator: '.',
+    numberGroupSeparator: ',',
+    numberNegativePattern: '-n',
+    numberPositivePattern: 'n',
+
+    percentDecimalDigits: 2,
+    percentDecimalSeparator: '.',
+    percentGroupSeparator: ',',
+    percentSymbol: '%',
+    percentNegativePattern: '-p %',
+    percentPositivePattern: 'p %',
+
+    currencyDecimalDigits: 2,
+    currencyDecimalSeparator: '.',
+    currencyGroupSeparator: ',',
+    currencySymbol: '$',
+    currencyNegativePattern: '($c)',
+    currencyPositivePattern: '$c',
+
+    negativeInfinitySymbol: '-Infinity',
+    positiveInfinitySymbol: 'Infinity',
+    NaNSymbol: 'NaN'
+};
+//####app/localizations/patternDateFormats.js
+InfinniUI.localizations['ru-RU'].patternDateFormats = {
+    f: 'dd MMMM yyyy г. HH:mm',
+    F: 'dd MMMM yyyy г. HH:mm:ss',
+
+    g: 'dd.MM.yyyy HH:mm',
+    G: 'dd.MM.yyyy HH:mm:ss',
+
+    d: 'dd.MM.yyyy',
+    D: 'dd MMMM yyyy г.',
+
+    t: 'H:mm',
+    T: 'HH:mm:ss',
+
+    y: 'MMMM yyyy', Y: 'MMMM yyyy',
+    m: 'MMMM dd', M: 'MMMM dd',
+
+    s: 'yyyy-MM-ddTHH:mm:ss',
+    u: 'yyyy-MM-dd HH:mm:ssZ'
+};
+
+InfinniUI.localizations['en-US'].patternDateFormats = {
+    f: 'dddd, MMMM dd, yyyy h:%m tt',
+    F: 'dddd, MMMM dd, yyyy h:%m:%s tt',
+
+    // TODO: Изменен формат для корректного отображения в DateTimePicker (UI-2453)
+    g: 'M/%d/yyyy h:%m tt',
+    G: 'M/%d/yyyy h:%m:%s tt',
+
+    d: 'M/%d/yyyy',
+    D: 'dddd, MMMM dd, yyyy',
+
+    t: 'h:%m tt',
+    T: 'h:%m:%s tt',
+
+    y: 'MMMM, yyyy', Y: 'MMMM, yyyy',
+    m: 'MMMM dd', M: 'MMMM dd',
+
+    s: 'yyyy-MM-ddTHH:mm:ss',
+    u: 'yyyy-MM-dd HH:mm:ssZ'
+};
+//####app/localizations/stringResources.js
+InfinniUI.localizations['ru-RU'].strings = {
+    ImageBox: {
+        chooseImage: 'Выбрать изображение',
+        imageSizeTooBig: 'Размер выбранного файла {chosen-size}Мб больше допустимого размера {permitted-size}Мб',
+        incorrectFormat: 'Загрузка данного типа файла не разрешена'
+    },
+    FileBox: {
+        noFile: 'Файл не выбран...',
+        fileSizeTooBig: 'Размер выбранного файла {chosen-size}Мб больше допустимого размера {permitted-size}Мб',
+        incorrectFormat: 'Загрузка данного типа файла не разрешена'
+    },
+    DateTimePicker: {
+        time: 'Время',
+        clear: 'Очистить',
+        today: 'Сегодня',
+        date: 'Дата'
+    }
+};
+
+InfinniUI.localizations['en-US'].strings = {
+    ImageBox: {
+        chooseImage: 'Choose photo',
+        imageSizeTooBig: 'Size of the chosen file {chosen-size}MB is more than allowed {permitted-size}MB',
+        incorrectFormat: 'Uploading of this file type is forbidden'
+    },
+    FileBox: {
+        noFile: 'Choose file...',
+        fileSizeTooBig: 'Size of the chosen file {chosen-size}MB is more than allowed {permitted-size}MB',
+        incorrectFormat: 'Uploading of this file type is forbidden'
+    },
+    DateTimePicker: {
+        time: 'Time',
+        clear: 'Clear',
+        today: 'Today',
+        date: 'Date'
+    }
+};
 //####app/utils/collection/collection.js
 /**
  *
@@ -3357,11 +3524,10 @@ var layoutManager = {
 	},
 
 	resizeDialog: function () {
-		var manager = this;
-		$(this.getModalSelector()).each(function (i, el) {
-			manager._resizeDialog($(el));
-			manager.resetDialogHeight($(el));
-		});
+		var $currentDialog = $(this.getModalSelector()).last();
+
+		this._resizeDialog($currentDialog);
+		this.resetDialogHeight($currentDialog);
 	},
 
 	resetDialogHeight: function($modal){
@@ -4195,12 +4361,16 @@ window.messageTypes = {
     onChangeLayout: {name: 'OnChangeLayout'},
     onNotifyUser: {name: 'onNotifyUser'},
     onToolTip: {name: 'onToolTip'},
+    onRemove: {name: 'onRemove'},
 
     onContextMenu: {name: 'onContextMenu'},
     onOpenContextMenu: {name: 'onOpenContextMenu'},
 
     onDataLoading: {name: 'onDataLoading'},
-    onDataLoaded: {name: 'onDataLoaded'}
+    onDataLoaded: {name: 'onDataLoaded'},
+
+    onToolTipDestroy: {name: 'onToolTipDestroy'},
+    onToolTipInit: {name: 'onToolTipInit'}
 
 };
 
@@ -4443,6 +4613,10 @@ _.extend(Control.prototype, {
 
     onKeyUp: function (handler) {
         this.controlView.$el.on('keyup', handler);
+    },
+
+    onRemove: function( handler ) {
+        this.controlView.on(messageTypes.onRemove.name, handler);
     },
 
     remove: function () {
@@ -4842,6 +5016,11 @@ var ControlView = Backbone.View.extend(/** @lends ControlView.prototype */{
         if (triggeringOnLoaded) {
             this.trigger('onLoaded');
         }
+    },
+
+    remove: function () {
+        this.trigger(messageTypes.onRemove.name);
+        Backbone.View.prototype.remove.apply(this, Array.prototype.slice.call(arguments));
     },
 
     switchClass: function (name, value, $el, separator) {
@@ -5987,7 +6166,9 @@ var TextEditorView = Backbone.View.extend({
             default:
                 //замена выделенного текста, по нажатию
                 var char = InfinniUI.Keyboard.getCharByKeyCode(event.keyCode);
+
                 event.preventDefault();
+
                 if (this.getSelectionLength() > 0) {
                     position = editMask.deleteSelectedText(this.getCaretPosition(), this.getSelectionLength(), char);
                 } else {
@@ -5996,17 +6177,16 @@ var TextEditorView = Backbone.View.extend({
                 }
 
                 this.model.setText(editMask.getText());
+
                 if (position !== false) {
                     this.setCaretPosition(position);
                 }
+
                 break;
         }
-
-
     },
 
     onKeyupHandler: function (event) {
-
         this.trigger('onKeyDown', {
             keyCode: event.which,
             value: this.model.getValue()
@@ -6015,7 +6195,6 @@ var TextEditorView = Backbone.View.extend({
 
     onClickHandler: function (event) {
         this.checkCurrentPosition();
-        event.preventDefault();
     },
 
     onPasteHandler: function (event) {
@@ -6074,8 +6253,6 @@ var TextEditorView = Backbone.View.extend({
 
         var originalEvent = event.originalEvent;
         var text = originalEvent.dataTransfer.getData('text/plain');
-
-
 
         this.textTyping(text, 0);
         this.$el.focus();
@@ -6233,9 +6410,7 @@ var TextEditorView = Backbone.View.extend({
                 this.checkCurrentPosition(position);
             }
         }
-
     }
-
 });
 //####app/controls/_base/textEditor/_mode/textEditorModelBaseModeStrategy.js
 /**
@@ -9207,8 +9382,10 @@ var CommonButtonView = ControlView.extend({
 
     updateText: function(){
         var textForButton = this.model.get('text');
-        if (typeof textForButton == 'string'){
-            this.getButtonElement().html(textForButton);
+        var $button = this.getButtonElement();
+
+        if($button) {
+            $button.html(textForButton);
         }
     },
 
@@ -10273,11 +10450,11 @@ _.extend(DataGridControl.prototype, {
     },
 
     onRowClick: function(callback) {
-        this.controlView.$el.on('click', '.pl-datagrid__body .pl-datagrid-row', callback);
+        this.controlView.$el.on('click', 'tbody .pl-datagrid-row', callback);
     },
 
     onRowDoubleClick: function(callback) {
-        this.controlView.$el.on('dblclick', '.pl-datagrid__body .pl-datagrid-row', callback);
+        this.controlView.$el.on('dblclick', 'tbody .pl-datagrid-row', callback);
     }
 });
 
@@ -10591,14 +10768,16 @@ var DataGridView = ListEditorBaseView.extend({
     renderHeaders: function () {
         var that = this;
         var columns = this.model.get('columns');
-        var templateHeaderCell = this.template.headerCell;
+        // var templateHeaderCell = this.template.headerCell();
         var sizeCells = [];
-        var templateSizeCells = this.template.sizeCell;
+        var templateSizeCells = this.template.sizeCell();
 
         var $headers = columns.toArray().map(function (column) {
 
-            sizeCells.push(templateSizeCells());
-            var $th = $(templateHeaderCell());
+            sizeCells.push(templateSizeCells);
+            // @TODO remove hardcoded template when the memory leaks of dataBindings would have fixed
+            // bug related to task JK-4516
+            var $th = $('<th class="pl-datagrid-row__cell"></th>');
 
             var headerTemplate = column.getHeaderTemplate();
             var header = column.getHeader();
@@ -10663,7 +10842,6 @@ var DataGridView = ListEditorBaseView.extend({
                         model.toggleValue(valueSelector(undefined, {value:items.getByIndex(index)}));
                     }
                 });
-                element.childElements = element.control.controlView.childElements;
                 that.addRowElement(item, element);
 
                 var $element = element.render();
@@ -10806,7 +10984,7 @@ var DataGridRowView = ControlView.extend({
 
     initialize: function () {
         ControlView.prototype.initialize.call(this);
-        this.childElements = [];
+
         this.on('render', function () {
             this.ui.toggleCell.on('click', this.onToggleHandler.bind(this));
         }, this);
@@ -10839,15 +11017,15 @@ var DataGridRowView = ControlView.extend({
         $el.html(template());
         this.bindUIElements();
 
-        var templates = this.model.get('cellTemplates');
-        var templateDataCell = this.template.dataCell;
-        if (Array.isArray(templates)) {
-            templates.forEach(function (template, index) {
-                var $cell = $(templateDataCell());
-                var cellElement = template();
+        var cellElements = this.model.get('cellElements');
+        // var templateDataCell = this.template.dataCell();
+        if (Array.isArray(cellElements)) {
+            cellElements.forEach(function (cellElement, index) {
+	            // @TODO remove hardcoded template when the memory leaks of dataBindings would have fixed
+	            // bug related to task JK-4516
+                var $cell = $('<td class="pl-datagrid-row__cell"></td>');
                 $cell.append(cellElement.render());
                 $el.append($cell);
-                row.addChildElement(cellElement);
             });
         }
         this.updateProperties();
@@ -10882,23 +11060,6 @@ var DataGridRowView = ControlView.extend({
 
     onToggleHandler: function (event) {
         this.trigger('toggle');
-    },
-
-    addChildElement: function (element) {
-        this.childElements.push(element);
-    },
-
-    removeChildElements: function () {
-        this.childElements.forEach(function (element) {
-            element.remove();
-        });
-
-        this.childElements.length = 0;
-    },
-
-    remove: function () {
-        this.removeChildElements();
-        ControlView.prototype.remove.call(this);
     }
 
 
@@ -13025,7 +13186,7 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
         this.renderTemplate(this.getTemplate());
 
         this.renderItemsContents();
-        this.checkSelectedItem();
+        this.initSelectedItem();
 
         this.postrenderingActions();
 
@@ -13081,11 +13242,17 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
             var header = this.renderTabHeader(data.tabElement, selected);
 
             this.listenTo(header, 'selected', function () {
-                model.set('selectedItem', data.tabElement);
+                var isEnabled = data.tabElement.getEnabled();
+                if(isEnabled) {
+                    model.set('selectedItem', data.tabElement);
+                }
             });
 
             this.listenTo(header, 'close', function () {
-                data.tabElement.close();
+                var isEnabled = data.tabElement.getEnabled();
+                if(isEnabled) {
+                    data.tabElement.close();
+                }
             });
 
             return header;
@@ -13101,10 +13268,12 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
      */
     renderTabHeader: function (tabPageElement, selected) {
         var header = new TabHeaderView({
-            text: tabPageElement.getText(),
-            canClose: tabPageElement.getCanClose(),
-            selected: selected
-        });
+                text: tabPageElement.getText(),
+                canClose: tabPageElement.getCanClose(),
+                enabled: tabPageElement.getEnabled(),
+                selected: selected
+            }),
+            that = this;
 
         tabPageElement.onPropertyChanged('text', function () {
             header.setText(tabPageElement.getText());
@@ -13112,6 +13281,15 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
 
         tabPageElement.onPropertyChanged('canClose', function () {
             header.setCanClose(tabPageElement.getCanClose());
+        });
+
+        tabPageElement.onPropertyChanged('enabled', function () {
+            header.setEnabled(tabPageElement.getEnabled());
+
+            var selectedTabPage = that.model.get('selectedItem');
+            if(tabPageElement == selectedTabPage){ // если видимость поменяли у выбранного элемента
+                that.resetDefaultSelectedItem();
+            }
         });
 
         this.ui.header.append(header.render().$el);
@@ -13188,21 +13366,39 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
      * @protected
      * @description Проверяет чтобы одна из вкладок была активна
      */
-    checkSelectedItem: function () {
+    initSelectedItem: function () {
         var
             model = this.model,
             tabPages = this.childElements,
             selectedItem = model.get('selectedItem');
 
-        if (!Array.isArray(tabPages)) {
+        if (!Array.isArray(tabPages) || tabPages.length == 0) {
             model.set('selectedItem', null);
-        } else if (tabPages.length) {
-            if (tabPages.indexOf(selectedItem) === -1) {
-                model.set('selectedItem', tabPages[0]);
-            }
         } else {
-            model.set('selectedItem', null);
+            if (tabPages.indexOf(selectedItem) === -1) {
+                var firstEnabledPageIndex = this._getFirstEnabledPageIndex();
+                if(firstEnabledPageIndex != -1) {
+                    model.set('selectedItem', tabPages[firstEnabledPageIndex]);
+                }
+            }
         }
+    },
+
+    resetDefaultSelectedItem: function () {
+        this.model.set('selectedItem', null);
+        this.initSelectedItem();
+    },
+
+    _getFirstEnabledPageIndex: function() {
+        var tabPages = this.childElements;
+
+        for(var i=0; i<tabPages.length; ++i ){
+            if(tabPages[i].getEnabled()){
+                return i;
+            }
+        }
+
+        return -1;
     },
 
     /**
@@ -13258,6 +13454,7 @@ var TabHeaderModel = Backbone.Model.extend({
 
     defaults: {
         text: '',
+        enabled: true,
         canClose: false
     }
 });
@@ -13320,6 +13517,10 @@ var TabHeaderView = Backbone.View.extend({
         this.model.set('selected', value);
     },
 
+    setEnabled: function (value) {
+        this.model.set('enabled', value);
+    },
+
     /**
      * @protected
      */
@@ -13327,6 +13528,7 @@ var TabHeaderView = Backbone.View.extend({
         this.updateTextHandler();
         this.updateCanClose();
         this.updateSelectedHandler();
+        this.updateEnabled();
     },
 
     /**
@@ -13336,7 +13538,8 @@ var TabHeaderView = Backbone.View.extend({
         this.updateProperties();
         this.listenTo(this.model, 'change:text', this.updateTextHandler);
         this.listenTo(this.model, 'change:selected', this.updateSelectedHandler);
-        this.listenTo(this.model, 'cahnge:canClose', this.updateCanClose);
+        this.listenTo(this.model, 'change:canClose', this.updateCanClose);
+        this.listenTo(this.model, 'change:enabled', this.updateProperties); // нужно обновлять все свойства
     },
 
     /**
@@ -13361,6 +13564,11 @@ var TabHeaderView = Backbone.View.extend({
     updateSelectedHandler: function () {
         var selected = this.model.get('selected');
         this.$el.toggleClass('pl-active active', selected);
+    },
+
+    updateEnabled: function () {
+        var isEnabled = this.model.get('enabled');
+        this.$el.toggleClass('pl-disabled', !isEnabled);
     },
 
     onClickHandler: function (event) {
@@ -14457,15 +14665,6 @@ var ContextMenuView = ContainerView.extend({
 
 	contextMenuTemplate: InfinniUI.Template["controls/contextMenu/template/contextMenu.tpl.html"],
 
-	updateProperties: function(){
-		ContainerView.prototype.updateProperties.call(this);
-
-		this.updateContent();
-	},
-
-	updateContent: CommonButtonView.prototype.updateContent,
-	updateText: CommonButtonView.prototype.updateText,
-
 	updateHorizontalAlignment: function(){
 		var horizontalAlignment = this.model.get('horizontalAlignment');
 		var that = this;
@@ -14487,10 +14686,6 @@ var ContextMenuView = ContainerView.extend({
 				}
 			}
 		);
-	},
-
-	getButtonElement: function(){
-		return this.ui.button;
 	},
 
 	render: function () {
@@ -14823,7 +15018,9 @@ var FileBoxModel = ControlModel.extend( _.extend({
         if (file) {
             if (maxSize) {
                 if (file.size > maxSize) {
-                    return 'Размер выбранного файла ' + (file.size/(1024*1024)).toFixed(1) + 'Мб больше допустимого размера ' + (maxSize/(1024*1024)).toFixed(1) + 'Мб';
+                    return localized.strings.FileBox.fileSizeTooBig
+                        .replace(/\{chosen-size\}/g, (file.size/(1024*1024)).toFixed(1))
+                        .replace(/\{permitted-size\}/g, (maxSize/(1024*1024)).toFixed(1));
                 }
             }
 
@@ -14838,7 +15035,7 @@ var FileBoxModel = ControlModel.extend( _.extend({
                 }
 
                 if (!acceptType) {
-                    return 'Загрузка данного типа файла не разрешена';
+                    return localized.strings.FileBox.incorrectFormat;
                 }
 
             }
@@ -15519,7 +15716,8 @@ var GridPanelView = ContainerView.extend(
 
         renderRow: function (row) {
             var view = this;
-            var $row = $(this.template.row());
+            // var $row = $(this.template.row());
+            var $row = $('<div class="pl-clearfix"></div>');
             $row.append(row.map(function(element) {
                 view.addChildElement(element);
                 return element.render();
@@ -15663,7 +15861,7 @@ _.extend(ImageBoxControl.prototype, {
 var ImageBoxModel = ControlModel.extend( _.extend({
 
     defaults: _.defaults({
-            text: 'Выбрать изображение'
+            text: localized.strings.ImageBox.chooseImage
         },
         editorBaseModelMixin.defaults_editorBaseModel,
         ControlModel.prototype.defaults
@@ -15688,12 +15886,14 @@ var ImageBoxModel = ControlModel.extend( _.extend({
         if (file) {
             if (maxSize) {
                 if (file.size > maxSize) {
-                    return 'Размер выбранного файла ' + (file.size/(1024*1024)).toFixed(1) + 'Мб больше допустимого размера ' + (maxSize/(1024*1024)).toFixed(1) + 'Мб';
+                    return localized.strings.ImageBox.imageSizeTooBig
+                        .replace(/\{chosen-size\}/g, (file.size/(1024*1024)).toFixed(1))
+                        .replace(/\{permitted-size\}/g, (maxSize/(1024*1024)).toFixed(1));
                 }
             }
 
             if (acceptTypes.length && !acceptTypes.contains(file.type)) {
-                return 'Загрузка данного типа файла не разрешена';
+                return localized.strings.ImageBox.incorrectFormat;
             }
         }
     },
@@ -17227,6 +17427,71 @@ var ToolBarView = ContainerView.extend({
     updateGrouping: function(){}
 });
 
+//####app/controls/tooltip/tooltipControl.js
+var TooltipControl = function () {
+    _.superClass(TooltipControl, this);
+};
+
+_.inherit(TooltipControl, Control);
+
+_.extend(TooltipControl.prototype, {
+
+    createControlModel: function(  ) {
+        return new InfinniUI.TooltipModel();
+    },
+
+    createControlView: function( model ) {
+        return new InfinniUI.TooltipView({model: model});
+    }
+
+});
+
+InfinniUI.TooltipControl = TooltipControl;
+//####app/controls/tooltip/tooltipModel.js
+/**
+ * @class
+ * @augments ControlModel
+ */
+InfinniUI.TooltipModel = ControlModel.extend( {
+
+
+} );
+
+//####app/controls/tooltip/tooltipView.js
+InfinniUI.TooltipView = ControlView.extend({
+
+    render: function(){
+        this.prerenderingActions();
+        this.renderContent();
+        this.trigger('render');
+        this.postrenderingActions();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
+        return this;
+    },
+
+    initHandlersForProperties: function(  ) {
+        ControlView.prototype.initHandlersForProperties.apply(this, Array.prototype.slice.call(arguments));
+
+        this.listenTo(this.model, 'change:content', this.updateContent);
+    },
+
+    updateContent: function(  ) {
+        this.renderContent();
+    },
+
+    /**
+     * @protected
+     */
+    renderContent: function() {
+        var model = this.model;
+        var content = model.get('content');
+        this.$el.html(content.render());
+    }
+
+});
+
 //####app/controls/view/viewControl.js
 /**
  *
@@ -17916,8 +18181,9 @@ var BaseDataSource = Backbone.Model.extend({
             return;
         }
 
-        validateResult = this.validateOnErrors(item);
+        validateResult = this.getValidationResult(item);
         if (!validateResult.IsValid) {
+            this._notifyAboutValidation(validateResult, 'error');
             this._executeCallback(error, {item: item, result: validateResult});
             return;
         }
@@ -17926,16 +18192,16 @@ var BaseDataSource = Backbone.Model.extend({
             if( !('IsValid' in data) || data.IsValid === true ){
                 that._excludeItemFromModifiedSet(item);
                 that._notifyAboutItemSaved({item: item, result: data.data}, 'modified');
-                that._executeCallback(success, {item: item, result: that._getValidationResult(data)});
+                that._executeCallback(success, {item: item, result: that._getValidationResult(data), originalResponse: data});
             }else{
                 var result = that._getValidationResult(data);
                 that._notifyAboutValidation(result, 'error');
-                that._executeCallback(error, {item: item, result: result});
+                that._executeCallback(error, {item: item, result: result, originalResponse: data});
             }
         }, function(data) {
             var result = that._getValidationResult(data);
             that._notifyAboutValidation(result, 'error');
-            that._executeCallback(errorInProvider, {item: item, result: result});
+            that._executeCallback(errorInProvider, {item: item, result: result, originalResponse: data});
         });
     },
 
@@ -18119,7 +18385,7 @@ var BaseDataSource = Backbone.Model.extend({
             itemsData = this.get('newItemsHandler')(itemsData);
         }
 
-        this.setProperty('', itemsData);
+        this._setItems(itemsData);
         this._notifyAboutItemsUpdated(itemsData, successHandler, errorHandler);
     },
 
@@ -18188,7 +18454,7 @@ var BaseDataSource = Backbone.Model.extend({
             items = [itemData];
         }
 
-        this.setProperty('', items);
+        this._setItems(items);
         this._includeItemToModifiedSet(itemData);
         this.setSelectedItem(itemData);
         this._notifyAboutItemCreated(itemData, successHandler);
@@ -18236,7 +18502,7 @@ var BaseDataSource = Backbone.Model.extend({
         this.set('errorValidator', validatingFunction);
     },
 
-    validateOnErrors: function (item, callback) {
+    getValidationResult: function (item) {
         var validatingFunction = this.get('errorValidator'),
             result = {
                 IsValid: true,
@@ -18244,7 +18510,7 @@ var BaseDataSource = Backbone.Model.extend({
             },
             isCheckingOneItem = !!item,
             context = this.getContext(),
-            items, subResult, itemIndex;
+            items, subResult;
 
         if (validatingFunction) {
             if (isCheckingOneItem) {
@@ -18267,9 +18533,6 @@ var BaseDataSource = Backbone.Model.extend({
 
             }
         }
-
-        this._notifyAboutValidation(result, 'error');
-        this._executeCallback(callback, {item: item, result: result});
 
         return result;
     },
@@ -18651,7 +18914,7 @@ var RestDataSource = BaseDataSource.extend({
             dataProvider.setPath('get', templated);
             templated = that._templateParamsInObject(urlParams.data, urlParams.params);
             dataProvider.setData('get', templated);
-
+            dataProvider.setMethod('get', urlParams.method);
 
             if( that.get('isDataReady') || that.get('isRequestInProcess') || that.get('waitingOnUpdateItemsHandlers').length > 0 ){ // ds was resolved or waiting resolving
                 that.updateItems();
@@ -18668,6 +18931,7 @@ var RestDataSource = BaseDataSource.extend({
             dataProvider.setPath('set', templated);
             templated = that._templateParamsInObject(urlParams.data, urlParams.params);
             dataProvider.setData('set', templated);
+            dataProvider.setMethod('set', urlParams.method);
         });
 
         this.get('model').onPropertyChanged('urlParams.delete.*', function(context, args){
@@ -18680,6 +18944,7 @@ var RestDataSource = BaseDataSource.extend({
             dataProvider.setPath('delete', templated);
             templated = that._templateParamsInObject(urlParams.data, urlParams.params);
             dataProvider.setData('delete', templated);
+            dataProvider.setMethod('delete', urlParams.method);
         });
     },
 
@@ -18900,6 +19165,7 @@ var DocumentDataSource = RestDataSource.extend({
         model.setProperty('filterParams', {});
         this.setUpdatingItemsConverter(function(data){
             model.setProperty('totalCount', data['Result']['Count']);
+            model.setProperty('additionalResult', data['Result']['AdditionalResult']);
             return data['Result']['Items'];
         });
 
@@ -18933,7 +19199,7 @@ var DocumentDataSource = RestDataSource.extend({
     updateGettingUrlParams: function(){
         var model = this.get('model'),
             params = {
-                type: 'get',
+                method: 'get',
                 origin: InfinniUI.config.serverUrl,
                 path: '/documents/' + this.get('model').getProperty('documentId'),
                 data: {},
@@ -18983,7 +19249,7 @@ var DocumentDataSource = RestDataSource.extend({
     updateSettingUrlParams: function(){
         var model = this.get('model'),
             params = {
-                type: 'post',
+                method: 'post',
                 origin: InfinniUI.config.serverUrl,
                 path: '/documents/' + this.get('model').getProperty('documentId'),
                 data: {},
@@ -18996,7 +19262,7 @@ var DocumentDataSource = RestDataSource.extend({
     updateDeletingUrlParams: function(){
         var model = this.get('model'),
             params = {
-                type: 'delete',
+                method: 'delete',
                 origin: InfinniUI.config.serverUrl,
                 path: '/documents/' + this.get('model').getProperty('documentId') + '/<%id%>',
                 data: {},
@@ -19142,7 +19408,7 @@ window.InfinniUI.DocumentDataSource = DocumentDataSource;
  * @mixes DataSourceValidationNotifierMixin
  */
 var BaseDataSourceBuilder = function() {
-}
+};
 
 _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.prototype */ {
     build: function (context, args) {
@@ -19179,19 +19445,12 @@ _.extend(BaseDataSourceBuilder.prototype, /** @lends BaseDataSourceBuilder.proto
             dataSource.setIdProperty(idProperty);
         }
 
+        if( 'SuspendUpdate' in metadata ) {
+            dataSource.suspendUpdate( metadata['SuspendUpdate'] );
+        }
+
         dataSource.setName(metadata.Name);
         dataSource.setFillCreatedItem(metadata.FillCreatedItem);
-        //dataSource.setPageSize(metadata.PageSize || 15);
-        //dataSource.setPageNumber(metadata.PageNumber || 0);
-        //
-        //if('Sorting' in metadata){
-        //    dataSource.setSorting(metadata['Sorting']);
-        //}
-        //
-        //var queryMetadata;
-        //if('Query' in metadata){
-        //    dataSource.setFilter(metadata['Query']);
-        //}
 
         if('IsLazy' in metadata){
             dataSource.setIsLazy(metadata['IsLazy']);
@@ -19420,7 +19679,7 @@ window.InfinniUI.RestDataSourceBuilder = RestDataSourceBuilder;
 //####app/data/dataSource/documentDataSourceBuilder.js
 var DocumentDataSourceBuilder = function() {
     _.superClass(DocumentDataSourceBuilder, this);
-}
+};
 
 _.inherit(DocumentDataSourceBuilder, BaseDataSourceBuilder);
 
@@ -19445,10 +19704,6 @@ _.extend(DocumentDataSourceBuilder.prototype, {
         if('Select' in metadata){ dataSource.setSelect(metadata['Select']); }
         if('Order' in metadata){ dataSource.setOrder(metadata['Order']); }
         if('NeedTotalCount' in metadata){ dataSource.setNeedTotalCount(metadata['NeedTotalCount']); }
-
-        if (Array.isArray(metadata.DefaultItems)) {
-            dataSource.setProperty('', metadata.DefaultItems);
-        }
     },
 
     createDataSource: function(parent){
@@ -19784,7 +20039,8 @@ _.extend(Element.prototype, {
     },
 
     setFocused: function (value) {
-        return this.control.set('focused', !!value);
+        //Установка фокуса вручную
+        return this.control.setFocus();
     },
     onLostFocus: function (handler) {
         this.control.on('OnLostFocus', handler);
@@ -19960,7 +20216,12 @@ _.extend(Element.prototype, {
         return this.control.onMouseWheel(callback);
     },
 
-    remove: function (isInitiatedByParent) {
+    onRemove: function( handler ) {
+        return this.control.onRemove(this.createControlEventHandler(this, handler));
+    },
+
+    remove: function (isInitiatedByParent, parent) {
+
         var logger = window.InfinniUI.global.logger;
         if(this.isRemoved){
             logger.warn('Element.remove: Попытка удалить элемент, который уже был удален');
@@ -19970,18 +20231,22 @@ _.extend(Element.prototype, {
         var children = this.childElements;
 
         for (var i = 0, ii = children.length; i < ii; i++) {
-            children[i].remove(true);
+            children[i].remove(true, this);
         }
 
         this.control.remove();
 
         if (this.parent && this.parent.removeChild && !isInitiatedByParent) {
             if(this.parent.isRemoved){
-                logger.warn('Element.remove: Попытка удалить элемент из родителя, который помечан как удаленный');
+                logger.warn('Element.remove: Попытка удалить элемент из родителя, который помечен как удаленный');
             }else{
                 this.parent.removeChild(this);
             }
 
+        }
+
+        if( parent && this.parent && this.parent.removeChild && isInitiatedByParent && parent !== this.parent ) {
+          this.parent.removeChild(this);
         }
 
         this.isRemoved = true;
@@ -20017,6 +20282,7 @@ _.extend(Element.prototype, {
         }
 
         return function (message) {
+            message = message || {};
             _.extend(
                 message,
                 additionParams
@@ -20113,16 +20379,6 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 		if (args.parent && args.parent.addChild) {
 			args.parent.addChild(element);
 		}
-
-//devblockstart
-		element.onMouseDown( function(eventData) {
-			if( eventData.ctrlKey ){
-				args.metadata.isSelectedElement = true;
-				args.parentView.showSelectedElementMetadata();
-				eventData.nativeEventData.stopPropagation();
-			}
-		});
-//devblockstop
 
 		return element;
 	},
@@ -20311,28 +20567,17 @@ _.extend(ElementBuilder.prototype, /** @lends ElementBuilder.prototype */ {
 	},
 
 	initToolTip: function (params) {
-		var exchange = window.InfinniUI.global.messageBus,
-				builder = params.builder,
-				element = params.element,
-				metadata = params.metadata,
-				tooltip;
+		var builder = params.builder,
+			element = params.element,
+			metadata = params.metadata;
 
-		var argumentForBuilder = {
+		var tooltipBuilderParams = {
+            basePathOfProperty: params.basePathOfProperty,
 			parent: element,
-			parentView: params.parentView,
-			basePathOfProperty: params.basePathOfProperty
+			parentView: params.parentView
 		};
 
-		if (typeof metadata.ToolTip === 'string') {
-			tooltip = builder.buildType("Label", {
-				"Text": metadata.ToolTip
-			}, argumentForBuilder);
-		} else {
-			tooltip = builder.build(metadata.ToolTip, argumentForBuilder);
-		}
-
-		element.setToolTip(tooltip);
-		exchange.send(messageTypes.onToolTip.name, { source: element, content: tooltip.render() });
+		element.setToolTip(builder.buildType('ToolTip', metadata['ToolTip'], tooltipBuilderParams));
 	},
 
 	initContextMenu: function(params) {
@@ -21144,25 +21389,27 @@ _.extend(ContainerBuilder.prototype, {
                 var items = element.getItems(),
                     isCollectionChanged;
 
-                if(itemComparator){
+                if(!element.isRemoved) {
+                    if (itemComparator) {
 
-                    isCollectionChanged = items.set(value, true);
+                        isCollectionChanged = items.set(value, true);
 
-                    items.forEach(function (item, index, collection) {
-                        collection.setProperty(index, 'bindingIndex', index);
-                    });
+                        items.forEach(function (item, index, collection) {
+                            collection.setProperty(index, 'bindingIndex', index);
+                        });
 
-                    if (isCollectionChanged) {
-                        items.sort(itemComparator);
+                        if (isCollectionChanged) {
+                            items.sort(itemComparator);
+                        }
+
+                    } else {
+
+                        isCollectionChanged = items.set(value);
+
+                        items.forEach(function (item, index, collection) {
+                            collection.setProperty(index, 'bindingIndex', index);
+                        });
                     }
-
-                }else{
-
-                    isCollectionChanged = items.set(value);
-
-                    items.forEach(function (item, index, collection) {
-                        collection.setProperty(index, 'bindingIndex', index);
-                    });
                 }
 
             },
@@ -21259,6 +21506,10 @@ var editorBaseBuilderMixin = {
                 topPriority.toSource = nonPriority.toSource;
             }
 
+            if( !topPriority._element && nonPriority._element ) {
+                topPriority._element = nonPriority._element;
+            }
+
             return !_.isEmpty(topPriority) ? topPriority : null;
         }
 
@@ -21280,22 +21531,10 @@ var editorBaseBuilderMixin = {
                 var result = args.value,
                     text = '';
 
-                if (!result.isValid && Array.isArray(result.items)) {
-                    text = getTextForItems(result.items);
+                if (!result.IsValid && Array.isArray(result.Items)) {
+                    text = getTextForItems(result.Items);
                 }
                 element.setErrorText(text);
-            });
-        }
-
-        if (typeof source.onWarningValidator == 'function') {
-            source.onWarningValidator(function (context, args) {
-                var result = args.value,
-                    text = '';
-
-                if (!result.isValid && Array.isArray(result.items)) {
-                    text = getTextForItems(result.items);
-                }
-                element.setWarningText(text);
             });
         }
 
@@ -21303,10 +21542,10 @@ var editorBaseBuilderMixin = {
         function getTextForItems(items, callback) {
             return items
                 .filter(function (item) {
-                    return property === item.property;
+                    return property === item.Property;
                 })
                 .map(function (item) {
-                    return item.message;
+                    return item.Message;
                 })
                 .join(' ');
         }
@@ -21496,14 +21735,15 @@ _.extend(ListEditorBaseBuilder.prototype, {
     initSelecting: function(params, itemsBinding){
         var metadata = params.metadata;
         var element = params.element;
-        var dataSource = itemsBinding.getSource();
+        var source = itemsBinding.getSource();
         var sourceProperty = itemsBinding.getSourceProperty();
-        var isBindingOnWholeDS = sourceProperty == '';
+        var isBindingOnWholeDS = sourceProperty == '',
+            sourceIsDataSource = source instanceof InfinniUI.BaseDataSource;
 
-        if(isBindingOnWholeDS){
-            dataSource.setSelectedItem(null);
+        if(sourceIsDataSource && isBindingOnWholeDS){
+            source.setSelectedItem(null);
 
-            dataSource.onSelectedItemChanged(function(context, args){
+            source.onSelectedItemChanged(function(context, args){
                 var currentSelectedItem = element.getSelectedItem(),
                     newSelectedItem = args.value;
 
@@ -21514,11 +21754,14 @@ _.extend(ListEditorBaseBuilder.prototype, {
         }
 
         element.onSelectedItemChanged(function(context, args){
-            var currentSelectedItem = dataSource.getSelectedItem(),
-                newSelectedItem = args.value;
 
-            if(isBindingOnWholeDS && newSelectedItem != currentSelectedItem){
-                dataSource.setSelectedItem(newSelectedItem);
+            if(sourceIsDataSource && isBindingOnWholeDS) {
+                var currentSelectedItem = source.getSelectedItem(),
+                    newSelectedItem = args.value;
+
+                if (newSelectedItem != currentSelectedItem) {
+                    source.setSelectedItem(newSelectedItem);
+                }
             }
 
             if (metadata.OnSelectedItemChanged) {
@@ -23016,7 +23259,13 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
         var builder = this;
 
         return function (context, args) {
-            var row = dataGrid.createRow();
+
+            var row = params.builder.buildType('DataGridRow', {}, {
+                parent: dataGrid,
+                parentView: params.parentView,
+                basePathOfProperty: params.basePathOfProperty
+            });
+
             row.setGrid(dataGrid);
 
             ['RowStyle', 'RowBackground', 'RowForeground', 'RowTextStyle']
@@ -23024,12 +23273,14 @@ _.extend(DataGridBuilder.prototype, /** @lends DataGridBuilder.prototype */{
 
             var columns = dataGrid.getColumns();
 
-            var cellItemTemplates = columns.toArray().map(function (column, index) {
+            var cellElements = columns.toArray().map(function (column, index) {
                 var cellTemplate = column.getCellTemplate();
-                var template = cellTemplate(itemsBinding);
-                return template.bind(column, context, args);
+                var template = cellTemplate(itemsBinding, row);
+                var cellEl = template(context, args);
+
+                return cellEl;
             });
-            row.setCellTemplates(cellItemTemplates);
+            row.setCellElements(cellElements);
             row.setMultiSelect(dataGrid.getMultiSelect());
             row.setShowSelectors(dataGrid.getShowSelectors());
             return row;
@@ -23286,11 +23537,11 @@ DataGridColumnBuilder.prototype.buildCellTemplateByTemplate = function (params, 
     var builder = params.builder;
     var basePathOfProperty = params.basePathOfProperty || new BasePathOfProperty('');
 
-    return function (itemsBinding) {
+    return function (itemsBinding, row) {
         return function  (context, args) {
             var index = args.index;
             var argumentForBuilder = {
-                parent: dataGrid,
+                parent: row,
                 parentView: params.parentView
             };
             argumentForBuilder.basePathOfProperty = basePathOfProperty.buildChild('', index);
@@ -23306,10 +23557,10 @@ DataGridColumnBuilder.prototype.buildCellTemplateByFormat = function (params, ce
         grid = column.parent,
         format = this.buildDisplayFormat(cellFormatMetadata, params);
 
-    return function  (itemsBinding) {
+    return function  (itemsBinding, row) {
         return function (context, args) {
             var index = args.index;
-            var label = new Label(this);
+            var builder = params.builder;
 
             var sourceProperty = itemsBinding.getSourceProperty();
             var source = itemsBinding.getSource();
@@ -23319,6 +23570,12 @@ DataGridColumnBuilder.prototype.buildCellTemplateByFormat = function (params, ce
             if (itemsBinding.getSourceProperty() != '') {
                 sourceProperty = itemsBinding.getSourceProperty() + '.' + sourceProperty;
             }
+
+            var label = builder.buildType('Label', {}, {
+                parent: row,
+                parentView: params.parentView,
+                basePathOfProperty: params.basePathOfProperty
+            });
 
             label.setDisplayFormat(format);
 
@@ -23335,9 +23592,15 @@ DataGridColumnBuilder.prototype.buildCellTemplateBySelector = function (params, 
     var column = params.element,
         grid = column.parent;
 
-    return function  () {
+    return function  (itemsBinding, row) {
         return function (context, args) {
-            var label = new Label(this);
+
+            var label = params.builder.buildType('Label', {}, {
+                parent: row,
+                parentView: params.parentView,
+                basePathOfProperty: params.basePathOfProperty
+            });
+
             var scriptExecutor = new ScriptExecutor(grid.getScriptsStorage());
             var value = scriptExecutor.executeScript(cellSelectorMetadata.Name || cellSelectorMetadata, {
                 value: args.item
@@ -23350,15 +23613,13 @@ DataGridColumnBuilder.prototype.buildCellTemplateBySelector = function (params, 
 };
 
 DataGridColumnBuilder.prototype.buildCellTemplateByDefault = function (params, cellProperty) {
-    var column = params.element,
-        grid = column.parent;
+    var grid = params.element;
 
-    return function  (itemsBinding) {
+    return function  (itemsBinding, row) {
 
         return function (context, args) {
             var index = args.index;
-            var label = new Label(grid);
-
+            var builder = params.builder;
 
             var sourceProperty;
             var source = itemsBinding.getSource();
@@ -23372,6 +23633,13 @@ DataGridColumnBuilder.prototype.buildCellTemplateByDefault = function (params, c
             if (cellProperty != '') {
                 sourceProperty = sourceProperty + '.' + cellProperty;
             }
+
+
+            var label = builder.buildType('Label', {}, {
+                parent: row,
+                parentView: params.parentView,
+                basePathOfProperty: params.basePathOfProperty
+            });
 
             binding.bindSource(source, sourceProperty);
             binding.bindElement(label, 'value');
@@ -23461,17 +23729,48 @@ DataGridColumnBuilder.prototype.buildHeaderTemplateByMetadata = function (header
 /**
  * @protected
  * @param {Object} params
+ * @param {DataGrid} params.element
  * @returns {Function}
  */
 DataGridColumnBuilder.prototype.buildHeaderTemplateByDefault = function (params) {
 
+    var builder = params.builder;
+
+
     return function (context, args) {
-        var label = new Label(this);
+
+        var label = builder.buildType('Label', {}, {
+            parent: params.element,
+            parentView: params.parentView,
+            basePathOfProperty: params.basePathOfProperty
+        });
+
         label.setText(args.value);
         return label;
     };
 
 };
+
+//####app/elements/dataGrid/dataGridRowBuilder.js
+function DataGridRowBuilder() {
+    _.superClass(DataGridRowBuilder, this);
+}
+
+window.InfinniUI.DataGridRowBuilder = DataGridRowBuilder;
+
+_.inherit(DataGridRowBuilder, ElementBuilder);
+
+_.extend(DataGridRowBuilder.prototype, /** @lends DataGridBuilder.prototype */{
+    
+    createElement: function( params ) {
+        return new DataGridRow(params.parent);
+    },
+    
+    applyMetadata: function( params ) {
+        ElementBuilder.prototype.applyMetadata.call(this, params);
+        
+    }
+});
 
 //####app/elements/dataNavigation/dataNavigation.js
 function DataNavigation (parent) {
@@ -23728,7 +24027,7 @@ _.extend(ExtensionPanelBuilder.prototype, {
 
         var parameters = {};
         _.each(metadata.Parameters, function (parameterMetadata) {
-            var param = builder.buildType('Parameter', parameterMetadata, {parentView: parentView});
+            var param = builder.buildType('Parameter', parameterMetadata, {parentView: parentView, basePathOfProperty: params.basePathOfProperty});
             parameters[param.getName()] = param;
         });
 
@@ -23926,6 +24225,8 @@ function FileBoxValueConverter (element) {
     this._element = element;
 }
 
+window.InfinniUI.FileBoxValueConverter = FileBoxValueConverter;
+
 FileBoxValueConverter.prototype.toElement = function (context, args) {
     var value = args.value;
     var binding = args.binding;
@@ -23955,6 +24256,7 @@ FileBoxValueConverter.prototype.toElement = function (context, args) {
 
     return url;
 };
+
 //####app/elements/form/form.js
 /**
  *
@@ -25780,6 +26082,114 @@ _.extend(ToolBarBuilder.prototype, /** @lends ToolBarBuilder.prototype */{
 
 });
 
+//####app/elements/tooltip/tooltip.js
+var Tooltip = function (parent) {
+    _.superClass( Icon, this, parent );
+};
+
+_.inherit(Tooltip, Element);
+
+
+_.extend(Tooltip.prototype, {
+
+    createControl: function () {
+        return new InfinniUI.TooltipControl();
+    },
+
+    setContent: function (content) {
+        this.control.set('content', content);
+    }
+
+
+});
+
+
+InfinniUI.Tooltip = Tooltip;
+
+//####app/elements/tooltip/tooltipBuilder.js
+function TooltipBuilder() {
+    _.superClass( TooltipBuilder, this );
+}
+
+InfinniUI.TooltipBuilder = TooltipBuilder;
+
+_.inherit( TooltipBuilder, ElementBuilder );
+
+_.extend( TooltipBuilder.prototype, {
+
+    createElement: function( params ) {
+        return new InfinniUI.Tooltip();
+    },
+
+    normalizeMetadata: function( metadata ) {
+        if( typeof metadata === 'string' ) {
+            metadata = {
+                Text: metadata
+            }
+        }
+
+        return metadata;
+    },
+
+    applyMetadata: function( params ) {
+        var tooltip = params.element;
+
+        params.metadata = this.normalizeMetadata( params.metadata );
+
+        ElementBuilder.prototype.applyMetadata.call( this, params );
+        tooltip.setContent( this.buildContent( params.metadata, params ) );
+
+        var exchange = InfinniUI.global.messageBus;
+
+        exchange.send(messageTypes.onToolTipInit, {element: params.parent, content: tooltip});
+        params.parent.onRemove(function () {
+            exchange.send(messageTypes.onToolTipDestroy, {element: params.parent});
+        });
+
+    },
+
+    buildContent: function( metadata, params ) {
+        var builder = params.builder;
+        var builderParams = {
+            parent: params.element,
+            parentView: params.parentView,
+            basePathOfProperty: params.basePathOfProperty
+        };
+        var content;
+
+        if( 'Text' in metadata ) {
+            content = this.buildTextContent( metadata[ 'Text' ], builder, builderParams );
+        } else {
+            content = this.buildElementContent( metadata, builder, builderParams );
+        }
+
+        return content;
+    },
+
+    /**
+     * @protected
+     * @param text
+     * @param builder
+     * @param builderParams
+     * @return {*}
+     */
+    buildTextContent: function( text, builder, builderParams ) {
+        return builder.buildType( "Label", {
+            "Text": text
+        }, builderParams )
+    },
+
+    /**
+     * @protected
+     * @param metadata
+     * @param builder
+     * @param builderParams
+     */
+    buildElementContent: function( metadata, builder, builderParams ) {
+        return builder.build( metadata, builderParams );
+    }
+
+} );
 //####app/elements/treeView/treeView.js
 /**
  * @param parent
@@ -26240,18 +26650,6 @@ _.extend(View.prototype,
         getFocusOnControl: function () {
             return this.control.get('focusOnControl');
         }
-
-//devblockstart
-        ,showSelectedElementMetadata: function(){
-            if(this.handlers.onSelectedElementChange){
-                this.handlers.onSelectedElementChange();
-            }
-        }
-
-        ,onSelectedElementChange: function(handler) {
-            this.handlers.onSelectedElementChange = handler;
-        }
-//devblockstop
     }
 );
 
@@ -26273,35 +26671,6 @@ _.extend(ViewBuilder.prototype, {
         return new View(params.parent);
     },
 
-//devblockstart
-    _getSelectedElementPath: function(metadata) {
-        var result;
-
-        if( _.isArray(metadata) ){
-            for (var i = 0, ii =  metadata.length; i<ii; i++){
-                result = this._getSelectedElementPath(metadata[i]);
-                if(result !== false){
-                    return '['+ i + ']' + result;
-                }
-            }
-        } else if( _.isObject(metadata) ){
-            if('isSelectedElement' in metadata) {
-                delete metadata.isSelectedElement;
-                return '';
-            } else {
-                for (var key in metadata){
-                    result = this._getSelectedElementPath(metadata[key]);
-                    if(result !== false){
-                        return '.' + key + result;
-                    }
-                }
-            }
-        }
-
-        return false;
-    },
-//devblockstop
-
     applyMetadata: function (params) {
 
         var parentView = params.parentView;
@@ -26314,16 +26683,6 @@ _.extend(ViewBuilder.prototype, {
             metadata = params.metadata,
             element = params.element,
             builder = params.builder;
-
-//devblockstart
-        element.onSelectedElementChange(function() {
-            var path = that._getSelectedElementPath(params.metadata);
-
-            InfinniUI.JsonEditor.setMetadata(params.metadata).always(function () {
-                InfinniUI.JsonEditor.setPath(path);
-            });
-        });
-//devblockstop
 
         var scripts = element.getScripts();
         var parameters = element.getParameters();
@@ -26390,11 +26749,11 @@ _.extend(ViewBuilder.prototype, {
             element.noDataSourceOnView();
         }
 
-        if( metadata.NotificationSubsriptions ) {
-            var subscriptor = InfinniUI.global.notificationSubsription;
-            for( var key in metadata.NotificationSubsriptions ) {
+        if( metadata.NotificationSubscriptions ) {
+            var subscriptor = InfinniUI.global.notificationSubscription;
+            for( var key in metadata.NotificationSubscriptions ) {
                 (function() {
-                    var script = metadata.NotificationSubsriptions[key];
+                    var script = metadata.NotificationSubscriptions[key];
                     subscriptor.subscribe(key, function(context, args) {
                         new ScriptExecutor(element).executeScript(script, {context: context, message: args.message});
                     }, this);
@@ -26402,7 +26761,7 @@ _.extend(ViewBuilder.prototype, {
             }
 
             element.onClosing(function() {
-                for( var key2 in metadata.NotificationSubsriptions ) {
+                for( var key2 in metadata.NotificationSubscriptions ) {
                     subscriptor.unsubscribe(key2, this);
                 }
             });
@@ -26590,8 +26949,8 @@ _.extend(DataGridRow.prototype, {
         return new DataGridRowControl()
     },
 
-    setCellTemplates: function (cellTemplates) {
-        this.control.set('cellTemplates', cellTemplates);
+    setCellElements: function (cellElements) {
+        this.control.set('cellElements', cellElements);
     },
 
     toggle: function (toggle) {
@@ -28046,26 +28405,60 @@ _.extend(ServerAction.prototype,
             return result;
         },
 
-        _replaceParamsInStr: function(str){
-            if(!str){
+        _replaceParamsInStr: function(str, escape){
+
+            if(!str || !_.isString(str)){
                 return str;
             }
 
             var that = this;
 
+
+            var matched = str.match(/^<%([\s\S]+?)%>$/);
+
+            if (matched) {
+                return this.getParam(matched[1]);
+            }
+
             return str.replace(/<%([\s\S]+?)%>/g, function(p1, p2){
-                return that.getParam(p2);
+                var val = that.getParam(p2);
+
+                if (escape && _.isString(val)) {
+                    val = val.replace(/"/g,'\\"');
+                }
+                return val;
             });
         },
 
+        _compileData: function (data) {
+            var res;
+
+            if (Array.isArray(data)) {
+                res = Array.map(function (item) {
+                    if (_.isObject(item) || Array.isArray(item)) {
+                        this._compileData(item);
+                    }
+                }, this);
+            } else if (_.isObject(data)) {
+                res = {};
+                Object.keys(data).forEach(function (name) {
+                    var parsedName = this._replaceParamsInStr(name);
+
+                    res[parsedName] = this._compileData(data[name]);
+                }, this);
+            } else {
+                res = this._replaceParamsInStr(data, true);
+            }
+
+            return res;
+        },
         _replaceParamsInObject: function(obj){
             if(_.isEmpty(obj) ){
                 return obj;
             }
 
-            var str = JSON.stringify(obj);
-            var replacedStr = this._replaceParamsInStr(str);
-            return JSON.parse(replacedStr);
+
+            return this._compileData(obj);
         }
     }
 );
@@ -28089,7 +28482,7 @@ _.extend(ServerActionBuilder.prototype,
             this.applyBaseActionMetadata(action, args);
             this.applyBaseFallibleActionMetadata(action, args);
 
-            action.setProperty('origin', metadata.Origin);
+            action.setProperty('origin', metadata.Origin || InfinniUI.config.serverUrl.replace(/\/$/, ''));
             action.setProperty('path', metadata.Path);
 
             if (metadata.Data) {
@@ -28109,7 +28502,7 @@ _.extend(ServerActionBuilder.prototype,
 
                     var value = metadata.Params[name];
 
-                    if (typeof value != 'object') {
+                    if (Array.isArray(value) || value === null || typeof value != 'object') {
                         if (value !== undefined) {
                             action.setParam(name, value);
                         }
@@ -28260,6 +28653,8 @@ _.extend(ApplicationBuilder.prototype, {
         builder.register('MenuBar', new MenuBarBuilder());
 
         builder.register('DataGrid', new DataGridBuilder());
+        builder.register('DataGridRow', new DataGridRowBuilder());
+
         builder.register('DataGridColumn', new DataGridColumnBuilder());
         builder.register('ListBox', new ListBoxBuilder());
 
@@ -28326,6 +28721,8 @@ _.extend(ApplicationBuilder.prototype, {
 
         builder.register('Divider', new DividerBuilder());
         builder.register('ContextMenu', new ContextMenuBuilder());
+
+        builder.register('ToolTip', new InfinniUI.TooltipBuilder());
 
 
         var registerQueue = ApplicationBuilder.registerQueue;
@@ -28967,12 +29364,9 @@ _.extend(ObjectDataProvider.prototype, {
         resultCallback(item);
     },
 
-    saveItem: function (item, resultCallback) {
+    saveItem: function (item, successCallback) {
         var items = this.items,
-            itemIndex = this._getIndexOfItem(item),
-            result = {
-                isValid: true
-            };
+            itemIndex = this._getIndexOfItem(item);
 
         if (itemIndex == -1) {
             items.push(item);
@@ -28980,24 +29374,31 @@ _.extend(ObjectDataProvider.prototype, {
             items[itemIndex] = item;
         }
 
-        resultCallback(result);
+        successCallback( {} );
     },
 
-    deleteItem: function (item, resultCallback) {
+    deleteItem: function (item, successCallback, errorCallback) {
         var items = this.items,
-            itemIndex = this._getIndexOfItem(item),
-            result = {
-                isValid: true
-            };
+            itemIndex = this._getIndexOfItem(item);
 
-        if (itemIndex == -1) {
-            result.isValid = false;
-            result.message = 'Удаляемый элемент не найден';
-        } else {
+        if (itemIndex != -1) {
             items.splice(itemIndex, 1);
+            successCallback( {} );
+        } else {
+            errorCallback({
+                data: {
+                    Result: {
+                        ValidationResult: {
+                            IsValid: false,
+                            Items: [{
+                                Property: '',
+                                Message: 'Удаляемый элемент не найден'
+                            }]
+                        }
+                    }
+                }
+            });
         }
-
-        resultCallback(result);
     },
 
     createIdFilter: function (id) {
@@ -29398,6 +29799,11 @@ var ObjectDataSource = BaseDataSource.extend({
     setItems: function(items){
         this.get('dataProvider').setItems(items);
         this.updateItems();
+    },
+
+    _setItems: function(items){
+        this.get('dataProvider').setItems(items);
+        BaseDataSource.prototype._setItems.apply(this, [items]);
     }
 
 });
@@ -30050,17 +30456,12 @@ _.extend(DateTimeFormat.prototype, {
                 return hoursIndex.toString();
             }
         },
-        '%h': function(date){
-            var hoursIndex = date.getHours();
-            if(hoursIndex > 12){
-                hoursIndex -= 12;
-            }
-            return hoursIndex.toString();
-        },
         'h': function(date){
             var hoursIndex = date.getHours();
             if(hoursIndex > 12){
                 hoursIndex -= 12;
+            } else if (hoursIndex === 0) {
+                hoursIndex = 12;
             }
             return hoursIndex.toString();
         },
@@ -30793,12 +31194,56 @@ var DateTimeMaskPartStrategy = (function () {
     var regExpFullYear = /^\d{1,4}$/;
     var regExpYear = /^\d{1,2}$/;
     var regExpHour24 = /^(?:[2][0-3]|[01]?[0-9]?)$/;
+    var regExpHour12 = /^(?:0?\d|1[0-2])$/;
     var regExp60 = /^[0-5]?[0-9]$/;
+
+    function filledDay(value) {
+        if (value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        var val = parseInt(value, 10);
+        return [4,5,6,7,8,9].indexOf(val) !== -1 || value.length === 2;
+    }
+
+    function filledMonth(value) {
+        if (value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        var val = parseInt(value, 10);
+        return [2,3,4,5,6,7,8,9].indexOf(val) !== -1 || value.length === 2;
+    }
+
+    function filledHours(value) {
+        if (value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        return parseInt(value, 10) > 2 || value.length === 2;
+    }
+
+    function filledMinutes(value) {
+        if (value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        return parseInt(value, 10) > 5 || value.length === 2;
+    }
+
+    function filledSeconds(value) {
+        if (value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        return parseInt(value, 10) > 5 || value.length === 2;
+    }
+
 
     return {
         'd': {
             init: function () {
-                this.width = 2;
+                this.width = 1;
                 this.min = 1;
                 this.max = 31;
             },
@@ -30808,6 +31253,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledDay,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -30834,6 +31280,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledDay,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -30850,7 +31297,7 @@ var DateTimeMaskPartStrategy = (function () {
         },
         'M': {
             init: function () {
-                this.width = 2;
+                this.width = 1;
                 this.min = 1;
                 this.max = 12;
             },
@@ -30860,6 +31307,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledMonth,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -30886,6 +31334,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledMonth,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -30990,7 +31439,7 @@ var DateTimeMaskPartStrategy = (function () {
         },
         'H': {
             init: function () {
-                this.width = 2;
+                this.width = 1;
                 this.min = 0;
                 this.max = 23;
             },
@@ -31000,6 +31449,34 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledHours,
+            prev: function (value) {
+                return this.getPrevIntValue(value);
+            },
+            next: function (value) {
+                return this.getNextIntValue(value);
+            },
+            format: function (value) {
+                return this.padNumber(value);
+            },
+            apply: function (value, part) {
+                value.setHours(part);
+                return value;
+            }
+        },
+        'h': {
+            init: function () {
+                this.width = 1;
+                this.min = 1;
+                this.max = 12;
+            },
+            match: function (value) {
+                return regExpHour12.test(value);
+            },
+            validator: function (value) {
+                return this.rangeValidator(value);
+            },
+            filled: filledHours,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -31026,6 +31503,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledHours,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -31042,7 +31520,7 @@ var DateTimeMaskPartStrategy = (function () {
         },
         'm': {
             init: function () {
-                this.width = 2;
+                this.width = 1;
                 this.min = 0;
                 this.max = 59;
             },
@@ -31052,6 +31530,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledMinutes,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -31078,6 +31557,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledMinutes,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -31094,7 +31574,7 @@ var DateTimeMaskPartStrategy = (function () {
         },
         's': {
             init: function () {
-                this.width = 2;
+                this.width = 1;
                 this.min = 0;
                 this.max = 59;
             },
@@ -31104,6 +31584,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledSeconds,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -31130,6 +31611,7 @@ var DateTimeMaskPartStrategy = (function () {
             validator: function (value) {
                 return this.rangeValidator(value);
             },
+            filled: filledSeconds,
             prev: function (value) {
                 return this.getPrevIntValue(value);
             },
@@ -31198,6 +31680,44 @@ var DateTimeMaskPartStrategy = (function () {
                 }
                 return value;
             }
+        },
+        'tt': {
+            init: function () {
+                // this.min = 0;
+                // this.max = 1;
+                this.width = 2;
+            },
+            match: function() {
+                return false;
+            },
+            prev: function (value) {
+                var newValue = this.getPrevMonthValue('tt', value);
+
+                return (newValue === value) ? this.getNextMonthValue('tt', value): newValue;
+            },
+            next: function (value) {
+                var newValue = this.getNextMonthValue('tt', value);
+                return (newValue === value) ? this.getPrevMonthValue('tt', value): newValue;
+            },
+            apply: function (value, part) {
+                if (value instanceof Date) {
+                    var hours = value.getHours();
+                    var culture = this.getCurrentCulture();
+                    var formatInfo = culture.dateTimeFormatInfo;
+
+                    if (hours >= 12) {
+                        hours = hours - 12;
+                    }
+
+                    if (part === formatInfo.pmDesignator) {
+                        hours += 12;
+                    }
+
+                    value.setHours(hours);
+                }
+
+                return value;
+            }
         }
 
     }
@@ -31213,6 +31733,14 @@ _.extend(DateTimeMaskPart.prototype, {
 
     init: function () {
 
+    },
+
+    filled: function (value) {
+        if (value === null || typeof value === 'undefined') {
+            return false;
+        }
+
+        return value.length === this.width;
     },
 
     match: function (value) {
@@ -31290,9 +31818,15 @@ _.extend(DateTimeMaskPart.prototype, {
         return value;
     },
 
+    getCurrentCulture: function () {
+        var culture = new Culture(InfinniUI.config.lang);
+
+        return culture;
+    },
+
     getListForMask: function (mask) {
         //@TODO Получать культуру из контекста!
-        var culture = new Culture(InfinniUI.config.lang);
+        var culture = this.getCurrentCulture();
         var formatInfo = culture.dateTimeFormatInfo;
 
         var list;
@@ -31309,6 +31843,9 @@ _.extend(DateTimeMaskPart.prototype, {
                 break;
             case 'ddd':
                 list = formatInfo.abbreviatedDayNames;
+                break;
+            case 'tt':
+                list = [formatInfo.amDesignator, formatInfo.pmDesignator];
                 break;
         }
 
@@ -31679,27 +32216,25 @@ _.extend(DateTimeEditMask.prototype, {
 
         if (data !== null) {
             item = data.item;
-            index = position - data.left;
+            index = position - data.left;   //Позиция внутри текущего шаблона ввода маски
 
-            if (index > item.text.length) {
+            if (index > item.text.length) { //Если превышение по правой границе - в конец
+                position = data.left + item.text.length;
+                index = item.text.length;
+            } else if (index < 0) { //Если превышение по левой границе - в начало шаблона
                 position = data.left;
+                index = 0;
             }
 
             mask = this.masks[item.mask];
 
-            newpos = position - item.position;
-            if(newpos < 0) newpos = 0;
+            text = item.text.slice(0, index) + char + item.text.slice(index);
 
-            if(item.text.slice(newpos, newpos+1)) {
-                text = [item.text.slice(0, newpos), char, item.text.slice(newpos+1)].join('');
-            }else{
-                text = [item.text.slice(0, data.index), char, item.text.slice(data.index)].join('');
-            }
 
             if(mask.match(text)) {
                 item.text = text;
                 position = this.moveToNextChar(position);
-                if (mask.width === newpos+1) {
+                if (mask.filled(text)) {
                     position = this.getNextItemMask(position);
                 }
             } else {    //Нажатая кнопка не подходит под маску
@@ -32016,7 +32551,9 @@ _.extend(DateTimeEditMask.prototype, {
         's': new DateTimeMaskPart('s'),
         'ss': new DateTimeMaskPart('ss'),
         'MMM': new DateTimeMaskPart('MMM'),
-        'MMMM': new DateTimeMaskPart('MMMM')
+        'MMMM': new DateTimeMaskPart('MMMM'),
+        'h': new DateTimeMaskPart('h'),
+        'tt': new DateTimeMaskPart('tt')
     }
 
 });
@@ -33127,7 +33664,7 @@ _.extend(NumberEditMask.prototype, {
         var itemTemplate = this.getItemTemplate();
         var item = itemTemplate.item;
         var text = item.text;
-        var val = item.value.toString();
+        var val = (item.value === null || typeof item.value === 'undefined') ? '' : item.value.toString();
         var endLength = len + position;
         if(!char)char = "";
 
@@ -33933,135 +34470,6 @@ _.extend(OpenModeDialogStrategy.prototype, {
     }
 });
 
-//####app/localizations/culture.js
-function Culture(name){
-    this.name = name;
-    this.caption = InfinniUI.localizations[name].caption;
-    this.dateTimeFormatInfo = InfinniUI.localizations[name].dateTimeFormatInfo;
-    this.numberFormatInfo = InfinniUI.localizations[name].numberFormatInfo;
-}
-
-window.InfinniUI.global.culture = new Culture(InfinniUI.config.lang);
-window.InfinniUI.Culture = Culture;
-
-//####app/localizations/dateTimeFormatInfo.js
-InfinniUI.localizations['ru-RU'].dateTimeFormatInfo = {
-    monthNames: [ "Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь" ],
-    abbreviatedMonthNames: ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"],
-    dayNames: [ "воскресенье","понедельник","вторник","среда","четверг","пятница","суббота" ],
-    abbreviatedDayNames: [ "Вс","Пн","Вт","Ср","Чт","Пт","Сб" ],
-    dateSeparator: '.',
-    timeSeparator: ':',
-    amDesignator: '',
-    pmDesignator: '',
-    firstDayOfWeek: 1
-};
-
-InfinniUI.localizations['en-US'].dateTimeFormatInfo = {
-    monthNames: [ "January","February","March","April","May","June","July","August","September","October","November","December" ],
-    abbreviatedMonthNames: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
-    dayNames: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
-    abbreviatedDayNames: ["Sun", "Mon","Tue","Wed","Thu","Fri","Sat"],
-    dateSeparator: '/',
-    timeSeparator: ':',
-    amDesignator: 'AM',
-    pmDesignator: 'PM',
-    firstDayOfWeek: 0
-};
-//####app/localizations/localized.js
-var localized = InfinniUI.localizations [InfinniUI.config.lang];
-//####app/localizations/numberFormatInfo.js
-InfinniUI.localizations['ru-RU'].numberFormatInfo = {
-    numberDecimalDigits: 2,
-    numberDecimalSeparator: ',',
-    numberGroupSeparator: ' ',
-    numberNegativePattern: '-n',
-    numberPositivePattern: 'n',
-
-    percentDecimalDigits: 2,
-    percentDecimalSeparator: ',',
-    percentGroupSeparator: ' ',
-    percentSymbol: '%',
-    percentNegativePattern: '-p%',
-    percentPositivePattern: 'p%',
-
-    currencyDecimalDigits: 2,
-    currencyDecimalSeparator: ',',
-    currencyGroupSeparator: ' ',
-    currencySymbol: 'р.',
-    currencyNegativePattern: '-c$',
-    currencyPositivePattern: 'c$',
-
-    negativeInfinitySymbol: '-бесконечность',
-    positiveInfinitySymbol: 'бесконечность',
-    NaNSymbol: 'NaN'
-};
-
-InfinniUI.localizations['en-US'].numberFormatInfo = {
-    numberDecimalDigits: 2,
-    numberDecimalSeparator: '.',
-    numberGroupSeparator: ',',
-    numberNegativePattern: '-n',
-    numberPositivePattern: 'n',
-
-    percentDecimalDigits: 2,
-    percentDecimalSeparator: '.',
-    percentGroupSeparator: ',',
-    percentSymbol: '%',
-    percentNegativePattern: '-p %',
-    percentPositivePattern: 'p %',
-
-    currencyDecimalDigits: 2,
-    currencyDecimalSeparator: '.',
-    currencyGroupSeparator: ',',
-    currencySymbol: '$',
-    currencyNegativePattern: '($c)',
-    currencyPositivePattern: '$c',
-
-    negativeInfinitySymbol: '-Infinity',
-    positiveInfinitySymbol: 'Infinity',
-    NaNSymbol: 'NaN'
-};
-//####app/localizations/patternDateFormats.js
-InfinniUI.localizations['ru-RU'].patternDateFormats = {
-    f: 'dd MMMM yyyy г. HH:mm',
-    F: 'dd MMMM yyyy г. HH:mm:ss',
-
-    g: 'dd.MM.yyyy HH:mm',
-    G: 'dd.MM.yyyy HH:mm:ss',
-
-    d: 'dd.MM.yyyy',
-    D: 'dd MMMM yyyy г.',
-
-    t: 'H:mm',
-    T: 'HH:mm:ss',
-
-    y: 'MMMM yyyy', Y: 'MMMM yyyy',
-    m: 'MMMM yy', M: 'MMMM yy',
-
-    s: 'yyyy-MM-ddTHH:mm:ss',
-    u: 'yyyy-MM-dd HH:mm:ssZ'
-};
-
-InfinniUI.localizations['en-US'].patternDateFormats = {
-    f: 'dddd, MMMM dd, yyyy h:%m tt',
-    F: 'dddd, MMMM dd, yyyy h:%m:%s tt',
-
-    g: 'M/%d/yyyy h:%m tt',
-    G: 'M/%d/yyyy h:%m:%s tt',
-
-    d: 'M/%d/yyyy',
-    D: 'dddd, MMMM dd, yyyy',
-
-    t: 'h:%m tt',
-    T: 'h:%m:%s tt',
-
-    y: 'MMMM, yyyy', Y: 'MMMM, yyyy',
-    m: 'MMMM yy', M: 'MMMM yy',
-
-    s: 'yyyy-MM-ddTHH:mm:ss',
-    u: 'yyyy-MM-dd HH:mm:ssZ'
-};
 //####app/script/scriptBuilder.js
 /**
  *
@@ -34160,8 +34568,8 @@ InfinniUI.ModalWindowService = (function () {
             if (modalQueue.length != 0) {
                 var previous = modalQueue[modalQueue.length - 1];
 
-                previous.modal.hide();
-                previous.background.hide();
+                previous.modal.addClass('invisible');
+                previous.background.addClass('invisible');
             }
 
             modalQueue.push(obj);
@@ -34174,8 +34582,8 @@ InfinniUI.ModalWindowService = (function () {
                     if (i == length - 1 && i != 0) {
                         var previous = modalQueue[i - 1];
 
-                        previous.modal.show();
-                        previous.background.show();
+                        previous.modal.removeClass('invisible');
+                        previous.background.removeClass('invisible');
                         notifyLayoutChange();
                     }
 
@@ -34193,18 +34601,20 @@ InfinniUI.ModalWindowService = (function () {
     }
 })();
 
-//####app/services/notificationSubsription.js
-var notificationSubsription = (function() {
+//####app/services/notificationSubscription.js
+var notificationSubscription = (function() {
 	var subscription = {},
 			hubProxy,
+			hubName,
 			connection,
 			onSuccessCb,
 			onErrorCb,
 			isConnected = false;
 
-	var setUpConnection = function(hubName, onSuccess, onError) {
-		onSuccessCb = onSuccess;
-		onErrorCb = onError;
+	var setUpConnection = function(newHubName, onSuccess, onError) {
+		onSuccessCb = onSuccess || onSuccessCb;
+		onErrorCb = onError || onErrorCb;
+		hubName = newHubName || hubName;
 		connection = $.hubConnection(window.InfinniUI.config.serverUrl);
 		hubProxy = connection.createHubProxy(hubName);
 
@@ -34291,11 +34701,20 @@ var notificationSubsription = (function() {
 	};
 
 	var stopConnection = function() {
-		isConnected = false;
+		if( hubProxy ) {
+			isConnected = false;
 
-		eventSwitcher('off');
-		hubProxy = null;
-		connection.stop();
+			eventSwitcher('off');
+			hubProxy = null;
+			connection.stop();
+		}
+	};
+
+	var reconnection = function() {
+		if( connection && hubProxy ) {
+			stopConnection();
+		}
+		setUpConnection();
 	};
 
 	var checkHandlers = function() {
@@ -34304,15 +34723,31 @@ var notificationSubsription = (function() {
 		}
 	};
 
+	var on = function(eventName, callback) {
+		if( !connection ) {
+			console.error('Необходимо сначала установить соединение с сервером');
+		}
+		if( connection[eventName] ) {
+			connection[eventName](callback);
+		}
+	};
+
+	var isDisconnected = function() {
+		return $.connection.isDisconnecting(connection);
+	};
+
 	return {
 		startConnection: setUpConnection,
+		reconnection: reconnection,
 		subscribe: subscribe,
 		unsubscribe: unsubscribe,
-		stopConnection: stopConnection
+		stopConnection: stopConnection,
+		on: on,
+		isDisconnected: isDisconnected
 	};
 })();
 
-InfinniUI.global.notificationSubsription = notificationSubsription;
+InfinniUI.global.notificationSubscription = notificationSubscription;
 
 //####app/services/notifyService.js
 /**
@@ -34618,7 +35053,7 @@ var routerService = (function(myRoutes) {
 				}
 			}
 			routerObj.routes[myRoutes[i].Path.slice(1)] = myRoutes[i].Name; // remove first slash from myRoutes[i].Path for backbone
-			routerObj[myRoutes[i].Name] = myFunc(myRoutes[i].Name, myRoutes[i].Action);
+			routerObj[myRoutes[i].Name] = onRouteSelectHandler(myRoutes[i].Name, myRoutes[i].Action);
 		}
 		return routerObj;
 	};
@@ -34636,54 +35071,111 @@ var routerService = (function(myRoutes) {
 		}
 	};
 
-	var myFunc = function(name, callback) {
+	var onRouteSelectHandler = function(name, script) {
 		return function() {
-			var params = Array.prototype.slice.call(arguments);
-			new ScriptExecutor({getContext: function() {return 'No context';}}).executeScript(callback, { name: name, params: params });
+			var params = _.extend(Array.prototype.slice.call(arguments),
+					{
+						routeParams: routerService._params
+					});
+
+			new ScriptExecutor({getContext: function() {return routerService._context || "No context";}}).executeScript(script, { name: name, params: params });
 		};
 	};
 
 	var routerObj = parseRouteForBackbone(myRoutes);
 
 	var startRouter = function() {
-		var Router = Backbone.Router.extend(routerObj);
-		InfinniUI.AppRouter = new Router();
+		if( !InfinniUI.AppRouter ) {
+			var Router = Backbone.Router.extend(routerObj);
+			InfinniUI.AppRouter = new Router();
 
-		Backbone.history = Backbone.history || new Backbone.History({});
-		Backbone.history.start(InfinniUI.config.HistoryAPI);
+			Backbone.history = Backbone.history || new Backbone.History({});
+			Backbone.history.start(InfinniUI.config.HistoryAPI);
+		} else {
+			console.log("Попытка повторно запустить routerService");
+		}
 	};
 
-	return {
+	var setContext = function(context) {
+		this._context = context;
+	};
+
+	var setParams = function(params) {
+		this._params = params;
+	};
+
+	var addParams = function(params) {
+		this._params = _.extend( this._params||{} ,params);
+	};
+
+	var routerService = {
 		getLinkByName: getLinkByName,
-		startRouter: startRouter
+		startRouter: startRouter,
+		setContext: setContext,
+		setParams: setParams,
+		addParams: addParams
 	};
+
+	return routerService;
 })(InfinniUI.config.Routes);
 
 window.InfinniUI.RouterService = routerService;
 
 //####app/services/toolTipService/toolTipService.js
-InfinniUI.ToolTipService = (function () {
+InfinniUI.ToolTipService = (function() {
 
-	var exchange = window.InfinniUI.global.messageBus;
+    var TOOLTIP_PLACEMENT = 'auto top';
+    var TOOLTIP_CONTAINER = 'body';
+    var TOOLTIP_TRIGGER = 'hover';
 
-	exchange.subscribe(messageTypes.onToolTip.name, function (context, args) {
-		var message = args.value;
-		showToolTip(getSourceElement(message.source), message.content);
-	});
+    var exchange = window.InfinniUI.global.messageBus;
 
-	function getSourceElement(source) {
-		return source.control.controlView.$el
-	}
-	function showToolTip($element, content) {
-		$element
-			.tooltip({
-				html: true,
-				title:content,
-				placement: 'auto top',
-				container: 'body'
+    exchange.subscribe( messageTypes.onToolTipInit.name, initToolTip );
 
-			})
-			.tooltip('show');
-	}
+    exchange.subscribe( messageTypes.onToolTipDestroy.name, destroyToolTip );
+
+    function destroyToolTip( context, args ) {
+        var element = extractElementFromArgs( args );
+        var $element = element.control.controlView.$el;
+
+        $element.tooltip( 'destroy' );
+    }
+
+    function initToolTip( context, args ) {
+        var element = extractElementFromArgs( args );
+        var content = extractContentFromArgs( args );
+        var $element = element.control.controlView.$el;
+
+        var options = {
+            html: true,
+            title: function() {
+                return content.render();
+            },
+            placement: TOOLTIP_PLACEMENT,
+            container: TOOLTIP_CONTAINER,
+            trigger: TOOLTIP_TRIGGER
+        };
+
+        $element.tooltip( options );
+    }
+
+    /**
+     *
+     * @param {Object} args
+     * @returns InfinniUI.Element
+     */
+    function extractContentFromArgs( args ) {
+        return args.value.content;
+    }
+
+    /**
+     *
+     * @param {Object} args
+     * @returns InfinniUI.Element
+     */
+    function extractElementFromArgs( args ) {
+        return args.value.element;
+    }
+
 })();
 })();

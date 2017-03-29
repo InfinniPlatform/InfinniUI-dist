@@ -1,5 +1,6 @@
 window.InfinniUI = window.InfinniUI || {};
 window.InfinniUI.config = window.InfinniUI.config || {};
+window.InfinniUI.config.lang = 'en-US';
 
 // перекрываем дефолтные конфиги, лежащие в InfinniUI/app/config.js
 

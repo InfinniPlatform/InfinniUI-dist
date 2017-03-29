@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 var help = '';
 var gulp = require('gulp'),
 			watch = require('gulp-watch'),

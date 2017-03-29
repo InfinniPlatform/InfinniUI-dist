@@ -400,6 +400,7 @@
 														{
 															"Button": {
 																"Text": "submit",
+																"ToolTip": "HEllo!",
 																"OnClick": "{debugger; console.log(context);}"
 															}
 														}
