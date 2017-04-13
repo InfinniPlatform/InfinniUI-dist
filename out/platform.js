@@ -119,7 +119,7 @@ _.defaults( InfinniUI.config, {
 });
 
 
-InfinniUI.VERSION='2.2.12';
+InfinniUI.VERSION='2.2.13';
 
 //####app/localizations/culture.js
 function Culture(name){
@@ -13526,6 +13526,13 @@ _.extend(TreeViewControl.prototype, {
 //####app/controls/treeView/treeViewModel.js
 var TreeViewModel = ListEditorBaseModel.extend({
 
+    defaults: _.defaults({
+            onExpand: null,
+            onCollapse: null
+        },
+        ListEditorBaseModel.prototype.defaults
+    ),
+
     initialize: function () {
         ListEditorBaseModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
     },
@@ -13636,6 +13643,8 @@ var TreeViewView = ListEditorBaseView.extend({
 
                     view.listenTo(node, 'select', view.onSelectNodeHandler.bind(view, item, node));
                     view.listenTo(node, 'check', view.onCheckNodeHandler.bind(view, item, node));
+                    view.listenTo( node, 'expand', view.onExpandNodeHandler.bind( view, item ) );
+                    view.listenTo( node, 'collapse', view.onCollapseNodeHandler.bind( view, item ) );
 
                     node.setItemContent($item);
                     var key = keySelector(null, {value: item}),
@@ -13780,7 +13789,6 @@ var TreeViewView = ListEditorBaseView.extend({
     },
 
     toggleNode: function( key ) {
-
         var item = this.itemsMap.get(key);
 
         if (!item) {
@@ -13794,7 +13802,6 @@ var TreeViewView = ListEditorBaseView.extend({
             var toggle = collapsed ? this.expandNode : this.collapseNode;
             toggle.call(this, key);
         }
-
     },
 
     expandNode: function( key ) {
@@ -13823,6 +13830,24 @@ var TreeViewView = ListEditorBaseView.extend({
         nodes.reverse().forEach(function (node) {
             node.expand();
         });
+    },
+
+    onExpandNodeHandler: function( item ) {
+        var model = this.model;
+        var onExpandNode = model.get( 'onExpand' );
+
+        if( onExpandNode ) {
+            onExpandNode( item );
+        }
+    },
+
+    onCollapseNodeHandler: function( item ) {
+        var model = this.model;
+        var onCollapseNode = model.get( 'onCollapse' );
+
+        if( onCollapseNode ) {
+            onCollapseNode( item );
+        }
     }
 
 
@@ -13850,7 +13875,7 @@ var TreeViewNodeBase = Backbone.View.extend({
         button: '.pl-treeview-node__button'
     },
 
-    initialize: function () {
+    initialize: function() {
         var model = new Backbone.Model({collapsed: true, isLeaf: true});
         this.model = model;
         this.listenTo(model, 'change:selected', this.updateSelected);
@@ -13859,18 +13884,18 @@ var TreeViewNodeBase = Backbone.View.extend({
         this.listenTo(model, 'change:isLeaf', this.updateCollapsed);
     },
 
-    updateChecked: function () {
+    updateChecked: function() {
         var checked = this.model.get('checked');
         this.ui.checker.toggleClass(this.classNameCheckerChecked, checked === true);
         this.ui.checker.toggleClass(this.classNameCheckerUnchecked, checked !== true);
     },
 
-    updateSelected: function () {
+    updateSelected: function() {
         var selected = this.model.get('selected');
         this.ui.content.toggleClass(this.classNameContentSelected, selected === true);
     },
 
-    updateCollapsed: function () {
+    updateCollapsed: function() {
         var isLeaf = this.model.get('isLeaf');
         var collapsed = !!this.model.get('collapsed');
         this.ui.items.toggleClass(this.classNameItemsExpanded, !collapsed && !isLeaf);
@@ -13882,13 +13907,13 @@ var TreeViewNodeBase = Backbone.View.extend({
         this.ui.button.toggleClass(this.classNameButtonNone, isLeaf);
     },
 
-    updateState: function () {
+    updateState: function() {
         this.updateCollapsed();
         this.updateSelected();
         this.updateChecked();
     },
 
-    render: function () {
+    render: function() {
         this.$el.html(this.template);
         this.bindUIElements();
         this.updateState();
@@ -13896,59 +13921,65 @@ var TreeViewNodeBase = Backbone.View.extend({
         return this;
     },
 
-    initDomEventsHandlers: function () {
+    initDomEventsHandlers: function() {
         this.ui.button.on('click', this.onClickEventHandler.bind(this));
         this.ui.content[0].addEventListener('click', this.onClickItemHandler.bind(this), true);
         this.ui.checker[0].addEventListener('click', this.onClickCheckHandler.bind(this), true);
     },
 
-    onClickItemHandler: function (event) {
+    onClickItemHandler: function(event) {
         this.trigger('select');
     },
 
-    onClickCheckHandler: function (event) {
+    onClickCheckHandler: function(event) {
         this.trigger('check');
     },
 
-    toggle: function () {
+    toggle: function() {
         var model = this.model;
         var collapsed = model.get('collapsed');
 
-        this.model.set('collapsed', !collapsed);
+        if( !collapsed ) {
+            this.collapse();
+        } else {
+            this.expand();
+        }
     },
 
-    expand: function () {
+    expand: function() {
         this.model.set('collapsed', false);
+        this.trigger('expand');
     },
 
-    collapse: function(  ) {
+    collapse: function() {
         this.model.set('collapsed', true);
+        this.trigger('collapse');
     },
 
-    getCollapsed: function(  ) {
+    getCollapsed: function() {
         return this.model.get('collapsed');
     },
 
-    setItemContent: function ($itemContent) {
+    setItemContent: function($itemContent) {
         this.ui.content.empty();
         this.ui.content.append($itemContent);
     },
 
-    setItemsContent: function ($itemsContent) {
+    setItemsContent: function($itemsContent) {
         this.ui.items.empty();
         this.model.set('isLeaf', !$itemsContent.length);
         this.ui.items.append($itemsContent);
     },
 
-    onClickEventHandler: function (event) {
+    onClickEventHandler: function(event) {
         this.toggle();
     },
 
-    setSelected: function (selected) {
+    setSelected: function(selected) {
         this.model.set('selected', selected);
     },
 
-    setChecked: function (checked) {
+    setChecked: function(checked) {
         this.model.set('checked', checked);
     }
 });
@@ -15764,8 +15795,7 @@ var ImageBoxModel = ControlModel.extend( _.extend({
 
     defaults: _.defaults({
             text: localized.strings.ImageBox.chooseImage,
-            currentWideSide: null,
-            rotatedSide: null
+            currentWideSide: null
         },
         editorBaseModelMixin.defaults_editorBaseModel,
         ControlModel.prototype.defaults
@@ -15891,27 +15921,34 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
             this.fileLoader = fileLoader;
 
             fileLoader.then(function(file, content) {
-                this.updateUrl(content);
-                this.orientation( file, function( base64img, value ) {
-                    if( value ) {
-                        that.rotate( value );
-                    }
-                } );
+                if( file ) {
+                    this.orientation( file, function( base64img, value ) {
+                        if( value ) {
+                            that.rotate( value );
+                            that.updateUrl(content);
+                        }
+                    } );
+                } else {
+                    this.updateUrl(content);
+                }
             }.bind(this), function(err) {
                 console.log(err);
             } );
         } else {
-            this.orientation( savedFile, function( base64img, value ) {
-                if( value ) {
-                    that.rotate( value );
-                }
-            } );
-            this.updateUrl(value);
+            if( savedFile ) {
+                this.orientation( savedFile, function( base64img, value ) {
+                    if( value ) {
+                        that.rotate( value );
+                        that.updateUrl(value);
+                    }
+                } );
+            } else {
+                this.updateUrl(value);
+            }
         }
     },
 
     rotate: function( value ) {
-        this.model.set( 'rotatedSide', value );
         this.ui.img.css( 'transform', this.rotation[ value ] );
     },
 
@@ -15930,15 +15967,8 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
         var img = this.ui.img;
         var width = img.width();
         var height = img.height();
-        var rotatedSide = this.model.get( 'rotatedSide' );
         var wideSide = 'limit-width';
         var currentWideSide = this.model.get( 'currentWideSide' );
-
-        if( rotatedSide == 6 || rotatedSide == 8 ) {
-            var tmpWidth = width;
-            width = height;
-            height = tmpWidth;
-        }
 
         if( width >= height ) {
             wideSide = 'limit-height';
@@ -26197,6 +26227,38 @@ TreeView.prototype.toggle = function( key ) {
     this.control.toggle(key);
 };
 
+/**
+ *
+ * @returns {Function}
+ */
+TreeView.prototype.getOnExpand = function () {
+    return this.control.get('onExpand');
+};
+
+/**
+ *
+ * @param {Function} callback
+ */
+TreeView.prototype.setOnExpand = function (callback) {
+    this.control.set('onExpand', callback);
+};
+
+/**
+ *
+ * @returns {Function}
+ */
+TreeView.prototype.getOnCollapse = function () {
+    return this.control.get('onCollapse');
+};
+
+/**
+ *
+ * @param {Function} callback
+ */
+TreeView.prototype.setOnCollapse = function (callback) {
+    this.control.set('onCollapse', callback);
+};
+
 
 
 
@@ -26217,10 +26279,26 @@ _.extend(TreeViewBuilder.prototype, /** @lends TreeViewBuilder.prototype */{
     },
 
     applyMetadata: function (params) {
+        var element = params.element;
+        var metadata = params.metadata;
         var data = ListEditorBaseBuilder.prototype.applyMetadata.call(this, params);
 
         this._initKeySelector(params);
         this._initParentSelector(params);
+
+        if( metadata.OnExpand ) {
+            var onExpandExecutor = function( item ) {
+                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnExpand, { item: item });
+            };
+            element.setOnExpand(onExpandExecutor);
+        }
+
+        if( metadata.OnCollapse ) {
+            var onCollapseExecutor = function( item ) {
+                new ScriptExecutor(element.getScriptsStorage()).executeScript(metadata.OnCollapse, { item: item });
+            };
+            element.setOnCollapse(onCollapseExecutor);
+        }
     },
 
     _initKeySelector: function (params) {

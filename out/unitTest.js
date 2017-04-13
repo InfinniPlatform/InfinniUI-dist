@@ -9495,6 +9495,106 @@ describe('TreeView', function () {
             });
 
         });
+
+        it('should trigger OnExpand and OnCollapse events', function () {
+            // Given
+            var counterExpand = 0;
+            var counterCollapse = 0;
+            window.treeViewExpandHandler = function() {
+                counterExpand += 1;
+            };
+            window.treeViewCollapseHandler = function() {
+                counterCollapse += 1;
+            };
+            var metadata = {
+                "DataSources": [
+                    {
+                        "ObjectDataSource": {
+                            "Name": "Geo",
+                            "Items": [
+                                {
+                                    "Id": 1,
+                                    "ParentId": null,
+                                    "Name": "Челябинск"
+                                },
+                                {
+                                    "Id": 2,
+                                    "ParentId": 1,
+                                    "Name": "Чичерина"
+                                },
+                                {
+                                    "Id": 3,
+                                    "ParentId": 1,
+                                    "Name": "Комарова"
+                                },
+                                {
+                                    "Id": 4,
+                                    "ParentId": null,
+                                    "Name": "Копейск"
+                                },
+                                {
+                                    "Id": 5,
+                                    "ParentId": 4,
+                                    "Name": "Победы"
+                                },
+                                {
+                                    "Id": 6,
+                                    "ParentId": 5,
+                                    "Name": "33/1"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "Items": [
+                    {
+                        "TreeView": {
+                            "Name": "TreeView3",
+                            "KeyProperty": "Id",
+                            "ParentProperty": "ParentId",
+                            "ItemProperty": "Name",
+                            "ValueProperty": "Name",
+                            "MultiSelect": false,
+                            "Items": {
+                                "Source": "Geo"
+                            },
+                            "OnExpand": "{ window.treeViewExpandHandler(); }",
+                            "OnCollapse": "{ window.treeViewCollapseHandler(); }"
+                        }
+                    }
+                ]
+            };
+
+
+            // When
+            testHelper.applyViewMetadata(metadata, function (view, $view) {
+
+                var treeView = view.context.controls['TreeView3'];
+                var buttons = $view.find('.pl-treeview-node__button');
+                var firstBtn;
+
+                assert.equal(counterExpand, 0, 'item is expanded');
+                assert.equal(counterCollapse, 0, 'item is collapsed');
+
+                // When
+                buttons.each( function( i ) {
+                    if( i == 0 ) {
+                        firstBtn = $( this );
+                        firstBtn.click();
+                    }
+                } );
+
+                // Then
+                assert.equal(counterExpand, 1, 'item is expanded');
+
+                firstBtn.click();
+
+                assert.equal(counterCollapse, 1, 'item is collapsed');
+
+                view.close();
+            });
+
+        });
     });
 
 });

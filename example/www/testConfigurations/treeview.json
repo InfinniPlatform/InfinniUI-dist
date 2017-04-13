@@ -53,7 +53,9 @@
 				"MultiSelect": false,
 				"Items": {
 					"Source": "Geo"
-				}
+				},
+				"OnExpand": "{ console.log( 'This Item is expanded: ', args.item ); }",
+				"OnCollapse": "{ console.log( 'This Item is collapsed: ', args.item ); }"
 			}
 		}
 	]
