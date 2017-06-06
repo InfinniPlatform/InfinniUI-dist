@@ -6877,22 +6877,6 @@ describe("ObjectUtils", function () {
         });
     });
 });
-describe('ButtonControl', function () {
-    describe('render', function () {
-        it('should render button with correct class', function () {
-            //Given
-            var builder = new InfinniUI.ApplicationBuilder(),
-                button = builder.buildType('Button', {});
-
-            //When
-            var $el = button.render();
-
-            //Then
-            assert.isTrue($el.hasClass('pl-button'));
-        });
-    });
-});
-
 describe('CheckBox', function () {
     var checkbox;
 
@@ -7725,6 +7709,22 @@ describe('Container (Control)', function () {
     });
 });
 
+describe('ButtonControl', function () {
+    describe('render', function () {
+        it('should render button with correct class', function () {
+            //Given
+            var builder = new InfinniUI.ApplicationBuilder(),
+                button = builder.buildType('Button', {});
+
+            //When
+            var $el = button.render();
+
+            //Then
+            assert.isTrue($el.hasClass('pl-button'));
+        });
+    });
+});
+
 describe('ContextMenu (Control)', function () {
 
 	describe('Remove element from ListBox by clicking on button from ContextMenu', function () {
@@ -7997,13 +7997,14 @@ describe('Form (Control)', function () {
 
 			// Then
 			function onViewReady(view, $layout){
-				$layout.detach();
 
 				assert.equal($layout.find('.pl-form').attr('method'), 'get', 'attribute method is right');
 				
 				$layout.find('.pl-button button').click();
 
 				assert.equal($layout.find('.pl-form').attr('method'), 'post', 'attribute method is right');
+
+        $layout.detach();
 			}
 		});
 	});

@@ -119,7 +119,7 @@ _.defaults( InfinniUI.config, {
 });
 
 
-InfinniUI.VERSION='2.2.13';
+InfinniUI.VERSION='2.2.14';
 
 //####app/localizations/culture.js
 function Culture(name){
@@ -2278,11 +2278,7 @@ var exifRotate = {
             }
         };
 
-        if( !file || typeof file === 'string' ) {
-            return file;
-        } else {
-            fileReader.readAsArrayBuffer( file );
-        }
+        fileReader.readAsArrayBuffer( file );
     }
 };
 //####app/utils/fileSize.js
@@ -4147,6 +4143,10 @@ function MessageBus(view) {
 
     this.getView = function () {
         return view;
+    };
+
+    this.dispose = function() {
+        subscriptions = {};
     };
 
     function patchMessageType(messageType) {
@@ -15911,7 +15911,6 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
         var that = this;
         var model = this.model;
         var value = model.get('value');
-        var savedFile = model.get('file');
 
         if( value && typeof value === 'object' ) {
             //Native FileAPI File instance, start loading preview
@@ -15921,30 +15920,12 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
             this.fileLoader = fileLoader;
 
             fileLoader.then(function(file, content) {
-                if( file ) {
-                    this.orientation( file, function( base64img, value ) {
-                        if( value ) {
-                            that.rotate( value );
-                            that.updateUrl(content);
-                        }
-                    } );
-                } else {
-                    this.updateUrl(content);
-                }
+                that.updateUrl(content);
             }.bind(this), function(err) {
                 console.log(err);
             } );
         } else {
-            if( savedFile ) {
-                this.orientation( savedFile, function( base64img, value ) {
-                    if( value ) {
-                        that.rotate( value );
-                        that.updateUrl(value);
-                    }
-                } );
-            } else {
-                this.updateUrl(value);
-            }
+            this.updateUrl(value);
         }
     },
 
@@ -15954,19 +15935,37 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
 
     updateUrl: function(url) {
         var that = this;
+        this.ui.img.get(0).onload = function() {
+            that.updateRotation( function() {
+                that.setPerfectPosition();
+            } );
+        };
+
         this.ui.img.attr('src', url);
         var none = url === null || typeof url === 'undefined';
-        this.$el.toggleClass('pl-empty', none);
 
-        this.ui.img.get(0).onload = function() {
-            that.setPerfectPosition();
-        };
+        this.$el.toggleClass('pl-empty', none);
+    },
+
+    updateRotation: function( callback ) {
+        var that = this;
+        var file = this.model.get( 'file' );
+
+        if( file ) {
+            this.orientation( file, function( base64img, value ) {
+                that.rotate( value );
+                callback();
+            } );
+        } else {
+            this.rotate( 1 );
+            callback();
+        }
     },
 
     setPerfectPosition: function() {
         var img = this.ui.img;
-        var width = img.width();
-        var height = img.height();
+        var width = img.get( 0 ).naturalWidth;
+        var height = img.get( 0 ).naturalHeight;
         var wideSide = 'limit-width';
         var currentWideSide = this.model.get( 'currentWideSide' );
 
