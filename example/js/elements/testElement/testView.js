@@ -1,44 +1,44 @@
-var TestView = InfinniUI.ControlView.extend({
+var TestView = InfinniUI.ControlView.extend( {
     tagName: 'div',
-    className: 'pl-test-view',
+    className: 'test-view',
 
-    template: InfinniUI.Template["elements/testElement/template/testElement.tpl.html"],
+    template: Example.Template[ 'elements/testElement/template/testElement.tpl.html' ],
 
     UI: {
-        control: '.pl-test-element-in'
+        control: '.test-element-in'
     },
 
 
-    initialize: function () {
-        InfinniUI.ControlView.prototype.initialize.apply(this);
+    initialize: function() {
+        InfinniUI.ControlView.prototype.initialize.apply( this );
     },
 
-    initHandlersForProperties: function(){
-        InfinniUI.ControlView.prototype.initHandlersForProperties.call(this);
+    initHandlersForProperties: function() {
+        InfinniUI.ControlView.prototype.initHandlersForProperties.call( this );
 
-        this.listenTo(this.model, 'change:testProperty', this.updateTestProperty);
+        this.listenTo( this.model, 'change:testProperty', this.updateTestProperty );
     },
 
-    updateProperties: function(){
-        InfinniUI.ControlView.prototype.updateProperties.call(this);
+    updateProperties: function() {
+        InfinniUI.ControlView.prototype.updateProperties.call( this );
 
         this.updateTestProperty();
     },
 
-    updateTestProperty: function(){
-        var testProperty = this.model.get('testProperty');
-        this.ui.control.html(testProperty);
+    updateTestProperty: function() {
+        var testProperty = this.model.get( 'testProperty' );
+        this.ui.control.html( testProperty );
     },
 
-    render: function () {
+    render: function() {
         this.prerenderingActions();
-        this.renderTemplate(this.template);
+        this.renderTemplate( this.template );
 
         this.updateProperties();
 
-        this.trigger('render');
+        this.trigger( 'render' );
         this.postrenderingActions();
         return this;
     }
 
-});
+} );

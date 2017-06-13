@@ -1,9 +1,0 @@
-{
-  "name": "infinni-ui-example",
-  "authors": [
-    "Infinnity Solutions"
-  ],
-  "dependencies": {
-    "infinni-ui": "latest"
-  }
-}

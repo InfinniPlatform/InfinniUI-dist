@@ -1,10 +1,10 @@
-var TestModel = InfinniUI.ControlModel.extend(_.extend({
+var TestModel = InfinniUI.ControlModel.extend( _.extend( {
 
-    defaults: _.defaults({
+    defaults: _.defaults( {
         testProperty: 'testPropertyValue'
-    }, InfinniUI.ControlModel.prototype.defaults),
+    }, InfinniUI.ControlModel.prototype.defaults ),
 
-    initialize: function(){
-        InfinniUI.ControlModel.prototype.initialize.apply(this, arguments);
+    initialize: function() {
+        InfinniUI.ControlModel.prototype.initialize.apply( this, arguments );
     }
-}));
+} ) );
