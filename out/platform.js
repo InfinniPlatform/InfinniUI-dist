@@ -118,7 +118,8 @@ _.defaults( InfinniUI.config, {
     configName: 'InfinniUI'
 });
 
-InfinniUI.VERSION = '2.1.60';
+
+InfinniUI.VERSION='2.1.61';
 
 //####app/localizations/culture.js
 function Culture(name){
@@ -4339,6 +4340,10 @@ function MessageBus(view) {
 
     this.getView = function () {
         return view;
+    };
+
+    this.dispose = function() {
+        subscriptions = {};
     };
 
     function patchMessageType(messageType) {
@@ -26929,8 +26934,8 @@ _.extend(ViewPanelBuilder.prototype, {
 InfinniUI.global.containers = {};
 
 //####app/elements/dataGrid/dataGridRow/dataGridRow.js
-function DataGridRow() {
-    _.superClass(DataGridRow, this);
+function DataGridRow( parent ) {
+    _.superClass(DataGridRow, this, parent);
 
     this._transformRowProperties({
         rowBackground: 'background',

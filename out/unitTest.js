@@ -7757,13 +7757,14 @@ describe('Form (Control)', function () {
 
 			// Then
 			function onViewReady(view, $layout){
-				$layout.detach();
 
 				assert.equal($layout.find('.pl-form').attr('method'), 'get', 'attribute method is right');
 				
 				$layout.find('.pl-button button').click();
 
 				assert.equal($layout.find('.pl-form').attr('method'), 'post', 'attribute method is right');
+
+        $layout.detach();
 			}
 		});
 	});

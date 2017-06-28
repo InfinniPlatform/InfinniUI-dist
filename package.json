@@ -1,6 +1,38 @@
 {
   "name": "infinni-ui",
-  "version": "2.1.60",
+  "version": "2.1.61",
+  "description": "Framework for lightning fast web apps creation",
+  "keywords": [
+    "infinniui"
+  ],
+  "contributors": [
+    {
+      "name": "Maksimov Konstantin",
+      "email": "k.maksimov@infinnitysolutions.com"
+    },
+    {
+      "name": "Vlasov Konstantin",
+      "email": "k.vlasov@infinnitysolutions.com"
+    },
+    {
+      "name": "Viriyalov Andrey",
+      "email": "a.viriyalov@infinnitysolutions.com"
+    },
+    {
+      "name": "Sadofyev Maxim",
+      "email": "m.sadofyev@infinnitysolutions.com"
+    },
+    {
+      "name": "Molodorich Margarita",
+      "email": "m.molodorich@infinnitysolutions.com"
+    }
+  ],
+  "license": "AGPL-3.0",
+  "homepage": "http://infinniui-en.readthedocs.io/",
+  "repository": "https://github.com/InfinniPlatform/InfinniUI",
+  "bugs": {
+    "url": "https://github.com/InfinniPlatform/InfinniUI/issues"
+  },
   "devDependencies": {
     "browser-sync": "^2.12.x",
     "del": "^2.2.0",
@@ -23,6 +55,19 @@
     "gulp-uglify": "^1.5.3",
     "gulp-watch": "^4.x",
     "gulp-wrapper": "^1.0.0",
+    "chai": "^3.5.0",
+    "jasmine-core": "^2.6.1",
+    "jquery": "1.12.4",
+    "jquery.cookie": "1.4.1",
+    "karma": "^1.6.0",
+    "karma-chai-plugins": "^0.9.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-coverage": "^1.1.1",
+    "karma-firefox-launcher": "^1.0.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-mocha": "^1.3.0",
+    "karma-mocha-reporter": "^2.2.3",
+    "karma-teamcity-reporter": "^1.0.0",
     "mocha": "^2.x",
     "stream-combiner2": "1.1.1",
     "through2": "2.x"
@@ -32,6 +77,7 @@
     "build": "gulp clean && gulp build",
     "pack": "npm run build-full && gulp assemble:package",
     "pack-for-teamcity": "gulp assemble:package",
-    "tests": "gulp run:tests"
+    "test": "karma start my.conf.js",
+    "test:tc": "karma start my.conf.js --single-run  --reporters teamcity --colors false --browsers Firefox"
   }
 }
