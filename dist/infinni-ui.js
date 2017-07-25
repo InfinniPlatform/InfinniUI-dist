@@ -488,7 +488,7 @@ var NumberFormatter = function () {
         }
         if (options.decimalDigits > 0) {
             fractional = fractional || '';
-            formattedParts.push(padEnd_1.padEnd(fractional.substr(0, decimalDigits), decimalDigits, options.blank));
+            formattedParts.push(padEnd_1.padEnd(fractional.substr(0, decimalDigits), decimalDigits, '0'));
         }
         var formattedText = formattedParts.join(this.getDecimalSeparator());
         return this.wrapSignPattern(formattedText, options);
@@ -1092,7 +1092,7 @@ var BaseNumberParser = function () {
             }),
                 int = _a[0],
                 fract = _a[1];
-            isComplete = int.length > 0 && fract.length > 0;
+            isComplete = int.length > 0;
         }
         return isComplete;
     };
@@ -2705,7 +2705,7 @@ var MonthPattern = function (_super) {
         if (value === null || typeof value === 'undefined') {
             this.setText('');
         } else {
-            var text = getMonth_1.getMonth(value - 1);
+            var text = getMonth_1.getMonth(value);
             this.setText(this.formatDecimal(text));
         }
     };
@@ -4871,7 +4871,7 @@ window["InfinniUI"]["Template"]["controls/buttonEdit/template/textBoxInput.tpl.h
 window["InfinniUI"]["Template"]["controls/checkBox/template/checkBox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<div class="checkbox">\r\n    <label>\r\n        <input type="checkbox" id="' +__e( guid ) +'">\r\n        <span class="checkbox-custom-body"></span>\r\n        <span class="checkbox-label"></span>\r\n    </label>\r\n</div>';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/template/combobox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<label class="pl-control-label" for="' +__e( guid ) +'"></label>\n\n<div class="input-group control-wrap">\n    <div class="pl-control form-control" id="' +__e( guid ) +'">\n        <div class="pl-combobox__value"></div>\n    </div>\n    <span class="pl-combobox__clear input-group-addon"><i class="fa fa-times"></i></span>\n    <span class="pl-combobox__grip input-group-addon"><i class="fa fa-chevron-down"></i></span>\n</div>\n';}return __p}
 window["InfinniUI"]["Template"]["controls/contextMenu/template/contextMenu.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) {__p += '<div class="pl-popup-button__dropdown">\n    <ul class="pl-popup-button__items dropdown-menu">\n        '; items.forEach(function(item, index){;__p += '\n        <li class="pl-popup-button__item"></li>\n        ';});;__p += '\n    </ul>\n</div>\n';}return __p}
-window["InfinniUI"]["Template"]["controls/dataGrid/template/dataGrid.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-datagrid__head">\n    <div class="pl-datagrid-container pl-datagrid-container_head">\n        <table class="pl-datagrid-table pl-datagrid-table_head table">\n            <thead>\n            <tr class="pl-datagrid-row pl-datagrid-row_first">\n                <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n            </tr>\n            <tr class="pl-datagrid-row pl-datagrid-row_header">\n                <th class="pl-datagrid-row__cell pl-datagrid-row__cell_toggle">\n                    <div class="pl-datagrid-toggle  pl-datagrid-toggle_all">\n                        <input class="pl-datagrid-toggle__button" type="checkbox"><span></span>\n                    </div>\n                </th>\n            </tr>\n            </thead>\n        </table>\n    </div>\n</div>\n<div class="pl-datagrid__body pl-adaptable-by-height">\n    <table class="pl-datagrid-table pl-datagrid-table_body table">\n        <tbody>\n        <tr class="pl-datagrid-row pl-datagrid-row_first">\n            <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n        </tr>\n        </tbody>\n    </table>\n</div>\n\n';}return __p}
+window["InfinniUI"]["Template"]["controls/dataGrid/template/dataGrid.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-datagrid__head">\n    <div class="pl-datagrid-container pl-datagrid-container_head">\n        <table class="pl-datagrid-table pl-datagrid-table_head table">\n            <thead>\n            <tr class="pl-datagrid-row pl-datagrid-row_first">\n                <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n            </tr>\n            <tr class="pl-datagrid-row pl-datagrid-row_header">\n                <th class="pl-datagrid-row__cell pl-datagrid-row__cell_toggle">\n                    <div class="pl-datagrid-toggle  pl-datagrid-toggle_all">\n                        <input class="pl-datagrid-toggle__button" type="checkbox"><span></span>\n                    </div>\n                </th>\n            </tr>\n            </thead>\n        </table>\n    </div>\n</div>\n<div class="pl-datagrid__body">\n    <table class="pl-datagrid-table pl-datagrid-table_body table">\n        <tbody>\n        <tr class="pl-datagrid-row pl-datagrid-row_first">\n            <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n        </tr>\n        </tbody>\n    </table>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/dataGrid/template/headerCell.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<th class="pl-datagrid-row__cell"></th>';}return __p}
 window["InfinniUI"]["Template"]["controls/dataGrid/template/sizeCell.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<td class="pl-datagrid-row__cell pl-datagrid-row__cell_width" style=""></td>';}return __p}
 window["InfinniUI"]["Template"]["controls/dataNavigation/template/dataNavigation.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-data-navigation-size">\r\n\r\n    <div class="pl-page-size">\r\n\r\n    </div>\r\n</div>\r\n\r\n<div class="pl-data-navigation-pager">\r\n    <nav>\r\n        <ul class="pagination">\r\n\r\n        </ul>\r\n    </nav>\r\n</div>\r\n\r\n';}return __p}
@@ -4938,8 +4938,8 @@ window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPane
 window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPanelGrouped.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<a class="pl-tabheader-text"></a>\n<a class="pl-tabheader-close pl-close">&times;</a>\n\n<style>\n    .pl-tabheader {\n        position: relative;\n        cursor: pointer;\n    }\n\n    .pl-tabheader-close.pl-close {\n        position: absolute;\n        right: 0;\n        top:0;\n    }\n</style>';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabPage/template/tabPage.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) {__p += '<div class="pl-tabpage-body">\n    '; items.forEach(function(item, index){;__p += '\n    <div class="pl-tabpage-i"></div>\n    ';});;__p += '\n</div>';}return __p}
-window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/group/template/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-combobox-group__header"></div>\n<div class="pl-combobox-group__items"></div>';}return __p}
+window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/plain/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<div class="pl-combobox-dropdown pl-dropdown-content">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty"></div>\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n';}return __p}
 //####app/utils/strict.js
 'use strict';
@@ -7904,8 +7904,8 @@ filterItems.filterMethods = ( function() {
      */
     that.startsWith = function( value, items, context ) {
         var propertyName = value[ 0 ];
-        var expectedStartValue = _.isArray( value[ 1 ] ) ? value[ 1 ][ 0 ] : value[ 1 ];
-        var ignoreCase = _.isArray( value[ 1 ] ) ? ( value[ 1 ][ 1 ] !== false ) : true;
+        var expectedStartValue = Array.isArray( value[ 1 ] ) ? value[ 1 ][ 0 ] : value[ 1 ];
+        var ignoreCase = Array.isArray( value[ 1 ] ) ? ( value[ 1 ][ 1 ] !== false ) : true;
         var regexpPattern = '^{expectedStartValue}'.replace( '{expectedStartValue}', expectedStartValue );
         var regexpFlag = ignoreCase ? 'i' : '';
 
@@ -7922,8 +7922,8 @@ filterItems.filterMethods = ( function() {
      */
     that.endsWith = function( value, items, context ) {
         var propertyName = value[ 0 ];
-        var expectedEndValue = _.isArray( value[ 1 ] ) ? value[ 1 ][ 0 ] : value[ 1 ];
-        var ignoreCase = _.isArray( value[ 1 ] ) ? ( value[ 1 ][ 1 ] !== false ) : true;
+        var expectedEndValue = Array.isArray( value[ 1 ] ) ? value[ 1 ][ 0 ] : value[ 1 ];
+        var ignoreCase = Array.isArray( value[ 1 ] ) ? ( value[ 1 ][ 1 ] !== false ) : true;
         var regexpPattern = '{expectedEndValue}$'.replace( '{expectedEndValue}', expectedEndValue );
         var regexpFlag = ignoreCase ? 'i' : '';
 
@@ -7940,8 +7940,8 @@ filterItems.filterMethods = ( function() {
      */
     that.contains = function( value, items, context ) {
         var propertyName = value[ 0 ];
-        var searchString = _.isArray( value[ 1 ] ) ? value[ 1 ][ 0 ] : value[ 1 ] || '';
-        var ignoreCase = _.isArray( value[ 1 ] ) ? ( value[ 1 ][ 1 ] !== false ) : true;
+        var searchString = Array.isArray( value[ 1 ] ) ? value[ 1 ][ 0 ] : value[ 1 ] || '';
+        var ignoreCase = Array.isArray( value[ 1 ] ) ? ( value[ 1 ][ 1 ] !== false ) : true;
         var regexpFlag = ignoreCase ? 'i' : '';
 
         return _.filter( items, function( item ) {
@@ -8580,7 +8580,7 @@ var stringUtils = {
         var that = this;
 
         for( var k in data ) {
-            var p = _.isString( data[ k ] ) ? data[ k ].replace( /[\+]/g, function( c ) {
+            var p = typeof data[ k ] === 'string' ? data[ k ].replace( /[\+]/g, function( c ) {
                 return that.replaced[ c ] || c;
             } ) : data[ k ];
 
@@ -10575,12 +10575,12 @@ var bindUIElementsMixin = {
     bindUIElements: function() {
         this.ui = {};
 
-        if ( typeof this.UI === 'undefined' ) {
+        if( typeof this.UI === 'undefined' ) {
             return;
         }
 
-        for ( var i in this.UI ) {
-            if ( !this.UI.hasOwnProperty( i ) ) continue;
+        for( var i in this.UI ) {
+            if( !this.UI.hasOwnProperty( i ) ) continue;
 
             this.ui[ i ] = this.$( this.UI[ i ] );
         }
@@ -10637,7 +10637,7 @@ var editMaskViewMixin = ( function( global ) {
         getEditMaskStrategy: function() {
             var strategy = this.editMaskStrategy;
 
-            if ( !strategy ) {
+            if( !strategy ) {
                 strategy = strategies[ DEFAULT_STRATEGY ];
             }
 
@@ -10652,7 +10652,7 @@ var editMaskViewMixin = ( function( global ) {
             this.model.set( 'errorText', error );
         },
 
-        getTimeZone: function(  ) {
+        getTimeZone: function() {
             return this.model.get( 'timeZone' );
         },
 
@@ -10666,12 +10666,14 @@ var editMaskViewMixin = ( function( global ) {
 
         onFocusinEventHandler: function() {
 
-            var el =  this.ui.control[ 0 ];
+            var el = this.ui.control[ 0 ];
             var view = this;
-            setTimeout( function(  ) {
+            setTimeout( function() {
                 var pos = el.selectionStart;
                 view.setEditMode( true );
-                el.setSelectionRange( pos, pos );
+                if( el.setSelectionRange && /text|search|password|tel|url/i.test( el.type || '' ) ) {
+                    el.setSelectionRange( pos, pos );
+                }
             }, 4 );
 
         },
@@ -10689,7 +10691,7 @@ var editMaskViewMixin = ( function( global ) {
         },
 
         updateModelValue: function() {
-            if ( this[ MASK_ATTRIBUTE ] ) {
+            if( this[ MASK_ATTRIBUTE ] ) {
 
             } else {
                 var text = this.ui.control.val();
@@ -10703,7 +10705,7 @@ var editMaskViewMixin = ( function( global ) {
         },
 
         onChangeEditModeHandler: function( model, editMode ) {
-            if ( editMode ) {
+            if( editMode ) {
                 //turn on edit-mask when it specified
                 createEditMask.call( this );
             } else {
@@ -10718,17 +10720,17 @@ var editMaskViewMixin = ( function( global ) {
     };
 
     function init() {
-        if ( editMaskLibraryInitialized ) {
+        if( editMaskLibraryInitialized ) {
             return;
         }
         editMaskLibraryInitialized = true;
         getEditMaskLibrary().Mask.api.init( { locale: InfinniUI.localized.name } );
     }
 
-    function createEditMask(  ) {
+    function createEditMask() {
         var metadata = this.model.get( 'editMask' );
 
-        if ( !metadata ) {
+        if( !metadata ) {
             return;
         }
 
@@ -10738,7 +10740,7 @@ var editMaskViewMixin = ( function( global ) {
         var mask;
 
         var usedStrategy = this.editMaskStrategies[ editMaskType ];
-        if ( typeof usedStrategy === 'undefined' || usedStrategy === null ) {
+        if( typeof usedStrategy === 'undefined' || usedStrategy === null ) {
             console.log( 'Не задано преобразование значения маски ввода' );
             usedStrategy = DEFAULT_STRATEGY;
         }
@@ -10773,7 +10775,7 @@ var editMaskViewMixin = ( function( global ) {
         var mask = getEditMaskLibrary().Mask.dateTime( this.ui.control[ 0 ], maskTemplate );
 
         var offset = model.get( 'timeZone' );
-        if ( typeof offset === 'undefined' || offset === null ) {
+        if( typeof offset === 'undefined' || offset === null ) {
             offset = InfinniUI.DateUtils.getDefaultTimeZone();
         }
 
@@ -10785,9 +10787,9 @@ var editMaskViewMixin = ( function( global ) {
 
         mask.onChangeValue( function( event ) {
             var value = event.newValue;
-            if ( value !== null && typeof value !== 'undefined' ) {
+            if( value !== null && typeof value !== 'undefined' ) {
                 model.set( 'value', that.getEditMaskStrategy().maskToValue( value ) );
-                if ( model.isValid() ) {  //reset error
+                if( model.isValid() ) {  //reset error
                     that.setValueValidationError( null );
                 }
             } else {
@@ -10804,7 +10806,7 @@ var editMaskViewMixin = ( function( global ) {
         mask.setValue( model.getValue() );
         mask.onChangeValue( function( event ) {
             model.set( 'value', event.newValue );
-            if ( model.isValid() ) {  //reset error
+            if( model.isValid() ) {  //reset error
                 model.set( 'errorText', null );
             }
         } );
@@ -10817,7 +10819,7 @@ var editMaskViewMixin = ( function( global ) {
         var mask = getEditMaskLibrary().Mask.template( this.ui.control[ 0 ], maskTemplate );
 
         var maskSaveLiteral = config[ 'MaskSaveLiteral' ];
-        if ( typeof maskSaveLiteral === 'boolean' ) {
+        if( typeof maskSaveLiteral === 'boolean' ) {
             mask.setMaskSaveLiteral( maskSaveLiteral );
         }
 
@@ -10843,7 +10845,7 @@ var editMaskViewMixin = ( function( global ) {
         return maskTemplate;
     }
 
-    function DefaultStrategy(  ) {
+    function DefaultStrategy() {
 
         this.valueToMask = function( value ) {
             return value;
@@ -10869,7 +10871,7 @@ var editMaskViewMixin = ( function( global ) {
         this.valueToMask = function( value ) {
             var maskValue = null;
 
-            if ( value !== null && !isNaN( value ) && isFinite( value ) ) {
+            if( value !== null && !isNaN( value ) && isFinite( value ) ) {
                 maskValue = Math.round( value * 1000 );
             }
 
@@ -10884,7 +10886,7 @@ var editMaskViewMixin = ( function( global ) {
         this.maskToValue = function( maskValue ) {
             var value = null;
 
-            if ( maskValue !== null && !isNaN( maskValue ) && isFinite( maskValue ) ) {
+            if( maskValue !== null && !isNaN( maskValue ) && isFinite( maskValue ) ) {
                 value = +( maskValue / 1000 ).toFixed( 3 );
             }
 
@@ -10901,7 +10903,7 @@ var editMaskViewMixin = ( function( global ) {
          */
         this.valueToMask = function( value ) {
             var maskValue = null;
-            if ( value !== null && typeof value !== 'undefined' ) {
+            if( value !== null && typeof value !== 'undefined' ) {
                 maskValue = new Date( value ).getTime();
             }
             return maskValue;
@@ -10921,7 +10923,7 @@ var editMaskViewMixin = ( function( global ) {
     function getEditMaskLibrary() {
         var editMask = global[ LIBRARY_NAME ];
 
-        if ( !editMask ) {
+        if( !editMask ) {
             console.error( 'edit-mask library "' + LIBRARY_NAME + '" not loaded!' );
         }
 
@@ -11501,7 +11503,7 @@ var ControlView = Backbone.View.extend( {
         var newName = this.model.get( 'name' );
         var currentName = this.$el.attr( 'data-pl-name' );
 
-        if( newName != currentName && typeof newName == 'string' ) {
+        if( newName !== currentName && typeof newName === 'string' ) {
             this.$el.attr( 'data-pl-name', newName );
         }
     },
@@ -11931,6 +11933,14 @@ var editorBaseControlMixin = {
      */
     onValueChanged: function( handler ) {
         this.controlModel.onValueChanged( handler );
+    },
+
+    /**
+     *
+     * @returns {*}
+     */
+    getRawValue: function() {
+        return this.controlView.getRawValue();
     }
 
 };
@@ -12143,7 +12153,7 @@ var editorBaseViewMixin = {
 
     updateValueState: function() {
         var value = this.model.get( 'value' );
-        var isEmpty = _.isEmpty( value ) && !( _.isNumber( value ) );
+        var isEmpty = _.isEmpty( value ) && typeof value !== 'number';
 
         this.$el.toggleClass( 'pl-empty-text-editor', isEmpty );
     },
@@ -12684,6 +12694,14 @@ var TextEditorBaseView = ControlView.extend( /** @lends TextEditorBaseView.proto
         var displayFormat = model.get( 'displayFormat' );
 
         return displayFormat ? displayFormat( null, { value: value } ) : value;
+    },
+
+    /**
+     *
+     * @returns {*}
+     */
+    getRawValue: function() {
+        return this.ui.editor.val();
     }
 
 } ) );
@@ -17200,7 +17218,8 @@ var DataGridModel = ListEditorBaseModel.extend( {
         checkAll: false,
         focusable: false,
         verticalAlignment: 'Top',
-        sortedColumn: null
+        sortedColumn: null,
+        scroll: true
     }, ListEditorBaseModel.prototype.defaults ),
 
     /**
@@ -17292,6 +17311,7 @@ var DataGridView = ListEditorBaseView.extend( {
         this.listenTo( this.model, 'change:checkAllVisible', this.updateCheckAllVisible );
         this.listenTo( this.model, 'change:checkAll', this.updateCheckAll );
         this.listenTo( this.model, 'change:verticalAlignment', this.updateVerticalAlignment );
+        this.listenTo( this.model, 'change:scroll', this.updateScroll );
 
         /** Update hash item => element when item changed **/
         var rowElements = this.rowElements;
@@ -17309,6 +17329,24 @@ var DataGridView = ListEditorBaseView.extend( {
     /**
      *
      */
+    updateScroll: function() {
+        var model = this.model;
+        var scrollValue = model.get( 'scroll' );
+        var scrollableClass = 'pl-datagrid-scrollable';
+        var adaptiveBody = 'pl-adaptive-by-height';
+
+        if( scrollValue ) {
+            this.$el.addClass( scrollableClass );
+            this.ui.body.addClass( adaptiveBody );
+        } else {
+            this.$el.removeClass( scrollableClass );
+            this.ui.body.removeClass( adaptiveBody );
+        }
+    },
+
+    /**
+     *
+     */
     updateProperties: function() {
         ListEditorBaseView.prototype.updateProperties.call( this );
         this.updateShowSelectors();
@@ -17316,6 +17354,7 @@ var DataGridView = ListEditorBaseView.extend( {
         this.updateCheckAll();
         this.updateDisabledItem();
         this.updateVerticalAlignment();
+        this.updateScroll();
     },
 
     /**
@@ -19576,6 +19615,22 @@ var CommonPopupButtonView = ContainerView.extend( {
     /**
      *
      */
+    updateBackground: function() {
+        var styleValue = this.model.get( 'background' );
+        var newBackground = this.valueToBackgroundClassName( styleValue );
+        var oldBackground = this.valueToBackgroundClassName( this.currentBackground );
+
+        if( newBackground !== '' ) {
+            this.ui.button.removeClass( oldBackground ).addClass( newBackground );
+            this.ui.grip.removeClass( oldBackground ).addClass( newBackground );
+        }
+
+        this.currentBackground = styleValue;
+    },
+
+    /**
+     *
+     */
     getButtonElement: function() {
         return this.ui.button;
     },
@@ -19777,9 +19832,13 @@ InfinniUI.PopupButtonModel = PopupButtonModel;
  */
 var ForMenuPopupButtonView = CommonPopupButtonView.extend( {
 
-    tagName: 'button',
+    tagName: 'a',
 
-    className: 'pl-popup-button btn',
+    className: 'pl-popup-button',
+
+    attributes: {
+        href: 'javascript:;'
+    },
 
     template: InfinniUI.Template[ 'controls/popupButton/forMenuView/template/popupButton.tpl.html' ],
 
@@ -19832,6 +19891,21 @@ var ForMenuPopupButtonView = CommonPopupButtonView.extend( {
                 }
             }
         );
+    },
+
+    /**
+     *
+     */
+    updateBackground: function() {
+        var styleValue = this.model.get( 'background' );
+        var newBackground = this.valueToBackgroundClassName( styleValue );
+        var oldBackground = this.valueToBackgroundClassName( this.currentBackground );
+
+        if( newBackground !== '' ) {
+            this.$el.removeClass( oldBackground ).addClass( newBackground );
+        }
+
+        this.currentBackground = styleValue;
     },
 
     /**
@@ -22664,9 +22738,9 @@ var ComboBoxView = ListEditorBaseView.extend( {
                     var $dropdown = dropdownView.render();
                     $( 'body' ).append( $dropdown );
 
-                    dropdownView.updatePosition( view.el );
+                    dropdownView.updatePosition( view.ui.control.get( 0 ) );
                     view.dropDownView.on( 'itemsRendered2', function() {
-                        dropdownView.updatePosition( view.el );
+                        dropdownView.updatePosition( view.ui.control.get( 0 ) );
                     } );
 
                     if( model.get( 'autocomplete' ) ) {
@@ -25376,6 +25450,10 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
         this.addToValue( -delta );
     },
 
+    transformValue: function( value ) {
+        return typeof value === 'string' ? +value : value;
+    },
+
     /**
      *
      * @param delta
@@ -25385,17 +25463,17 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
         var startValue = this.get( 'startValue' );
         var minValue = this.get( 'minValue' );
         var maxValue = this.get( 'maxValue' );
-        var newValue = _.isNumber( value ) ? value : +value;
+        var newValue = typeof value === 'number' ? value : +value;
 
-        if ( this.isSetValue( value ) && _.isNumber( value ) ) {
+        if ( this.isSetValue( value ) && typeof value === 'number' ) {
             newValue += delta;
         } else {
-            newValue = ( _.isNumber( startValue ) ) ? startValue : 0;
+            newValue = ( typeof startValue === 'number' ) ? startValue : 0;
         }
 
-        if ( _.isNumber( minValue ) && newValue < minValue ) {
+        if ( typeof minValue === 'number' && newValue < minValue ) {
             newValue = minValue;
-        } else if ( _.isNumber( maxValue ) && newValue > maxValue ) {
+        } else if ( typeof maxValue === 'number' && newValue > maxValue ) {
             newValue = maxValue;
         }
 
@@ -25416,13 +25494,13 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
         var error;
 
         if ( value !== null && typeof value !== 'undefined' ) {
-            if ( _.isNumber( min ) && _.isNumber( max ) ) {
+            if ( typeof min === 'number' && typeof max === 'number' ) {
                 if ( value < min || value > max ) {
                     error = 'Значение должно быть в диапазоне от ' + min + ' до ' + max + '.';
                 }
-            } else if ( _.isNumber( min ) && value < min ) {
+            } else if ( typeof min === 'number' && value < min ) {
                 error = 'Значение должно быть не меньше ' + min + '.';
-            } else if ( _.isNumber( max ) && value > max ) {
+            } else if ( typeof max === 'number' && value > max ) {
                 error = 'Значение должно быть не больше ' + max + '.';
             }
         }
@@ -27416,9 +27494,9 @@ var BaseDataSource = Backbone.Model.extend( {
         var indexOfSelectedItem;
         var resultOfSet;
 
-        if( propertyPaths[ 0 ] == '$' ) {
+        if( propertyPaths[ 0 ] === '$' ) {
             indexOfSelectedItem = this._indexOfSelectedItem();
-            if( indexOfSelectedItem == -1 ) {
+            if( indexOfSelectedItem === -1 ) {
                 return;
             }
 
@@ -27429,13 +27507,13 @@ var BaseDataSource = Backbone.Model.extend( {
         firstChar = property.charAt( 0 );
 
         if( propertyPaths.length === 1 ) {
-            if( propertyPaths[ 0 ] == '' ) {
+            if( propertyPaths[ 0 ] === '' ) {
                 this._setItems( value );
             } else if( this.get( 'isNumRegEx' ).test( propertyPaths[ 0 ] ) ) {
                 this._changeItem( propertyPaths[ 0 ], value );
             } else {
                 indexOfSelectedItem = this._indexOfSelectedItem();
-                if( indexOfSelectedItem == -1 ) {
+                if( indexOfSelectedItem === -1 ) {
                     return;
                 }
                 property = 'items.' + indexOfSelectedItem + '.' + property;
@@ -27459,7 +27537,7 @@ var BaseDataSource = Backbone.Model.extend( {
                 }
             } else {
                 indexOfSelectedItem = this._indexOfSelectedItem();
-                if( indexOfSelectedItem == -1 ) {
+                if( indexOfSelectedItem === -1 ) {
                     return;
                 }
                 property = 'items.' + indexOfSelectedItem + '.' + property;
@@ -27557,7 +27635,7 @@ var BaseDataSource = Backbone.Model.extend( {
      * @private
      */
     _tuneMirroringOfModel: function( index ) {
-        if( index != -1 ) {
+        if( index !== -1 ) {
             this.get( 'model' ).setMirroring( 'items.$', 'items.' + index );
         } else {
             this.get( 'model' ).setMirroring( null, null );
@@ -29033,10 +29111,10 @@ var RestDataSource = BaseDataSource.extend( {
      * @private
      */
     _checkUrlParamsReady: function( params ) {
-        return params && typeof params.origin == 'string'// && params.origin.lentgh > 0
-            && typeof params.path == 'string'
-            && typeof params.data == 'object'
-            && typeof params.params == 'object';
+        return params && typeof params.origin === 'string'// && params.origin.lentgh > 0
+            && typeof params.path === 'string'
+            && typeof params.data === 'object'
+            && typeof params.params === 'object';
     },
 
     /**
@@ -29432,7 +29510,7 @@ var DocumentDataSource = RestDataSource.extend( {
     quoteValue: function( value ) {
         var VALUE_QUOTE_CHAR = '\'';
 
-        if( _.isString( value ) ) {
+        if( typeof value === 'string' ) {
             return VALUE_QUOTE_CHAR + value + VALUE_QUOTE_CHAR;
         } else {
             return value;
@@ -30090,7 +30168,7 @@ _.extend( Element.prototype, {
             throw new Error( 'name already exists' );
         }
 
-        if( typeof name == 'string' ) {
+        if( typeof name === 'string' ) {
             this.control.set( 'name', name );
         }
     },
@@ -30282,7 +30360,7 @@ _.extend( Element.prototype, {
      * @param style
      */
     setStyle: function( style ) {
-        if( typeof style == 'string' ) {
+        if( typeof style === 'string' ) {
             this.control.set( 'style', style );
         }
     },
@@ -30316,7 +30394,7 @@ _.extend( Element.prototype, {
      * @param horizontalAlignment
      */
     setHorizontalAlignment: function( horizontalAlignment ) {
-        if( typeof horizontalAlignment == 'string' ) {
+        if( typeof horizontalAlignment === 'string' ) {
             this.control.set( 'horizontalAlignment', horizontalAlignment );
         }
     },
@@ -30333,7 +30411,7 @@ _.extend( Element.prototype, {
      * @param textStyle
      */
     setTextStyle: function( textStyle ) {
-        if( typeof textStyle == 'string' ) {
+        if( typeof textStyle === 'string' ) {
             this.control.set( 'textStyle', textStyle );
         }
     },
@@ -30350,7 +30428,7 @@ _.extend( Element.prototype, {
      * @param background
      */
     setBackground: function( background ) {
-        if( typeof background == 'string' ) {
+        if( typeof background === 'string' ) {
             this.control.set( 'background', background );
         }
     },
@@ -30367,7 +30445,7 @@ _.extend( Element.prototype, {
      * @param foreground
      */
     setForeground: function( foreground ) {
-        if( typeof foreground == 'string' ) {
+        if( typeof foreground === 'string' ) {
             this.control.set( 'foreground', foreground );
         }
     },
@@ -30773,7 +30851,7 @@ _.extend( Element.prototype, {
     removeChild: function( child ) {
         var index = this.childElements.indexOf( child );
 
-        if( index != -1 ) {
+        if( index !== -1 ) {
             this.childElements.splice( index, 1 );
         }
     },
@@ -32834,7 +32912,7 @@ _.extend( TextEditorBase.prototype, {
      * @returns {*}
      */
     getRawValue: function() {
-        var value = this.control.get( 'editor' ).getValue();
+        var value = this.control.getRawValue();
         var editMask = this.getEditMask();
 
         if ( editMask ) {
@@ -33204,7 +33282,7 @@ DateTimePicker.prototype.getTimeZone = function() {
  * @param value
  */
 DateTimePicker.prototype.setTimeZone = function( value ) {
-    if( _.isNumber( value ) ) {
+    if( typeof value === 'number' ) {
         this.control.set( 'timeZone', value );
     }
 };
@@ -34480,6 +34558,13 @@ DataGrid.prototype.setVerticalAlignment = function( verticalAlignment ) {
     }
 };
 
+/**
+ * @description dataGrid won't stretch to all free space
+ */
+DataGrid.prototype.makeUnscrollable = function() {
+    this.control.set( 'scroll', false );
+};
+
 //####app/elements/dataGrid/dataGridBuilder.js
 /**
  * @augments ListEditorBaseBuilder
@@ -34543,6 +34628,10 @@ _.extend( DataGridBuilder.prototype, {
         if( metadata.OnRowDoubleClick ) {
             var onRowDoubleClickExecutor = Executor( metadata.OnRowDoubleClick, params.builder, executorBuilderParams );
             element.onRowDoubleClick( onRowDoubleClickExecutor );
+        }
+
+        if( typeof metadata.Scroll !== 'undefined' && metadata.Scroll === false ) {
+            element.makeUnscrollable();
         }
 
         this.applyColumnsMetadata( params );
@@ -36260,7 +36349,7 @@ _.extend( Icon.prototype, {
      * @param size
      */
     setSize: function( size ) {
-        if( typeof size == 'string' ) {
+        if( typeof size === 'string' ) {
             this.control.set( 'size', size );
         }
     },
@@ -36887,7 +36976,7 @@ _.extend( MenuBar.prototype, {
         ( function highlight( element ) {
             var childElements = element.getChildElements();
             childElements.forEach( function( childElement ) {
-                var highlight = _.isString( name ) && childElement.getName() === name;
+                var highlight = typeof name === 'string' && childElement.getName() === name;
                 var control = childElement.control;
 
                 if( control ) {
@@ -37006,7 +37095,7 @@ NumericBox.prototype.setStartValue = function( value ) {
 NumericBox.prototype.convertValue = function( value ) {
     var val = ( value === null || value === '' || typeof value === 'undefined' ) ? null : +value;
 
-    return _.isNumber( val ) ? val : null;
+    return typeof val === 'number' ? val : null;
 };
 
 /**
@@ -38719,6 +38808,7 @@ _.extend( View.prototype, {
             this.eventManager.trigger( 'onClosed', scriptArgs, context );
 
             this.openStrategy.close();
+            this.removeParameters();
 
             if( success ) {
                 success( context, scriptArgs );
@@ -38726,6 +38816,23 @@ _.extend( View.prototype, {
 
         } else if( error ) {
             error( context, scriptArgs );
+        }
+    },
+
+    /**
+     *
+     */
+    removeParameters: function() {
+        var context = this.getContext();
+        var parameters = this.control.get( 'parameters' );
+
+        if( parameters._items.length ) {
+            parameters.forEach( function( parameter ) {
+                parameter.remove();
+            } );
+
+            parameters.removeAll();
+            context.parameters = {};
         }
     },
 
@@ -38977,9 +39084,10 @@ _.extend( ViewBuilder.prototype, {
 
                 param.set( 'view', params.element );
                 parameters.add( param );
-                if( metadata.Parameters[ j ][ 'OnPropertyChanged' ] ) {
+                if( typeof metadata.Parameters[ j ][ 'OnPropertyChanged' ] !== 'undefined' ) {
+                    var handler = metadata.Parameters[ j ][ 'OnPropertyChanged' ];
                     param.onPropertyChanged( function() {
-                        new ScriptExecutor( element ).executeScript( metadata.Parameters[ j ][ 'OnPropertyChanged' ] );
+                        new ScriptExecutor( element ).executeScript( handler );
                     } );
                 }
             }
@@ -39238,8 +39346,8 @@ InfinniUI.global.containers = {};
  * @augments Element
  * @constructor
  */
-function DataGridRow() {
-    _.superClass( DataGridRow, this );
+function DataGridRow( parent ) {
+    _.superClass( DataGridRow, this, parent );
 
     this._transformRowProperties( {
         rowBackground: 'background',
@@ -41279,7 +41387,7 @@ _.extend( ServerAction.prototype, baseFallibleActionMixin, {
     updateContentTypeStrategy: function() {
         var contentType = this.getProperty( 'contentType' );
 
-        if( _.isString( contentType ) && contentType.includes( 'multipart' ) ) {
+        if( typeof contentType === 'string' && contentType.includes( 'multipart' ) ) {
             this.contentTypeStrategy = serverActionContentTypeStrategy[ 'File' ];
         } else {
             this.contentTypeStrategy = serverActionContentTypeStrategy[ 'Object' ];
@@ -41348,7 +41456,7 @@ _.extend( ServerAction.prototype, baseFallibleActionMixin, {
             if( method == 'GET' ) {
                 result.requestUrl = result.requestUrl + '?' + stringUtils.joinDataForQuery( data );
             } else {
-                result.args = ( _.isString( contentType ) && contentType.includes( 'application/json' ) ) ? JSON.stringify( data ) : data;
+                result.args = ( typeof contentType === 'string' && contentType.includes( 'application/json' ) ) ? JSON.stringify( data ) : data;
             }
         }
 
@@ -41363,7 +41471,7 @@ _.extend( ServerAction.prototype, baseFallibleActionMixin, {
      * @private
      */
     _replaceParamsInStr: function( str, escape ) {
-        if( !str || !_.isString( str ) ) {
+        if( !str || typeof str !== 'string' ) {
             return str;
         }
 
@@ -41377,7 +41485,7 @@ _.extend( ServerAction.prototype, baseFallibleActionMixin, {
         return str.replace( /<%([\s\S]+?)%>/g, function( p1, p2 ) {
             var val = that.getParam( p2 );
 
-            if( escape && _.isString( val ) ) {
+            if( escape && typeof val === 'string' ) {
                 val = val.replace( /"/g, '\\"' );
             }
             return val;
@@ -42093,7 +42201,7 @@ var DataBinding = Backbone.Model.extend( {
                 var bindId = that.get( 'bindId' );
                 var propertyName = that.get( 'sourceProperty' );
 
-                if( source.offPropertyChanged ) {
+                if( source && source.offPropertyChanged ) {
                     source.offPropertyChanged( propertyName, bindId );
                 }
                 that.remove();
@@ -42997,7 +43105,7 @@ _.extend( ObjectDataProvider.prototype, {
         var items = this.items;
         var itemIndex = this._getIndexOfItem( item );
 
-        if ( itemIndex == -1 ) {
+        if( itemIndex === -1 ) {
             items.push( item );
         } else {
             items[ itemIndex ] = item;
@@ -43017,7 +43125,7 @@ _.extend( ObjectDataProvider.prototype, {
         var itemIndex = this._getIndexOfItem( item );
         var validationResult = new ValidationResult();
 
-        if ( itemIndex != -1 ) {
+        if( itemIndex !== -1 ) {
             items.splice( itemIndex, 1 );
             successCallback( {} );
         } else {
@@ -43038,11 +43146,11 @@ _.extend( ObjectDataProvider.prototype, {
      * @returns {[*]}
      */
     createIdFilter: function( id ) {
-        return [{
+        return [ {
             'Property': '_id',
             'Value': id,
             'CriteriaType': 1
-        }];
+        } ];
     },
 
     /**
@@ -43052,7 +43160,7 @@ _.extend( ObjectDataProvider.prototype, {
      * @private
      */
     _getIndexOfItem: function( item ) {
-        return  _.indexOf( this.items, item );
+        return _.indexOf( this.items, item );
     },
 
     /**
@@ -43076,6 +43184,7 @@ _.extend( ObjectDataProvider.prototype, {
     _generateLocalId: function() {
         return guid();
     }
+
 } );
 
 InfinniUI.Providers.ObjectDataProvider = ObjectDataProvider;
@@ -43528,11 +43637,14 @@ _.extend( ObjectDataSourceBuilder.prototype, {
             }
 
             if( $.isPlainObject( metadata.Items ) ) {
+                if( typeof metadata.Items.Mode === 'undefined' ) {
+                    metadata.Items.Mode = InfinniUI.BindingModes.toElement;
+                }
+
                 var binding = builder.buildBinding( metadata.Items, {
                     parentView: parent
                 } );
 
-                binding.setMode( InfinniUI.BindingModes.toElement );
                 binding.bindElement( dataSource, '' );
             }
         }
@@ -43697,6 +43809,51 @@ var Parameter = Backbone.Model.extend( {
         } else {
             return val;
         }
+    },
+
+    /**
+     *
+     * @param element
+     * @param handler
+     * @param additionParams
+     * @returns {Function}
+     */
+    createControlEventHandler: function( element, handler, additionParams ) {
+        var context;
+        var parentView = element.getView();
+        additionParams = additionParams || {};
+
+        if( parentView ) {
+            context = parentView.context;
+        }
+
+        return function( message ) {
+            message = message || {};
+            _.extend(
+                message,
+                additionParams
+            );
+            message.source = element;
+
+            return handler.call( undefined, context, message );
+        };
+    },
+
+    /**
+     *
+     * @param handler
+     * @returns {*|CollectionEventManager|{name}}
+     */
+    onRemove: function( handler ) {
+        return this.on( messageTypes.onRemove.name, this.createControlEventHandler( this, handler ) );
+    },
+
+    /**
+     *
+     */
+    remove: function() {
+        this.off();
+        this.clear();
     }
 
 } );
@@ -44318,7 +44475,7 @@ function DateTimeFormatBuilder() {
 
         format.setFormat( args.metadata.Format );
 
-        if( _.isNumber( args.metadata.TimeZone ) ) {
+        if( typeof args.metadata.TimeZone === 'number' ) {
             format.setOptions( { TimeZone: args.metadata.TimeZone } );
         }
 
@@ -45504,7 +45661,7 @@ InfinniUI.AutoHeightService = {
             var $body = $( '.modal-body', $container );
             var $el = $( this.adaptableByHeightSelector, $modal );
 
-            $el.parentsUntil( '.modal' ).css( 'height', 'auto' );
+            $el.parentsUntil( '.modal', ':not(' + this.adaptableByHeightSelector + ')' ).css( 'height', 'auto' );
             $container
                 .css( 'top', ( this.windowHeight - $header.outerHeight( true ) - $body.outerHeight( true ) ) / 2 );
 
@@ -46420,6 +46577,7 @@ var MessageBox = Backbone.View.extend( {
      */
     applyDefaultOptions: function( config ) {
         var options = _.defaults( {}, config, {
+            type: 'default',
             buttons: []
         } );
         this.applyDefaultButtonsOptions( options );
@@ -46451,10 +46609,6 @@ InfinniUI.MessageBox = MessageBox;
 
 //####app/services/router/routerService.js
 function RouterService( myRoutes ) {
-    if( !myRoutes ) {
-        return null;
-    }
-
     /**
      *
      * @param myRoutes
@@ -46581,7 +46735,9 @@ function RouterService( myRoutes ) {
     return routerService;
 }
 
-InfinniUI.routerService = new RouterService( InfinniUI.config.routes );
+if( InfinniUI.config.routes ) {
+    InfinniUI.routerService = new RouterService( InfinniUI.config.routes );
+}
 
 //####app/services/toolTipService/toolTipService.js
 /**
