@@ -1,6 +1,17 @@
 Changelog
 =========
 
+## 3.0.2
+fixed: dataGridView scroll update
+
+## 3.0.1
+* fixed: ComboBox with label place dropdown menu relate to control, not label 
+* added: 'Scroll' property to DataGrid metadata
+* fixed: 'Background' property of PopupButton work correctly for all PopupButton types
+* fixed: Key events in TextBox
+* added: Parameters make unsubscription correctly and remove from view after it closed
+
+
 ## 3.0
 * renamed: InfinniUI.config.HistoryAPI, InfinniUI.config.Routes, InfinniUI.RouterService, InfinniUI.StringUtils to InfinniUI.config.historyApi, InfinniUI.config.routes, InfinniUI.routerService, InfinniUI.stringUtils
 * added: InfinniUI.extensionPanels service, which help to register ExtensionPanels

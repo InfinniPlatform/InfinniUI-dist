@@ -17333,14 +17333,17 @@ var DataGridView = ListEditorBaseView.extend( {
         var model = this.model;
         var scrollValue = model.get( 'scroll' );
         var scrollableClass = 'pl-datagrid-scrollable';
-        var adaptiveBody = 'pl-adaptive-by-height';
+        var adaptableBody = 'pl-adaptable-by-height';
+        var $head = this.ui.head;
 
         if( scrollValue ) {
             this.$el.addClass( scrollableClass );
-            this.ui.body.addClass( adaptiveBody );
+            this.ui.body.addClass( adaptableBody );
+            $head.css( 'padding-right', this.getHorizontalScrollBarWidth() + 'px' );
         } else {
             this.$el.removeClass( scrollableClass );
-            this.ui.body.removeClass( adaptiveBody );
+            this.ui.body.removeClass( adaptableBody );
+            $head.css( 'padding-right', '' );
         }
     },
 
