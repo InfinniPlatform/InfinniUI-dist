@@ -1,6 +1,9 @@
 Changelog
 =========
 
+## 3.0.3
+fixed: choose date in DatePicker 
+
 ## 3.0.2
 fixed: dataGridView scroll update
 
