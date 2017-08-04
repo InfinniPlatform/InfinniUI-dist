@@ -1,11 +1,13 @@
 Changelog
 =========
+## 3.0.4
+* fixed: DatePicker make wrong timeZone correction 
 
 ## 3.0.3
-fixed: choose date in DatePicker 
+* fixed: choose date in DatePicker 
 
 ## 3.0.2
-fixed: dataGridView scroll update
+* fixed: dataGridView scroll update
 
 ## 3.0.1
 * fixed: ComboBox with label place dropdown menu relate to control, not label 
