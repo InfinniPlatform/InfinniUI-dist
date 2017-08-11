@@ -1,21 +1,23 @@
 Changelog
 =========
+## 3.0.5
+* fixed: InfinniUI.VERSION template
+
 ## 3.0.4
-* fixed: DatePicker make wrong timeZone correction 
+* fixed: DatePicker make wrong timeZone correction
 
 ## 3.0.3
-* fixed: choose date in DatePicker 
+* fixed: choose date in DatePicker
 
 ## 3.0.2
 * fixed: dataGridView scroll update
 
 ## 3.0.1
-* fixed: ComboBox with label place dropdown menu relate to control, not label 
+* fixed: ComboBox with label place dropdown menu relate to control, not label
 * added: 'Scroll' property to DataGrid metadata
 * fixed: 'Background' property of PopupButton work correctly for all PopupButton types
 * fixed: Key events in TextBox
 * added: Parameters make unsubscription correctly and remove from view after it closed
-
 
 ## 3.0
 * renamed: InfinniUI.config.HistoryAPI, InfinniUI.config.Routes, InfinniUI.RouterService, InfinniUI.StringUtils to InfinniUI.config.historyApi, InfinniUI.config.routes, InfinniUI.routerService, InfinniUI.stringUtils
