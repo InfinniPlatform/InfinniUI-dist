@@ -1,5 +1,8 @@
 Changelog
 =========
+## 3.0.7
+* added 'signalRServerUrl' url to InfinniUI.config
+
 ## 3.0.6
 * fixed: Rounding for NumberMask
 

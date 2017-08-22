@@ -5064,12 +5064,13 @@ InfinniUI.TabHeaderOrientation = {
 _.defaults( InfinniUI.config, {
     lang: 'ru-RU',
     cacheMetadata: false, //boolean - enable/disable cache | milliseconds
-    serverUrl: 'http://localhost:9900', //'http://10.0.0.32:9900';
+    serverUrl: 'http://localhost:9900',
+    signalRServerUrl: null,
     configName: 'InfinniUI'
 } );
 
 
-InfinniUI.VERSION = '3.0.6';
+InfinniUI.VERSION = '3.0.7';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -20540,6 +20541,123 @@ var TablePanelView = ContainerView.extend( {
 
 InfinniUI.TablePanelView = TablePanelView;
 
+//####app/controls/tablePanel/row/rowControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function RowControl( parent ) {
+    _.superClass( RowControl, this, parent );
+}
+
+_.inherit( RowControl, ContainerControl );
+
+_.extend( RowControl.prototype, {
+
+    /**
+     * @returns {RowModel}
+     */
+    createControlModel: function() {
+        return new RowModel();
+    },
+
+    /**
+     * @returns {RowView}
+     * @param model
+     */
+    createControlView: function( model ) {
+        return new RowView( { model: model } );
+    }
+
+} );
+
+InfinniUI.RowControl = RowControl;
+
+//####app/controls/tablePanel/row/rowModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var RowModel = ContainerModel.extend( {
+
+    /**
+     *
+     */
+    initialize: function() {
+        ContainerModel.prototype.initialize.apply( this, Array.prototype.slice.call( arguments ) );
+    }
+
+} );
+
+InfinniUI.RowModel = RowModel;
+
+//####app/controls/tablePanel/row/rowView.js
+/**
+ * @constructor
+ * @augments ContainerView
+ */
+var RowView = ContainerView.extend( {
+
+    className: 'pl-row row',
+
+    /**
+     *
+     * @param options
+     */
+    initialize: function( options ) {
+        ContainerView.prototype.initialize.call( this, options );
+    },
+
+    /**
+     *
+     * @returns {RowView}
+     */
+    render: function() {
+        this.prerenderingActions();
+
+        this.removeChildElements();
+
+        this.renderItemsContents();
+
+        this.updateProperties();
+        this.trigger( 'render' );
+
+        this.postrenderingActions();
+        //devblockstart
+        InfinniUI.global.messageBus.send( 'render', { element: this } );
+        //devblockstop
+        return this;
+    },
+
+    /**
+     *
+     */
+    renderItemsContents: function() {
+        var items = this.model.get( 'items' );
+        var itemTemplate = this.model.get( 'itemTemplate' );
+        var that = this;
+        var element;
+
+        items.forEach( function( item, i ) {
+            element = itemTemplate( undefined, { item: item, index: i } );
+            that.addChildElement( element );
+            that.$el
+                .append( element.render() );
+        } );
+    },
+
+    /**
+     *
+     */
+    updateGrouping: function() {
+    }
+
+} );
+
+InfinniUI.RowView = RowView;
+
 //####app/controls/tablePanel/cell/cellControl.js
 /**
  *
@@ -20691,123 +20809,6 @@ var CellView = ContainerView.extend( {
 } );
 
 InfinniUI.CellView = CellView;
-
-//####app/controls/tablePanel/row/rowControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function RowControl( parent ) {
-    _.superClass( RowControl, this, parent );
-}
-
-_.inherit( RowControl, ContainerControl );
-
-_.extend( RowControl.prototype, {
-
-    /**
-     * @returns {RowModel}
-     */
-    createControlModel: function() {
-        return new RowModel();
-    },
-
-    /**
-     * @returns {RowView}
-     * @param model
-     */
-    createControlView: function( model ) {
-        return new RowView( { model: model } );
-    }
-
-} );
-
-InfinniUI.RowControl = RowControl;
-
-//####app/controls/tablePanel/row/rowModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var RowModel = ContainerModel.extend( {
-
-    /**
-     *
-     */
-    initialize: function() {
-        ContainerModel.prototype.initialize.apply( this, Array.prototype.slice.call( arguments ) );
-    }
-
-} );
-
-InfinniUI.RowModel = RowModel;
-
-//####app/controls/tablePanel/row/rowView.js
-/**
- * @constructor
- * @augments ContainerView
- */
-var RowView = ContainerView.extend( {
-
-    className: 'pl-row row',
-
-    /**
-     *
-     * @param options
-     */
-    initialize: function( options ) {
-        ContainerView.prototype.initialize.call( this, options );
-    },
-
-    /**
-     *
-     * @returns {RowView}
-     */
-    render: function() {
-        this.prerenderingActions();
-
-        this.removeChildElements();
-
-        this.renderItemsContents();
-
-        this.updateProperties();
-        this.trigger( 'render' );
-
-        this.postrenderingActions();
-        //devblockstart
-        InfinniUI.global.messageBus.send( 'render', { element: this } );
-        //devblockstop
-        return this;
-    },
-
-    /**
-     *
-     */
-    renderItemsContents: function() {
-        var items = this.model.get( 'items' );
-        var itemTemplate = this.model.get( 'itemTemplate' );
-        var that = this;
-        var element;
-
-        items.forEach( function( item, i ) {
-            element = itemTemplate( undefined, { item: item, index: i } );
-            that.addChildElement( element );
-            that.$el
-                .append( element.render() );
-        } );
-    },
-
-    /**
-     *
-     */
-    updateGrouping: function() {
-    }
-
-} );
-
-InfinniUI.RowView = RowView;
 
 //####app/controls/tabPanel/tabPanelControl.js
 /**
@@ -46070,6 +46071,7 @@ var notificationSubscription = ( function() {
     var onSuccessCb;
     var onErrorCb;
     var isConnected = false;
+    var serverUrl;
 
     /**
      *
@@ -46081,7 +46083,8 @@ var notificationSubscription = ( function() {
         onSuccessCb = onSuccess || onSuccessCb;
         onErrorCb = onError || onErrorCb;
         hubName = newHubName || hubName;
-        connection = $.hubConnection( InfinniUI.config.serverUrl );
+        serverUrl = serverUrl || InfinniUI.config.signalRServerUrl || InfinniUI.config.serverUrl;
+        connection = $.hubConnection( serverUrl );
         hubProxy = connection.createHubProxy( hubName );
 
         if( _.size( subscription ) > 0 ) {
