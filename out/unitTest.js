@@ -6877,6 +6877,22 @@ describe("ObjectUtils", function () {
         });
     });
 });
+describe('ButtonControl', function () {
+    describe('render', function () {
+        it('should render button with correct class', function () {
+            //Given
+            var builder = new InfinniUI.ApplicationBuilder(),
+                button = builder.buildType('Button', {});
+
+            //When
+            var $el = button.render();
+
+            //Then
+            assert.isTrue($el.hasClass('pl-button'));
+        });
+    });
+});
+
 describe('CheckBox', function () {
     var checkbox;
 
@@ -7706,22 +7722,6 @@ describe('Container (Control)', function () {
             assert.equal($layout.find('.pl-text-box-input').eq(1).val(), 'LTE', 'value in template is right');
             assert.equal($layout.find('.pl-text-box-input').eq(2).val(), '2G', 'value in template is right');
         }
-    });
-});
-
-describe('ButtonControl', function () {
-    describe('render', function () {
-        it('should render button with correct class', function () {
-            //Given
-            var builder = new InfinniUI.ApplicationBuilder(),
-                button = builder.buildType('Button', {});
-
-            //When
-            var $el = button.render();
-
-            //Then
-            assert.isTrue($el.hasClass('pl-button'));
-        });
     });
 });
 

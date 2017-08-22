@@ -114,12 +114,13 @@ _.defaults( InfinniUI.config, {
     lang: 'ru-RU',
     maxLengthUrl: 2048,
     cacheMetadata: false, //boolean - enable/disable cache | milliseconds
-    serverUrl: 'http://localhost:9900',//'http://10.0.0.32:9900';
+    serverUrl: 'http://localhost:9900',
+    signalRServerUrl: null,
     configName: 'InfinniUI'
 });
 
 
-InfinniUI.VERSION='2.2.14';
+InfinniUI.VERSION='2.2.15';
 
 //####app/localizations/culture.js
 function Culture(name){
@@ -15848,19 +15849,19 @@ var ImageBoxModel = ControlModel.extend( _.extend({
  * @mixes editorBaseViewMixin
  * @constructor
  */
-var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.extend({}, editorBaseViewMixin, exifRotate, {
+var ImageBoxView = ControlView.extend( /** @lends ImageBoxView.prototype */ _.extend( {}, editorBaseViewMixin, exifRotate, {
 
     className: 'pl-imagebox',
 
-    template: InfinniUI.Template["controls/imageBox/template/imageBox.tpl.html"],
+    template: InfinniUI.Template[ "controls/imageBox/template/imageBox.tpl.html" ],
 
-    UI: _.extend({}, editorBaseViewMixin.UI, {
+    UI: _.extend( {}, editorBaseViewMixin.UI, {
         input: 'input',
         img: 'img',
         file: '.pl-image-file',
         remove: '.pl-image-remove',
         uploadButton: '.pl-image-file-upload-button'
-    }),
+    } ),
 
     events: {
         'change input': 'onChangeFileHandler',
@@ -15869,16 +15870,16 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
 
 
     initHandlersForProperties: function() {
-        ControlView.prototype.initHandlersForProperties.call(this);
+        ControlView.prototype.initHandlersForProperties.call( this );
 
-        this.listenTo(this.model, 'change:value', this.updateValue);
-        this.listenTo(this.model, 'change:hintText', this.updateHintText);
-        this.listenTo(this.model, 'change:errorText', this.updateErrorText);
-        this.listenTo(this.model, 'change:warningText', this.updateWarningText);
+        this.listenTo( this.model, 'change:value', this.updateValue );
+        this.listenTo( this.model, 'change:hintText', this.updateHintText );
+        this.listenTo( this.model, 'change:errorText', this.updateErrorText );
+        this.listenTo( this.model, 'change:warningText', this.updateWarningText );
     },
 
     updateProperties: function() {
-        ControlView.prototype.updateProperties.call(this);
+        ControlView.prototype.updateProperties.call( this );
 
         this.updateValue();
         this.updateHintText();
@@ -15887,45 +15888,45 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
     },
 
     updateFocusable: function() {
-        var focusable = this.model.get('focusable');
+        var focusable = this.model.get( 'focusable' );
 
         if( focusable ) {
-            this.ui.file.attr('tabindex', 0);
+            this.ui.file.attr( 'tabindex', 0 );
         } else {
-            this.ui.file.removeAttr('tabindex');
+            this.ui.file.removeAttr( 'tabindex' );
         }
     },
 
     updateText: function() {
-        var text = this.model.get('text');
-        this.ui.uploadButton.text(text);
+        var text = this.model.get( 'text' );
+        this.ui.uploadButton.text( text );
     },
 
     updateEnabled: function() {
-        ControlView.prototype.updateEnabled.call(this);
-        var isEnabled = this.model.get('enabled');
-        this.ui.input.prop('disabled', !isEnabled);
+        ControlView.prototype.updateEnabled.call( this );
+        var isEnabled = this.model.get( 'enabled' );
+        this.ui.input.prop( 'disabled', !isEnabled );
     },
 
     updateValue: function() {
         var that = this;
         var model = this.model;
-        var value = model.get('value');
+        var value = model.get( 'value' );
 
         if( value && typeof value === 'object' ) {
             //Native FileAPI File instance, start loading preview
             this.stopLoadingFile();
-            var fileLoader = this.loadPreview(value);
+            var fileLoader = this.loadPreview( value );
 
             this.fileLoader = fileLoader;
 
-            fileLoader.then(function(file, content) {
-                that.updateUrl(content);
-            }.bind(this), function(err) {
-                console.log(err);
+            fileLoader.then( function( file, content ) {
+                that.updateUrl( content );
+            }.bind( this ), function( err ) {
+                console.log( err );
             } );
         } else {
-            this.updateUrl(value);
+            this.updateUrl( value );
         }
     },
 
@@ -15933,18 +15934,18 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
         this.ui.img.css( 'transform', this.rotation[ value ] );
     },
 
-    updateUrl: function(url) {
+    updateUrl: function( url ) {
         var that = this;
-        this.ui.img.get(0).onload = function() {
+        this.ui.img.get( 0 ).onload = function() {
             that.updateRotation( function() {
                 that.setPerfectPosition();
             } );
         };
 
-        this.ui.img.attr('src', url);
+        this.ui.img.attr( 'src', url );
         var none = url === null || typeof url === 'undefined';
 
-        this.$el.toggleClass('pl-empty', none);
+        this.$el.toggleClass( 'pl-empty', none );
     },
 
     updateRotation: function( callback ) {
@@ -15985,52 +15986,52 @@ var ImageBoxView = ControlView.extend(/** @lends ImageBoxView.prototype */ _.ext
         }
     },
 
-    loadPreview: function(file) {
+    loadPreview: function( file ) {
         var defer = $.Deferred();
         var reader = new FileReader();
-        reader.onload = (function(file) {
-            return function(event) {
-                defer.resolve(file, event.target.result);
+        reader.onload = (function( file ) {
+            return function( event ) {
+                defer.resolve( file, event.target.result );
             };
-        }(file));
-        reader.onerror = function(event) {
-            defer.reject(event);
+        }( file ));
+        reader.onerror = function( event ) {
+            defer.reject( event );
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL( file );
         return defer.promise();
     },
 
     onClickRemoveImageHandler: function() {
         this.model.removeFile();
-        this.ui.input.val('');
+        this.ui.input.val( '' );
     },
 
     onChangeFileHandler: function() {
         var file = null;
-        var files = this.ui.input[0].files;
+        var files = this.ui.input[ 0 ].files;
 
-        if( files && files[0] ) {
-            file = files[0];
+        if( files && files[ 0 ] ) {
+            file = files[ 0 ];
         }
-        this.model.setFile(file);
+        this.model.setFile( file );
     },
 
     render: function() {
         this.prerenderingActions();
 
-        this.renderTemplate(this.template);
+        this.renderTemplate( this.template );
         this.updateProperties();
 
-        this.trigger('render');
+        this.trigger( 'render' );
 
         this.postrenderingActions();
         //devblockstart
-        window.InfinniUI.global.messageBus.send('render', {element: this});
+        window.InfinniUI.global.messageBus.send( 'render', { element: this } );
         //devblockstop
         return this;
     }
 
-}));
+} ) );
 
 //####app/controls/indeterminateCheckBox/indeterminateCheckBoxControl.js
 function IndeterminateCheckBoxControl(parent) {
@@ -26969,8 +26970,8 @@ _.extend(ViewPanelBuilder.prototype, {
 InfinniUI.global.containers = {};
 
 //####app/elements/dataGrid/dataGridRow/dataGridRow.js
-function DataGridRow() {
-    _.superClass(DataGridRow, this);
+function DataGridRow( parent ) {
+    _.superClass(DataGridRow, this, parent);
 
     this._transformRowProperties({
         rowBackground: 'background',
@@ -35103,13 +35104,15 @@ var notificationSubscription = (function() {
 			connection,
 			onSuccessCb,
 			onErrorCb,
-			isConnected = false;
+			isConnected = false,
+			serverUrl;
 
 	var setUpConnection = function(newHubName, onSuccess, onError) {
 		onSuccessCb = onSuccess || onSuccessCb;
 		onErrorCb = onError || onErrorCb;
 		hubName = newHubName || hubName;
-		connection = $.hubConnection(window.InfinniUI.config.serverUrl);
+		serverUrl = serverUrl || window.InfinniUI.config.signalRServerUrl || window.InfinniUI.config.serverUrl;
+		connection = $.hubConnection(serverUrl);
 		hubProxy = connection.createHubProxy(hubName);
 
 		if( _.size(subscription) > 0 ) {
@@ -35154,7 +35157,7 @@ var notificationSubscription = (function() {
 				return;
 			}
 		}
-		
+
 		if( subscription[routingKey] ) {
 			delete subscription[routingKey];
 			if( hubProxy ) {
