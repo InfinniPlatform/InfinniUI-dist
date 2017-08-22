@@ -1,5 +1,8 @@
 Changelog
 =========
+## 3.0.6
+* fixed: Rounding for NumberMask
+
 ## 3.0.5
 * fixed: InfinniUI.VERSION template
 

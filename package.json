@@ -1,6 +1,6 @@
 {
   "name": "infinni-ui",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "description": "Framework for lightning fast web apps creation",
   "keywords": [
     "infinniui"
@@ -37,7 +37,7 @@
     "browser-sync": "^2.12.x",
     "chai": "^3.5.0",
     "del": "^2.2.0",
-    "edit-mask": "https://bitbucket.org/puritania74/edit-mask.git",
+    "edit-mask": "https://bitbucket.org/puritania74/edit-mask.git#0.0.2",
     "eslint": "^3.19.0",
     "eslint-plugin-filenames": "^1.2.0",
     "gulp": "git+https://git@github.com/gulpjs/gulp/#4.0",

@@ -471,7 +471,7 @@ var NumberFormatter = function () {
         if (isEmpty_1.isEmpty(value)) {
             return this.formatEmpty(options);
         } else {
-            var text = value.toString(10).split('.').join(this.getDecimalSeparator());
+            var text = value.toFixed(options.decimalDigits).split('.').join(this.getDecimalSeparator());
             return this.format(text, options);
         }
     };
@@ -4407,9 +4407,11 @@ var Localization = function () {
         var localization;
         switch (lang) {
             case 'RU':
+            case 'RU-RU':
                 localization = new ru_1.Ru();
                 break;
             case 'EN':
+            case 'EN-US':
                 localization = new en_1.En();
                 break;
             default:
@@ -5067,7 +5069,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.5';
+InfinniUI.VERSION = '3.0.6';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
