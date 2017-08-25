@@ -120,7 +120,7 @@ _.defaults( InfinniUI.config, {
 });
 
 
-InfinniUI.VERSION='2.2.15';
+InfinniUI.VERSION='2.2.16';
 
 //####app/localizations/culture.js
 function Culture(name){
@@ -8936,6 +8936,101 @@ _.extend(AuthenticationProvider.prototype, {
     },
 
     /**
+     * Осуществляет вход пользователя в систему по любому идентификатору
+     *
+     * @param {string} userKey - идентификатор (id, имя пользователя, email, номер телефона)
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signIn: function(userKey, password, remember, resultCallback, errorCallback) {
+        var signInForm = {
+            UserKey: userKey,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest('/Auth/SignIn', signInForm, resultCallback, errorCallback);
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему Id
+     *
+     * @param {string} userId - идентификатор пользователя
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInById: function(userId, password, remember, resultCallback, errorCallback) {
+        var signInForm = {
+            Id: userId,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest('/Auth/SignInById', signInForm, resultCallback, errorCallback);
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по имени
+     *
+     * @param {string] userName - имя пользователя
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInByUserName: function(userName, password, remember, resultCallback, errorCallback) {
+        var signInForm = {
+            UserName: userName,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest('/Auth/SignInByUserName', signInForm, resultCallback, errorCallback);
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по электронной почте
+     *
+     * @param {string} email - электронная почта
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInByEmail: function(email, password, remember, resultCallback, errorCallback) {
+        var signInForm = {
+            Email: email,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest('/Auth/SignInByEmail', signInForm, resultCallback, errorCallback);
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по номеру телефона
+     *
+     * @param {string} phoneNumber - номер телефона
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInByPhoneNumber: function(phoneNumber, password, remember, resultCallback, errorCallback) {
+        var signInForm = {
+            PhoneNumber: phoneNumber,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest('/Auth/SignInByPhoneNumber', signInForm, resultCallback, errorCallback);
+    },
+
+    /**
           * Возвращает форму входа пользователя в систему через внешний провайдер.
           *
           * @public
@@ -13231,6 +13326,131 @@ var TabPanelView = ContainerView.extend(/** @lends TabPanelView.prototype */ {
 
 });
 
+//####app/controls/tabPanel/tabPage/tabPageControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function TabPageControl(parent) {
+    _.superClass(TabPageControl, this, parent);
+}
+
+_.inherit(TabPageControl, ContainerControl);
+
+_.extend(TabPageControl.prototype, /** @lends TabPageControl.prototype */ {
+
+
+    createControlModel: function () {
+        return new TabPageModel();
+    },
+
+    createControlView: function (model) {
+        return new TabPageView({model: model});
+    }
+
+
+});
+
+
+//####app/controls/tabPanel/tabPage/tabPageModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var TabPageModel = ContainerModel.extend(/** @lends TabPageModel.prototype */ {
+
+    initialize: function () {
+        ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
+    },
+
+    defaults: _.defaults(
+        {
+            canClose: false,
+            selected: false
+        },
+        ContainerModel.prototype.defaults
+    )
+
+});
+//####app/controls/tabPanel/tabPage/tabPageView.js
+/**
+ * @class
+ * @augments ControlView
+ */
+var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
+
+    className: 'pl-tabpage hidden',
+
+    template: InfinniUI.Template["controls/tabPanel/tabPage/template/tabPage.tpl.html"],
+
+    UI: {
+
+    },
+
+    initHandlersForProperties: function () {
+        ContainerView.prototype.initHandlersForProperties.call(this);
+        this.listenTo(this.model, 'change:selected', this.updateSelected);
+    },
+
+    updateProperties: function () {
+        ContainerView.prototype.updateProperties.call(this);
+        this.updateSelected();
+    },
+
+    render: function () {
+        this.prerenderingActions();
+
+        this.removeChildElements();
+
+        this.$el.html(this.template({
+            items: this.model.get('items')
+        }));
+        this.renderItemsContents();
+
+        this.bindUIElements();
+
+        this.postrenderingActions();
+
+        this.trigger('render');
+        this.updateProperties();
+        //devblockstart
+        window.InfinniUI.global.messageBus.send('render', {element: this});
+        //devblockstop
+        return this;
+    },
+
+    renderItemsContents: function () {
+        var $items = this.$el.find('.pl-tabpage-i'),
+            items = this.model.get('items'),
+            itemTemplate = this.model.get('itemTemplate'),
+            that = this,
+            element, item;
+
+        $items.each(function (i, el) {
+            item = items.getByIndex(i);
+            element = itemTemplate(undefined, {item: item, index: i});
+            that.addChildElement(element);
+            $(el)
+                .append(element.render());
+        });
+    },
+
+    updateSelected: function () {
+        var selected = this.model.get('selected');
+        this.$el.toggleClass('hidden', !selected);
+    },
+
+    /**
+     * @protected
+     */
+    updateGrouping: function () {
+
+    }
+
+});
+
 //####app/controls/tabPanel/tabHeader/tabHeaderView.js
 var TabHeaderModel = Backbone.Model.extend({
 
@@ -13365,131 +13585,6 @@ var TabHeaderView = Backbone.View.extend({
 });
 
 _.extend(TabHeaderView.prototype, bindUIElementsMixin);
-
-//####app/controls/tabPanel/tabPage/tabPageControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function TabPageControl(parent) {
-    _.superClass(TabPageControl, this, parent);
-}
-
-_.inherit(TabPageControl, ContainerControl);
-
-_.extend(TabPageControl.prototype, /** @lends TabPageControl.prototype */ {
-
-
-    createControlModel: function () {
-        return new TabPageModel();
-    },
-
-    createControlView: function (model) {
-        return new TabPageView({model: model});
-    }
-
-
-});
-
-
-//####app/controls/tabPanel/tabPage/tabPageModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var TabPageModel = ContainerModel.extend(/** @lends TabPageModel.prototype */ {
-
-    initialize: function () {
-        ContainerModel.prototype.initialize.apply(this, Array.prototype.slice.call(arguments));
-    },
-
-    defaults: _.defaults(
-        {
-            canClose: false,
-            selected: false
-        },
-        ContainerModel.prototype.defaults
-    )
-
-});
-//####app/controls/tabPanel/tabPage/tabPageView.js
-/**
- * @class
- * @augments ControlView
- */
-var TabPageView = ContainerView.extend(/** @lends TabPageView.prototype */ {
-
-    className: 'pl-tabpage hidden',
-
-    template: InfinniUI.Template["controls/tabPanel/tabPage/template/tabPage.tpl.html"],
-
-    UI: {
-
-    },
-
-    initHandlersForProperties: function () {
-        ContainerView.prototype.initHandlersForProperties.call(this);
-        this.listenTo(this.model, 'change:selected', this.updateSelected);
-    },
-
-    updateProperties: function () {
-        ContainerView.prototype.updateProperties.call(this);
-        this.updateSelected();
-    },
-
-    render: function () {
-        this.prerenderingActions();
-
-        this.removeChildElements();
-
-        this.$el.html(this.template({
-            items: this.model.get('items')
-        }));
-        this.renderItemsContents();
-
-        this.bindUIElements();
-
-        this.postrenderingActions();
-
-        this.trigger('render');
-        this.updateProperties();
-        //devblockstart
-        window.InfinniUI.global.messageBus.send('render', {element: this});
-        //devblockstop
-        return this;
-    },
-
-    renderItemsContents: function () {
-        var $items = this.$el.find('.pl-tabpage-i'),
-            items = this.model.get('items'),
-            itemTemplate = this.model.get('itemTemplate'),
-            that = this,
-            element, item;
-
-        $items.each(function (i, el) {
-            item = items.getByIndex(i);
-            element = itemTemplate(undefined, {item: item, index: i});
-            that.addChildElement(element);
-            $(el)
-                .append(element.render());
-        });
-    },
-
-    updateSelected: function () {
-        var selected = this.model.get('selected');
-        this.$el.toggleClass('hidden', !selected);
-    },
-
-    /**
-     * @protected
-     */
-    updateGrouping: function () {
-
-    }
-
-});
 
 //####app/controls/treeView/treeViewControl.js
 function TreeViewControl() {
