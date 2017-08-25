@@ -206,7 +206,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.8';
+InfinniUI.VERSION = '3.0.9';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -656,6 +656,101 @@ _.extend( AuthenticationProvider.prototype, {
         };
 
         this.sendPostRequestForServiceResult( '/Auth/SignInInternal', signInInternalForm, resultCallback, errorCallback );
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по любому идентификатору
+     *
+     * @param {string} userKey - идентификатор (id, имя пользователя, email, номер телефона)
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signIn: function( userKey, password, remember, resultCallback, errorCallback ) {
+        var signInForm = {
+            UserKey: userKey,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest( '/Auth/SignIn', signInForm, resultCallback, errorCallback );
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему Id
+     *
+     * @param {string} userId - идентификатор пользователя
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInById: function( userId, password, remember, resultCallback, errorCallback ) {
+        var signInForm = {
+            Id: userId,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest( '/Auth/SignInById', signInForm, resultCallback, errorCallback );
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по имени
+     *
+     * @param {string} userName - имя пользователя
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInByUserName: function( userName, password, remember, resultCallback, errorCallback ) {
+        var signInForm = {
+            UserName: userName,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest( '/Auth/SignInByUserName', signInForm, resultCallback, errorCallback );
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по электронной почте
+     *
+     * @param {string} email - электронная почта
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInByEmail: function( email, password, remember, resultCallback, errorCallback ) {
+        var signInForm = {
+            Email: email,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest( '/Auth/SignInByEmail', signInForm, resultCallback, errorCallback );
+    },
+
+    /**
+     * Осуществляет вход пользователя в систему по номеру телефона
+     *
+     * @param {string} phoneNumber - номер телефона
+     * @param {string} password - пароль
+     * @param {string} remember - запомнить
+     * @param {function} resultCallback - при успешном результате
+     * @param {function} errorCallback - при неудачном результате
+     */
+    signInByPhoneNumber: function( phoneNumber, password, remember, resultCallback, errorCallback ) {
+        var signInForm = {
+            PhoneNumber: phoneNumber,
+            Password: password,
+            Remember: remember
+        };
+
+        this.sendPostRequest( '/Auth/SignInByPhoneNumber', signInForm, resultCallback, errorCallback );
     },
 
     /**
@@ -15677,123 +15772,6 @@ var TablePanelView = ContainerView.extend( {
 
 InfinniUI.TablePanelView = TablePanelView;
 
-//####app/controls/tablePanel/row/rowControl.js
-/**
- *
- * @param parent
- * @constructor
- * @augments ContainerControl
- */
-function RowControl( parent ) {
-    _.superClass( RowControl, this, parent );
-}
-
-_.inherit( RowControl, ContainerControl );
-
-_.extend( RowControl.prototype, {
-
-    /**
-     * @returns {RowModel}
-     */
-    createControlModel: function() {
-        return new RowModel();
-    },
-
-    /**
-     * @returns {RowView}
-     * @param model
-     */
-    createControlView: function( model ) {
-        return new RowView( { model: model } );
-    }
-
-} );
-
-InfinniUI.RowControl = RowControl;
-
-//####app/controls/tablePanel/row/rowModel.js
-/**
- * @constructor
- * @augments ContainerModel
- */
-var RowModel = ContainerModel.extend( {
-
-    /**
-     *
-     */
-    initialize: function() {
-        ContainerModel.prototype.initialize.apply( this, Array.prototype.slice.call( arguments ) );
-    }
-
-} );
-
-InfinniUI.RowModel = RowModel;
-
-//####app/controls/tablePanel/row/rowView.js
-/**
- * @constructor
- * @augments ContainerView
- */
-var RowView = ContainerView.extend( {
-
-    className: 'pl-row row',
-
-    /**
-     *
-     * @param options
-     */
-    initialize: function( options ) {
-        ContainerView.prototype.initialize.call( this, options );
-    },
-
-    /**
-     *
-     * @returns {RowView}
-     */
-    render: function() {
-        this.prerenderingActions();
-
-        this.removeChildElements();
-
-        this.renderItemsContents();
-
-        this.updateProperties();
-        this.trigger( 'render' );
-
-        this.postrenderingActions();
-        //devblockstart
-        InfinniUI.global.messageBus.send( 'render', { element: this } );
-        //devblockstop
-        return this;
-    },
-
-    /**
-     *
-     */
-    renderItemsContents: function() {
-        var items = this.model.get( 'items' );
-        var itemTemplate = this.model.get( 'itemTemplate' );
-        var that = this;
-        var element;
-
-        items.forEach( function( item, i ) {
-            element = itemTemplate( undefined, { item: item, index: i } );
-            that.addChildElement( element );
-            that.$el
-                .append( element.render() );
-        } );
-    },
-
-    /**
-     *
-     */
-    updateGrouping: function() {
-    }
-
-} );
-
-InfinniUI.RowView = RowView;
-
 //####app/controls/tablePanel/cell/cellControl.js
 /**
  *
@@ -15945,6 +15923,123 @@ var CellView = ContainerView.extend( {
 } );
 
 InfinniUI.CellView = CellView;
+
+//####app/controls/tablePanel/row/rowControl.js
+/**
+ *
+ * @param parent
+ * @constructor
+ * @augments ContainerControl
+ */
+function RowControl( parent ) {
+    _.superClass( RowControl, this, parent );
+}
+
+_.inherit( RowControl, ContainerControl );
+
+_.extend( RowControl.prototype, {
+
+    /**
+     * @returns {RowModel}
+     */
+    createControlModel: function() {
+        return new RowModel();
+    },
+
+    /**
+     * @returns {RowView}
+     * @param model
+     */
+    createControlView: function( model ) {
+        return new RowView( { model: model } );
+    }
+
+} );
+
+InfinniUI.RowControl = RowControl;
+
+//####app/controls/tablePanel/row/rowModel.js
+/**
+ * @constructor
+ * @augments ContainerModel
+ */
+var RowModel = ContainerModel.extend( {
+
+    /**
+     *
+     */
+    initialize: function() {
+        ContainerModel.prototype.initialize.apply( this, Array.prototype.slice.call( arguments ) );
+    }
+
+} );
+
+InfinniUI.RowModel = RowModel;
+
+//####app/controls/tablePanel/row/rowView.js
+/**
+ * @constructor
+ * @augments ContainerView
+ */
+var RowView = ContainerView.extend( {
+
+    className: 'pl-row row',
+
+    /**
+     *
+     * @param options
+     */
+    initialize: function( options ) {
+        ContainerView.prototype.initialize.call( this, options );
+    },
+
+    /**
+     *
+     * @returns {RowView}
+     */
+    render: function() {
+        this.prerenderingActions();
+
+        this.removeChildElements();
+
+        this.renderItemsContents();
+
+        this.updateProperties();
+        this.trigger( 'render' );
+
+        this.postrenderingActions();
+        //devblockstart
+        InfinniUI.global.messageBus.send( 'render', { element: this } );
+        //devblockstop
+        return this;
+    },
+
+    /**
+     *
+     */
+    renderItemsContents: function() {
+        var items = this.model.get( 'items' );
+        var itemTemplate = this.model.get( 'itemTemplate' );
+        var that = this;
+        var element;
+
+        items.forEach( function( item, i ) {
+            element = itemTemplate( undefined, { item: item, index: i } );
+            that.addChildElement( element );
+            that.$el
+                .append( element.render() );
+        } );
+    },
+
+    /**
+     *
+     */
+    updateGrouping: function() {
+    }
+
+} );
+
+InfinniUI.RowView = RowView;
 
 //####app/controls/tabPanel/tabPanelControl.js
 /**

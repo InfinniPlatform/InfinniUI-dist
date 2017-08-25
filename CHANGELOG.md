@@ -1,5 +1,8 @@
 Changelog
 =========
+## 3.0.9
+* added: more sign in methods (support InfinniPlatform >= 2.4)
+
 ## 3.0.8
 * fixed: toggling sign in NumberMask by pressing backspace and delete keys
 
