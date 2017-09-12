@@ -206,7 +206,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.9';
+InfinniUI.VERSION = '3.0.10';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -808,8 +808,10 @@ _.extend( AuthenticationProvider.prototype, {
         };
 
         this.sendPostRequestForServiceResult( '/Auth/SignOut', null, function() {
-            InfinniUI.user.onReadyDeferred = $.Deferred();
-            InfinniUI.user.onReadyDeferred.resolve( null );
+            if( typeof InfinniUI.user !== 'undefined' && InfinniUI.user !== null ) {
+                InfinniUI.user.onReadyDeferred = $.Deferred();
+                InfinniUI.user.onReadyDeferred.resolve( null );
+            }
 
             var args = _.toArray( arguments );
             if( resultCallback ) {

@@ -1,5 +1,8 @@
 Changelog
 =========
+## 3.0.10
+* fixed: sign out issue when InfinniUI.user not defined
+
 ## 3.0.9
 * added: more sign in methods (support InfinniPlatform >= 2.4)
 
@@ -42,12 +45,40 @@ Changelog
 * added: InfinniUI.config.cacheMetadata property, that allow to turn off cache of the requested pages by the browser
 * added: 'CanExecute' property to Actions metadata
 * changed: 'ComboBox' wait for the moment when DataSource get results before show the values
-* added: new DataSource 'LocalStorageDataSource'
-* changed: 'Script' property can be only string, syntax with object not supported
+* added: new DataSource 'LocalStorageDataSource'. It can be used like 'ObjectDataSource'. It saves data to brawser LocalStorage.
+* changed: 'Script' property can be string or action, syntax with object not supported. 
+
+Syntax like that is not correct now:
+
+```javascript
+    "Scripts": [{
+        "Name": "alertAction",
+        "Body": "alert(args.source.getName());"
+    }]
+```
+
+
 * added: InfinniUI.ValidationResult
 * added: new action 'CreateItemAction'
 * added: 'Filter' and 'FilterParams' properties to 'ObjectDataSource' metadata
 * changed: 'Action' can be set instead of 'Script'
+
+```javascript
+    {
+        "Button": {
+            "OnClick": {
+                "OpenAction": {
+                    "LinkView": {
+                        "InlineView": {
+                            // ...
+                        }
+                    }
+                }
+            }
+        }
+    }
+```
+
 * added: 'Localizations', you can extend it or/and add something new to it
 * changed: display format syntax, use '${format}' instead of '{format}'
 * added: ability to use expressions (http://infinniui-en.readthedocs.io/en/latest/Core/JSExpression/index.html)
@@ -74,16 +105,16 @@ Changelog
 * fixed: When click on any 'TextBox' point, cursor doesn't jump to the begin of the input field
 * added: 'Replace' property to 'RouteToAction' metadata
 * fixed: 'ListBox' correctly work when 'Enabled' property is set
-* changed: 'ObjectDataSource', 'MetadataDataSource', 'DocumentDataSource', 'RestDataSource', 'ServerActionProvider' have default providers, you can override them with InfinniUI.providerRegister
+* changed: 'ObjectDataSource', 'MetadataDataSource', 'DocumentDataSource', 'RestDataSource', 'ServerActionProvider' have default providers, you don't need register providers by yourself anymore, but you can override them with InfinniUI.providerRegister if needed
 * changed: 'AddAction' can work without 'DestinationValue' property ('DestinationValue' is not required now)
-* changed:'PopupButton' default color is changed
+* changed: 'PopupButton' default color is changed
 * added: 'Enabled' property to 'TabPage' metadata
 * added: 'CollapseChanger' property to 'Panel' metadata
 * removed: 'CollapsibleArea' property from 'Panel' metadata
 * changed: 'Parameter' can be DataBinding's source for 'ListEditorBase'
 * added: 'AdditionalResult' property to 'DocumentDataSource'
 * added: 'OnProviderError' property to DataSources metadata
-* added: 'onProviderError' method to DataSources
+* added: 'OnProviderError' method to DataSources
 * fixed: 'setFocused' method of 'TextBox'
 * changed: 'ServerAction' can work without 'Origin' property('Origin' is not required now)
 * added: 'setContext', 'setParams', 'addParams' methods to InfinniUI.routerService
