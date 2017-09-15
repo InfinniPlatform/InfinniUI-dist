@@ -1,5 +1,9 @@
 Changelog
 =========
+
+## 3.0.11
+* removed: memory leaks of container based elements
+
 ## 3.0.10
 * fixed: sign out issue when InfinniUI.user not defined
 
