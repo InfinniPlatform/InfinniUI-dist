@@ -1,6 +1,9 @@
 Changelog
 =========
 
+## 3.0.12
+* fixed: ComboBox's drop down container doesn't stretch to the width of the parent
+
 ## 3.0.11
 * removed: memory leaks of container based elements
 
@@ -50,7 +53,7 @@ Changelog
 * added: 'CanExecute' property to Actions metadata
 * changed: 'ComboBox' wait for the moment when DataSource get results before show the values
 * added: new DataSource 'LocalStorageDataSource'. It can be used like 'ObjectDataSource'. It saves data to brawser LocalStorage.
-* changed: 'Script' property can be string or action, syntax with object not supported. 
+* changed: 'Script' property can be string or action, syntax with object not supported.
 
 Syntax like that is not correct now:
 

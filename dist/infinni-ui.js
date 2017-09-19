@@ -4,12 +4,13 @@ window["InfinniUI"] = window["InfinniUI"] || {};
 window["InfinniUI"]["Template"] = window["InfinniUI"]["Template"] || {};
 window["InfinniUI"]["Template"]["controls/loaderIndicator/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div id="loaderIndicator" style="display:none;">\n    <div class="cssload-spin-box"></div>\n</div>';}return __p}
 window["InfinniUI"]["Template"]["linkView/template/dialog.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) { function dialogWidthClass(widthValue){    if(widthValue == 'small'){        return 'modal-sm';    }    if(widthValue == 'large'){        return 'modal-lg';    }    return '';}function dialogWidthValue(widthValue){    if(widthValue.search(/\d/) == 0){        return 'width:' + widthValue + ';';    }else{        return '';    }} ;__p += '\n\n<div class="modal container modal-scrollable" id="full-width" tabindex="-1" role="dialog" aria-hidden="false">\n    <div class="modal-dialog ' +((__t = ( dialogWidthClass(dialogWidth) )) == null ? '' : __t) +'" style="' +((__t = ( dialogWidthValue(dialogWidth) )) == null ? '' : __t) +'">\n        <div class="modal-content">\n            <div class="modal-header">\n                <button type="button" class="close firstfocuselementinmodal pl-close-modal">\n                    <span aria-hidden="true">&times;</span>\n                </button>\n                <h4 class="modal-title"></h4>\n            </div>\n            <div class="modal-body"></div>\n        </div>\n    </div>\n</div>';}return __p}
-window["InfinniUI"]["Template"]["controls/checkBox/template/checkBox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<div class="checkbox">\r\n    <label>\r\n        <input type="checkbox" id="' +__e( guid ) +'">\r\n        <span class="checkbox-custom-body"></span>\r\n        <span class="checkbox-label"></span>\r\n    </label>\r\n</div>';}return __p}
-window["InfinniUI"]["Template"]["controls/comboBox/template/combobox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<label class="pl-control-label" for="' +__e( guid ) +'"></label>\n\n<div class="input-group control-wrap">\n    <div class="pl-control form-control" id="' +__e( guid ) +'">\n        <div class="pl-combobox__value"></div>\n    </div>\n    <span class="pl-combobox__clear input-group-addon"><i class="fa fa-times"></i></span>\n    <span class="pl-combobox__grip input-group-addon"><i class="fa fa-chevron-down"></i></span>\n</div>\n';}return __p}
 window["InfinniUI"]["Template"]["controls/buttonEdit/template/textBoxArea.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<label class="pl-control-label" for="' +__e( guid ) +'"></label>\r\n<textarea class="pl-control pl-control-editor pl-editor form-control pl-text-area-input" id="' +__e( guid ) +'"></textarea>\r\n\r\n<div class="pl-control-hint-text help-block hidden"></div>\r\n<div class="pl-control-error-text help-block hidden"></div>\r\n<div class="pl-control-warning-text help-block hidden"></div>';}return __p}
 window["InfinniUI"]["Template"]["controls/buttonEdit/template/textBoxInput.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<label class="pl-control-label" for="' +__e( guid ) +'"></label>\r\n\r\n<div class="input-group pl-button-edit-group">\r\n    <input class="pl-control form-control pl-control-editor pl-editor pl-text-box-input pl-button-edit-group__control" type="text" id="' +__e( guid ) +'">\r\n    <span class="pl-button-edit-button pl-button-edit-button_clear input-group-addon">\r\n        <i class="pl-button-edit-button__icon pl-button-edit-button__icon_clear fa fa-times"></i>\r\n    </span>\r\n    <span class="pl-button-edit-button pl-button-edit-button_action input-group-addon">\r\n        <i class="pl-button-edit-button__icon pl-button-edit-button__icon_action fa"></i>\r\n    </span>\r\n</div>\r\n\r\n<div class="pl-control-hint-text help-block hidden"></div>\r\n<div class="pl-control-error-text help-block hidden"></div>\r\n<div class="pl-control-warning-text help-block hidden"></div>\r\n\r\n\r\n';}return __p}
+window["InfinniUI"]["Template"]["controls/checkBox/template/checkBox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<div class="checkbox">\r\n    <label>\r\n        <input type="checkbox" id="' +__e( guid ) +'">\r\n        <span class="checkbox-custom-body"></span>\r\n        <span class="checkbox-label"></span>\r\n    </label>\r\n</div>';}return __p}
+window["InfinniUI"]["Template"]["controls/comboBox/template/combobox.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __e = _.escape;with (obj) {__p += '<label class="pl-control-label" for="' +__e( guid ) +'"></label>\n\n<div class="input-group control-wrap">\n    <div class="pl-control form-control" id="' +__e( guid ) +'">\n        <div class="pl-combobox__value"></div>\n    </div>\n    <span class="pl-combobox__clear input-group-addon"><i class="fa fa-times"></i></span>\n    <span class="pl-combobox__grip input-group-addon"><i class="fa fa-chevron-down"></i></span>\n</div>\n';}return __p}
 window["InfinniUI"]["Template"]["controls/contextMenu/template/contextMenu.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) {__p += '<div class="pl-popup-button__dropdown">\n    <ul class="pl-popup-button__items dropdown-menu">\n        '; items.forEach(function(item, index){;__p += '\n        <li class="pl-popup-button__item"></li>\n        ';});;__p += '\n    </ul>\n</div>\n';}return __p}
 window["InfinniUI"]["Template"]["controls/dataGrid/template/dataGrid.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-datagrid__head">\n    <div class="pl-datagrid-container pl-datagrid-container_head">\n        <table class="pl-datagrid-table pl-datagrid-table_head table">\n            <thead>\n            <tr class="pl-datagrid-row pl-datagrid-row_first">\n                <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n            </tr>\n            <tr class="pl-datagrid-row pl-datagrid-row_header">\n                <th class="pl-datagrid-row__cell pl-datagrid-row__cell_toggle">\n                    <div class="pl-datagrid-toggle  pl-datagrid-toggle_all">\n                        <input class="pl-datagrid-toggle__button" type="checkbox"><span></span>\n                    </div>\n                </th>\n            </tr>\n            </thead>\n        </table>\n    </div>\n</div>\n<div class="pl-datagrid__body">\n    <table class="pl-datagrid-table pl-datagrid-table_body table">\n        <tbody>\n        <tr class="pl-datagrid-row pl-datagrid-row_first">\n            <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n        </tr>\n        </tbody>\n    </table>\n</div>\n\n';}return __p}
+window["InfinniUI"]["Template"]["controls/dataGrid/template/dataGridWithoutScroll.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-datagrid__body">\n    <table class="pl-datagrid-table pl-datagrid-table_body table">\n        <thead>\n        <tr class="pl-datagrid-row pl-datagrid-row_first">\n            <td class="pl-datagrid-row__cell pl-datagrid-row__cell_width pl-datagrid-row__cell_checker" style=""></td>\n        </tr>\n        <tr class="pl-datagrid-row pl-datagrid-row_header">\n            <th class="pl-datagrid-row__cell pl-datagrid-row__cell_toggle">\n                <div class="pl-datagrid-toggle pl-datagrid-toggle_all">\n                    <input class="pl-datagrid-toggle__button" type="checkbox"><span></span>\n                </div>\n            </th>\n        </tr>\n        </thead>\n        <tbody>\n        </tbody>\n    </table>\n</div>\n';}return __p}
 window["InfinniUI"]["Template"]["controls/dataGrid/template/headerCell.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<th class="pl-datagrid-row__cell"></th>';}return __p}
 window["InfinniUI"]["Template"]["controls/dataGrid/template/sizeCell.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<td class="pl-datagrid-row__cell pl-datagrid-row__cell_width" style=""></td>';}return __p}
 window["InfinniUI"]["Template"]["controls/dataNavigation/template/dataNavigation.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-data-navigation-size">\r\n\r\n    <div class="pl-page-size">\r\n\r\n    </div>\r\n</div>\r\n\r\n<div class="pl-data-navigation-pager">\r\n    <nav>\r\n        <ul class="pagination">\r\n\r\n        </ul>\r\n    </nav>\r\n</div>\r\n\r\n';}return __p}
@@ -76,8 +77,8 @@ window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPane
 window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPanelGrouped.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<a class="pl-tabheader-text"></a>\n<a class="pl-tabheader-close pl-close">&times;</a>\n\n<style>\n    .pl-tabheader {\n        position: relative;\n        cursor: pointer;\n    }\n\n    .pl-tabheader-close.pl-close {\n        position: absolute;\n        right: 0;\n        top:0;\n    }\n</style>';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabPage/template/tabPage.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) {__p += '<div class="pl-tabpage-body">\n    '; items.forEach(function(item, index){;__p += '\n    <div class="pl-tabpage-i"></div>\n    ';});;__p += '\n</div>';}return __p}
-window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/group/template/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-combobox-group__header"></div>\n<div class="pl-combobox-group__items"></div>';}return __p}
+window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/plain/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<div class="pl-combobox-dropdown pl-dropdown-content">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty"></div>\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n';}return __p}
 //####app/utils/strict.js
 'use strict';
@@ -206,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.11';
+InfinniUI.VERSION = '3.0.12';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -11795,23 +11796,25 @@ var ComboBoxDropdownView = Backbone.View.extend( {
 
     /**
      *
-     * @param parentDOMElement
+     * @param baseWidthDOMElement
+     * @param basePositionDOMElement
      */
-    updatePosition: function( parentDOMElement ) {
-        var direction = this.getDropdownDirection( parentDOMElement );
-        this.setPositionFor( parentDOMElement, direction );
+    updatePosition: function( baseWidthDOMElement, basePositionDOMElement ) {
+        var direction = this.getDropdownDirection( baseWidthDOMElement );
+        this.setPositionFor( baseWidthDOMElement, basePositionDOMElement, direction );
     },
 
     /**
      *
-     * @param parentDOMElement
+     * @param baseWidthDOMElement
+     * @param basePositionDOMElement
      * @param direction
      */
-    setPositionFor: function( parentDOMElement, direction ) {
+    setPositionFor: function( baseWidthDOMElement, basePositionDOMElement, direction ) {
         clearInterval( this._intervalId );
 
-        this.applyStyle( parentDOMElement, direction );
-        this._intervalId = setInterval( this.applyStyle.bind( this, parentDOMElement, direction ), 100 );
+        this.applyStyle( baseWidthDOMElement, basePositionDOMElement, direction );
+        this._intervalId = setInterval( this.applyStyle.bind( this, baseWidthDOMElement, basePositionDOMElement, direction ), 100 );
     },
 
     /**
@@ -11843,20 +11846,22 @@ var ComboBoxDropdownView = Backbone.View.extend( {
 
     /**
      *
-     * @param parentDOMElement
+     * @param baseWidthDOMElement
+     * @param basePositionDOMElement
      * @param direction
      */
-    applyStyle: function( parentDOMElement, direction ) {
-        var rect = parentDOMElement.getBoundingClientRect();
+    applyStyle: function( baseWidthDOMElement, basePositionDOMElement, direction ) {
+        var widthElementRect = baseWidthDOMElement.getBoundingClientRect();
+        var positionElementRect = basePositionDOMElement.getBoundingClientRect();
         var style = {
-            left: window.pageXOffset + rect.left,
-            width: Math.round( rect.width ) - 1
+            left: window.pageXOffset + positionElementRect.left,
+            width: Math.round( widthElementRect.width )
         };
 
         if( direction === 'bottom' ) {
-            style.top = window.pageYOffset + rect.bottom;
+            style.top = window.pageYOffset + positionElementRect.bottom;
         } else {
-            style.top = window.pageYOffset + rect.top - this.$el.height();
+            style.top = window.pageYOffset + positionElementRect.top - this.$el.height();
         }
 
         this.$el.css( style );
@@ -12503,6 +12508,7 @@ var DataGridView = ListEditorBaseView.extend( {
 
     template: {
         'grid': InfinniUI.Template[ 'controls/dataGrid/template/dataGrid.tpl.html' ],
+        'gridWithoutScroll': InfinniUI.Template[ 'controls/dataGrid/template/dataGridWithoutScroll.tpl.html' ],
         'headerCell': InfinniUI.Template[ 'controls/dataGrid/template/headerCell.tpl.html' ],
         'sizeCell': InfinniUI.Template[ 'controls/dataGrid/template/sizeCell.tpl.html' ]
     },
@@ -12777,7 +12783,13 @@ var DataGridView = ListEditorBaseView.extend( {
         this.prerenderingActions();
 
         var verticalAlignment = this.model.get( 'verticalAlignment' );
+        var scrollValue = this.model.get( 'scroll' );
         var template = this.template.grid;
+
+        if( !scrollValue ) {
+            template = this.template.gridWithoutScroll;
+        }
+
         this.$el.html( template() );
 
         this.bindUIElements();
@@ -17977,9 +17989,13 @@ var ComboBoxView = ListEditorBaseView.extend( {
                     var $dropdown = dropdownView.render();
                     $( 'body' ).append( $dropdown );
 
-                    dropdownView.updatePosition( view.ui.control.get( 0 ) );
+                    var baseWidthDOMElement = view.el;
+                    var basePositionDOMElement = view.ui.control.get( 0 );
+
+                    dropdownView.updatePosition( baseWidthDOMElement, basePositionDOMElement );
+
                     view.dropDownView.on( 'itemsRendered2', function() {
-                        dropdownView.updatePosition( view.ui.control.get( 0 ) );
+                        dropdownView.updatePosition( baseWidthDOMElement, basePositionDOMElement );
                     } );
 
                     if( model.get( 'autocomplete' ) ) {
@@ -27546,7 +27562,7 @@ _.extend( ContainerBuilder.prototype, {
                 }
 
                 if( itemComparator ) {
-                    isCollectionChanged = items.set( value, true );
+                    isCollectionChanged = items.set( value || [], true );
 
                     items.forEach( function( item, index, collection ) {
                         collection.setProperty( index, 'bindingIndex', index );
@@ -27557,7 +27573,7 @@ _.extend( ContainerBuilder.prototype, {
                     }
 
                 } else {
-                    isCollectionChanged = items.set( value );
+                    isCollectionChanged = items.set( value || [] );
 
                     items.forEach( function( item, index, collection ) {
                         collection.setProperty( index, 'bindingIndex', index );
