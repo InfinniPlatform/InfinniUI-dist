@@ -207,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.12';
+InfinniUI.VERSION = '3.0.13';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -41338,7 +41338,7 @@ var notificationSubscription = ( function() {
         onErrorCb = onError || onErrorCb;
         hubName = newHubName || hubName;
         serverUrl = serverUrl || InfinniUI.config.signalRServerUrl || InfinniUI.config.serverUrl;
-        connection = $.hubConnection( serverUrl );
+        connection = $.hubConnection( serverUrl, InfinniUI.config.signalROptions );
         hubProxy = connection.createHubProxy( hubName );
 
         if( _.size( subscription ) > 0 ) {

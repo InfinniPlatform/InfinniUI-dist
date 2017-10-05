@@ -1,6 +1,9 @@
 Changelog
 =========
 
+## 3.0.13
+* added: InfinniUI.config.signalROptions (hubConnection options [guide](https://docs.microsoft.com/en-us/aspnet/signalr/overview/guide-to-the-api/hubs-api-guide-javascript-client#connequivalence))
+
 ## 3.0.12
 * fixed: ComboBox's drop down container doesn't stretch to the width of the parent
 
