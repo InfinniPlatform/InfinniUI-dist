@@ -207,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.13';
+InfinniUI.VERSION = '3.0.14';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -2043,7 +2043,7 @@ var filterItems = ( function() {
          * @returns {*}
          */
         function stringToNum( value ) {
-            if( typeof value === 'string' && !isNaN( value ) ) {
+            if( typeof value === 'string' && !isNaN( value ) && value !== '' ) {
                 value = +value;
             }
             return value;
@@ -8220,7 +8220,7 @@ var dateTimePickerModeDate = {
     /**
      *
      */
-    onClickDropdownHandler: function() {
+    openDropdown: function() {
         var model = this.model;
         var calendar = new SelectDate( {
             model: model
@@ -8231,8 +8231,14 @@ var dateTimePickerModeDate = {
 
         calendar.updatePosition( this.el );
 
+        model.set( 'dropdown', calendar );
+
         this.listenTo( calendar, 'date', function( date ) {
             model.set( 'value', this.convertValue( date ) );
+        } );
+
+        this.listenTo( calendar, 'remove', function( date ) {
+            model.set( 'dropdown', null );
         } );
     },
 
@@ -8267,7 +8273,7 @@ var dateTimePickerModeDateTime = {
     /**
      *
      */
-    onClickDropdownHandler: function() {
+    openDropdown: function() {
         var model = this.model;
         var calendar = new SelectDateTime( {
             model: model
@@ -8278,8 +8284,14 @@ var dateTimePickerModeDateTime = {
 
         calendar.updatePosition( this.el );
 
+        model.set( 'dropdown', calendar );
+
         this.listenTo( calendar, 'date', function( date ) {
             model.set( 'value', this.convertValue( date ) );
+        } );
+
+        this.listenTo( calendar, 'remove', function( date ) {
+            model.set( 'dropdown', null );
         } );
     },
 
@@ -8314,7 +8326,7 @@ var dateTimePickerModeTime = {
     /**
      *
      */
-    onClickDropdownHandler: function() {
+    openDropdown: function() {
         var model = this.model;
         var calendar = new SelectTime( {
             model: model
@@ -8325,8 +8337,14 @@ var dateTimePickerModeTime = {
 
         calendar.updatePosition( this.el );
 
+        model.set( 'dropdown', calendar );
+
         this.listenTo( calendar, 'date', function( date ) {
             model.set( 'value', this.convertValue( date ) );
+        } );
+
+        this.listenTo( calendar, 'remove', function( date ) {
+            model.set( 'dropdown', null );
         } );
     },
 
@@ -9916,7 +9934,10 @@ InfinniUI.DateTimePickerControl = DateTimePickerControl;
 var DateTimePickerModel = TextEditorBaseModel.extend( {
 
     defaults: _.extend(
-        {},
+        {
+            expandOnEnter: true,
+            dropdown: null
+        },
         TextEditorBaseModel.prototype.defaults,
         {
             mode: 'Date'
@@ -9986,7 +10007,8 @@ var DateTimePickerView = TextEditorBaseView.extend( {
     } ),
 
     events: _.extend( {}, TextEditorBaseView.prototype.events, {
-        'click .pl-datepicker-calendar': 'onClickDropdownHandler'
+        'click .pl-datepicker-calendar': 'onClickDropdownHandler',
+        'keydown .pl-control': 'onKeyDownControlHandler'
     } ),
 
     editMaskStrategies: {
@@ -10104,11 +10126,65 @@ var DateTimePickerView = TextEditorBaseView.extend( {
      *
      */
     onClickDropdownHandler: function() {
-    }
+        this.toggleDropdown();
+    },
+
+    /**
+     *
+     * @returns {boolean}
+     */
+    toggleDropdown: function() {
+        var dropdown = this.model.get( 'dropdown' );
+
+        if( dropdown !== null ) {
+            this.closeDropdown();
+        } else {
+            this.openDropdown();
+        }
+    },
+
     /**
      *
      */
+    openDropdown: function() {
+    },
 
+    /**
+     *
+     */
+    closeDropdown: function() {
+        var dropdown = this.model.get( 'dropdown' );
+        dropdown.onClickBackdropHandler();
+    },
+
+    /**
+     *
+     * @param event
+     * @returns {*}
+     */
+    onKeyDownControlHandler: function( event ) {
+        var enabled = this.model.get( 'enabled' );
+        var expandOnEnter = this.model.get( 'expandOnEnter' );
+
+        if( !enabled ) {
+            event.preventDefault();
+            return;
+        }
+
+        if( event.ctrlKey || event.altKey ) {
+            return;
+        }
+        switch( event.which ) {
+            case 13:    //Enter
+                if( expandOnEnter ) {
+                    event.preventDefault();
+                    this.toggleDropdown();
+                }
+                break;
+            default:
+                break;
+        }
+    }
 
 } );
 
@@ -10312,6 +10388,7 @@ var SelectDate = Backbone.View.extend( {
      */
     remove: function() {
         clearInterval( this._intervalId );
+        this.trigger( 'remove' );
         return Backbone.View.prototype.remove.apply( this, arguments );
     },
 
@@ -17730,6 +17807,7 @@ InfinniUI.ComboBoxControl = ComboBoxControl;
 var ComboBoxModel = ListEditorBaseModel.extend( {
 
     defaults: _.defaults( {
+        expandOnEnter: true,
         noItemsMessage: null,
         showClear: true,
         autocomplete: false,
@@ -18056,6 +18134,7 @@ var ComboBoxView = ListEditorBaseView.extend( {
      */
     onKeyDownControlHandler: function( event ) {
         var enabled = this.model.get( 'enabled' );
+        var expandOnEnter = this.model.get( 'expandOnEnter' );
 
         if( !enabled ) {
             event.preventDefault();
@@ -18071,9 +18150,11 @@ var ComboBoxView = ListEditorBaseView.extend( {
         }
         switch( event.which ) {
             case 40:    //Down Arrow
-            case 13:    //Ennter
-                event.preventDefault();
-                this.toggleDropdown();
+            case 13:    //Enter
+                if( expandOnEnter ) {
+                    event.preventDefault();
+                    this.toggleDropdown();
+                }
                 break;
             default:
                 break;
@@ -20706,6 +20787,10 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
     },
 
     transformValue: function( value ) {
+        if( value === '' ) {
+            return null;
+        }
+
         return typeof value === 'string' ? +value : value;
     },
 
@@ -28555,7 +28640,20 @@ DateTimePicker.prototype.setDateFormat = function( value ) {
     this.control.set( 'format', value );
 };
 
+/**
+ * @returns {*}
+ */
+DateTimePicker.prototype.getExpandOnEnter = function() {
+    return this.control.get( 'expandOnEnter' );
+};
 
+/**
+ *
+ * @param value
+ */
+DateTimePicker.prototype.setExpandOnEnter = function( value ) {
+    this.control.set( 'expandOnEnter', value );
+};
 
 //####app/elements/dateTimePicker/dateTimePickerBuilder.js
 /**
@@ -28597,6 +28695,10 @@ DateTimePickerBuilder.prototype.applyMetadata = function( params ) {
 
     this.applyMinValue( element, metadata.MinValue );
     this.applyMaxValue( element, metadata.MaxValue );
+
+    if( 'ExpandOnEnter' in params.metadata ) {
+        this.initBindingToProperty( params, 'ExpandOnEnter' );
+    }
 
     //var format = params.builder.buildType(params.parent, 'DateFormat', {}, null);
     //element.setDateFormat(format);
@@ -29447,6 +29549,21 @@ ComboBox.prototype.setNoItemsMessage = function( value ) {
     this.control.setNoItemsMessage( value );
 };
 
+/**
+ * @returns {*}
+ */
+ComboBox.prototype.getExpandOnEnter = function() {
+    return this.control.get( 'expandOnEnter' );
+};
+
+/**
+ *
+ * @param value
+ */
+ComboBox.prototype.setExpandOnEnter = function( value ) {
+    this.control.set( 'expandOnEnter', value );
+};
+
 //####app/elements/comboBox/comboBoxBuilder.js
 /**
  * @augments ListEditorBaseBuilder
@@ -29487,6 +29604,10 @@ _.extend( ComboBoxBuilder.prototype, {
         if( 'NoItemsMessage' in params.metadata ) {
             this.initBindingToProperty( params, 'NoItemsMessage' );
             this.resolveExpressionInText( params, 'NoItemsMessage' );
+        }
+
+        if( 'ExpandOnEnter' in params.metadata ) {
+            this.initBindingToProperty( params, 'ExpandOnEnter' );
         }
 
         element.setAutocomplete( params.metadata.Autocomplete );
