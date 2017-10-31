@@ -1,6 +1,11 @@
 Changelog
 =========
 
+## 3.0.15
+
+* fixed: TimePicker, DatePicker, DateTimePicker saves focus after closing dropdown menu and after choosing value
+* added: NumericBox has auto value validation if 'MinValue' or(and) 'MaxValue' property were added to metadata
+
 ## 3.0.14
 
 * fixed: NumericBox allows leave input field empty

@@ -207,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.14';
+InfinniUI.VERSION = '3.0.15';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -8221,6 +8221,7 @@ var dateTimePickerModeDate = {
      *
      */
     openDropdown: function() {
+        var that = this;
         var model = this.model;
         var calendar = new SelectDate( {
             model: model
@@ -8239,6 +8240,7 @@ var dateTimePickerModeDate = {
 
         this.listenTo( calendar, 'remove', function( date ) {
             model.set( 'dropdown', null );
+            that.ui.control.focus();
         } );
     },
 
@@ -8274,6 +8276,7 @@ var dateTimePickerModeDateTime = {
      *
      */
     openDropdown: function() {
+        var that = this;
         var model = this.model;
         var calendar = new SelectDateTime( {
             model: model
@@ -8292,6 +8295,7 @@ var dateTimePickerModeDateTime = {
 
         this.listenTo( calendar, 'remove', function( date ) {
             model.set( 'dropdown', null );
+            that.ui.control.focus();
         } );
     },
 
@@ -8327,6 +8331,7 @@ var dateTimePickerModeTime = {
      *
      */
     openDropdown: function() {
+        var that = this;
         var model = this.model;
         var calendar = new SelectTime( {
             model: model
@@ -8345,6 +8350,7 @@ var dateTimePickerModeTime = {
 
         this.listenTo( calendar, 'remove', function( date ) {
             model.set( 'dropdown', null );
+            that.ui.control.focus();
         } );
     },
 
@@ -20765,7 +20771,10 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
     defaults: _.defaults(
         {
             increment: 1,
-            inputType: 'number'
+            inputType: 'number',
+            minValue: null,
+            maxValue: null,
+            isNeedValidation: false
         },
         TextEditorBaseModel.prototype.defaults
     ),
@@ -20787,11 +20796,9 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
     },
 
     transformValue: function( value ) {
-        if( value === '' ) {
-            return null;
-        }
+        var val = ( value === null || value === '' || typeof value === 'undefined' ) ? null : +value;
 
-        return typeof value === 'string' ? +value : value;
+        return typeof val === 'number' ? val : null;
     },
 
     /**
@@ -20825,29 +20832,7 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
      */
     initialize: function() {
         TextEditorBaseModel.prototype.initialize.apply( this, Array.prototype.slice.call( arguments ) );
-    },
-
-    validate: function( attributes/*, options */ ) {
-        var value = attributes.value;
-        var min = attributes.minValue;
-        var max = attributes.maxValue;
-        var error;
-
-        if ( value !== null && typeof value !== 'undefined' ) {
-            if ( typeof min === 'number' && typeof max === 'number' ) {
-                if ( value < min || value > max ) {
-                    error = 'Значение должно быть в диапазоне от ' + min + ' до ' + max + '.';
-                }
-            } else if ( typeof min === 'number' && value < min ) {
-                error = 'Значение должно быть не меньше ' + min + '.';
-            } else if ( typeof max === 'number' && value > max ) {
-                error = 'Значение должно быть не больше ' + max + '.';
-            }
-        }
-
-        return error;
     }
-
 
 } );
 
@@ -20979,6 +20964,51 @@ var NumericBoxView = TextEditorBaseView.extend( {
         var enabled = model.get( 'enabled' );
 
         return enabled === true;
+    },
+
+    /**
+     *
+     */
+    updateValue: function() {
+        editorBaseViewMixin.updateValueState.call( this );
+
+        var displayValue = this.getDisplayValue();
+        var isNeedValidation = this.model.get( 'isNeedValidation' );
+        var validationResult = new ValidationResult();
+
+        if( isNeedValidation ) {
+            this.validate( displayValue, validationResult );
+        }
+
+        if( !validationResult.IsValid ) {
+            this.model.set( 'errorText', validationResult.Items[ 0 ].Message );
+        } else {
+            this.model.set( 'errorText', null );
+        }
+
+        this.ui.control.val( this.getDisplayValue() );
+    },
+
+    /**
+     *
+     * @param value
+     * @param validationResult
+     */
+    validate: function( value, validationResult ) {
+        var min = this.model.get( 'minValue' );
+        var max = this.model.get( 'maxValue' );
+
+        if ( value !== null && typeof value !== 'undefined' ) {
+            if ( typeof min === 'number' && typeof max === 'number' ) {
+                if ( value < min || value > max ) {
+                    validationResult.error( 'Значение должно быть в диапазоне от ' + min + ' до ' + max + '.' );
+                }
+            } else if ( typeof min === 'number' && value < min ) {
+                validationResult.error( 'Значение должно быть не меньше ' + min + '.' );
+            } else if ( typeof max === 'number' && value > max ) {
+                validationResult.error( 'Значение должно быть не больше ' + max + '.' );
+            }
+        }
     }
 
 } );
@@ -32466,13 +32496,19 @@ NumericBox.prototype.setIncrement = function( value ) {
 
 /**
  * @public
- * @description Устанваливает начальное значение
+ * @description Устанавливает начальное значение
  * @param {Number} value
  */
 NumericBox.prototype.setStartValue = function( value ) {
     this.control.set( 'startValue', value );
 };
 
+/**
+ *
+ * @param value
+ * @description Конвертирует значение в число
+ * @return {Number | null}
+ */
 NumericBox.prototype.convertValue = function( value ) {
     var val = ( value === null || value === '' || typeof value === 'undefined' ) ? null : +value;
 
@@ -32486,6 +32522,15 @@ NumericBox.prototype.convertValue = function( value ) {
  */
 NumericBox.prototype.getStartValue = function() {
     return this.control.get( 'startValue' );
+};
+
+/**
+ * @public
+ * @param {Boolean} value
+ * @description Устанавливает необходимость валидации вводимого значения
+ */
+NumericBox.prototype.setIsNeedValidation = function( value ) {
+    this.control.set( 'isNeedValidation', value );
 };
 
 //####app/elements/numericBox/numericBoxBuilder.js
@@ -32525,6 +32570,10 @@ NumericBoxBuilder.prototype.applyMetadata = function( params ) {
     element.setMaxValue( metadata.MaxValue );
     element.setIncrement( metadata.Increment );
     element.setStartValue( metadata.StartValue );
+
+    if( typeof metadata.MinValue !== 'undefined' || typeof metadata.MaxValue !== 'undefined' ) {
+        element.setIsNeedValidation( true );
+    }
 };
 
 
