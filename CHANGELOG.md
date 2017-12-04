@@ -1,6 +1,11 @@
 Changelog
 =========
 
+## 3.0.16
+
+* fixed: In 'EditAction' instead of simple clone used recursiveDeepCopy
+* fixed: Validation of file extension in 'FileBox'
+
 ## 3.0.15
 
 * fixed: TimePicker, DatePicker, DateTimePicker saves focus after closing dropdown menu and after choosing value

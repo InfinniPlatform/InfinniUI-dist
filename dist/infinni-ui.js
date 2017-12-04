@@ -207,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.15';
+InfinniUI.VERSION = '3.0.16';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -1145,6 +1145,38 @@ _.mixin( {
             return JSON.parse( JSON.stringify( value ) );
         }
         return value;
+    },
+
+    recursiveDeepCopy: function recursiveDeepCopy( objForCopy ) {
+        var newObj;
+
+        if( typeof objForCopy !== 'object' ) {
+            return objForCopy;
+        }
+
+        if( !objForCopy ) {
+            return objForCopy;
+        }
+
+        if( Array.isArray( objForCopy ) ) {
+            newObj = [];
+
+            for( var i = 0; i < objForCopy.length; i += 1 ) {
+                newObj[ i ] = recursiveDeepCopy( objForCopy[ i ] );
+            }
+
+            return newObj;
+        }
+
+        newObj = {};
+
+        for( var key in objForCopy ) {
+            if( objForCopy.hasOwnProperty( key ) ) {
+                newObj[ key ] = recursiveDeepCopy( objForCopy[ key ] );
+            }
+        }
+
+        return newObj;
     }
 
 } );
@@ -5936,7 +5968,13 @@ var editMaskViewMixin = ( function( global ) {
                 this.model.set( {
                     value: text,
                     rawValue: text
+                }, {
+                    validate: true
                 } );
+
+                if( this.model.isValid() ) {
+                    this.model.set( 'errorText', null );
+                }
             }
 
         },
@@ -18929,7 +18967,9 @@ var FileBoxModel = ControlModel.extend( _.extend( {
                 if( !acceptType ) {
                     var len = fileName.length;
                     acceptType = acceptTypes.some( function( name ) {
-                        return fileName.lastIndexOf( name.toLowerCase() ) === len - name.length;
+                        var index = fileName.lastIndexOf( name.toLowerCase() );
+
+                        return index !== -1 && index === len - name.length;
                     } );
                 }
 
@@ -20773,8 +20813,7 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
             increment: 1,
             inputType: 'number',
             minValue: null,
-            maxValue: null,
-            isNeedValidation: false
+            maxValue: null
         },
         TextEditorBaseModel.prototype.defaults
     ),
@@ -20796,9 +20835,13 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
     },
 
     transformValue: function( value ) {
-        var val = ( value === null || value === '' || typeof value === 'undefined' ) ? null : +value;
+        var val = null;
 
-        return typeof val === 'number' ? val : null;
+        if( value !== null && value !== '' && typeof value !== 'undefined' ) {
+            val = +value;
+        }
+
+        return !isNaN( parseFloat( val ) ) && isFinite( val ) ? val : null;
     },
 
     /**
@@ -20832,6 +20875,27 @@ var NumericBoxModel = TextEditorBaseModel.extend( {
      */
     initialize: function() {
         TextEditorBaseModel.prototype.initialize.apply( this, Array.prototype.slice.call( arguments ) );
+    },
+
+    validate: function( attributes/*, options */ ) {
+        var value = attributes.value;
+        var min = attributes.minValue;
+        var max = attributes.maxValue;
+        var error;
+
+        if ( value !== null && typeof value !== 'undefined' ) {
+            if ( typeof min === 'number' && typeof max === 'number' ) {
+                if ( value < min || value > max ) {
+                    error = 'Значение должно быть в диапазоне от ' + min + ' до ' + max + '.';
+                }
+            } else if ( typeof min === 'number' && value < min ) {
+                error = 'Значение должно быть не меньше ' + min + '.';
+            } else if ( typeof max === 'number' && value > max ) {
+                error = 'Значение должно быть не больше ' + max + '.';
+            }
+        }
+
+        return error;
     }
 
 } );
@@ -20964,51 +21028,6 @@ var NumericBoxView = TextEditorBaseView.extend( {
         var enabled = model.get( 'enabled' );
 
         return enabled === true;
-    },
-
-    /**
-     *
-     */
-    updateValue: function() {
-        editorBaseViewMixin.updateValueState.call( this );
-
-        var displayValue = this.getDisplayValue();
-        var isNeedValidation = this.model.get( 'isNeedValidation' );
-        var validationResult = new ValidationResult();
-
-        if( isNeedValidation ) {
-            this.validate( displayValue, validationResult );
-        }
-
-        if( !validationResult.IsValid ) {
-            this.model.set( 'errorText', validationResult.Items[ 0 ].Message );
-        } else {
-            this.model.set( 'errorText', null );
-        }
-
-        this.ui.control.val( this.getDisplayValue() );
-    },
-
-    /**
-     *
-     * @param value
-     * @param validationResult
-     */
-    validate: function( value, validationResult ) {
-        var min = this.model.get( 'minValue' );
-        var max = this.model.get( 'maxValue' );
-
-        if ( value !== null && typeof value !== 'undefined' ) {
-            if ( typeof min === 'number' && typeof max === 'number' ) {
-                if ( value < min || value > max ) {
-                    validationResult.error( 'Значение должно быть в диапазоне от ' + min + ' до ' + max + '.' );
-                }
-            } else if ( typeof min === 'number' && value < min ) {
-                validationResult.error( 'Значение должно быть не меньше ' + min + '.' );
-            } else if ( typeof max === 'number' && value > max ) {
-                validationResult.error( 'Значение должно быть не больше ' + max + '.' );
-            }
-        }
     }
 
 } );
@@ -36164,7 +36183,7 @@ _.extend( EditAction.prototype, {
      * @private
      */
     _setItem: function( editDataSource, selectedItem ) {
-        var item = _.clone( selectedItem );
+        var item = _.recursiveDeepCopy( selectedItem );
 
         if( typeof item === 'undefined' || item === null ) {
             item = {};
