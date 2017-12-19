@@ -77,8 +77,8 @@ window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPane
 window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPanelGrouped.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<a class="pl-tabheader-text"></a>\n<a class="pl-tabheader-close pl-close">&times;</a>\n\n<style>\n    .pl-tabheader {\n        position: relative;\n        cursor: pointer;\n    }\n\n    .pl-tabheader-close.pl-close {\n        position: absolute;\n        right: 0;\n        top:0;\n    }\n</style>';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabPage/template/tabPage.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) {__p += '<div class="pl-tabpage-body">\n    '; items.forEach(function(item, index){;__p += '\n    <div class="pl-tabpage-i"></div>\n    ';});;__p += '\n</div>';}return __p}
-window["InfinniUI"]["Template"]["controls/comboBox/dropdown/group/template/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-combobox-group__header"></div>\n<div class="pl-combobox-group__items"></div>';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
+window["InfinniUI"]["Template"]["controls/comboBox/dropdown/group/template/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-combobox-group__header"></div>\n<div class="pl-combobox-group__items"></div>';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/plain/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<div class="pl-combobox-dropdown pl-dropdown-content">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty"></div>\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n';}return __p}
 //####app/utils/strict.js
 'use strict';
@@ -207,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.16';
+InfinniUI.VERSION = '3.0.17';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -7803,6 +7803,7 @@ var TextEditorBaseModel = ControlModel.extend( {
 
     defaults: _.defaults( {
         labelText: null,
+        labelTextTitle: null,
         displayFormat: null,
         editMask: null
     }, editorBaseModelMixin.defaults_editorBaseModel, ControlModel.prototype.defaults ),
@@ -7859,6 +7860,7 @@ var TextEditorBaseView = ControlView.extend( /** @lends TextEditorBaseView.proto
         editMaskViewMixin.initHandlersForProperties.call( this );
 
         this.listenTo( this.model, 'change:labelText', this.updateLabelText );
+        this.listenTo( this.model, 'change:labelTextTitle', this.updateLabelTextTitle );
         this.listenTo( this.model, 'change:displayFormat', this.updateDisplayFormat );
         this.listenTo( this.model, 'change:editMask', this.updateEditMask );
         this.listenTo( this.model, 'change:inputType', this.updateInputType );
@@ -7872,6 +7874,7 @@ var TextEditorBaseView = ControlView.extend( /** @lends TextEditorBaseView.proto
         editorBaseViewMixin.updateProperties.call( this );
 
         this.updateLabelText();
+        this.updateLabelTextTitle();
         this.updateInputType();
     },
 
@@ -7933,6 +7936,20 @@ var TextEditorBaseView = ControlView.extend( /** @lends TextEditorBaseView.proto
             this.ui.label
                 .text( '' )
                 .addClass( 'hidden' );
+        }
+    },
+
+    /**
+     *
+     */
+    updateLabelTextTitle: function() {
+        var labelTextTitle = this.model.get( 'labelTextTitle' );
+        var labelText = this.model.get( 'labelText' );
+
+        if( labelTextTitle && labelText && labelText !== '' ) {
+            this.ui.label.attr( 'title', labelText );
+        } else {
+            this.ui.label.attr( 'title', null );
         }
     },
 
@@ -18142,6 +18159,7 @@ var ComboBoxView = ListEditorBaseView.extend( {
         ListEditorBaseView.prototype.initHandlersForProperties.call( this );
         this.listenTo( this.model, 'change:showClear', this.updateShowClear );
         this.listenTo( this.model, 'change:labelText', this.updateLabelText );
+        this.listenTo( this.model, 'change:labelTextTitle', this.updateLabelTextTitle );
     },
 
     /**
@@ -18235,6 +18253,7 @@ var ComboBoxView = ListEditorBaseView.extend( {
         ListEditorBaseView.prototype.updateProperties.call( this );
 
         this.updateLabelText();
+        this.updateLabelTextTitle();
         this.updateShowClear();
     },
 
@@ -18258,6 +18277,20 @@ var ComboBoxView = ListEditorBaseView.extend( {
         }
 
         this.ui.label.text( labelText );
+    },
+
+    /**
+     *
+     */
+    updateLabelTextTitle: function() {
+        var labelTextTitle = this.model.get( 'labelTextTitle' );
+        var labelText = this.model.get( 'labelText' );
+
+        if( labelTextTitle && labelText && labelText !== '' ) {
+            this.ui.label.attr( 'title', labelText );
+        } else {
+            this.ui.label.attr( 'title', null );
+        }
     },
 
     /**
@@ -18915,7 +18948,11 @@ InfinniUI.FileBoxControl = FileBoxControl;
  */
 var FileBoxModel = ControlModel.extend( _.extend( {
 
-    defaults: _.defaults( {},
+    defaults: _.defaults(
+        {
+            labelText: null,
+            labelTextTitle: null
+        },
         editorBaseModelMixin.defaults_editorBaseModel,
         ControlModel.prototype.defaults
     ),
@@ -19053,6 +19090,7 @@ var FileBoxView = ControlView.extend( /** @lends FileBoxView.prototype */ _.exte
     initHandlersForProperties: function() {
         ControlView.prototype.initHandlersForProperties.call( this );
         this.listenTo( this.model, 'change:labelText', this.updateLabelText );
+        this.listenTo( this.model, 'change:labelTextTitle', this.updateLabelTextTitle );
         this.listenTo( this.model, 'change:fileName', this.updateFileName );
         this.listenTo( this.model, 'change:fileSize', this.updateFileSize );
         this.listenTo( this.model, 'change:fileTime', this.updateFileTime );
@@ -19076,6 +19114,7 @@ var FileBoxView = ControlView.extend( /** @lends FileBoxView.prototype */ _.exte
         ControlView.prototype.updateProperties.call( this );
 
         this.updateLabelText();
+        this.updateLabelTextTitle();
         this.updateFileName();
         this.updateFileSize();
         this.updateFileType();
@@ -19100,6 +19139,20 @@ var FileBoxView = ControlView.extend( /** @lends FileBoxView.prototype */ _.exte
                 .text( labelText );
         } else {
             this.ui.label.css( { display: 'none' } );
+        }
+    },
+
+    /**
+     *
+     */
+    updateLabelTextTitle: function() {
+        var labelTextTitle = this.model.get( 'labelTextTitle' );
+        var labelText = this.model.get( 'labelText' );
+
+        if( labelTextTitle && labelText && labelText !== '' ) {
+            this.ui.label.attr( 'title', labelText );
+        } else {
+            this.ui.label.attr( 'title', null );
         }
     },
 
@@ -21450,6 +21503,7 @@ var PasswordBoxView = ControlView.extend( _.extend( {}, editorBaseViewMixin, {
         editorBaseViewMixin.initHandlersForProperties.call( this );
 
         this.listenTo( this.model, 'change:labelText', this.updateLabelText );
+        this.listenTo( this.model, 'change:labelTextTitle', this.updateLabelTextTitle );
         this.listenTo( this.model, 'change:labelFloating', this.updateLabelFloating );
         this.listenTo( this.model, 'change:autocomplete', this.updateAutocomplete );
     },
@@ -21460,7 +21514,9 @@ var PasswordBoxView = ControlView.extend( _.extend( {}, editorBaseViewMixin, {
     updateProperties: function() {
         ControlView.prototype.updateProperties.call( this );
         editorBaseViewMixin.updateProperties.call( this );
+
         this.updateLabelText();
+        this.updateLabelTextTitle();
     },
 
     /**
@@ -21469,6 +21525,20 @@ var PasswordBoxView = ControlView.extend( _.extend( {}, editorBaseViewMixin, {
     updateLabelText: function() {
         var labelText = this.model.get( 'labelText' );
         this.ui.label.text( labelText );
+    },
+
+    /**
+     *
+     */
+    updateLabelTextTitle: function() {
+        var labelTextTitle = this.model.get( 'labelTextTitle' );
+        var labelText = this.model.get( 'labelText' );
+
+        if( labelTextTitle && labelText && labelText !== '' ) {
+            this.ui.label.attr( 'title', labelText );
+        } else {
+            this.ui.label.attr( 'title', null );
+        }
     },
 
     /**
@@ -26972,6 +27042,21 @@ var labelTextElementMixin = {
      */
     setLabelText: function( value ) {
         this.control.set( 'labelText', value );
+    },
+
+    /**
+     * @returns {boolean | null}
+     */
+    getLabelTextTitle: function() {
+        return this.control.get( 'labelTextTitle' );
+    },
+
+    /**
+     *
+     * @param {boolean} value
+     */
+    setLabelTextTitle: function( value ) {
+        this.control.set( 'labelTextTitle', value );
     }
 
 };
@@ -28378,6 +28463,7 @@ _.extend( TextEditorBaseBuilder.prototype, {
 
         this.initBindingToProperty( params, 'LabelText' );
         this.resolveExpressionInText( params, 'LabelText' );
+        this.initBindingToProperty( params, 'LabelTextTitle' );
 
         element.setInputType( this.getCompatibleInputType( params ) );
         this
@@ -29649,6 +29735,7 @@ _.extend( ComboBoxBuilder.prototype, {
         this.initValueTemplate( data.valueBinding, params );
         this.initBindingToProperty( params, 'LabelText' );
         this.resolveExpressionInText( params, 'LabelText' );
+        this.initBindingToProperty( params, 'LabelTextTitle' );
 
         if( 'NoItemsMessage' in params.metadata ) {
             this.initBindingToProperty( params, 'NoItemsMessage' );
@@ -31381,6 +31468,7 @@ _.extend( FileBoxBuilder.prototype, {
 
         this.initBindingToProperty( params, 'LabelText' );
         this.resolveExpressionInText( params, 'LabelText' );
+        this.initBindingToProperty( params, 'LabelTextTitle' );
 
         // Привязка данных односторонняя т.к.:
         // 1. по значению из источника данных - сформировать URL изображения.
@@ -32978,6 +33066,8 @@ _.extend( PasswordBoxBuilder.prototype, {
 
         this.initBindingToProperty( params, 'LabelText' );
         this.resolveExpressionInText( params, 'LabelText' );
+        this.initBindingToProperty( params, 'LabelTextTitle' );
+
         element.setAutocomplete( metadata.Autocomplete );
     },
 

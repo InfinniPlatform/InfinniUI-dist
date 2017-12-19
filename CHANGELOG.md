@@ -1,6 +1,10 @@
 Changelog
 =========
 
+## 3.0.17
+
+* added: 'LabelTextTitle' property to ComboBox, FileBox, TextBox, PasswordBox, NumericBox, DataTimePicker, DataPicker, TimePicker metadata
+
 ## 3.0.16
 
 * fixed: In 'EditAction' instead of simple clone used recursiveDeepCopy
