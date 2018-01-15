@@ -77,8 +77,8 @@ window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPane
 window["InfinniUI"]["Template"]["controls/stackPanel/baseView/template/stackPanelGrouped.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabHeader/template/tabHeader.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<a class="pl-tabheader-text"></a>\n<a class="pl-tabheader-close pl-close">&times;</a>\n\n<style>\n    .pl-tabheader {\n        position: relative;\n        cursor: pointer;\n    }\n\n    .pl-tabheader-close.pl-close {\n        position: absolute;\n        right: 0;\n        top:0;\n    }\n</style>';}return __p}
 window["InfinniUI"]["Template"]["controls/tabPanel/tabPage/template/tabPage.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '', __j = Array.prototype.join;function print() { __p += __j.call(arguments, '') }with (obj) {__p += '<div class="pl-tabpage-body">\n    '; items.forEach(function(item, index){;__p += '\n    <div class="pl-tabpage-i"></div>\n    ';});;__p += '\n</div>';}return __p}
-window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/group/template/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="pl-combobox-group__header"></div>\n<div class="pl-combobox-group__items"></div>';}return __p}
+window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/group/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<!--<style>-->\n    <!--.pl-combobox-group__items > .pl-combobox-selected {-->\n        <!--border-left: 4px solid #39b3d7;-->\n    <!--}-->\n<!--</style>-->\n<div class="pl-dropdown-content" style="position: relative; background: #FFFFFF; padding: 5px;">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty">\n        По запросу "<span></span>" ничего не найдено\n    </div>\n\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n\n';}return __p}
 window["InfinniUI"]["Template"]["controls/comboBox/dropdown/template/plain/template.tpl.html"] = function(obj) {obj || (obj = {});var __t, __p = '';with (obj) {__p += '<div class="backdrop" style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0);"></div>\n\n<div class="pl-combobox-dropdown pl-dropdown-content">\n    <div class="form-group pl-combobox-filter">\n        <input type="text" class="pl-combobox-filter-text form-control">\n    </div>\n    <div class="pl-combobox-items-empty"></div>\n    <div class="pl-combobox-items" style="background: rgba(255, 255, 255, 1);">\n        <label>Dropdown items</label>\n    </div>\n</div>\n';}return __p}
 //####app/utils/strict.js
 'use strict';
@@ -207,7 +207,7 @@ _.defaults( InfinniUI.config, {
 } );
 
 
-InfinniUI.VERSION = '3.0.17';
+InfinniUI.VERSION = '3.0.18';
 
 //####app/localizations/dateTimeFormatInfo.js
 InfinniUI.localizations[ 'ru-RU' ].dateTimeFormatInfo = {
@@ -7928,7 +7928,7 @@ var TextEditorBaseView = ControlView.extend( /** @lends TextEditorBaseView.proto
     updateLabelText: function() {
         var labelText = this.model.get( 'labelText' );
 
-        if( labelText ) {
+        if( labelText !== '' && labelText !== null && typeof labelText !== 'undefined' ) {
             this.ui.label
                 .text( labelText )
                 .removeClass( 'hidden' );
@@ -18270,7 +18270,7 @@ var ComboBoxView = ListEditorBaseView.extend( {
     updateLabelText: function() {
         var labelText = this.model.get( 'labelText' );
 
-        if( labelText && labelText !== '' ) {
+        if( labelText !== null && typeof labelText !== 'undefined' && labelText !== '' ) {
             this.ui.label.toggleClass( 'hidden', false );
         } else {
             this.ui.label.toggleClass( 'hidden', true );
@@ -19133,7 +19133,7 @@ var FileBoxView = ControlView.extend( /** @lends FileBoxView.prototype */ _.exte
     updateLabelText: function() {
         var labelText = this.model.get( 'labelText' );
 
-        if( labelText != '' ) {
+        if( labelText !== '' && labelText !== null && typeof labelText !== 'undefined' ) {
             this.ui.label
                 .css( { display: 'inline-block' } )
                 .text( labelText );
@@ -21444,6 +21444,7 @@ var PasswordBoxModel = ControlModel.extend( _.extend( {
 
     defaults: _.defaults(
         {
+            labelText: null,
             autocomplete: true
         },
         editorBaseModelMixin.defaults_editorBaseModel,
@@ -21524,7 +21525,12 @@ var PasswordBoxView = ControlView.extend( _.extend( {}, editorBaseViewMixin, {
      */
     updateLabelText: function() {
         var labelText = this.model.get( 'labelText' );
-        this.ui.label.text( labelText );
+
+        if( labelText !== '' && labelText !== null && typeof labelText !== 'undefined' ) {
+            this.ui.label.text( labelText );
+        } else {
+            this.ui.label.css( { display: 'none' } );
+        }
     },
 
     /**
@@ -25282,9 +25288,9 @@ _.extend( RestDataSourceBuilder.prototype, {
         }
 
         if( 'DeletingParams' in metadata ) {
-            tmpParams = this.extractUrlParams( metadata[ 'DeletingParams' ], '.urlParams.delet.params' );
+            tmpParams = this.extractUrlParams( metadata[ 'DeletingParams' ], '.urlParams.delete.params' );
             dataSource.setDeletingUrlParams( tmpParams );
-            this.bindParams( metadata[ 'DeletingParams' ], dataSource, parent, '.urlParams.delet.params', builder );
+            this.bindParams( metadata[ 'DeletingParams' ], dataSource, parent, '.urlParams.delete.params', builder );
         }
 
         if( 'UpdatingItemsConverter' in metadata ) {

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+## 3.0.18
+
+* fixed: 'FileBox' bug with empty 'LabelText' property
+
 ## 3.0.17
 
 * added: 'LabelTextTitle' property to ComboBox, FileBox, TextBox, PasswordBox, NumericBox, DataTimePicker, DataPicker, TimePicker metadata
